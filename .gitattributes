@@ -1,0 +1,9 @@
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
+
+*.sh text eol=lf
+Makefile text eol=lf
+
+*.yml text eol=lf
+*.yaml text eol=lf
