@@ -258,9 +258,12 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err := mtag.Parse(); err != nil {
 			return err
 		}
+		if p := g.parser(); p != nil {
+			p.normalizeStructTag(&mtag)
+		}
 
 		// Skip fields with the no-flag tag
-		if mtag.Get("no-flag") != "" {
+		if mtag.Get(FlagTagNoFlag) != "" {
 			continue
 		}
 
@@ -288,11 +291,11 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			}
 		}
 
-		longname := mtag.Get("long")
-		shortname := mtag.Get("short")
+		longname := mtag.Get(FlagTagLong)
+		shortname := mtag.Get(FlagTagShort)
 
 		// Need at least either a short or long name
-		if longname == "" && shortname == "" && mtag.Get("ini-name") == "" {
+		if longname == "" && shortname == "" && mtag.Get(FlagTagIniName) == "" {
 			continue
 		}
 
@@ -307,25 +310,25 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			short, _ = utf8.DecodeRuneInString(shortname)
 		}
 
-		description := mtag.Get("description")
-		def := mtag.GetMany("default")
+		description := mtag.Get(FlagTagDescription)
+		def := mtag.GetMany(FlagTagDefault)
 
-		optionalValue := mtag.GetMany("optional-value")
-		valueName := mtag.Get("value-name")
-		defaultMask := mtag.Get("default-mask")
+		optionalValue := mtag.GetMany(FlagTagOptionalValue)
+		valueName := mtag.Get(FlagTagValueName)
+		defaultMask := mtag.Get(FlagTagDefaultMask)
 
-		optional := !isStringFalsy(mtag.Get("optional"))
-		required := !isStringFalsy(mtag.Get("required"))
-		choices := mtag.GetMany("choice")
-		hidden := !isStringFalsy(mtag.Get("hidden"))
+		optional := !isStringFalsy(mtag.Get(FlagTagOptional))
+		required := !isStringFalsy(mtag.Get(FlagTagRequired))
+		choices := mtag.GetMany(FlagTagChoice)
+		hidden := !isStringFalsy(mtag.Get(FlagTagHidden))
 
 		option := &Option{
 			Description:      description,
 			ShortName:        short,
 			LongName:         longname,
 			Default:          def,
-			EnvDefaultKey:    mtag.Get("env"),
-			EnvDefaultDelim:  mtag.Get("env-delim"),
+			EnvDefaultKey:    mtag.Get(FlagTagEnv),
+			EnvDefaultDelim:  mtag.Get(FlagTagEnvDelim),
 			OptionalArgument: optional,
 			OptionalValue:    optionalValue,
 			Required:         required,
@@ -398,8 +401,11 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 	if err := mtag.Parse(); err != nil {
 		return true, err
 	}
+	if p := g.parser(); p != nil {
+		p.normalizeStructTag(&mtag)
+	}
 
-	subgroup := mtag.Get("group")
+	subgroup := mtag.Get(FlagTagGroup)
 
 	if len(subgroup) != 0 {
 		var ptrval reflect.Value
@@ -414,7 +420,7 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 			ptrval = realval.Addr()
 		}
 
-		description := mtag.Get("description")
+		description := mtag.Get(FlagTagDescription)
 
 		group, err := g.AddGroup(subgroup, description, ptrval.Interface())
 
@@ -422,9 +428,9 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 			return true, err
 		}
 
-		group.Namespace = mtag.Get("namespace")
-		group.EnvNamespace = mtag.Get("env-namespace")
-		group.Hidden = mtag.Get("hidden") != ""
+		group.Namespace = mtag.Get(FlagTagNamespace)
+		group.EnvNamespace = mtag.Get(FlagTagEnvNamespace)
+		group.Hidden = mtag.Get(FlagTagHidden) != ""
 
 		return true, nil
 	}

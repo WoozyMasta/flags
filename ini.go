@@ -187,13 +187,13 @@ func readFullLine(reader *bufio.Reader) (string, error) {
 }
 
 func optionIniName(option *Option) string {
-	name := option.tag.Get("_read-ini-name")
+	name := option.tag.Get(flagTagReadIniName)
 
 	if len(name) != 0 {
 		return name
 	}
 
-	name = option.tag.Get("ini-name")
+	name = option.tag.Get(FlagTagIniName)
 
 	if len(name) != 0 {
 		return name
@@ -225,7 +225,7 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 			continue
 		}
 
-		if len(option.tag.Get("no-ini")) != 0 {
+		if len(option.tag.Get(FlagTagNoIni)) != 0 {
 			continue
 		}
 
@@ -530,10 +530,10 @@ func (i *IniParser) parse(ini *ini) error {
 
 			for _, group := range groups {
 				opt = group.optionByName(inival.Name, func(o *Option, n string) bool {
-					return strings.EqualFold(o.tag.Get("ini-name"), n)
+					return strings.EqualFold(o.tag.Get(FlagTagIniName), n)
 				})
 
-				if opt != nil && len(opt.tag.Get("no-ini")) != 0 {
+				if opt != nil && len(opt.tag.Get(FlagTagNoIni)) != 0 {
 					opt = nil
 				}
 
@@ -610,7 +610,7 @@ func (i *IniParser) parse(ini *ini) error {
 				quotesLookup[opt] = inival.Quoted
 			}
 
-			opt.tag.Set("_read-ini-name", inival.Name)
+			opt.tag.Set(flagTagReadIniName, inival.Name)
 		}
 	}
 

@@ -48,7 +48,7 @@ type DefaultProvider interface {
 }
 
 func getBase(options multiTag, base int) (int, error) {
-	sbase := options.Get("base")
+	sbase := options.Get(FlagTagBase)
 
 	var err error
 	var ivbase int64
@@ -305,7 +305,7 @@ func convert(val string, retval reflect.Value, options multiTag) error {
 
 		retval.Set(reflect.Append(retval, elemval))
 	case reflect.Map:
-		keyValueDelimiter := options.Get("key-value-delimiter")
+		keyValueDelimiter := options.Get(FlagTagKeyValueDelimiter)
 		if keyValueDelimiter == "" {
 			keyValueDelimiter = ":"
 		}

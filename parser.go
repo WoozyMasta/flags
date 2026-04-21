@@ -61,6 +61,8 @@ type Parser struct {
 
 	// Option flags changing the behavior of the parser.
 	Options Options
+
+	flagTags FlagTags
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -193,6 +195,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		NamespaceDelimiter:    ".",
 		EnvNamespaceDelimiter: "_",
 		lookupGeneration:      1,
+		flagTags:              NewFlagTags(),
 	}
 
 	p.parent = p
@@ -202,6 +205,156 @@ func NewNamedParser(appname string, options Options) *Parser {
 
 func (p *Parser) invalidateLookupCache() {
 	p.lookupGeneration++
+}
+
+// SetTagPrefix configures a common prefix for all struct tags used by the parser.
+// It rescans already attached top-level groups and commands.
+func (p *Parser) SetTagPrefix(prefix string) error {
+	return p.SetFlagTags(NewFlagTagsWithPrefix(prefix))
+}
+
+// SetFlagTags configures custom struct tag names used by the parser.
+// It rescans already attached top-level groups and commands.
+func (p *Parser) SetFlagTags(tags FlagTags) error {
+	p.flagTags = tags.withDefaults()
+	return p.rebuildTree()
+}
+
+func (p *Parser) normalizeStructTag(mtag *multiTag) {
+	c := mtag.cached()
+
+	alias := map[string]string{
+		p.flagTags.Short:               FlagTagShort,
+		p.flagTags.Long:                FlagTagLong,
+		p.flagTags.Required:            FlagTagRequired,
+		p.flagTags.Description:         FlagTagDescription,
+		p.flagTags.LongDescription:     FlagTagLongDescription,
+		p.flagTags.NoFlag:              FlagTagNoFlag,
+		p.flagTags.Optional:            FlagTagOptional,
+		p.flagTags.OptionalValue:       FlagTagOptionalValue,
+		p.flagTags.Default:             FlagTagDefault,
+		p.flagTags.DefaultMask:         FlagTagDefaultMask,
+		p.flagTags.Env:                 FlagTagEnv,
+		p.flagTags.EnvDelim:            FlagTagEnvDelim,
+		p.flagTags.ValueName:           FlagTagValueName,
+		p.flagTags.Choice:              FlagTagChoice,
+		p.flagTags.Hidden:              FlagTagHidden,
+		p.flagTags.Base:                FlagTagBase,
+		p.flagTags.IniName:             FlagTagIniName,
+		p.flagTags.NoIni:               FlagTagNoIni,
+		p.flagTags.Group:               FlagTagGroup,
+		p.flagTags.Namespace:           FlagTagNamespace,
+		p.flagTags.EnvNamespace:        FlagTagEnvNamespace,
+		p.flagTags.Command:             FlagTagCommand,
+		p.flagTags.SubCommandsOptional: FlagTagSubCommandsOptional,
+		p.flagTags.Alias:               FlagTagAlias,
+		p.flagTags.PositionalArgs:      FlagTagPositionalArgs,
+		p.flagTags.PositionalArgName:   FlagTagPositionalArgName,
+		p.flagTags.KeyValueDelimiter:   FlagTagKeyValueDelimiter,
+		p.flagTags.PassAfterNonOption:  FlagTagPassAfterNonOption,
+		p.flagTags.Unquote:             FlagTagUnquote,
+	}
+
+	for source, target := range alias {
+		if source == "" || source == target {
+			continue
+		}
+
+		values, ok := c[source]
+		if !ok {
+			continue
+		}
+
+		if _, exists := c[target]; !exists {
+			c[target] = values
+		}
+	}
+}
+
+type groupSpec struct {
+	shortDescription string
+	longDescription  string
+	namespace        string
+	envNamespace     string
+	hidden           bool
+	data             any
+}
+
+type commandSpec struct {
+	name                string
+	shortDescription    string
+	longDescription     string
+	aliases             []string
+	subcommandsOptional bool
+	passAfterNonOption  bool
+	hidden              bool
+	data                any
+}
+
+func (p *Parser) rebuildTree() error {
+	groups := make([]groupSpec, 0, len(p.groups))
+	commands := make([]commandSpec, 0, len(p.commands))
+	rootOptions := append([]*Option(nil), p.options...)
+
+	for _, g := range p.groups {
+		if g.isBuiltinHelp {
+			continue
+		}
+
+		groups = append(groups, groupSpec{
+			shortDescription: g.ShortDescription,
+			longDescription:  g.LongDescription,
+			namespace:        g.Namespace,
+			envNamespace:     g.EnvNamespace,
+			hidden:           g.Hidden,
+			data:             g.data,
+		})
+	}
+
+	for _, c := range p.commands {
+		commands = append(commands, commandSpec{
+			name:                c.Name,
+			shortDescription:    c.ShortDescription,
+			longDescription:     c.LongDescription,
+			aliases:             append([]string(nil), c.Aliases...),
+			subcommandsOptional: c.SubcommandsOptional,
+			passAfterNonOption:  c.PassAfterNonOption,
+			hidden:              c.Hidden,
+			data:                c.data,
+		})
+	}
+
+	p.groups = nil
+	p.commands = nil
+	p.options = rootOptions
+	p.args = nil
+	p.Active = nil
+	p.hasBuiltinHelpGroup = false
+	p.lookupCacheValid = false
+
+	for _, g := range groups {
+		ng, err := p.AddGroup(g.shortDescription, g.longDescription, g.data)
+		if err != nil {
+			return fmt.Errorf("failed to rescan group %q: %w", g.shortDescription, err)
+		}
+		ng.Namespace = g.namespace
+		ng.EnvNamespace = g.envNamespace
+		ng.Hidden = g.hidden
+	}
+
+	for _, c := range commands {
+		nc, err := p.AddCommand(c.name, c.shortDescription, c.longDescription, c.data)
+		if err != nil {
+			return fmt.Errorf("failed to rescan command %q: %w", c.name, err)
+		}
+		nc.Aliases = c.aliases
+		nc.SubcommandsOptional = c.subcommandsOptional
+		nc.PassAfterNonOption = c.passAfterNonOption
+		nc.Hidden = c.hidden
+	}
+
+	p.invalidateLookupCache()
+	return nil
 }
 
 // Parse parses the command line arguments from os.Args using Parser.ParseArgs.
@@ -575,7 +728,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 			}
 		}
 
-		if option.tag.Get("unquote") != "false" {
+		if option.tag.Get(FlagTagUnquote) != "false" {
 			arg, err = unquoteIfPossible(arg)
 		}
 

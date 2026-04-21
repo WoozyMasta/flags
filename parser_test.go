@@ -990,3 +990,47 @@ func TestExpectedTypeForFuncAndNonFunc(t *testing.T) {
 		t.Fatalf("expected string type, got %q", got)
 	}
 }
+
+func TestSetTagPrefix(t *testing.T) {
+	var opts struct {
+		Path string `flag-short:"p" flag-long:"path"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if err := p.SetTagPrefix("flag-"); err != nil {
+		t.Fatalf("unexpected set prefix error: %v", err)
+	}
+
+	_, err := p.ParseArgs([]string{"-p", "tmp-path"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Path != "tmp-path" {
+		t.Fatalf("expected tmp-path, got %q", opts.Path)
+	}
+}
+
+func TestSetFlagTags(t *testing.T) {
+	var opts struct {
+		Path string `my-short:"p" long:"path"`
+	}
+
+	p := NewParser(&opts, None)
+	tags := NewFlagTags()
+	tags.Short = "my-short"
+
+	if err := p.SetFlagTags(tags); err != nil {
+		t.Fatalf("unexpected set tags error: %v", err)
+	}
+
+	_, err := p.ParseArgs([]string{"-p", "var-path"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Path != "var-path" {
+		t.Fatalf("expected var-path, got %q", opts.Path)
+	}
+}

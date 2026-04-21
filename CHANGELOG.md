@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning][].
 * Completion script generation API:
   `Parser.WriteCompletion(...)` and `Parser.WriteNamedCompletion(...)`
   with `bash` and `zsh` support.
+* Parser tag customization API:
+  `Parser.SetTagPrefix(...)` and `Parser.SetFlagTags(...)`.
 * Dynamic defaults via `DefaultProvider`.
 * Parser option `DefaultsIfEmpty` to apply defaults only to empty values.
 * `Group.Data()` accessor.

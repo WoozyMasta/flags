@@ -191,8 +191,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 		if err := mtag.Parse(); err != nil {
 			return true, err
 		}
+		if p := c.parser(); p != nil {
+			p.normalizeStructTag(&mtag)
+		}
 
-		positional := mtag.Get("positional-args")
+		positional := mtag.Get(FlagTagPositionalArgs)
 
 		if len(positional) != 0 {
 			stype := realval.Type()
@@ -205,8 +208,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				if err := m.Parse(); err != nil {
 					return true, err
 				}
+				if p := c.parser(); p != nil {
+					p.normalizeStructTag(&m)
+				}
 
-				name := m.Get("positional-arg-name")
+				name := m.Get(FlagTagPositionalArgName)
 
 				if len(name) == 0 {
 					name = field.Name
@@ -215,7 +221,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				required := -1
 				requiredMaximum := -1
 
-				sreq := m.Get("required")
+				sreq := m.Get(FlagTagRequired)
 
 				if sreq != "" {
 					required = 1
@@ -239,7 +245,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 				arg := &Arg{
 					Name:            name,
-					Description:     m.Get("description"),
+					Description:     m.Get(FlagTagDescription),
 					Required:        required,
 					RequiredMaximum: requiredMaximum,
 
@@ -249,7 +255,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 				c.args = append(c.args, arg)
 
-				if len(mtag.Get("required")) != 0 {
+				if len(mtag.Get(FlagTagRequired)) != 0 {
 					c.ArgsRequired = true
 				}
 			}
@@ -257,7 +263,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			return true, nil
 		}
 
-		subcommand := mtag.Get("command")
+		subcommand := mtag.Get(FlagTagCommand)
 
 		if len(subcommand) != 0 {
 			var ptrval reflect.Value
@@ -272,11 +278,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				ptrval = realval.Addr()
 			}
 
-			shortDescription := mtag.Get("description")
-			longDescription := mtag.Get("long-description")
-			subcommandsOptional := mtag.Get("subcommands-optional")
-			aliases := mtag.GetMany("alias")
-			passAfterNonOption := mtag.Get("pass-after-non-option")
+			shortDescription := mtag.Get(FlagTagDescription)
+			longDescription := mtag.Get(FlagTagLongDescription)
+			subcommandsOptional := mtag.Get(FlagTagSubCommandsOptional)
+			aliases := mtag.GetMany(FlagTagAlias)
+			passAfterNonOption := mtag.Get(FlagTagPassAfterNonOption)
 
 			subc, err := c.AddCommand(subcommand, shortDescription, longDescription, ptrval.Interface())
 
@@ -284,7 +290,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				return true, err
 			}
 
-			subc.Hidden = mtag.Get("hidden") != ""
+			subc.Hidden = mtag.Get(FlagTagHidden) != ""
 
 			if len(subcommandsOptional) > 0 {
 				subc.SubcommandsOptional = true
