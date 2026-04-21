@@ -140,6 +140,11 @@ const (
 	// This is useful for preserving indentation in lists and code examples.
 	KeepDescriptionWhitespace
 
+	// EnvProvisioning auto-generates env keys from long option names when an
+	// option does not define an explicit `env` tag. Generated keys are
+	// uppercased and punctuation is replaced with underscores.
+	EnvProvisioning
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
@@ -253,6 +258,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.Default:             FlagTagDefault,
 		p.flagTags.DefaultMask:         FlagTagDefaultMask,
 		p.flagTags.Env:                 FlagTagEnv,
+		p.flagTags.AutoEnv:             FlagTagAutoEnv,
 		p.flagTags.EnvDelim:            FlagTagEnvDelim,
 		p.flagTags.ValueName:           FlagTagValueName,
 		p.flagTags.Choice:              FlagTagChoice,

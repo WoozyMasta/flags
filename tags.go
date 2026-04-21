@@ -30,6 +30,8 @@ const (
 	FlagTagDefaultMask = "default-mask"
 	// FlagTagEnv maps option default to an environment variable key.
 	FlagTagEnv = "env"
+	// FlagTagAutoEnv enables deriving env key from long flag name.
+	FlagTagAutoEnv = "auto-env"
 	// FlagTagEnvDelim splits env-provided list/map values by delimiter.
 	FlagTagEnvDelim = "env-delim"
 	// FlagTagValueName customizes value placeholder shown in help.
@@ -99,6 +101,8 @@ type FlagTags struct {
 	DefaultMask string
 	// Env maps to environment variable key tag (default: "env").
 	Env string
+	// AutoEnv maps to env auto-derivation toggle tag (default: "auto-env").
+	AutoEnv string
 	// EnvDelim maps to env list/map delimiter tag (default: "env-delim").
 	EnvDelim string
 	// ValueName maps to help placeholder tag (default: "value-name").
@@ -158,6 +162,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Default:             prefix + FlagTagDefault,
 		DefaultMask:         prefix + FlagTagDefaultMask,
 		Env:                 prefix + FlagTagEnv,
+		AutoEnv:             prefix + FlagTagAutoEnv,
 		EnvDelim:            prefix + FlagTagEnvDelim,
 		ValueName:           prefix + FlagTagValueName,
 		Choice:              prefix + FlagTagChoice,
@@ -215,6 +220,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Env != "" {
 		d.Env = t.Env
+	}
+	if t.AutoEnv != "" {
+		d.AutoEnv = t.AutoEnv
 	}
 	if t.EnvDelim != "" {
 		d.EnvDelim = t.EnvDelim

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -234,6 +235,18 @@ func isStringFalsy(s string) bool {
 	return s == "" || s == "false" || s == "no" || s == "0"
 }
 
+func autoEnvKeyFromLongName(longName string) string {
+	upper := strings.ToUpper(longName)
+
+	return strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return r
+		}
+
+		return '_'
+	}, upper)
+}
+
 func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, handler scanHandler) error {
 	stype := realval.Type()
 
@@ -322,12 +335,28 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		choices := mtag.GetMany(FlagTagChoice)
 		hidden := !isStringFalsy(mtag.Get(FlagTagHidden))
 
+		envKey := mtag.Get(FlagTagEnv)
+		autoEnvTag := mtag.Get(FlagTagAutoEnv)
+		hasAutoEnvTag := autoEnvTag != ""
+		autoEnv := !isStringFalsy(autoEnvTag)
+		if p := g.parser(); p != nil && (p.Options&EnvProvisioning) != None && !hasAutoEnvTag {
+			autoEnv = true
+		}
+		if envKey == "" && autoEnv {
+			if longname == "" {
+				return newErrorf(ErrInvalidTag,
+					"auto env for field `%s' requires a long flag name",
+					field.Name)
+			}
+			envKey = autoEnvKeyFromLongName(longname)
+		}
+
 		option := &Option{
 			Description:      description,
 			ShortName:        short,
 			LongName:         longname,
 			Default:          def,
-			EnvDefaultKey:    mtag.Get(FlagTagEnv),
+			EnvDefaultKey:    envKey,
 			EnvDefaultDelim:  mtag.Get(FlagTagEnvDelim),
 			OptionalArgument: optional,
 			OptionalValue:    optionalValue,

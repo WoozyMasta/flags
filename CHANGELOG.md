@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning][].
   (supports both `[]T` and `[][]T` option targets).
 * Parser option `KeepDescriptionWhitespace` to keep leading indentation in
   multi-line help descriptions.
+* Parser option `EnvProvisioning` to auto-derive `env` keys from
+  `long` tags when `env` is not explicitly set.
+* Option tag `auto-env:"true"` for per-flag env key derivation from `long`
+  without enabling the global parser option.
+* `auto-env:"false"` per-option opt-out when global `EnvProvisioning` is enabled.
 
 ### Changed
 

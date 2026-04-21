@@ -437,6 +437,220 @@ func TestEnvPrefix(t *testing.T) {
 	}
 }
 
+func TestEnvProvisioning(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		SomeFunction string `long:"some-function" default:"fallback"`
+	}
+
+	_ = os.Setenv("SOME_FUNCTION", "from-env")
+
+	p := NewParser(&opts, EnvProvisioning)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.SomeFunction != "from-env" {
+		t.Fatalf("expected env default from long name, got %q", opts.SomeFunction)
+	}
+}
+
+func TestEnvProvisioningPunctuationToUnderscore(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		SomeFunction string `long:"some.function" default:"fallback"`
+	}
+
+	_ = os.Setenv("SOME_FUNCTION", "from-env")
+
+	p := NewParser(&opts, EnvProvisioning)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.SomeFunction != "from-env" {
+		t.Fatalf("expected punctuation to map to underscore, got %q", opts.SomeFunction)
+	}
+}
+
+func TestEnvProvisioningDisabledByDefault(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		SomeFunction string `long:"some-function" default:"fallback"`
+	}
+
+	_ = os.Setenv("SOME_FUNCTION", "from-env")
+
+	p := NewParser(&opts, None)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.SomeFunction != "fallback" {
+		t.Fatalf("expected tag default when auto env is disabled, got %q", opts.SomeFunction)
+	}
+}
+
+func TestEnvProvisioningExplicitEnvWins(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		SomeFunction string `long:"some-function" env:"EXPLICIT_ENV" default:"fallback"`
+	}
+
+	_ = os.Setenv("SOME_FUNCTION", "auto-env")
+	_ = os.Setenv("EXPLICIT_ENV", "explicit-env")
+
+	p := NewParser(&opts, EnvProvisioning)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.SomeFunction != "explicit-env" {
+		t.Fatalf("expected explicit env to win, got %q", opts.SomeFunction)
+	}
+}
+
+func TestEnvProvisioningWithNamespacesAndPrefix(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		DB struct {
+			SomeFunction string `long:"some-function"`
+		} `group:"db" env-namespace:"DB"`
+	}
+
+	_ = os.Setenv("MY_APP_DB_SOME_FUNCTION", "from-env")
+
+	p := NewParser(&opts, EnvProvisioning)
+	p.SetEnvPrefix("MY_APP")
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.DB.SomeFunction != "from-env" {
+		t.Fatalf("expected env with namespace+prefix, got %q", opts.DB.SomeFunction)
+	}
+}
+
+func TestAutoEnvTagWithoutGlobalOption(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		SomeFunction string `long:"some-function" auto-env:"true"`
+	}
+
+	_ = os.Setenv("SOME_FUNCTION", "from-env")
+
+	p := NewParser(&opts, None)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.SomeFunction != "from-env" {
+		t.Fatalf("expected auto-env tag to derive env key, got %q", opts.SomeFunction)
+	}
+}
+
+func TestAutoEnvTagRequiresLongName(t *testing.T) {
+	var opts struct {
+		ShortOnly string `short:"s" auto-env:"true"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestEnvProvisioningRequiresLongNameWhenEnvMissing(t *testing.T) {
+	var opts struct {
+		ShortOnly string `short:"s"`
+	}
+
+	p := NewParser(&opts, EnvProvisioning)
+	_, err := p.ParseArgs(nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestEnvProvisioningNoLongButExplicitEnvIsValid(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		ShortOnly string `short:"s" env:"SHORT_ONLY_ENV"`
+	}
+
+	_ = os.Setenv("SHORT_ONLY_ENV", "from-env")
+
+	p := NewParser(&opts, EnvProvisioning)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.ShortOnly != "from-env" {
+		t.Fatalf("expected explicit env to work without long name, got %q", opts.ShortOnly)
+	}
+}
+
+func TestEnvProvisioningAutoEnvFalseOptOut(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		SomeFunction string `long:"some-function" default:"fallback" auto-env:"false"`
+	}
+
+	_ = os.Setenv("SOME_FUNCTION", "from-env")
+
+	p := NewParser(&opts, EnvProvisioning)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.SomeFunction != "fallback" {
+		t.Fatalf("expected auto-env opt-out to keep default, got %q", opts.SomeFunction)
+	}
+}
+
+func TestEnvProvisioningAutoEnvFalseSkipsLongValidation(t *testing.T) {
+	var opts struct {
+		ShortOnly string `short:"s" auto-env:"false"`
+	}
+
+	p := NewParser(&opts, EnvProvisioning)
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("expected no error when auto-env is explicitly disabled, got %v", err)
+	}
+}
+
 func TestDefaultsIfEmptyPrefilledAndCLI(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()

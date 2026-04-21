@@ -193,6 +193,25 @@ parser.SetEnvPrefix("MY_APP")
 Then `PORT` resolves to `MY_APP_PORT`, and grouped values resolve like
 `MY_APP_DB_HOST`.
 
+You can also auto-derive env names from `long` tags when `env` is not set:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.EnvProvisioning)
+```
+
+Example: `long:"some-function"` becomes `SOME_FUNCTION`.
+
+For per-option behavior (without global parser flag), use:
+
+```go
+type Options struct {
+  SomeFunction string `long:"some-function" auto-env:"true"`
+}
+```
+
+When global `EnvProvisioning` is enabled, use `auto-env:"false"` to opt out
+for a specific option.
+
 ## Tag Customization
 
 If your structs already use tags for other libraries, you can remap flags
