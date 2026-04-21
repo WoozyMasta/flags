@@ -1,8 +1,21 @@
 package flags
 
 import (
+	"errors"
 	"testing"
 )
+
+type dynamicDefaultValue string
+
+func (v *dynamicDefaultValue) Default() ([]string, error) {
+	return []string{"from-provider"}, nil
+}
+
+type failingDynamicDefaultValue string
+
+func (v *failingDynamicDefaultValue) Default() ([]string, error) {
+	return nil, errors.New("dynamic default failed")
+}
 
 func TestGroupInline(t *testing.T) {
 	var opts = struct {
@@ -271,5 +284,40 @@ func TestAddOptionNonOptional(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	} else if !opts.Test {
 		t.Errorf("option not set")
+	}
+}
+
+func TestDynamicDefaultProvider(t *testing.T) {
+	var opts struct {
+		Value dynamicDefaultValue `long:"value"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	assertString(t, string(opts.Value), "from-provider")
+}
+
+func TestDynamicDefaultProviderError(t *testing.T) {
+	var opts struct {
+		Value failingDynamicDefaultValue `long:"value"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+
+	if err == nil {
+		t.Fatalf("Expected error, but got nil")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok {
+		t.Fatalf("Expected *Error, but got %T", err)
+	}
+
+	if flagsErr.Type != ErrMarshal {
+		t.Fatalf("Expected ErrMarshal, but got %v", flagsErr.Type)
 	}
 }

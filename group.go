@@ -347,6 +347,15 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 				option.shortAndLongName())
 		}
 
+		if defaults, ok, err := dynamicOptionDefault(option.value); err != nil {
+			return newErrorf(ErrMarshal,
+				"could not get dynamic default for flag `%s': %v",
+				option.shortAndLongName(),
+				err)
+		} else if ok {
+			option.Default = defaults
+		}
+
 		g.options = append(g.options, option)
 	}
 
@@ -460,4 +469,23 @@ func (g *Group) groupByName(name string) *Group {
 	}
 
 	return g.Find(name)
+}
+
+func dynamicOptionDefault(value reflect.Value) ([]string, bool, error) {
+	v := value
+
+	for v.IsValid() && v.CanInterface() {
+		if provider, ok := v.Interface().(DefaultProvider); ok {
+			def, err := provider.Default()
+			return def, true, err
+		}
+
+		if !v.CanAddr() {
+			break
+		}
+
+		v = v.Addr()
+	}
+
+	return nil, false, nil
 }

@@ -38,6 +38,14 @@ type ValueValidator interface {
 	IsValidValue(value string) error
 }
 
+// DefaultProvider is the interface implemented by types that can provide
+// dynamic default values at runtime.
+type DefaultProvider interface {
+	// Default returns one or more default string values that will be applied
+	// as if they were specified through repeated `default` tags.
+	Default() ([]string, error)
+}
+
 func getBase(options multiTag, base int) (int, error) {
 	sbase := options.Get("base")
 
