@@ -1,4 +1,4 @@
-module github.com/jessevdk/go-flags
+module github.com/woozymasta/flags
 
 go 1.26
 

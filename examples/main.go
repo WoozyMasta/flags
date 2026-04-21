@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jessevdk/go-flags"
+	"github.com/woozymasta/flags"
 )
 
 type EditorOptions struct {
