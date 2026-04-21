@@ -95,13 +95,23 @@ func init() {
 	_, sourcefile, _, _ := runtime.Caller(0)
 	completionTestSourcedir := filepath.Join(filepath.SplitList(path.Dir(sourcefile))...)
 
-	completionTestFilename := []string{filepath.Join(completionTestSourcedir, "completion.go"), filepath.Join(completionTestSourcedir, "completion_test.go")}
+	completionTestFilename, _ := filepath.Glob(filepath.Join(completionTestSourcedir, "completion*"))
+	completionTestFilenameShort := make([]string, 0, len(completionTestFilename))
+	completionTestFilenameShortEq := make([]string, 0, len(completionTestFilename))
+	completionTestFilenameLongEq := make([]string, 0, len(completionTestFilename))
+
+	for _, v := range completionTestFilename {
+		completionTestFilenameShort = append(completionTestFilenameShort, "-f"+v)
+		completionTestFilenameShortEq = append(completionTestFilenameShortEq, "-f="+v)
+		completionTestFilenameLongEq = append(completionTestFilenameLongEq, "--filename="+v)
+	}
 
 	completionTestSubdir := []string{
 		filepath.Join(completionTestSourcedir, "examples/add.go"),
 		filepath.Join(completionTestSourcedir, "examples/bash-completion"),
 		filepath.Join(completionTestSourcedir, "examples/main.go"),
 		filepath.Join(completionTestSourcedir, "examples/rm.go"),
+		filepath.Join(completionTestSourcedir, "examples/zsh-completion"),
 	}
 
 	completionTests = []completionTest{
@@ -222,21 +232,21 @@ func init() {
 		{
 			// Flag concat filename
 			[]string{"rm", "-f" + filepath.Join(completionTestSourcedir, "completion")},
-			[]string{"-f" + completionTestFilename[0], "-f" + completionTestFilename[1]},
+			completionTestFilenameShort,
 			false,
 		},
 
 		{
 			// Flag equal concat filename
 			[]string{"rm", "-f=" + filepath.Join(completionTestSourcedir, "completion")},
-			[]string{"-f=" + completionTestFilename[0], "-f=" + completionTestFilename[1]},
+			completionTestFilenameShortEq,
 			false,
 		},
 
 		{
 			// Flag concat long filename
 			[]string{"rm", "--filename=" + filepath.Join(completionTestSourcedir, "completion")},
-			[]string{"--filename=" + completionTestFilename[0], "--filename=" + completionTestFilename[1]},
+			completionTestFilenameLongEq,
 			false,
 		},
 

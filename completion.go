@@ -6,7 +6,9 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -50,6 +52,17 @@ type Completer interface {
 type completion struct {
 	parser *Parser
 }
+
+// CompletionShell identifies a shell script format for completion output.
+type CompletionShell string
+
+const (
+	// CompletionShellBash generates a Bash completion script.
+	CompletionShellBash CompletionShell = "bash"
+
+	// CompletionShellZsh generates a Zsh completion script.
+	CompletionShellZsh CompletionShell = "zsh"
+)
 
 // Filename is a string alias which provides filename completion.
 type Filename string
@@ -330,4 +343,70 @@ func (c *completion) print(items []Completion, showDescriptions bool) {
 			fmt.Println(v.Item)
 		}
 	}
+}
+
+// WriteCompletion writes a shell completion script for the parser command name.
+func (p *Parser) WriteCompletion(w io.Writer, shell CompletionShell) error {
+	return p.WriteNamedCompletion(w, shell, p.Name)
+}
+
+// WriteNamedCompletion writes a shell completion script for commandName.
+func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, commandName string) error {
+	if commandName == "" {
+		return errors.New("command name must not be empty")
+	}
+
+	functionName := completionFunctionName(commandName)
+
+	switch shell {
+	case CompletionShellBash:
+		_, err := fmt.Fprintf(w, `_%[1]s() {
+	args=("${COMP_WORDS[@]:1:$COMP_CWORD}")
+
+	local IFS=$'\n'
+	COMPREPLY=($(GO_FLAGS_COMPLETION=1 ${COMP_WORDS[0]} "${args[@]}"))
+	return 0
+}
+
+complete -F _%[1]s %[2]s
+`, functionName, commandName)
+		return err
+	case CompletionShellZsh:
+		_, err := fmt.Fprintf(w, `#compdef %[2]s
+
+_%[1]s() {
+	local -a completions
+	local IFS=$'\n'
+
+	completions=($(GO_FLAGS_COMPLETION=1 "${words[@]}"))
+	(( ${#completions} )) || return 1
+
+	compadd -- "${completions[@]}"
+	return 0
+}
+
+compdef _%[1]s %[2]s
+`, functionName, commandName)
+		return err
+	default:
+		return fmt.Errorf("unsupported completion shell %q", shell)
+	}
+}
+
+func completionFunctionName(commandName string) string {
+	var b strings.Builder
+
+	for i, r := range commandName {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '_' || (i > 0 && r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		} else {
+			b.WriteByte('_')
+		}
+	}
+
+	if b.Len() == 0 {
+		return "completion"
+	}
+
+	return b.String()
 }

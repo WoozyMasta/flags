@@ -147,3 +147,44 @@ fmt.Printf("Remaining args: %s\n", strings.Join(args, " "))
 
 More information can be found in the godocs:
 <https://pkg.go.dev/github.com/woozymasta/flags>
+
+## Shell completion
+
+Use `WriteNamedCompletion` to generate shell script output from your app:
+
+```go
+type Options struct {
+  Completion string `long:"completion" choice:"bash" choice:"zsh"`
+}
+
+if opts.Completion != "" {
+  _ = parser.WriteNamedCompletion(
+    os.Stdout,
+    flags.CompletionShell(opts.Completion),
+    "myapp")
+  return
+}
+```
+
+Generate and use:
+
+```bash
+# write to file
+./myapp --completion bash > ./myapp.bash
+
+# load directly in current shell
+source <(./myapp --completion bash)
+```
+
+Raw completion mode (used by shell templates):
+
+```bash
+GO_FLAGS_COMPLETION=1 ./myapp --env pr
+```
+
+For custom argument value completion (beyond built-in flag/command completion),
+implement `flags.Completer` on your value type.
+
+Ready templates:
+[`examples/bash-completion`](examples/bash-completion),
+[`examples/zsh-completion`](examples/zsh-completion).

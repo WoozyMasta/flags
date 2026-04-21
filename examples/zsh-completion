@@ -1,0 +1,12 @@
+#compdef examples
+
+_examples() {
+	local -a completions
+	local IFS=$'\n'
+
+	completions=($(GO_FLAGS_COMPLETION=1 "${words[@]}"))
+	(( ${#completions} )) || return 1
+
+	compadd -- "${completions[@]}"
+	return 0
+}
