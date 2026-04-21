@@ -406,6 +406,79 @@ func TestEnvDefaults(t *testing.T) {
 	}
 }
 
+func TestDefaultsIfEmptyPrefilledAndCLI(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+
+	oldEnv.Restore()
+	_ = os.Setenv("TEST_DEFAULTS_IF_EMPTY", "from-env")
+
+	var opts struct {
+		Value string `long:"value" default:"from-tag" env:"TEST_DEFAULTS_IF_EMPTY"`
+	}
+
+	opts.Value = "prefilled"
+
+	parser := NewParser(&opts, DefaultsIfEmpty)
+	_, err := parser.ParseArgs(nil)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Value != "prefilled" {
+		t.Fatalf("expected prefilled value to be preserved, got %q", opts.Value)
+	}
+
+	_, err = parser.ParseArgs([]string{"--value=from-cli"})
+	if err != nil {
+		t.Fatalf("unexpected parse error with CLI value: %v", err)
+	}
+
+	if opts.Value != "from-cli" {
+		t.Fatalf("expected CLI value to win, got %q", opts.Value)
+	}
+}
+
+func TestDefaultsIfEmptyCollections(t *testing.T) {
+	var opts struct {
+		Map   map[string]int `long:"map" default:"a:1"`
+		Slice []int          `long:"slice" default:"2"`
+	}
+
+	opts.Map = map[string]int{}
+	opts.Slice = []int{}
+
+	parser := NewParser(&opts, DefaultsIfEmpty)
+	_, err := parser.ParseArgs(nil)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if diff := cmp.Diff(map[string]int{"a": 1}, opts.Map); diff != "" {
+		t.Fatalf("unexpected map defaults (-expected +actual):\n%s", diff)
+	}
+
+	if diff := cmp.Diff([]int{2}, opts.Slice); diff != "" {
+		t.Fatalf("unexpected slice defaults (-expected +actual):\n%s", diff)
+	}
+
+	opts.Map = map[string]int{"x": 9}
+	opts.Slice = []int{9}
+
+	_, err = parser.ParseArgs(nil)
+	if err != nil {
+		t.Fatalf("unexpected parse error on second pass: %v", err)
+	}
+
+	if diff := cmp.Diff(map[string]int{"x": 9}, opts.Map); diff != "" {
+		t.Fatalf("non-empty map should be preserved (-expected +actual):\n%s", diff)
+	}
+
+	if diff := cmp.Diff([]int{9}, opts.Slice); diff != "" {
+		t.Fatalf("non-empty slice should be preserved (-expected +actual):\n%s", diff)
+	}
+}
+
 type CustomFlag struct {
 	Value string
 }

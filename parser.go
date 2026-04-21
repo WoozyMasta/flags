@@ -122,6 +122,11 @@ const (
 	// rather than raising an error stating it cannot have an argument.
 	AllowBoolValues
 
+	// DefaultsIfEmpty applies tag/env defaults only to options whose current
+	// values are empty. This keeps pre-populated option values intact unless
+	// they were explicitly set on the command line.
+	DefaultsIfEmpty
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
@@ -335,6 +340,10 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 	if s.err == nil {
 		p.eachOption(func(_ *Command, _ *Group, option *Option) {
+			if (p.Options&DefaultsIfEmpty) != None && !option.isEmpty() {
+				return
+			}
+
 			err := option.clearDefault()
 			if err != nil {
 				if _, ok := err.(*Error); !ok {

@@ -500,6 +500,17 @@ func (option *Option) isFunc() bool {
 	return option.value.Type().Kind() == reflect.Func
 }
 
+func (option *Option) isEmpty() bool {
+	switch option.value.Kind() {
+	case reflect.String, reflect.Slice, reflect.Map:
+		return option.value.Len() == 0
+	case reflect.Ptr, reflect.Interface, reflect.Func:
+		return option.value.IsNil()
+	default:
+		return option.value.IsZero()
+	}
+}
+
 func (option *Option) call(value *string) error {
 	var retval []reflect.Value
 
