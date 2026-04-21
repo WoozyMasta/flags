@@ -172,6 +172,45 @@ type Options struct {
 
 With defaults, that resolves to `DB_HOST` and `DB_PORT`.
 
+Use `SetEnvPrefix(...)` for a global application prefix:
+
+```go
+parser := flags.NewParser(&opts, flags.Default)
+parser.SetEnvPrefix("MY_APP")
+```
+
+Then `PORT` resolves to `MY_APP_PORT`, and grouped values resolve like
+`MY_APP_DB_HOST`.
+
+## Tag Customization
+
+If your structs already use tags for other libraries, you can remap flags
+tag names without changing parser constructors.
+
+Use a common prefix for all tags:
+
+```go
+type Cfg struct {
+  Path string `flag-short:"p" flag-long:"path" flag-description:"path to config"`
+}
+
+parser := flags.NewParser(&cfg, flags.Default)
+_ = parser.SetTagPrefix("flag-")
+```
+
+Or override specific tag names:
+
+```go
+type Cfg struct {
+  Path string `my-short:"p" long:"path"`
+}
+
+parser := flags.NewParser(&cfg, flags.Default)
+tags := flags.NewFlagTags()
+tags.Short = "my-short"
+_ = parser.SetFlagTags(tags)
+```
+
 ## INI
 
 INI support is available via `NewIniParser(...)`:
