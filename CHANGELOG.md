@@ -6,7 +6,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog][],
 and this project adheres to [Semantic Versioning][].
 
-## [Unreleased][]
+<!--
+## Unreleased
+
+### Added
+### Changed
+### Removed
+-->
+
+## [Unreleased][] - 2026-04-21
 
 ### Added
 
@@ -36,21 +44,21 @@ and this project adheres to [Semantic Versioning][].
 * Duplicate `default` struct tags in examples were removed.
 * Windows `gofmt` instability fixed via `.gitattributes` (LF normalization).
 
-[Unreleased]: https://github.com/WoozyMasta/flags/commits/master
+[Unreleased]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.1...HEAD
 
 ---
 
 > [!NOTE]  
 > The sections **below** are a reconstructed change history
 > from before this fork was created,
-> with links to the original `jessevdk/go-flags` releases.  
+> mirrored as `legacy/*` tags in this repository.  
 > Entries **above** this note follow the fork's own versioning line.
 > This project does not inherit old upstream release tags
 > and starts its own versioning sequence.
 
 ---
 
-## [v1.6.1][] - 2024-06-15
+## [legacy/v1.6.1][] - 2024-06-15
 
 commit: `c02e333e441eb1187c25e6d689d769d499ec2a0b`
 
@@ -58,9 +66,9 @@ commit: `c02e333e441eb1187c25e6d689d769d499ec2a0b`
 
 * Reverted a minor cleanup change related to an unused parameter.
 
-[v1.6.1]: https://github.com/jessevdk/go-flags/releases/tag/v1.6.1
+[legacy/v1.6.1]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.0...legacy%2Fv1.6.1
 
-## [v1.6.0][] - 2024-06-15
+## [legacy/v1.6.0][] - 2024-06-15
 
 commit: `1898d831bc780f0fcce3ea97d73a9df1b1e27ed4`
 
@@ -83,9 +91,9 @@ commit: `1898d831bc780f0fcce3ea97d73a9df1b1e27ed4`
 * Panic when rendering help for hidden command/group combinations.
 * INI zero-value write behavior.
 
-[v1.6.0]: https://github.com/jessevdk/go-flags/releases/tag/v1.6.0
+[legacy/v1.6.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.5.0...legacy%2Fv1.6.0
 
-## [v1.5.0][] - 2021-03-21
+## [legacy/v1.5.0][] - 2021-03-21
 
 commit: `1878de27329cba29066dc088d84b3ce743885f82`
 
@@ -108,9 +116,9 @@ commit: `1878de27329cba29066dc088d84b3ce743885f82`
 * Subcommand INI section and man-page usage text issues.
 * Error reporting for invalid env defaults includes flag context.
 
-[v1.5.0]: https://github.com/jessevdk/go-flags/releases/tag/v1.5.0
+[legacy/v1.5.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.4.0...legacy%2Fv1.5.0
 
-## [v1.4.0][] - 2018-03-31
+## [legacy/v1.4.0][] - 2018-03-31
 
 commit: `c6ca198ec95c841fdb89fc0de7496fed11ab854e`
 
@@ -127,9 +135,9 @@ commit: `c6ca198ec95c841fdb89fc0de7496fed11ab854e`
 
 * Removed/limited unsafe syscall usage in constrained environments.
 
-[v1.4.0]: https://github.com/jessevdk/go-flags/releases/tag/v1.4.0
+[legacy/v1.4.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.3.0...legacy%2Fv1.4.0
 
-## [v1.3.0][] - 2017-07-20
+## [legacy/v1.3.0][] - 2017-07-20
 
 commit: `96dc06278ce32a0e9d957d590bb987c81ee66407`
 
@@ -143,9 +151,9 @@ commit: `96dc06278ce32a0e9d957d590bb987c81ee66407`
 * `default-mask:"-"` behavior.
 * Several completion and parsing edge cases.
 
-[v1.3.0]: https://github.com/jessevdk/go-flags/releases/tag/v1.3.0
+[legacy/v1.3.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.2.0...legacy%2Fv1.3.0
 
-## [v1.2.0][] - 2017-02-12
+## [legacy/v1.2.0][] - 2017-02-12
 
 commit: `48cf8722c3375517aba351d1f7577c40663a4407`
 
@@ -158,9 +166,9 @@ commit: `48cf8722c3375517aba351d1f7577c40663a4407`
 * Pointer initialization for custom marshalers.
 * Non-tagged struct fields are no longer modified during parsing.
 
-[v1.2.0]: https://github.com/jessevdk/go-flags/releases/tag/v1.2.0
+[legacy/v1.2.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.1.0...legacy%2Fv1.2.0
 
-## [v1.1.0][] - 2017-02-12
+## [legacy/v1.1.0][] - 2017-02-12
 
 commit: `8bc97d602c3bfeb5fc6fc9b5a9c898f245495637`
 
@@ -168,9 +176,9 @@ commit: `8bc97d602c3bfeb5fc6fc9b5a9c898f245495637`
 
 * Historical release marker retained for compatibility.
 
-[v1.1.0]: https://github.com/jessevdk/go-flags/releases/tag/v1.1.0
+[legacy/v1.1.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.1...legacy%2Fv1.1.0
 
-## [v1.1][] - 2016-11-04
+## [legacy/v1.1][] - 2016-11-04
 
 commit: `8bc97d602c3bfeb5fc6fc9b5a9c898f245495637`
 
@@ -185,9 +193,9 @@ commit: `8bc97d602c3bfeb5fc6fc9b5a9c898f245495637`
 * Help output stream behavior (`--help` to stdout).
 * Windows-related test/doc issues.
 
-[v1.1]: https://github.com/jessevdk/go-flags/releases/tag/v1.1
+[legacy/v1.1]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1...legacy%2Fv1.1
 
-## [v1][] - 2013-11-22
+## [legacy/v1][] - 2013-11-22
 
 commit: `37c8226983775d404b6edfebd44be1078bd0fe95`
 
@@ -198,9 +206,9 @@ commit: `37c8226983775d404b6edfebd44be1078bd0fe95`
 * `default-mask` support.
 * `Usage` interface.
 
-[v1]: https://github.com/jessevdk/go-flags/releases/tag/v1
+[legacy/v1]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv0.1...legacy%2Fv1
 
-## [v0.1][] - 2013-08-26
+## [legacy/v0.1][] - 2013-08-26
 
 commit: `1c98f1f5b27ef97fb039f258dce6aa14bd80ce41`
 
@@ -208,7 +216,7 @@ commit: `1c98f1f5b27ef97fb039f258dce6aa14bd80ce41`
 
 * First tagged release.
 
-[v0.1]: https://github.com/jessevdk/go-flags/releases/tag/v0.1
+[legacy/v0.1]: https://github.com/WoozyMasta/flags/tree/legacy/v0.1
 
 <!--links-->
 [Keep a Changelog]: https://keepachangelog.com/en/1.1.0/
