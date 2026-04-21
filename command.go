@@ -17,6 +17,7 @@ import (
 // is specified on the command line. The Command type embeds a Group and
 // therefore also carries a set of command specific options.
 type Command struct {
+	lookupCache lookup
 	// Embedded, see Group for more information
 	*Group
 
@@ -35,6 +36,8 @@ type Command struct {
 	// Positional arguments declared for this command.
 	args []*Arg
 
+	lookupCacheGeneration uint64
+
 	// Whether subcommands are optional
 	SubcommandsOptional bool
 
@@ -49,6 +52,8 @@ type Command struct {
 
 	// Whether the built-in help group has already been attached.
 	hasBuiltinHelpGroup bool
+
+	lookupCacheValid bool
 }
 
 // Commander is an interface which can be implemented by any command added in
@@ -91,6 +96,11 @@ func (c *Command) AddCommand(command string, shortDescription string, longDescri
 	}
 
 	c.commands = append(c.commands, cmd)
+
+	if p := c.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+
 	return cmd, nil
 }
 
@@ -107,6 +117,11 @@ func (c *Command) AddGroup(shortDescription string, longDescription string, data
 	}
 
 	c.groups = append(c.groups, group)
+
+	if p := c.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+
 	return group, nil
 }
 
@@ -282,6 +297,10 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				subc.PassAfterNonOption = true
 			}
 
+			if p := c.parser(); p != nil {
+				p.invalidateLookupCache()
+			}
+
 			return true, nil
 		}
 
@@ -339,6 +358,10 @@ func (c *Command) addHelpGroups(showHelp func() error) {
 }
 
 func (c *Command) makeLookup() lookup {
+	if p := c.parser(); p != nil && c.lookupCacheValid && c.lookupCacheGeneration == p.lookupGeneration {
+		return c.lookupCache
+	}
+
 	ret := lookup{
 		shortNames: make(map[string]*Option),
 		longNames:  make(map[string]*Option),
@@ -363,7 +386,33 @@ func (c *Command) makeLookup() lookup {
 	}
 
 	c.fillLookup(&ret, false)
+
+	if p := c.parser(); p != nil {
+		c.lookupCache = ret
+		c.lookupCacheGeneration = p.lookupGeneration
+		c.lookupCacheValid = true
+	}
+
 	return ret
+}
+
+func (c *Command) parser() *Parser {
+	var parent = c.parent
+
+	for parent != nil {
+		switch v := parent.(type) {
+		case *Parser:
+			return v
+		case *Command:
+			parent = v.parent
+		case *Group:
+			parent = v.parent
+		default:
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {

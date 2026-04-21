@@ -71,6 +71,11 @@ func (g *Group) AddGroup(shortDescription string, longDescription string, data a
 	}
 
 	g.groups = append(g.groups, group)
+
+	if p := g.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+
 	return group, nil
 }
 
@@ -79,6 +84,10 @@ func (g *Group) AddOption(option *Option, data any) {
 	option.value = reflect.ValueOf(data)
 	option.group = g
 	g.options = append(g.options, option)
+
+	if p := g.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
 }
 
 // Groups returns the list of groups embedded in this group.
@@ -143,6 +152,25 @@ func newGroup(shortDescription string, longDescription string, data any) *Group 
 
 		data: data,
 	}
+}
+
+func (g *Group) parser() *Parser {
+	var parent = g.parent
+
+	for parent != nil {
+		switch v := parent.(type) {
+		case *Parser:
+			return v
+		case *Command:
+			parent = v.parent
+		case *Group:
+			parent = v.parent
+		default:
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (g *Group) optionByName(name string, namematch func(*Option, string) bool) *Option {

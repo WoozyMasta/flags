@@ -14,15 +14,22 @@ import (
 	"unicode/utf8"
 )
 
+const (
+	optionInterfaceUnknown int8 = iota
+	optionInterfaceAbsent
+	optionInterfacePresent
+)
+
 // Option flag information. Contains a description of the option, short and
 // long name as well as a default value and whether an argument for this
 // flag is optional.
 type Option struct {
-	// Parsed struct tags associated with this option.
-	tag multiTag
 
 	// The group which the option belongs to
 	group *Group
+
+	// Parsed struct tags associated with this option.
+	tag multiTag
 
 	// The struct field value which the option represents.
 	value reflect.Value
@@ -74,6 +81,8 @@ type Option struct {
 	// or LongName needs to be non-empty.
 	ShortName rune
 
+	defaultLiteralInitialized bool
+
 	// If true, specifies that the argument to an option flag is optional.
 	// When no argument to the flag is specified on the command line, the
 	// value of OptionalValue will be set in the field this option represents.
@@ -102,6 +111,9 @@ type Option struct {
 
 	// Whether map/slice values should be cleared before the next set.
 	clearReferenceBeforeSet bool
+
+	unmarshalerState    int8
+	valueValidatorState int8
 }
 
 // LongNameWithNamespace returns the option's long name with the group namespaces
@@ -400,12 +412,17 @@ func (option *Option) valueIsDefault() bool {
 }
 
 func (option *Option) isUnmarshaler() Unmarshaler {
+	if option.unmarshalerState == optionInterfaceAbsent {
+		return nil
+	}
+
 	v := option.value
 
 	for v.CanInterface() {
 		i := v.Interface()
 
 		if u, ok := i.(Unmarshaler); ok {
+			option.unmarshalerState = optionInterfacePresent
 			return u
 		}
 
@@ -416,16 +433,22 @@ func (option *Option) isUnmarshaler() Unmarshaler {
 		v = v.Addr()
 	}
 
+	option.unmarshalerState = optionInterfaceAbsent
 	return nil
 }
 
 func (option *Option) isValueValidator() ValueValidator {
+	if option.valueValidatorState == optionInterfaceAbsent {
+		return nil
+	}
+
 	v := option.value
 
 	for v.CanInterface() {
 		i := v.Interface()
 
 		if u, ok := i.(ValueValidator); ok {
+			option.valueValidatorState = optionInterfacePresent
 			return u
 		}
 
@@ -436,6 +459,7 @@ func (option *Option) isValueValidator() ValueValidator {
 		v = v.Addr()
 	}
 
+	option.valueValidatorState = optionInterfaceAbsent
 	return nil
 }
 

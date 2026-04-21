@@ -42,16 +42,15 @@ func stripOptionPrefix(optname string) (prefix string, name string, islong bool)
 }
 
 // splitOption attempts to split the passed option into a name and an argument.
-// When there is no argument specified, nil will be returned for it.
-func splitOption(prefix string, option string, islong bool) (string, string, *string) {
+// When there is no argument specified, hasArgument will be false.
+func splitOption(prefix string, option string, islong bool) (name string, split string, argument string, hasArgument bool) {
 	pos := strings.Index(option, "=")
 
 	if (islong && pos >= 0) || (!islong && pos == 1) {
-		rest := option[pos+1:]
-		return option[:pos], "=", &rest
+		return option[:pos], "=", option[pos+1:], true
 	}
 
-	return option, "", nil
+	return option, "", "", false
 }
 
 // addHelpGroup adds a new group that contains default help parameters.

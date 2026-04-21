@@ -63,10 +63,10 @@ func stripOptionPrefix(optname string) (prefix string, name string, islong bool)
 }
 
 // splitOption attempts to split the passed option into a name and an argument.
-// When there is no argument specified, nil will be returned for it.
-func splitOption(prefix string, option string, islong bool) (string, string, *string) {
+// When there is no argument specified, hasArgument will be false.
+func splitOption(prefix string, option string, islong bool) (name string, split string, argument string, hasArgument bool) {
 	if len(option) == 0 {
-		return option, "", nil
+		return option, "", "", false
 	}
 
 	// Windows typically uses a colon for the option name and argument
@@ -85,11 +85,10 @@ func splitOption(prefix string, option string, islong bool) (string, string, *st
 	}
 
 	if (islong && pos >= 0) || (!islong && pos == 1) {
-		rest := option[pos+1:]
-		return option[:pos], sp, &rest
+		return option[:pos], sp, option[pos+1:], true
 	}
 
-	return option, "", nil
+	return option, "", "", false
 }
 
 // addHelpGroup adds a new group that contains default help parameters.

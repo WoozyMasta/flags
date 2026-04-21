@@ -20,6 +20,7 @@ import (
 // option groups each with their own set of options.
 type Parser struct {
 	internalError error
+
 	// Embedded, see Command for more information
 	*Command
 
@@ -55,6 +56,8 @@ type Parser struct {
 	// EnvNamespaceDelimiter separates group env namespaces and env keys
 	EnvNamespaceDelimiter string
 
+	lookupGeneration uint64
+
 	// Option flags changing the behavior of the parser.
 	Options Options
 }
@@ -68,15 +71,16 @@ type SplitArgument interface {
 }
 
 type strArgument struct {
-	value *string
+	value   string
+	present bool
 }
 
 func (s strArgument) Value() (string, bool) {
-	if s.value == nil {
+	if !s.present {
 		return "", false
 	}
 
-	return *s.value, true
+	return s.value, true
 }
 
 // Options provides parser options that change the behavior of the option
@@ -182,11 +186,16 @@ func NewNamedParser(appname string, options Options) *Parser {
 		Options:               options,
 		NamespaceDelimiter:    ".",
 		EnvNamespaceDelimiter: "_",
+		lookupGeneration:      1,
 	}
 
 	p.parent = p
 
 	return p
+}
+
+func (p *Parser) invalidateLookupCache() {
+	p.lookupGeneration++
 }
 
 // Parse parses the command line arguments from os.Args using Parser.ParseArgs.
@@ -213,7 +222,10 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 	p.eachOption(func(_ *Command, _ *Group, option *Option) {
 		option.clearReferenceBeforeSet = true
-		option.updateDefaultLiteral()
+		if !option.defaultLiteralInitialized {
+			option.updateDefaultLiteral()
+			option.defaultLiteralInitialized = true
+		}
 	})
 
 	// Add built-in help group to all commands if necessary
@@ -282,12 +294,12 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		}
 
 		prefix, optname, islong := stripOptionPrefix(arg)
-		optname, _, argument := splitOption(prefix, optname, islong)
+		optname, _, argument, hasArgument := splitOption(prefix, optname, islong)
 
 		if islong {
-			err = p.parseLong(s, optname, argument)
+			err = p.parseLong(s, optname, argument, hasArgument)
 		} else {
-			err = p.parseShort(s, optname, argument)
+			err = p.parseShort(s, optname, argument, hasArgument)
 		}
 
 		if err != nil {
@@ -305,7 +317,10 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 					break
 				}
 			} else if p.UnknownOptionHandler != nil {
-				modifiedArgs, err := p.UnknownOptionHandler(optname, strArgument{argument}, s.args)
+				modifiedArgs, err := p.UnknownOptionHandler(optname, strArgument{
+					value:   argument,
+					present: hasArgument,
+				}, s.args)
 
 				if err != nil {
 					s.err = err
@@ -524,18 +539,22 @@ func (p *parseState) estimateCommand() error {
 	return newError(errtype, msg)
 }
 
-func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg bool, argument *string) (err error) {
+func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg bool, argument string, hasArgument bool) (err error) {
 	switch {
 	case !option.canArgument():
-		if argument != nil && (p.Options&AllowBoolValues) == None {
+		if hasArgument && (p.Options&AllowBoolValues) == None {
 			return newErrorf(ErrNoArgumentForBool, "bool flag `%s' cannot have an argument", option)
 		}
-		err = option.Set(argument)
-	case argument != nil || (canarg && !s.eof()):
+		var value *string
+		if hasArgument {
+			value = &argument
+		}
+		err = option.Set(value)
+	case hasArgument || (canarg && !s.eof()):
 		var arg string
 
-		if argument != nil {
-			arg = *argument
+		if hasArgument {
+			arg = argument
 		} else {
 			arg = s.pop()
 
@@ -600,13 +619,13 @@ func (p *Parser) expectedType(option *Option) string {
 	return valueType.String()
 }
 
-func (p *Parser) parseLong(s *parseState, name string, argument *string) error {
+func (p *Parser) parseLong(s *parseState, name string, argument string, hasArgument bool) error {
 	if option := s.lookup.longNames[name]; option != nil {
 		// Only long options that are required can consume an argument
 		// from the argument list
 		canarg := !option.OptionalArgument
 
-		return p.parseOption(s, name, option, canarg, argument)
+		return p.parseOption(s, name, option, canarg, argument, hasArgument)
 	}
 
 	return newErrorf(ErrUnknownFlag, "unknown flag `%s'", name)
@@ -629,9 +648,14 @@ func (p *Parser) splitShortConcatArg(s *parseState, optname string) (string, *st
 	return optname, nil
 }
 
-func (p *Parser) parseShort(s *parseState, optname string, argument *string) error {
-	if argument == nil {
-		optname, argument = p.splitShortConcatArg(s, optname)
+func (p *Parser) parseShort(s *parseState, optname string, argument string, hasArgument bool) error {
+	if !hasArgument {
+		var ptr *string
+		optname, ptr = p.splitShortConcatArg(s, optname)
+		if ptr != nil {
+			argument = *ptr
+			hasArgument = true
+		}
 	}
 
 	for i, c := range optname {
@@ -642,7 +666,7 @@ func (p *Parser) parseShort(s *parseState, optname string, argument *string) err
 			// the arguments list, and only if it's non optional
 			canarg := (i+utf8.RuneLen(c) == len(optname)) && !option.OptionalArgument
 
-			if err := p.parseOption(s, shortname, option, canarg, argument); err != nil {
+			if err := p.parseOption(s, shortname, option, canarg, argument, hasArgument); err != nil {
 				return err
 			}
 		} else {
@@ -651,7 +675,8 @@ func (p *Parser) parseShort(s *parseState, optname string, argument *string) err
 
 		// Only the first option can have a concatted argument, so just
 		// clear argument here
-		argument = nil
+		argument = ""
+		hasArgument = false
 	}
 
 	return nil

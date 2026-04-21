@@ -224,6 +224,10 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 				def = option.DefaultMask
 			}
 		} else {
+			if !option.defaultLiteralInitialized {
+				option.updateDefaultLiteral()
+				option.defaultLiteralInitialized = true
+			}
 			def = option.defaultLiteral
 		}
 

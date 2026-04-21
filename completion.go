@@ -204,9 +204,9 @@ func (c *completion) complete(args []string) []Completion {
 
 		if argumentIsOption(arg) {
 			prefix, optname, islong := stripOptionPrefix(arg)
-			optname, _, argument := splitOption(prefix, optname, islong)
+			optname, _, _, hasArgument := splitOption(prefix, optname, islong)
 
-			if argument == nil {
+			if !hasArgument {
 				var o *Option
 				canarg := true
 
@@ -266,10 +266,10 @@ func (c *completion) complete(args []string) []Completion {
 	case argumentStartsOption(lastarg):
 		// Complete the option
 		prefix, optname, islong := stripOptionPrefix(lastarg)
-		optname, split, argument := splitOption(prefix, optname, islong)
+		optname, split, argument, hasArgument := splitOption(prefix, optname, islong)
 
 		switch {
-		case argument == nil && !islong:
+		case !hasArgument && !islong:
 			rname, n := utf8.DecodeRuneInString(optname)
 			sname := string(rname)
 
@@ -278,7 +278,7 @@ func (c *completion) complete(args []string) []Completion {
 			} else {
 				ret = c.completeNamesForShortPrefix(s, prefix, optname)
 			}
-		case argument != nil:
+		case hasArgument:
 			if islong {
 				opt = s.lookup.longNames[optname]
 			} else {
@@ -286,7 +286,7 @@ func (c *completion) complete(args []string) []Completion {
 			}
 
 			if opt != nil {
-				ret = c.completeValue(opt.value, prefix+optname+split, *argument)
+				ret = c.completeValue(opt.value, prefix+optname+split, argument)
 			}
 		case islong:
 			ret = c.completeNamesForLongPrefix(s, prefix, optname)
