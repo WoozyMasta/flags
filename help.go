@@ -108,7 +108,7 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 	return ret
 }
 
-func wrapText(s string, l int, prefix string) string {
+func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
 	var ret string
 
 	if l < 10 {
@@ -121,7 +121,9 @@ func wrapText(s string, l int, prefix string) string {
 	for line := range lines {
 		var retline string
 
-		line = strings.TrimSpace(line)
+		if trimWhitespace {
+			line = strings.TrimSpace(line)
+		}
 
 		for len(line) > l {
 			// Try to split on space
@@ -129,7 +131,9 @@ func wrapText(s string, l int, prefix string) string {
 
 			pos := strings.LastIndex(line[:l], " ")
 
-			if pos < 0 {
+			splitOnSpace := pos >= 0
+
+			if !splitOnSpace {
 				pos = l - 1
 				suffix = "-\n"
 			}
@@ -138,8 +142,19 @@ func wrapText(s string, l int, prefix string) string {
 				retline += "\n" + prefix
 			}
 
-			retline += strings.TrimSpace(line[:pos]) + suffix
-			line = strings.TrimSpace(line[pos:])
+			part := line[:pos]
+			switch {
+			case trimWhitespace:
+				part = strings.TrimSpace(part)
+				line = strings.TrimSpace(line[pos:])
+			case splitOnSpace:
+				// Consume the separator so it is not processed repeatedly.
+				line = line[pos+1:]
+			default:
+				line = line[pos:]
+			}
+
+			retline += part + suffix
 		}
 
 		if len(line) > 0 {
@@ -164,7 +179,7 @@ func wrapText(s string, l int, prefix string) string {
 	return ret
 }
 
-func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alignmentInfo) {
+func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alignmentInfo, trimDescriptions bool) {
 	line := &bytes.Buffer{}
 
 	prefix := paddingBeforeOption
@@ -253,7 +268,8 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 
 		_, _ = writer.WriteString(wrapText(desc,
 			info.terminalColumns-descstart,
-			strings.Repeat(" ", descstart)))
+			strings.Repeat(" ", descstart),
+			trimDescriptions))
 	}
 
 	_, _ = writer.WriteString("\n")
@@ -289,6 +305,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 	wr := bufio.NewWriter(writer)
 	aligninfo := p.getAlignmentInfo()
+	trimDescriptions := (p.Options & KeepDescriptionWhitespace) == None
 
 	cmd := p.Command
 
@@ -384,7 +401,8 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 			t := wrapText(cmd.LongDescription,
 				aligninfo.terminalColumns,
-				"")
+				"",
+				trimDescriptions)
 
 			_, _ = fmt.Fprintln(wr, t)
 		}
@@ -426,7 +444,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					first = false
 				}
 
-				p.writeHelpOption(wr, info, aligninfo)
+				p.writeHelpOption(wr, info, aligninfo, trimDescriptions)
 			}
 		})
 
@@ -462,7 +480,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					descPrefix := strings.Repeat(" ", descStart)
 
 					_, _ = wr.WriteString(descPadding)
-					_, _ = wr.WriteString(wrapText(arg.Description, descWidth, descPrefix))
+					_, _ = wr.WriteString(wrapText(arg.Description, descWidth, descPrefix, trimDescriptions))
 				} else {
 					_, _ = wr.WriteString(argPrefix)
 				}

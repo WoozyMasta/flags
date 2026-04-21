@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning][].
 * Benchmarks for core parsing/help/INI flows.
 * `terminator` option tag for find-style terminated argument lists
   (supports both `[]T` and `[][]T` option targets).
+* Parser option `KeepDescriptionWhitespace` to keep leading indentation in
+  multi-line help descriptions.
 
 ### Changed
 

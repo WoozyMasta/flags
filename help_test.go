@@ -580,7 +580,7 @@ func TestHelpRestArgs(t *testing.T) {
 func TestWrapText(t *testing.T) {
 	s := "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
-	got := wrapText(s, 60, "      ")
+	got := wrapText(s, 60, "      ", true)
 	expected := `Lorem ipsum dolor sit amet, consectetur adipisicing elit,
       sed do eiusmod tempor incididunt ut labore et dolore magna
       aliqua. Ut enim ad minim veniam, quis nostrud exercitation
@@ -599,7 +599,7 @@ func TestWrapParagraph(t *testing.T) {
 	s += "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\n\n"
 	s += "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n"
 
-	got := wrapText(s, 60, "      ")
+	got := wrapText(s, 60, "      ", true)
 	expected := `Lorem ipsum dolor sit amet, consectetur adipisicing elit,
       sed do eiusmod tempor incididunt ut labore et dolore magna
       aliqua.
@@ -615,6 +615,64 @@ func TestWrapParagraph(t *testing.T) {
 `
 
 	assertDiff(t, got, expected, "wrapped paragraph")
+}
+
+func TestWrapTextKeepWhitespace(t *testing.T) {
+	s := "List:\n  - alpha\n  - beta"
+
+	gotTrimmed := wrapText(s, 80, "", true)
+	if strings.Contains(gotTrimmed, "\n  - alpha") {
+		t.Fatalf("expected trimmed output to remove leading spaces, got %q", gotTrimmed)
+	}
+
+	gotPreserved := wrapText(s, 80, "", false)
+	if !strings.Contains(gotPreserved, "\n  - alpha") {
+		t.Fatalf("expected preserved output to keep leading spaces, got %q", gotPreserved)
+	}
+}
+
+func TestHelpKeepDescriptionWhitespace(t *testing.T) {
+	var opts struct {
+		Cmd struct{} `command:"cmd" description:"Run command" long-description:"Usage:\n  cmd --flag value\n\n  - item 1\n  - item 2"`
+	}
+
+	trimmed := NewNamedParser("TrimDesc", HelpFlag)
+	if _, err := trimmed.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err := trimmed.ParseArgs([]string{"cmd", "--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	e, ok := err.(*Error)
+	if !ok || e.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	if strings.Contains(e.Message, "\n  cmd --flag value") {
+		t.Fatalf("expected default help to trim leading spaces, got:\n%s", e.Message)
+	}
+
+	preserved := NewNamedParser("KeepDesc", HelpFlag|KeepDescriptionWhitespace)
+	if _, err := preserved.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err = preserved.ParseArgs([]string{"cmd", "--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	e, ok = err.(*Error)
+	if !ok || e.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	if !strings.Contains(e.Message, "\n  cmd --flag value") || !strings.Contains(e.Message, "\n  - item 1") {
+		t.Fatalf("expected help to keep leading spaces, got:\n%s", e.Message)
+	}
 }
 
 func TestHelpDefaultMask(t *testing.T) {
@@ -671,7 +729,7 @@ func TestHelpDefaultMask(t *testing.T) {
 		}
 		h := &bytes.Buffer{}
 		w := bufio.NewWriter(h)
-		p.writeHelpOption(w, p.FindOptionByShortName('v'), p.getAlignmentInfo())
+		p.writeHelpOption(w, p.FindOptionByShortName('v'), p.getAlignmentInfo(), true)
 		w.Flush()
 		if strings.Index(h.String(), test.present) < 0 {
 			t.Errorf("Not present %q\n%s", test.present, h.String())

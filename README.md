@@ -246,6 +246,13 @@ parser := flags.NewParser(&opts, flags.Default)
 parser.WriteHelp(os.Stdout)
 ```
 
+If you need to preserve leading whitespace in multi-line descriptions
+(for lists or code snippets), enable:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.KeepDescriptionWhitespace)
+```
+
 ## Man Pages
 
 Generate a man page:

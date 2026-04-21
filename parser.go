@@ -135,6 +135,11 @@ const (
 	// they were explicitly set on the command line.
 	DefaultsIfEmpty
 
+	// KeepDescriptionWhitespace keeps leading/trailing whitespace in
+	// help-rendered descriptions instead of trimming each line before wrapping.
+	// This is useful for preserving indentation in lists and code examples.
+	KeepDescriptionWhitespace
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
