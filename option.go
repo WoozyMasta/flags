@@ -180,11 +180,13 @@ func (option *Option) EnvKeyWithNamespace() string {
 	// fetch the namespace delimiter from the parser which is always at the
 	// end of the group hierarchy
 	namespaceDelimiter := ""
+	envPrefix := ""
 	g := option.group
 
 	for {
 		if p, ok := g.parent.(*Parser); ok {
 			namespaceDelimiter = p.EnvNamespaceDelimiter
+			envPrefix = p.EnvPrefix
 
 			break
 		}
@@ -214,6 +216,10 @@ func (option *Option) EnvKeyWithNamespace() string {
 		case *Parser:
 			g = nil
 		}
+	}
+
+	if envPrefix != "" {
+		key = envPrefix + namespaceDelimiter + key
 	}
 
 	return key

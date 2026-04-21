@@ -61,6 +61,9 @@ type Parser struct {
 	// EnvNamespaceDelimiter separates group env namespaces and env keys
 	EnvNamespaceDelimiter string
 
+	// EnvPrefix prepends all resolved environment variable keys.
+	EnvPrefix string
+
 	// Monotonic generation used to invalidate cached lookup maps.
 	lookupGeneration uint64
 
@@ -221,6 +224,13 @@ func (p *Parser) SetTagPrefix(prefix string) error {
 func (p *Parser) SetFlagTags(tags FlagTags) error {
 	p.flagTags = tags.withDefaults()
 	return p.rebuildTree()
+}
+
+// SetEnvPrefix configures a global prefix for all environment variable keys.
+// For example, with prefix "MY_APP" and delimiter "_", env key "PORT" becomes
+// "MY_APP_PORT", and grouped keys become "MY_APP_<GROUP>_<KEY>".
+func (p *Parser) SetEnvPrefix(prefix string) {
+	p.EnvPrefix = prefix
 }
 
 func (p *Parser) normalizeStructTag(mtag *multiTag) {

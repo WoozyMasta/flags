@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning][].
   with `bash` and `zsh` support.
 * Parser tag customization API:
   `Parser.SetTagPrefix(...)` and `Parser.SetFlagTags(...)`.
+* Global environment variable prefix support via `Parser.SetEnvPrefix(...)`.
 * Dynamic defaults via `DefaultProvider`.
 * Parser option `DefaultsIfEmpty` to apply defaults only to empty values.
 * `Group.Data()` accessor.

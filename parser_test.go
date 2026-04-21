@@ -406,6 +406,37 @@ func TestEnvDefaults(t *testing.T) {
 	}
 }
 
+func TestEnvPrefix(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		Port int `long:"port" env:"PORT"`
+		DB   struct {
+			Host string `long:"host" env:"HOST"`
+		} `group:"db" env-namespace:"DB"`
+	}
+
+	_ = os.Setenv("MY_APP_PORT", "8081")
+	_ = os.Setenv("MY_APP_DB_HOST", "db.local")
+
+	p := NewParser(&opts, None)
+	p.SetEnvPrefix("MY_APP")
+
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Port != 8081 {
+		t.Fatalf("expected port 8081, got %d", opts.Port)
+	}
+
+	if opts.DB.Host != "db.local" {
+		t.Fatalf("expected db host db.local, got %q", opts.DB.Host)
+	}
+}
+
 func TestDefaultsIfEmptyPrefilledAndCLI(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()
