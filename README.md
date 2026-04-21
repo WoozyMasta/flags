@@ -1,4 +1,4 @@
-# go-flags
+# flags
 
 This library provides similar functionality to the builtin flag library of go,
 but provides much more functionality and nicer formatting.
