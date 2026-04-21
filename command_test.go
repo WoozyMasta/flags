@@ -424,7 +424,17 @@ func TestRequiredAllOnCommand(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseFail(t, ErrRequired, fmt.Sprintf("the required flags `%smissing' and `%cv' were not specified", defaultLongOptDelimiter, defaultShortOptDelimiter), &opts, "cmd")
+	assertParseFail(
+		t,
+		ErrRequired,
+		fmt.Sprintf(
+			"the required flags `%smissing' and `%cv' were not specified",
+			defaultLongOptDelimiter,
+			defaultShortOptDelimiter,
+		),
+		&opts,
+		"cmd",
+	)
 }
 
 func TestDefaultOnCommand(t *testing.T) {

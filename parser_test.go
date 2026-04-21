@@ -75,8 +75,12 @@ func TestDefaults(t *testing.T) {
 			},
 		},
 		{
-			msg:  "non-zero value arguments, expecting overwritten arguments",
-			args: []string{"--i=3", "--id=3", "--idu=3_3", "--f=-2.71", "--fd=2.71", "--fdu=2_2.71", "-3", "--str=def", "--strd=def", "--t=3ms", "--td=3ms", "--m=c:3", "--md=c:3", "--s=3", "--sd=3"},
+			msg: "non-zero value arguments, expecting overwritten arguments",
+			args: []string{
+				"--i=3", "--id=3", "--idu=3_3", "--f=-2.71", "--fd=2.71",
+				"--fdu=2_2.71", "-3", "--str=def", "--strd=def", "--t=3ms",
+				"--td=3ms", "--m=c:3", "--md=c:3", "--s=3", "--sd=3",
+			},
 			expected: defaultOptions{
 				Int:           3,
 				IntDefault:    3,
@@ -107,8 +111,12 @@ func TestDefaults(t *testing.T) {
 			expectedErr: "bool flag `" + makeShortName("3") + "' cannot have an argument",
 		},
 		{
-			msg:  "zero value arguments, expecting overwritten arguments",
-			args: []string{"--i=0", "--id=0", "--idu=0", "--f=0", "--fd=0", "--fdu=0", "--str", "", "--strd=\"\"", "--t=0ms", "--td=0s", "--m=:0", "--md=:0", "--s=0", "--sd=0"},
+			msg: "zero value arguments, expecting overwritten arguments",
+			args: []string{
+				"--i=0", "--id=0", "--idu=0", "--f=0", "--fd=0", "--fdu=0",
+				"--str", "", "--strd=\"\"", "--t=0ms", "--td=0s", "--m=:0",
+				"--md=:0", "--s=0", "--sd=0",
+			},
 			expected: defaultOptions{
 				Int:           0,
 				IntDefault:    0,
@@ -165,9 +173,21 @@ func TestNoDefaultsForBools(t *testing.T) {
 	}
 
 	if runtime.GOOS == "windows" {
-		assertParseFail(t, ErrInvalidTag, "boolean flag `/d' may not have default values, they always default to `false' and can only be turned on", &opts)
+		assertParseFail(
+			t,
+			ErrInvalidTag,
+			"boolean flag `/d' may not have default values, they always default "+
+				"to `false' and can only be turned on",
+			&opts,
+		)
 	} else {
-		assertParseFail(t, ErrInvalidTag, "boolean flag `-d' may not have default values, they always default to `false' and can only be turned on", &opts)
+		assertParseFail(
+			t,
+			ErrInvalidTag,
+			"boolean flag `-d' may not have default values, they always default "+
+				"to `false' and can only be turned on",
+			&opts,
+		)
 	}
 }
 
@@ -279,7 +299,7 @@ type envDefaultOptions struct {
 	Int    int              `long:"i" default:"1" env:"TEST_I"`
 	Time   time.Duration    `long:"t" default:"1m" env:"TEST_T"`
 	Map    map[string]int   `long:"m" default:"a:1" env:"TEST_M" env-delim:";"`
-	Slice  []int            `long:"s" default:"1" default:"2" env:"TEST_S"  env-delim:","`
+	Slice  []int            `long:"s" default:"1" default:"2" env:"TEST_S" env-delim:","`
 	Nested envNestedOptions `group:"nested" namespace:"nested" env-namespace:"NESTED"`
 }
 
@@ -1107,7 +1127,15 @@ func TestChoices(t *testing.T) {
 		Choice string `long:"choose" choice:"v1" choice:"v2"`
 	}
 
-	assertParseFail(t, ErrInvalidChoice, "Invalid value `invalid' for option `"+defaultLongOptDelimiter+"choose'. Allowed values are: v1 or v2", &opts, "--choose", "invalid")
+	assertParseFail(
+		t,
+		ErrInvalidChoice,
+		"Invalid value `invalid' for option `"+
+			defaultLongOptDelimiter+"choose'. Allowed values are: v1 or v2",
+		&opts,
+		"--choose",
+		"invalid",
+	)
 	assertParseSuccess(t, &opts, "--choose", "v2")
 	assertString(t, opts.Choice, "v2")
 }

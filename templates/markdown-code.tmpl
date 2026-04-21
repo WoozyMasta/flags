@@ -1,0 +1,92 @@
+# {{ .Doc.Name }}
+
+## NAME
+
+**{{ .Doc.Name }}** - {{ .Doc.ShortDescription }}
+
+## SYNOPSIS
+
+{{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
+
+## DESCRIPTION
+
+{{ .Doc.LongDescription }}
+
+## OPTIONS
+
+{{ range .Doc.Groups }}
+{{ if .ShortDescription }}
+### {{ .ShortDescription }}
+{{ end }}
+
+{{ codeFenceOpen }}
+{{ range .Options }}
+{{ join (optionForms .) ", " }}{{ if .Default }} [def: {{ .Default }}]{{ end }}{{ if .Env }} [env: {{ .Env }}{{ if .EnvDelim }}; delim={{ .EnvDelim }}{{ end }}]{{ end }}{{ if .Choices }} [choices: {{ join .Choices ", " }}]{{ end }}{{ if .Optional }} [optional: {{ .OptionalVal }}]{{ end }}{{ if .Terminator }} [term: {{ .Terminator }}]{{ end }}{{ if .Required }} [req]{{ end }}{{ if hiddenMark .Hidden }} [hidden]{{ end }}{{ if .IniName }} [ini: {{ .IniName }}]{{ end }}{{ if .KeyValueDelim }} [kv: {{ .KeyValueDelim }}]{{ end }}{{ if .Base }} [base: {{ .Base }}]{{ end }}{{ if .DefaultMask }} [mask: {{ .DefaultMask }}]{{ end }}{{ if .UnquoteTag }} [unquote: {{ .UnquoteTag }}]{{ end }}{{ if ne .Order 0 }} [order: {{ .Order }}]{{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ end }}
+{{ codeFenceClose }}
+
+{{ end }}
+
+{{ if .Doc.Commands }}
+## COMMANDS
+
+{{ range .Doc.Commands }}
+{{ template "command" . }}
+{{ end }}
+{{ end }}
+
+{{ if .Doc.Args }}
+## ARGUMENTS
+
+{{ codeFenceOpen }}
+{{ range .Doc.Args }}
+{{ .Name }}{{ if .Required }} (required){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ end }}
+{{ codeFenceClose }}
+{{ end }}
+
+{{ define "command" }}
+### {{ .Name }}
+
+{{ .ShortDescription }}
+
+{{ if .LongDescription }}
+{{ .LongDescription }}
+
+{{ end }}
+{{ if .UsageLine }}
+**Usage:** {{ code .UsageLine }}
+
+{{ end }}
+{{ if .Aliases }}
+**Aliases:** {{ join .Aliases ", " }}
+
+{{ end }}
+{{ range .Groups }}
+{{ if .ShortDescription }}
+#### {{ .ShortDescription }}
+
+{{ end }}
+
+{{ codeFenceOpen }}
+{{ range .Options }}
+{{ join (optionForms .) ", " }}{{ if .Default }} [def: {{ .Default }}]{{ end }}{{ if .Env }} [env: {{ .Env }}{{ if .EnvDelim }}; delim={{ .EnvDelim }}{{ end }}]{{ end }}{{ if .Choices }} [choices: {{ join .Choices ", " }}]{{ end }}{{ if .Optional }} [optional: {{ .OptionalVal }}]{{ end }}{{ if .Terminator }} [term: {{ .Terminator }}]{{ end }}{{ if .Required }} [req]{{ end }}{{ if hiddenMark .Hidden }} [hidden]{{ end }}{{ if .IniName }} [ini: {{ .IniName }}]{{ end }}{{ if .KeyValueDelim }} [kv: {{ .KeyValueDelim }}]{{ end }}{{ if .Base }} [base: {{ .Base }}]{{ end }}{{ if .DefaultMask }} [mask: {{ .DefaultMask }}]{{ end }}{{ if .UnquoteTag }} [unquote: {{ .UnquoteTag }}]{{ end }}{{ if ne .Order 0 }} [order: {{ .Order }}]{{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ end }}
+{{ codeFenceClose }}
+
+{{ end }}
+{{ if .Args }}
+#### Arguments
+
+{{ codeFenceOpen }}
+{{ range .Args }}
+{{ .Name }}{{ if .Required }} (required){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ end }}
+{{ codeFenceClose }}
+
+{{ end }}
+{{ range .Commands }}
+{{ template "command" . }}
+{{ end }}
+{{ end }}
+

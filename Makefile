@@ -1,10 +1,13 @@
-GO          ?= go
-LINTER      ?= golangci-lint
-ALIGNER     ?= betteralign
-VULNCHECK   ?= govulncheck
-BENCHSTAT   ?= benchstat
-BENCH_COUNT ?= 6
-BENCH_REF   ?= bench_baseline.txt
+GO           ?= go
+LINTER       ?= golangci-lint
+ALIGNER      ?= betteralign
+VULNCHECK    ?= govulncheck
+MARKDOWNLINT ?= markdownlint-cli2
+BENCHSTAT    ?= benchstat
+BENCH_COUNT  ?= 6
+BENCH_REF    ?= bench_baseline.txt
+
+DOC_SOURCE_DATE_EPOCH ?= 1700000000
 
 TARGETS ?= \
 	linux/arm/7 \
@@ -17,12 +20,12 @@ TARGETS ?= \
 	solaris/amd64
 
 .PHONY: test test-race test-short bench bench-fast bench-reset verify vet check ci \
-	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck \
+	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck markdownlint \
 	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat \
-	release-notes crosscompile
+	release-notes crosscompile docs-render docs-render-check
 
-check: verify vulncheck tidy fmt vet lint-fix align-fix test
-ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test
+check: verify vulncheck tidy fmt vet lint-fix align-fix test docs-render markdownlint
+ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test docs-render-check
 
 fmt:
 	gofmt -w .
@@ -39,13 +42,13 @@ vet:
 	$(GO) vet ./...
 
 test:
-	$(GO) test ./...
+	$(GO) test .
 
 test-race:
-	$(GO) test -race ./...
+	$(GO) test -race .
 
 test-short:
-	$(GO) test -short ./...
+	$(GO) test -short .
 
 bench:
 	@tmp=$$(mktemp); \
@@ -95,6 +98,14 @@ align-fix:
 vulncheck:
 	$(VULNCHECK) ./...
 
+markdownlint:
+	@if command -v $(MARKDOWNLINT) >/dev/null 2>&1; then \
+		$(MARKDOWNLINT) "**/*.md"; \
+	else \
+		echo "WARN: $(MARKDOWNLINT) not found; skipping markdown lint."; \
+		echo 'WARN: Install it with: npm i -g markdownlint-cli2'; \
+	fi
+
 tools: tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat
 tools-ci: tool-golangci-lint tool-betteralign tool-govulncheck
 
@@ -140,3 +151,12 @@ crosscompile:
 			GOOS=$$goos GOARCH=$$goarch $(GO) build ./...; \
 		fi; \
 	done
+
+docs-render:
+	SOURCE_DATE_EPOCH=$(DOC_SOURCE_DATE_EPOCH) UPDATE_DOC_EXAMPLES=1 \
+	$(GO) test -tags forceposix -run TestWriteDocBuiltinTemplatesGolden ./...
+
+docs-render-check:
+	SOURCE_DATE_EPOCH=$(DOC_SOURCE_DATE_EPOCH) UPDATE_DOC_EXAMPLES=1 \
+	$(GO) test -tags forceposix -run TestWriteDocBuiltinTemplatesGolden ./...
+	git diff --exit-code -- examples/doc-rendered

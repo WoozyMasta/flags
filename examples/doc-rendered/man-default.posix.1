@@ -1,0 +1,75 @@
+.TH golden-doc 1 "15 November 2023"
+.SH NAME
+golden-doc \- Golden doc parser
+.SH SYNOPSIS
+\fBgolden-doc\fP [OPTIONS]
+.SH DESCRIPTION
+Long description for golden tests.
+Includes options, groups and commands.
+
+.SH OPTIONS
+.SS Application Options
+Main options
+.TP
+\fB\fB\-v\fR, \fB\-\-verbose\fR\fP
+Enable verbose output
+.TP
+\fB\fB\-\-config\fR <default: \fIconfig.yaml\fR> (\fIrequired\fR)\fP
+Path to config
+\fBEnvironment\fP: MY_APP_APP_CONFIG
+.TP
+\fB\fB\-\-mode\fR <default: \fIfast\fR>\fP
+Execution mode
+\fBChoices\fP: fast, safe
+.TP
+\fB\fB\-\-tag\fR <default: \fIapi\fR>\fP
+Tag filter
+.TP
+\fB\fB\-\-header\fR <default: \fIx-env:dev\fR>\fP
+HTTP headers
+\fBKey/value delimiter\fP: :
+.TP
+\fB\fB\-\-level\fR [\fI=info\fR]\fP
+Log level
+\fBOptional value\fP: info
+.SS Database Options
+.TP
+\fB\fB\-\-db.host\fR <default: \fI127.0.0.1\fR>\fP
+Database host
+\fBEnvironment\fP: MY_APP_DB_HOST
+.TP
+\fB\fB\-\-db.port\fR <default: \fI5432\fR>\fP
+Database port
+\fBEnvironment\fP: MY_APP_DB_PORT
+.SH COMMANDS
+
+.SS run
+Run command
+
+Execute deployment workflow.
+
+\fBUsage\fP: golden-doc [OPTIONS] run [run-OPTIONS]
+.SS Run command
+Execute deployment workflow.
+.TP
+\fB\fB\-\-force\fR\fP
+Force execution
+.TP
+\fB\fB\-\-plan\fR\fP
+Show execution plan only
+
+
+.SS status
+Show status
+
+Read and print current status.
+
+\fBUsage\fP: golden-doc [OPTIONS] status [status-OPTIONS]
+.SS Show status
+Read and print current status.
+.TP
+\fB\fB\-\-json\fR\fP
+JSON output
+
+
+

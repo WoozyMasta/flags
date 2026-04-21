@@ -1,0 +1,91 @@
+# {{ .Doc.Name }}
+
+## NAME
+
+**{{ .Doc.Name }}** - {{ .Doc.ShortDescription }}
+
+## SYNOPSIS
+
+{{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
+
+## DESCRIPTION
+
+{{ .Doc.LongDescription }}
+
+## OPTIONS
+
+{{ range .Doc.Groups }}
+{{ if .ShortDescription }}
+### {{ .ShortDescription }}
+{{ end }}
+
+|Option|Description|Default|Env|Required|
+|---|---|---|---|---|
+{{ range .Options }}
+|{{ codeJoin (optionForms .) }}|{{ .Description }}{{ if hiddenMark .Hidden }} **(hidden)**{{ end }}{{ if .Choices }}; choices: {{ code (join .Choices ", ") }}{{ end }}{{ if .Optional }}; optional: {{ code .OptionalVal }}{{ end }}{{ if .Terminator }}; terminator: {{ code .Terminator }}{{ end }}{{ if ne .Order 0 }}; order: {{ .Order }}{{ end }}|{{ .Default }}|{{ .Env }}{{ if .EnvDelim }} ({{ .EnvDelim }}){{ end }}{{ if .IniName }}; ini: {{ code .IniName }}{{ end }}{{ if .KeyValueDelim }}; kv delim: {{ code .KeyValueDelim }}{{ end }}{{ if .Base }}; base: {{ code .Base }}{{ end }}{{ if .UnquoteTag }}; unquote: {{ code .UnquoteTag }}{{ end }}{{ if .DefaultMask }}; default mask: {{ code .DefaultMask }}{{ end }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+{{ end }}
+
+{{ end }}
+
+{{ if .Doc.Commands }}
+## COMMANDS
+
+{{ range .Doc.Commands }}
+{{ template "command" . }}
+{{ end }}
+{{ end }}
+
+{{ if .Doc.Args }}
+## ARGUMENTS
+
+|Name|Description|Required|
+|---|---|---|
+{{ range .Doc.Args }}
+|{{ code .Name }}|{{ .Description }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+{{ end }}
+{{ end }}
+
+{{ define "command" }}
+### {{ .Name }}
+
+{{ .ShortDescription }}
+
+{{ if .LongDescription }}
+{{ .LongDescription }}
+
+{{ end }}
+{{ if .UsageLine }}
+**Usage:** {{ code .UsageLine }}
+
+{{ end }}
+{{ if .Aliases }}
+**Aliases:** {{ join .Aliases ", " }}
+
+{{ end }}
+{{ range .Groups }}
+{{ if .ShortDescription }}
+#### {{ .ShortDescription }}
+
+{{ end }}
+
+|Option|Description|Default|Env|Required|
+|---|---|---|---|---|
+{{ range .Options }}
+|{{ codeJoin (optionForms .) }}|{{ .Description }}{{ if hiddenMark .Hidden }} **(hidden)**{{ end }}{{ if .Choices }}; choices: {{ code (join .Choices ", ") }}{{ end }}{{ if .Optional }}; optional: {{ code .OptionalVal }}{{ end }}{{ if .Terminator }}; terminator: {{ code .Terminator }}{{ end }}{{ if ne .Order 0 }}; order: {{ .Order }}{{ end }}|{{ .Default }}|{{ .Env }}{{ if .EnvDelim }} ({{ .EnvDelim }}){{ end }}{{ if .IniName }}; ini: {{ code .IniName }}{{ end }}{{ if .KeyValueDelim }}; kv delim: {{ code .KeyValueDelim }}{{ end }}{{ if .Base }}; base: {{ code .Base }}{{ end }}{{ if .UnquoteTag }}; unquote: {{ code .UnquoteTag }}{{ end }}{{ if .DefaultMask }}; default mask: {{ code .DefaultMask }}{{ end }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+{{ end }}
+
+{{ end }}
+{{ if .Args }}
+#### Arguments
+
+|Name|Description|Required|
+|---|---|---|
+{{ range .Args }}
+|{{ code .Name }}|{{ .Description }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+{{ end }}
+
+{{ end }}
+{{ range .Commands }}
+{{ template "command" . }}
+{{ end }}
+{{ end }}

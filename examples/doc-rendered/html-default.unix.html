@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>golden-doc CLI Documentation</title>
+</head>
+<body>
+  <h1>golden-doc</h1>
+
+  <section>
+    <h2>Synopsis</h2>
+    <pre>golden-doc [OPTIONS]</pre>
+  </section>
+
+  <section>
+    <h2>Description</h2>
+    <p>Long description for golden tests.
+Includes options, groups and commands.</p>
+  </section>
+
+  <section>
+    <h2>Options</h2>
+    <h3>Application Options</h3>
+    <ul>
+      <li><code>-v</code>, <code>--verbose</code> - Enable verbose output
+      </li>
+      <li><code>--config</code> (default: config.yaml) (required) - Path to config
+        <ul>          <li>env: <code>MY_APP_APP_CONFIG</code></li>
+        </ul>
+      </li>
+      <li><code>--mode</code> (default: fast) - Execution mode
+        <ul>      <li>choices: <code>fast, safe</code></li>
+        </ul>
+      </li>
+      <li><code>--tag</code> (default: api) - Tag filter
+      </li>
+      <li><code>--header</code> (default: x-env:dev) - HTTP headers
+        <ul><li>key-value-delimiter: <code>:</code></li>
+        </ul>
+      </li>
+      <li><code>--level [=info]</code> - Log level
+        <ul>     <li>optional value: <code>info</code></li>
+        </ul>
+      </li>
+    </ul>
+    <h3>Database Options</h3>
+    <ul>
+      <li><code>--db.host</code> (default: 127.0.0.1) - Database host
+        <ul>          <li>env: <code>MY_APP_DB_HOST</code></li>
+        </ul>
+      </li>
+      <li><code>--db.port</code> (default: 5432) - Database port
+        <ul>          <li>env: <code>MY_APP_DB_PORT</code></li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+  <section>
+    <h2>Commands</h2>
+    <article>
+      <h3>run</h3>
+      <p>Run command</p>
+      <p><strong>Usage:</strong> <code>golden-doc [OPTIONS] run [run-OPTIONS]</code></p>
+    </article>
+    <article>
+      <h3>status</h3>
+      <p>Show status</p>
+      <p><strong>Usage:</strong> <code>golden-doc [OPTIONS] status [status-OPTIONS]</code></p>
+    </article>
+  </section>
+</body>
+</html>

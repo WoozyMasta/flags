@@ -28,6 +28,10 @@ jobs:
         shell: bash
         run: make ci
 
+      - uses: DavidAnson/markdownlint-cli2-action@v23
+        with:
+          globs: '**/*.md'
+
       - name: Cross-compile check
         if: matrix.os == 'ubuntu-latest'
         shell: bash

@@ -111,6 +111,7 @@ func init() {
 		filepath.Join(completionTestSourcedir, "examples/advanced"),
 		filepath.Join(completionTestSourcedir, "examples/bash-completion"),
 		filepath.Join(completionTestSourcedir, "examples/custom-flag-tags"),
+		filepath.Join(completionTestSourcedir, "examples/doc-rendered"),
 		filepath.Join(completionTestSourcedir, "examples/main.go"),
 		filepath.Join(completionTestSourcedir, "examples/rm.go"),
 		filepath.Join(completionTestSourcedir, "examples/zsh-completion"),
@@ -212,7 +213,12 @@ func init() {
 		},
 		{
 			// Multiple positional filename (3 args)
-			[]string{"add-multi", filepath.Join(completionTestSourcedir, "completion.go"), filepath.Join(completionTestSourcedir, "completion.go"), filepath.Join(completionTestSourcedir, "completion")},
+			[]string{
+				"add-multi",
+				filepath.Join(completionTestSourcedir, "completion.go"),
+				filepath.Join(completionTestSourcedir, "completion.go"),
+				filepath.Join(completionTestSourcedir, "completion"),
+			},
 			completionTestFilename,
 			false,
 		},

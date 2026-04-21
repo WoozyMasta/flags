@@ -45,6 +45,14 @@ and this project adheres to [Semantic Versioning][].
   for invalid values.
 * Configurable option sorting (`SetOptionSort`) with `order` tag priority,
   plus customizable type rank for `OptionSortByType`.
+* Documentation rendering API:
+  `Parser.WriteDoc(...)`, `DocFormat`, built-in template registry
+  (`ListBuiltinTemplates`, `WriteBuiltinTemplate`), and markdown
+  template support (`markdown/list`, `markdown/table`, `markdown/code`).
+* Custom template execution for `DocFormatMan`
+  via `WithTemplateString` / `WithTemplateBytes`.
+* HTML documentation rendering with built-in template `html/default`,
+  `html/styled` and custom templates for `DocFormatHTML`.
 
 ### Changed
 
@@ -54,6 +62,8 @@ and this project adheres to [Semantic Versioning][].
 * Package/module docs and README were reworked and expanded.
 * SPDX headers were introduced across source files.
 * CI/checking pipeline was modernized (linting, alignment, cross-platform jobs).
+* `WriteManPage` / `DocFormatMan` default rendering now goes through template
+  execution path (`man/default`) instead of legacy writer implementation.
 
 ### Fixed
 

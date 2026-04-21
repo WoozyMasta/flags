@@ -301,7 +301,15 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 	}
 }
 
-func writeOption(writer io.Writer, optionName string, optionType reflect.Kind, optionKey string, optionValue string, commentOption bool, forceQuote bool) {
+func writeOption(
+	writer io.Writer,
+	optionName string,
+	optionType reflect.Kind,
+	optionKey string,
+	optionValue string,
+	commentOption bool,
+	forceQuote bool,
+) {
 	if forceQuote || (optionType == reflect.String && !isPrint(optionValue)) {
 		optionValue = strconv.Quote(optionValue)
 	}

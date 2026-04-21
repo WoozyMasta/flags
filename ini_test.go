@@ -1087,7 +1087,13 @@ func TestOverwriteRequiredOptions(t *testing.T) {
 			},
 		},
 		{
-			args: []string{"--value", "from CLI before", "--default", "from CLI before", "--config", "no file name", "--value", "from CLI after", "--default", "from CLI after"},
+			args: []string{
+				"--value", "from CLI before",
+				"--default", "from CLI before",
+				"--config", "no file name",
+				"--value", "from CLI after",
+				"--default", "from CLI after",
+			},
 			expected: []string{
 				"from CLI after",
 				"from CLI after",

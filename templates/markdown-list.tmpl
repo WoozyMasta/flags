@@ -1,0 +1,120 @@
+# {{ .Doc.Name }}
+
+## NAME
+
+**{{ .Doc.Name }}** * {{ markdownWrap .Doc.ShortDescription }}
+
+## SYNOPSIS
+
+{{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
+
+## DESCRIPTION
+
+{{ markdownWrap .Doc.LongDescription }}
+
+## OPTIONS
+
+{{ range .Doc.Groups }}
+{{ if .ShortDescription }}
+### {{ .ShortDescription }}{{ if hiddenMark .Hidden }} *(hidden group)*{{ end }}
+{{ end }}
+
+{{ if .LongDescription }}
+{{ markdownWrap .LongDescription }}
+{{ end }}
+
+{{ range .Options }}
+* {{ codeJoin (optionForms .) }}{{ if .Description }} - {{ markdownWrap .Description }}{{ if hiddenMark .Hidden }} **(hidden)**{{ end }}{{ else if hiddenMark .Hidden }} - **(hidden)**{{ end }}
+{{ if .Required }}  * Required: `yes`
+{{ end }}{{ if .Optional }}  * Optional value: {{ code .OptionalVal }}
+{{ end }}{{ if .Default }}  * Defaults: {{ code .Default }}
+{{ end }}{{ if .Env }}  * Environment: {{ code .Env }}{{ if .EnvDelim }} (delimiter {{ code .EnvDelim }}){{ end }}
+{{ end }}{{ if .Choices }}  * Choices: {{ code (join .Choices ", ") }}
+{{ end }}{{ if .ValueName }}  * Value name: {{ code .ValueName }}
+{{ end }}{{ if .Terminator }}  * Terminator: {{ code .Terminator }}
+{{ end }}{{ if .IniName }}  * INI key: {{ code .IniName }}
+{{ end }}{{ if .KeyValueDelim }}  * Key/value delimiter: {{ code .KeyValueDelim }}
+{{ end }}{{ if .DefaultMask }}  * Default mask: {{ code .DefaultMask }}
+{{ end }}{{ if .Base }}  * Base: {{ code .Base }}
+{{ end }}{{ if .UnquoteTag }}  * unquote tag: {{ code .UnquoteTag }}
+{{ end }}{{ if ne .Order 0 }}  * Order: {{ .Order }}
+{{ end }}
+{{ end }}
+
+{{ end }}
+
+{{ if .Doc.Commands }}
+## COMMANDS
+
+{{ range .Doc.Commands }}
+{{ template "command" . }}
+{{ end }}
+{{ end }}
+
+{{ if .Doc.Args }}
+## ARGUMENTS
+
+{{ range .Doc.Args }}
+* {{ code .Name }}{{ if .Required }} *(required)*{{ end }}
+  * Description: {{ markdownWrap .Description }}
+{{ end }}
+{{ end }}
+
+{{ define "command" }}
+### {{ .Name }}{{ if hiddenMark .Hidden }} *(hidden command)*{{ end }}
+
+{{ .ShortDescription }}
+
+{{ if .LongDescription }}
+{{ markdownWrap .LongDescription }}
+
+{{ end }}
+{{ if .UsageLine }}
+**Usage:** {{ code .UsageLine }}
+
+{{ end }}
+{{ if .Aliases }}
+**Aliases:** {{ join .Aliases ", " }}
+
+{{ end }}
+{{ range .Groups }}
+{{ if .ShortDescription }}
+#### {{ .ShortDescription }}{{ if hiddenMark .Hidden }} *(hidden group)*{{ end }}
+
+{{ end }}
+{{ if .LongDescription }}
+{{ markdownWrap .LongDescription }}
+
+{{ end }}
+{{ range .Options }}
+* {{ codeJoin (optionForms .) }}{{ if .Description }} - {{ markdownWrap .Description }}{{ if hiddenMark .Hidden }} **(hidden)**{{ end }}{{ else if hiddenMark .Hidden }} - **(hidden)**{{ end }}
+{{ if .Required }}  * Required: `yes`
+{{ end }}{{ if .Optional }}  * Optional value: {{ code .OptionalVal }}
+{{ end }}{{ if .Default }}  * Defaults: {{ code .Default }}
+{{ end }}{{ if .Env }}  * Environment: {{ code .Env }}{{ if .EnvDelim }} (delimiter {{ code .EnvDelim }}){{ end }}
+{{ end }}{{ if .Choices }}  * Choices: {{ code (join .Choices ", ") }}
+{{ end }}{{ if .ValueName }}  * Value name: {{ code .ValueName }}
+{{ end }}{{ if .Terminator }}  * Terminator: {{ code .Terminator }}
+{{ end }}{{ if .IniName }}  * INI key: {{ code .IniName }}
+{{ end }}{{ if .KeyValueDelim }}  * Key/value delimiter: {{ code .KeyValueDelim }}
+{{ end }}{{ if .DefaultMask }}  * Default mask: {{ code .DefaultMask }}
+{{ end }}{{ if .Base }}  * Base: {{ code .Base }}
+{{ end }}{{ if .UnquoteTag }}  * unquote tag: {{ code .UnquoteTag }}
+{{ end }}{{ if ne .Order 0 }}  * Order: {{ .Order }}
+{{ end }}
+{{ end }}
+
+{{ end }}
+{{ if .Args }}
+#### Arguments
+
+{{ range .Args }}
+* {{ code .Name }}{{ if .Required }} *(required)*{{ end }}
+  * Description: {{ markdownWrap .Description }}
+{{ end }}
+
+{{ end }}
+{{ range .Commands }}
+{{ template "command" . }}
+{{ end }}
+{{ end }}

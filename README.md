@@ -58,8 +58,8 @@ func main() {
 * Commands and subcommands
 * Defaults from tags and environment variables
 * INI parse/write support
-* Bash/Zsh completion
-* Help and man page generation
+* Bash/Zsh completion script generation
+* Help output and template-based documentation rendering (man/markdown/html)
 
 ## Option Values
 
@@ -305,15 +305,6 @@ If you need to preserve leading whitespace in multi-line descriptions
 parser := flags.NewParser(&opts, flags.Default|flags.KeepDescriptionWhitespace)
 ```
 
-## Man Pages
-
-Generate a man page:
-
-```go
-parser := flags.NewParser(&opts, flags.Default)
-parser.WriteManPage(os.Stdout)
-```
-
 ## Shell Completion
 
 Generate shell script output from your app:
@@ -345,6 +336,112 @@ GO_FLAGS_COMPLETION=1 ./myapp --some-arg prefix
 Templates:
 [`examples/bash-completion`](examples/bash-completion),
 [`examples/zsh-completion`](examples/zsh-completion).
+
+## Templates
+
+Use `WriteDoc` to render parser documentation:
+
+```go
+if err := parser.WriteDoc(os.Stdout, flags.DocFormatMarkdown); err != nil {
+  panic(err)
+}
+```
+
+Current built-in templates:
+
+* `markdown/list`: readable default markdown with option metadata.
+* `markdown/table`: compact markdown table view.
+* `markdown/code`: CLI-like code block output.
+* `html/default`: simple standalone HTML documentation page.
+* `html/styled`: styled HTML page with built-in CSS variables
+  and automatic light/dark theme via `prefers-color-scheme`.
+* `man/default`: classic groff/manpage output.
+
+Use exported constants (`flags.DocTemplate*`) instead of hardcoded strings
+when selecting built-ins programmatically.
+
+Include hidden options/groups/commands when needed:
+
+```go
+_ = parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatMarkdown,
+  flags.WithBuiltinTemplate(flags.DocTemplateMarkdownList),
+  flags.WithIncludeHidden(true),
+)
+```
+
+Use custom templates:
+
+```go
+tpl := "{{ .Doc.Name }} - {{ .Doc.ShortDescription }}\n"
+_ = parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatMarkdown,
+  flags.WithTemplateString(tpl),
+)
+```
+
+The same `WithTemplateString`/`WithTemplateBytes` flow also works with
+`flags.DocFormatMan` and `flags.DocFormatHTML`.
+
+```go
+_ = parser.WriteDoc(os.Stdout, flags.DocFormatMan)
+```
+
+`WriteManPage` is kept for backward compatibility and internally uses the
+same doc templating pipeline (`man/default`).
+
+`WriteHelp` stays unchanged for the core fast path.
+
+Inspect/export built-ins:
+
+```go
+for _, name := range flags.ListBuiltinTemplates() {
+  fmt.Println(name)
+}
+
+_ = flags.WriteBuiltinTemplate(os.Stdout, flags.DocTemplateMarkdownList)
+```
+
+Complete example with groups, commands, env and doc rendering modes:
+[`examples/advanced/main.go`](examples/advanced/main.go).
+
+Rendered template snapshots used by tests (also useful as docs/examples):
+[markdown-list.unix.md](examples/doc-rendered/markdown-list.unix.md),
+[html-default.unix.html](examples/doc-rendered/html-default.unix.html),
+[man-default.posix.1](examples/doc-rendered/man-default.posix.1).
+See `examples/doc-rendered` for additional variants.
+
+Detailed roadmap: [`docs-plan.md`](docs-plan.md)
+
+## Template Helpers
+
+Built-in helper functions available in templates:
+
+* `hiddenMark`: returns `true` only when hidden markers are enabled
+  (`WithMarkHidden(true)`) and the current entity is hidden.
+* `optionForms`: returns split option forms (for example `-v`, `--verbose`,
+  including value/optional suffixes when applicable).
+* `codeJoin`: wraps each item with backticks and joins using a comma.
+* `join`: joins string slices with a separator (for example aliases list).
+* `wrap`: wraps plain text to a target width.
+* `markdownWrap`: wraps markdown text to target width (default `76`).
+* `indent`: adds fixed left indentation to each line.
+* `defaultValue`: formats a default suffix like `(default: VALUE)` or empty.
+* `code`: wraps text with markdown backticks.
+* `codeFenceOpen`: returns the opening fenced code marker for `text` blocks.
+* `codeFenceClose`: returns the closing fenced code marker.
+* `quoteMan`: escapes text for man/groff-style output.
+* `manInline`: applies inline man formatting for backtick-quoted fragments.
+* `quoteMarkdown`: escapes markdown-sensitive backslashes.
+* `quoteHTML`: escapes HTML entities (`<`, `>`, `&`, quotes).
+* `isRequired`: returns `true` when option is required.
+* `hasDefault`: returns `true` when option has default value
+  (or env-derived fallback text).
+* `hasEnv`: returns `true` when option has resolved environment key.
+* `isBool`: returns `true` for boolean options.
+* `isCollection`: returns `true` for slice/array/map options.
 
 ## Documentation and Examples
 

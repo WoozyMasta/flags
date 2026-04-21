@@ -1,0 +1,133 @@
+.TH {{ quoteMan .Doc.Name }} 1 "{{ .Doc.GeneratedAt.Format "2 January 2006" }}"
+.SH NAME
+{{ quoteMan .Doc.Name }} \- {{ manInline .Doc.ShortDescription }}
+.SH SYNOPSIS
+\fB{{ quoteMan .Doc.Name }}\fP {{ quoteMan .Doc.Usage }}
+.SH DESCRIPTION
+{{ manInline .Doc.LongDescription }}
+
+.SH OPTIONS
+{{- range .Doc.Groups }}
+{{- if .ShortDescription }}
+.SS {{ quoteMan .ShortDescription }}
+{{- end }}
+{{- if .LongDescription }}
+{{ manInline .LongDescription }}
+
+{{- end }}
+{{- range .Options }}
+.TP
+\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <default: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fIrequired\fR){{- end }}\fP
+{{- if .Description }}
+{{ manInline .Description }}
+{{- if hiddenMark .Hidden }} \fB(hidden)\fP{{ end }}
+{{- else if hiddenMark .Hidden }}
+\fB(hidden)\fP
+{{- end }}
+{{- if .Choices }}
+\fBChoices\fP: {{ quoteMan (join .Choices ", ") }}
+{{- end }}
+{{- if .Env }}
+\fBEnvironment\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} (delimiter {{ quoteMan .EnvDelim }}){{ end }}
+{{- end }}
+{{- if .Optional }}
+\fBOptional value\fP: {{ quoteMan .OptionalVal }}
+{{- end }}
+{{- if .Terminator }}
+\fBTerminator\fP: {{ quoteMan .Terminator }}
+{{- end }}
+{{- if .IniName }}
+\fBINI key\fP: {{ quoteMan .IniName }}
+{{- end }}
+{{- if .KeyValueDelim }}
+\fBKey/value delimiter\fP: {{ quoteMan .KeyValueDelim }}
+{{- end }}
+{{- if .DefaultMask }}
+\fBDefault mask\fP: {{ quoteMan .DefaultMask }}
+{{- end }}
+{{- if .Base }}
+\fBBase\fP: {{ quoteMan .Base }}
+{{- end }}
+{{- if .UnquoteTag }}
+\fBUnquote tag\fP: {{ quoteMan .UnquoteTag }}
+{{- end }}
+{{- if ne .Order 0 }}
+\fBOrder\fP: {{ .Order }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if .Doc.Commands }}
+.SH COMMANDS
+{{- range .Doc.Commands }}
+{{ template "command" . }}
+{{- end }}
+{{- end }}
+
+{{ define "command" }}
+.SS {{ quoteMan .Name }}
+{{ manInline .ShortDescription }}
+{{- if .LongDescription }}
+
+{{ manInline .LongDescription }}
+{{- end }}
+{{- if .UsageLine }}
+
+\fBUsage\fP: {{ quoteMan .UsageLine }}
+{{- end }}
+{{- if .Aliases }}
+
+\fBAliases\fP: {{ quoteMan (join .Aliases ", ") }}
+{{- end }}
+{{- range .Groups }}
+{{- if .ShortDescription }}
+.SS {{ quoteMan .ShortDescription }}
+{{- end }}
+{{- if .LongDescription }}
+{{ manInline .LongDescription }}
+
+{{- end }}
+{{- range .Options }}
+.TP
+\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <default: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fIrequired\fR){{- end }}\fP
+{{- if .Description }}
+{{ manInline .Description }}
+{{- if hiddenMark .Hidden }} \fB(hidden)\fP{{ end }}
+{{- else if hiddenMark .Hidden }}
+\fB(hidden)\fP
+{{- end }}
+{{- if .Choices }}
+\fBChoices\fP: {{ quoteMan (join .Choices ", ") }}
+{{- end }}
+{{- if .Env }}
+\fBEnvironment\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} (delimiter {{ quoteMan .EnvDelim }}){{ end }}
+{{- end }}
+{{- if .Optional }}
+\fBOptional value\fP: {{ quoteMan .OptionalVal }}
+{{- end }}
+{{- if .Terminator }}
+\fBTerminator\fP: {{ quoteMan .Terminator }}
+{{- end }}
+{{- if .IniName }}
+\fBINI key\fP: {{ quoteMan .IniName }}
+{{- end }}
+{{- if .KeyValueDelim }}
+\fBKey/value delimiter\fP: {{ quoteMan .KeyValueDelim }}
+{{- end }}
+{{- if .DefaultMask }}
+\fBDefault mask\fP: {{ quoteMan .DefaultMask }}
+{{- end }}
+{{- if .Base }}
+\fBBase\fP: {{ quoteMan .Base }}
+{{- end }}
+{{- if .UnquoteTag }}
+\fBUnquote tag\fP: {{ quoteMan .UnquoteTag }}
+{{- end }}
+{{- if ne .Order 0 }}
+\fBOrder\fP: {{ .Order }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- range .Commands }}
+{{ template "command" . }}
+{{- end }}
+{{ end }}

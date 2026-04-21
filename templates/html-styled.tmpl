@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ quoteHTML .Doc.Name }} CLI Documentation</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --surface-alt: #f0f2f8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #dbe2ef;
+      --code-bg: #edf2ff;
+      --accent: #1d4ed8;
+      --ok: #0f766e;
+      --warn: #b45309;
+      --radius: 14px;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      --sans: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont,
+        "Helvetica Neue", Arial, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1220;
+        --surface: #121b2e;
+        --surface-alt: #0f1729;
+        --text: #e2e8f0;
+        --muted: #9fb2cc;
+        --border: #2a3754;
+        --code-bg: #1a2740;
+        --accent: #60a5fa;
+        --ok: #2dd4bf;
+        --warn: #f59e0b;
+        --shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 10px;
+      line-height: 1.25;
+    }
+
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; color: var(--accent); }
+
+    .muted { color: var(--muted); }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    code, pre {
+      font-family: var(--mono);
+      font-size: 0.92em;
+    }
+
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.1em 0.35em;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      white-space: pre-wrap;
+    }
+
+    ul { margin: 10px 0 0; padding-left: 18px; }
+    li + li { margin-top: 8px; }
+
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.95em;
+    }
+
+    .chip {
+      display: inline-block;
+      margin-right: 6px;
+      margin-bottom: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .chip.required {
+      color: var(--ok);
+      border-color: color-mix(in srgb, var(--ok) 50%, var(--border));
+    }
+
+    .chip.hidden {
+      color: var(--warn);
+      border-color: color-mix(in srgb, var(--warn) 50%, var(--border));
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <h1>{{ quoteHTML .Doc.Name }}</h1>
+      {{- if .Doc.ShortDescription }}
+      <p class="muted">{{ quoteHTML .Doc.ShortDescription }}</p>
+      {{- end }}
+      <pre>{{ quoteHTML .Doc.Name }} {{ quoteHTML .Doc.Usage }}</pre>
+    </header>
+
+    <section>
+      <h2>Description</h2>
+      <p>{{ quoteHTML .Doc.LongDescription }}</p>
+    </section>
+
+    <section>
+      <h2>Options</h2>
+{{- range .Doc.Groups }}
+{{- if .ShortDescription }}
+      <h3>{{ quoteHTML .ShortDescription }}</h3>
+{{- end }}
+      <ul>
+{{- range .Options }}
+        <li>
+{{- $forms := optionForms . -}}
+{{- range $idx, $f := $forms -}}
+{{- if gt $idx 0 }}, {{ end -}}<code>{{ quoteHTML $f }}</code>
+{{- end -}}
+{{ defaultValue .Default }}
+{{- if .Description }} - {{ quoteHTML .Description }}{{ end }}
+          <div class="meta">
+{{- if .Required }}<span class="chip required">required</span>{{ end }}
+{{- if hiddenMark .Hidden }}<span class="chip hidden">hidden</span>{{ end }}
+{{- if .Env }}<span class="chip">env {{ quoteHTML .Env }}</span>{{ end }}
+{{- if .Choices }}<span class="chip">choices {{ quoteHTML (join .Choices ", ") }}</span>{{ end }}
+{{- if .Optional }}<span class="chip">optional {{ quoteHTML .OptionalVal }}</span>{{ end }}
+{{- if .IniName }}<span class="chip">ini {{ quoteHTML .IniName }}</span>{{ end }}
+{{- if .Terminator }}<span class="chip">term {{ quoteHTML .Terminator }}</span>{{ end }}
+{{- if .KeyValueDelim }}<span class="chip">kv {{ quoteHTML .KeyValueDelim }}</span>{{ end }}
+{{- if .DefaultMask }}<span class="chip">mask {{ quoteHTML .DefaultMask }}</span>{{ end }}
+          </div>
+        </li>
+{{- end }}
+      </ul>
+{{- end }}
+    </section>
+
+{{- if .Doc.Commands }}
+    <section>
+      <h2>Commands</h2>
+{{- range .Doc.Commands }}
+      <article>
+        <h3>{{ quoteHTML .Name }}</h3>
+        <p>{{ quoteHTML .ShortDescription }}</p>
+{{- if .UsageLine }}
+        <p><strong>Usage:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
+{{- end }}
+{{- if .Aliases }}
+        <p><strong>Aliases:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
+{{- end }}
+      </article>
+{{- end }}
+    </section>
+{{- end }}
+  </main>
+</body>
+</html>
