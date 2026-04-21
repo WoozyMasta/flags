@@ -1,7 +1,4 @@
-go-flags: a go library for parsing command line arguments
-=========================================================
-
-[![GoDoc](https://godoc.org/github.com/jessevdk/go-flags?status.png)](https://godoc.org/github.com/jessevdk/go-flags)
+# go-flags
 
 This library provides similar functionality to the builtin flag library of
 go, but provides much more functionality and nicer formatting. From the
@@ -13,6 +10,7 @@ but provides more options and uses reflection to provide a convenient and
 succinct way of specifying command line options.
 
 Supported features:
+
 * Options with short names (-v)
 * Options with long names (--verbose)
 * Options with and without arguments (bool v.s. other type)
@@ -35,7 +33,7 @@ and concise specification of your application options. For example:
 
 ```go
 type Options struct {
-	Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
+  Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
 }
 ```
 
@@ -44,70 +42,74 @@ When either -v or --verbose is found on the command line, a 'true' value
 will be appended to the Verbose field. e.g. when specifying -vvv, the
 resulting value of Verbose will be {[true, true, true]}.
 
-Example:
---------
+> [!NOTE]  
+> this repository is a fork of
+> [`github.com/jessevdk/go-flags`](https://github.com/jessevdk/go-flags).
+
+## Example
+
 ```go
 var opts struct {
-	// Slice of bool will append 'true' each time the option
-	// is encountered (can be set multiple times, like -vvv)
-	Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
+  // Slice of bool will append 'true' each time the option
+  // is encountered (can be set multiple times, like -vvv)
+  Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
 
-	// Example of automatic marshalling to desired type (uint)
-	Offset uint `long:"offset" description:"Offset"`
+  // Example of automatic marshalling to desired type (uint)
+  Offset uint `long:"offset" description:"Offset"`
 
-	// Example of a callback, called each time the option is found.
-	Call func(string) `short:"c" description:"Call phone number"`
+  // Example of a callback, called each time the option is found.
+  Call func(string) `short:"c" description:"Call phone number"`
 
-	// Example of a required flag
-	Name string `short:"n" long:"name" description:"A name" required:"true"`
+  // Example of a required flag
+  Name string `short:"n" long:"name" description:"A name" required:"true"`
 
-	// Example of a flag restricted to a pre-defined set of strings
-	Animal string `long:"animal" choice:"cat" choice:"dog"`
+  // Example of a flag restricted to a pre-defined set of strings
+  Animal string `long:"animal" choice:"cat" choice:"dog"`
 
-	// Example of a value name
-	File string `short:"f" long:"file" description:"A file" value-name:"FILE"`
+  // Example of a value name
+  File string `short:"f" long:"file" description:"A file" value-name:"FILE"`
 
-	// Example of a pointer
-	Ptr *int `short:"p" description:"A pointer to an integer"`
+  // Example of a pointer
+  Ptr *int `short:"p" description:"A pointer to an integer"`
 
-	// Example of a slice of strings
-	StringSlice []string `short:"s" description:"A slice of strings"`
+  // Example of a slice of strings
+  StringSlice []string `short:"s" description:"A slice of strings"`
 
-	// Example of a slice of pointers
-	PtrSlice []*string `long:"ptrslice" description:"A slice of pointers to string"`
+  // Example of a slice of pointers
+  PtrSlice []*string `long:"ptrslice" description:"A slice of pointers to string"`
 
-	// Example of a map
-	IntMap map[string]int `long:"intmap" description:"A map from string to int"`
+  // Example of a map
+  IntMap map[string]int `long:"intmap" description:"A map from string to int"`
 
-	// Example of env variable
-	Thresholds  []int     `long:"thresholds" default:"1" default:"2" env:"THRESHOLD_VALUES"  env-delim:","`
+  // Example of env variable
+  Thresholds  []int     `long:"thresholds" default:"1" default:"2" env:"THRESHOLD_VALUES"  env-delim:","`
 }
 
 // Callback which will invoke callto:<argument> to call a number.
 // Note that this works just on OS X (and probably only with
 // Skype) but it shows the idea.
 opts.Call = func(num string) {
-	cmd := exec.Command("open", "callto:"+num)
-	cmd.Start()
-	cmd.Process.Release()
+  cmd := exec.Command("open", "callto:"+num)
+  cmd.Start()
+  cmd.Process.Release()
 }
 
 // Make some fake arguments to parse.
 args := []string{
-	"-vv",
-	"--offset=5",
-	"-n", "Me",
-	"--animal", "dog", // anything other than "cat" or "dog" will raise an error
-	"-p", "3",
-	"-s", "hello",
-	"-s", "world",
-	"--ptrslice", "hello",
-	"--ptrslice", "world",
-	"--intmap", "a:1",
-	"--intmap", "b:5",
-	"arg1",
-	"arg2",
-	"arg3",
+  "-vv",
+  "--offset=5",
+  "-n", "Me",
+  "--animal", "dog", // anything other than "cat" or "dog" will raise an error
+  "-p", "3",
+  "-s", "hello",
+  "-s", "world",
+  "--ptrslice", "hello",
+  "--ptrslice", "world",
+  "--intmap", "a:1",
+  "--intmap", "b:5",
+  "arg1",
+  "arg2",
+  "arg3",
 }
 
 // Parse flags from `args'. Note that here we use flags.ParseArgs for
@@ -116,7 +118,7 @@ args := []string{
 args, err := flags.ParseArgs(&opts, args)
 
 if err != nil {
-	panic(err)
+  panic(err)
 }
 
 fmt.Printf("Verbosity: %v\n", opts.Verbose)
@@ -139,4 +141,5 @@ fmt.Printf("Remaining args: %s\n", strings.Join(args, " "))
 // Remaining args: arg1 arg2 arg3
 ```
 
-More information can be found in the godocs: <http://godoc.org/github.com/jessevdk/go-flags>
+More information can be found in the godocs:
+<http://godoc.org/github.com/woozymasta/flags>
