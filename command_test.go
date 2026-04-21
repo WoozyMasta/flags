@@ -763,3 +763,27 @@ func TestCommandLocalPassAfterNonOptionNest2(t *testing.T) {
 
 	assertStringArray(t, ret, []string{"x"})
 }
+
+func TestCommandArgsReturnsCopyOfSlice(t *testing.T) {
+	var opts struct {
+		Cmd struct {
+			Positional struct {
+				Name string
+			} `positional-args:"yes"`
+		} `command:"cmd"`
+	}
+
+	p := NewParser(&opts, None)
+	cmd := p.Command.Find("cmd")
+	if cmd == nil {
+		t.Fatalf("command cmd not found")
+	}
+
+	got := cmd.Args()
+	originalLen := len(got)
+	got = append(got, &Arg{Name: "extra"})
+
+	if len(cmd.Args()) != originalLen {
+		t.Fatalf("expected original args length to stay %d", originalLen)
+	}
+}

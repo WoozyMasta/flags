@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -302,6 +303,32 @@ Opt = s
 
 		msg := fmt.Sprintf("with arguments %+v and ini options %b", test.args, test.options)
 		assertDiff(t, got, expected, msg)
+	}
+}
+
+func TestReadFullLineWithSmallBuffer(t *testing.T) {
+	long := strings.Repeat("x", 256)
+	reader := bufio.NewReaderSize(strings.NewReader(long+"\n"), 8)
+
+	line, err := readFullLine(reader)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+
+	if line != long {
+		t.Fatalf("expected %d chars, got %d", len(long), len(line))
+	}
+}
+
+func TestIniParseFileNotFound(t *testing.T) {
+	var opts struct {
+		Value string `long:"value"`
+	}
+
+	p := NewParser(&opts, None)
+	err := NewIniParser(p).ParseFile("this-file-should-not-exist-123456789.ini")
+	if err == nil {
+		t.Fatalf("expected error for missing ini file")
 	}
 }
 

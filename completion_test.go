@@ -349,3 +349,20 @@ func TestParserCompletion(t *testing.T) {
 
 	os.Setenv("GO_FLAGS_COMPLETION", "")
 }
+
+func TestCompletionSkipPositional(t *testing.T) {
+	c := &completion{}
+	s := &parseState{
+		positional: []*Arg{{}, {}},
+	}
+
+	c.skipPositional(s, 1)
+	if len(s.positional) != 1 {
+		t.Fatalf("expected 1 positional item left, got %d", len(s.positional))
+	}
+
+	c.skipPositional(s, 5)
+	if s.positional != nil {
+		t.Fatalf("expected positional args to be cleared")
+	}
+}

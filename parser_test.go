@@ -3,6 +3,7 @@ package flags
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"runtime"
@@ -766,5 +767,151 @@ func TestAllowBoolValues(t *testing.T) {
 				t.Errorf("%s:\nExpected error %q to contain substring %q", test.msg, err, test.expectedErr)
 			}
 		}
+	}
+}
+
+func captureStdIO(t *testing.T, fn func()) (string, string) {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	oldStderr := os.Stderr
+
+	stdoutR, stdoutW, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed creating stdout pipe: %v", err)
+	}
+
+	stderrR, stderrW, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed creating stderr pipe: %v", err)
+	}
+
+	os.Stdout = stdoutW
+	os.Stderr = stderrW
+
+	fn()
+
+	_ = stdoutW.Close()
+	_ = stderrW.Close()
+	os.Stdout = oldStdout
+	os.Stderr = oldStderr
+
+	stdout, err := io.ReadAll(stdoutR)
+	if err != nil {
+		t.Fatalf("failed reading stdout: %v", err)
+	}
+
+	stderr, err := io.ReadAll(stderrR)
+	if err != nil {
+		t.Fatalf("failed reading stderr: %v", err)
+	}
+
+	return string(stdout), string(stderr)
+}
+
+func TestParseConvenienceFunctionsUseOSArgs(t *testing.T) {
+	oldArgs := os.Args
+	defer func() {
+		os.Args = oldArgs
+	}()
+
+	os.Args = []string{"app", "--value=from-args"}
+
+	var opts1 struct {
+		Value string `long:"value"`
+	}
+
+	rest, err := Parse(&opts1)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if len(rest) != 0 {
+		t.Fatalf("expected no remaining args, got %v", rest)
+	}
+
+	if opts1.Value != "from-args" {
+		t.Fatalf("unexpected parsed value: %q", opts1.Value)
+	}
+
+	var opts2 struct {
+		Value string `long:"value"`
+	}
+	parser := NewParser(&opts2, None)
+
+	rest, err = parser.Parse()
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if len(rest) != 0 {
+		t.Fatalf("expected no remaining args, got %v", rest)
+	}
+
+	if opts2.Value != "from-args" {
+		t.Fatalf("unexpected parsed value: %q", opts2.Value)
+	}
+}
+
+func TestPrintErrorsDestination(t *testing.T) {
+	var helpOpts struct {
+		Value bool `long:"value"`
+	}
+
+	helpParser := NewParser(&helpOpts, Default)
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = helpParser.ParseArgs([]string{"--help"})
+	})
+
+	if !strings.Contains(stdout, "Usage:") {
+		t.Fatalf("expected help on stdout, got %q", stdout)
+	}
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for help, got %q", stderr)
+	}
+
+	var failOpts struct {
+		Value bool `long:"value"`
+	}
+
+	failParser := NewParser(&failOpts, Default)
+	stdout, stderr = captureStdIO(t, func() {
+		_, _ = failParser.ParseArgs([]string{"--unknown"})
+	})
+
+	if stdout != "" {
+		t.Fatalf("expected empty stdout for parse error, got %q", stdout)
+	}
+
+	if !strings.Contains(stderr, "unknown flag") {
+		t.Fatalf("expected parse error on stderr, got %q", stderr)
+	}
+}
+
+func TestExpectedTypeForFuncAndNonFunc(t *testing.T) {
+	var opts struct {
+		Do func() `long:"do"`
+		S  string `long:"s"`
+	}
+
+	p := NewParser(&opts, None)
+
+	doOpt := p.FindOptionByLongName("do")
+	if doOpt == nil {
+		t.Fatalf("option do not found")
+	}
+
+	if got := p.expectedType(doOpt); got != "" {
+		t.Fatalf("expected empty type for func option, got %q", got)
+	}
+
+	sOpt := p.FindOptionByLongName("s")
+	if sOpt == nil {
+		t.Fatalf("option s not found")
+	}
+
+	if got := p.expectedType(sOpt); got != "string" {
+		t.Fatalf("expected string type, got %q", got)
 	}
 }
