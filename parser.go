@@ -20,6 +20,7 @@ import (
 // A Parser provides command line option parsing. It can contain several
 // option groups each with their own set of options.
 type Parser struct {
+	// Internal parser scan/setup error returned by Parse/ParseArgs.
 	internalError error
 
 	// Embedded, see Command for more information
@@ -48,6 +49,9 @@ type Parser struct {
 	// command to be executed when parsing has finished.
 	CommandHandler func(command Commander, args []string) error
 
+	// Active struct-tag mapping used while scanning option metadata.
+	flagTags FlagTags
+
 	// A usage string to be displayed in the help message.
 	Usage string
 
@@ -57,12 +61,11 @@ type Parser struct {
 	// EnvNamespaceDelimiter separates group env namespaces and env keys
 	EnvNamespaceDelimiter string
 
+	// Monotonic generation used to invalidate cached lookup maps.
 	lookupGeneration uint64
 
 	// Option flags changing the behavior of the parser.
 	Options Options
-
-	flagTags FlagTags
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -272,15 +275,16 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 }
 
 type groupSpec struct {
+	data             any
 	shortDescription string
 	longDescription  string
 	namespace        string
 	envNamespace     string
 	hidden           bool
-	data             any
 }
 
 type commandSpec struct {
+	data                any
 	name                string
 	shortDescription    string
 	longDescription     string
@@ -288,7 +292,6 @@ type commandSpec struct {
 	subcommandsOptional bool
 	passAfterNonOption  bool
 	hidden              bool
-	data                any
 }
 
 func (p *Parser) rebuildTree() error {
