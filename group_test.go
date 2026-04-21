@@ -157,6 +157,41 @@ func TestGroupNestedInlineNamespace(t *testing.T) {
 	}
 }
 
+func TestGroupHiddenTagNo(t *testing.T) {
+	var opts = struct {
+		Group struct {
+			Opt string `long:"opt"`
+		} `group:"Visible Group" hidden:"no"`
+	}{}
+
+	p := NewParser(&opts, None)
+	g := p.Command.Group.Find("Visible Group")
+	if g == nil {
+		t.Fatalf("expected group to be found")
+	}
+
+	if g.Hidden {
+		t.Fatalf("expected group hidden to be false")
+	}
+}
+
+func TestGroupHiddenTagInvalidValue(t *testing.T) {
+	var opts = struct {
+		Group struct {
+			Opt string `long:"opt"`
+		} `group:"Broken Group" hidden:"maybe"`
+	}{}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
 func TestDuplicateShortFlags(t *testing.T) {
 	var opts struct {
 		Verbose   []bool   `short:"v" long:"verbose" description:"Show verbose debug information"`

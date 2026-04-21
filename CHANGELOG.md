@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning][].
 * Unified boolean tag parsing for option/group/command boolean tags
   (`true/false`, `yes/no`, `y/n`, `1/0`, `on/off`) with validation errors
   for invalid values.
+* Configurable option sorting (`SetOptionSort`) with `order` tag priority,
+  plus customizable type rank for `OptionSortByType`.
 
 ### Changed
 

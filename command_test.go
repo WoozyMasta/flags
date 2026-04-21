@@ -765,7 +765,7 @@ func TestCommandLocalPassAfterNonOptionNest2(t *testing.T) {
 }
 
 func TestCommandBooleanTagsNoValues(t *testing.T) {
-	var opts struct {
+	var opts = struct {
 		Cmd struct {
 			Positional struct {
 				Args []string
@@ -779,6 +779,45 @@ func TestCommandBooleanTagsNoValues(t *testing.T) {
 func TestCommandBooleanTagsInvalidValue(t *testing.T) {
 	var opts struct {
 		Cmd struct{} `command:"cmd" pass-after-non-option:"maybe"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestCommandPositionalRequiredTagNo(t *testing.T) {
+	var opts struct {
+		Cmd struct {
+			Positional struct {
+				Name string
+			} `positional-args:"yes" required:"no"`
+		} `command:"cmd"`
+	}
+
+	p := NewParser(&opts, None)
+	cmd := p.Command.Find("cmd")
+	if cmd == nil {
+		t.Fatalf("command cmd not found")
+	}
+
+	if cmd.ArgsRequired {
+		t.Fatalf("expected ArgsRequired to be false")
+	}
+}
+
+func TestCommandPositionalRequiredTagInvalidValue(t *testing.T) {
+	var opts struct {
+		Cmd struct {
+			Positional struct {
+				Name string
+			} `positional-args:"yes" required:"maybe"`
+		} `command:"cmd"`
 	}
 
 	_, err := ParseArgs(&opts, nil)

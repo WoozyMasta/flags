@@ -83,9 +83,11 @@ Value and default tags:
 
   - `optional`: marks option argument as optional; must be passed as `--opt=value`
   - `optional-value`: value used when optional option appears without explicit argument
+  - `order`: display/completion priority in group block sorting
   - `default`: default value (repeat for slice/map entries)
   - `default-mask`: display replacement for default in help; `-` hides default entirely
   - `env`: environment variable that overrides default value
+  - `auto-env`: derive environment variable from `long` name when enabled
   - `env-delim`: split `env` value by delimiter for slice/map fields
   - `value-name`: placeholder name shown in help
   - `choice`: allowed value constraint (repeatable), for example

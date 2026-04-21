@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -100,7 +101,14 @@ func (g *Group) Groups() []*Group {
 
 // Options returns the list of options in this group.
 func (g *Group) Options() []*Option {
-	return g.options
+	ret := make([]*Option, len(g.options))
+	copy(ret, g.options)
+
+	if p := g.parser(); p != nil {
+		return p.sortedOptions(ret)
+	}
+
+	return ret
 }
 
 // Data returns the user-provided struct pointer backing this group.
@@ -353,6 +361,16 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		optionalValue := mtag.GetMany(FlagTagOptionalValue)
 		valueName := mtag.Get(FlagTagValueName)
 		defaultMask := mtag.Get(FlagTagDefaultMask)
+		order := 0
+		if rawOrder := mtag.Get(FlagTagOrder); rawOrder != "" {
+			parsedOrder, convErr := strconv.Atoi(rawOrder)
+			if convErr != nil {
+				return newErrorf(ErrInvalidTag,
+					"invalid integer value `%s' for tag `%s' on field `%s'",
+					rawOrder, FlagTagOrder, field.Name)
+			}
+			order = parsedOrder
+		}
 
 		optional, _, err := parseStructBoolTag(mtag, FlagTagOptional, field.Name)
 		if err != nil {
@@ -404,6 +422,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			Choices:          choices,
 			Hidden:           hidden,
 			Terminator:       mtag.Get(FlagTagTerminator),
+			Order:            order,
 
 			group: g,
 

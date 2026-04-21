@@ -49,6 +49,9 @@ type Parser struct {
 	// command to be executed when parsing has finished.
 	CommandHandler func(command Commander, args []string) error
 
+	// Type rank order used by OptionSortByType.
+	optionTypeRank map[OptionTypeClass]int
+
 	// Active struct-tag mapping used while scanning option metadata.
 	flagTags FlagTags
 
@@ -69,6 +72,9 @@ type Parser struct {
 
 	// Option flags changing the behavior of the parser.
 	Options Options
+
+	// Active option sorting mode for grouped option presentation.
+	optionSort OptionSortMode
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -95,6 +101,38 @@ func (s strArgument) Value() (string, bool) {
 // Options provides parser options that change the behavior of the option
 // parser.
 type Options uint
+
+// OptionSortMode configures how options are ordered within each group block.
+type OptionSortMode uint8
+
+const (
+	// OptionSortByDeclaration keeps original declaration order.
+	OptionSortByDeclaration OptionSortMode = iota
+	// OptionSortByNameAsc sorts by option name ascending.
+	OptionSortByNameAsc
+	// OptionSortByNameDesc sorts by option name descending.
+	OptionSortByNameDesc
+	// OptionSortByType sorts by configured type rank, then by name.
+	OptionSortByType
+)
+
+// OptionTypeClass groups option value types for type-based sorting.
+type OptionTypeClass uint8
+
+const (
+	// OptionTypeBool classifies boolean option values.
+	OptionTypeBool OptionTypeClass = iota
+	// OptionTypeNumber classifies integer/float option values.
+	OptionTypeNumber
+	// OptionTypeString classifies string option values.
+	OptionTypeString
+	// OptionTypeDuration classifies time.Duration option values.
+	OptionTypeDuration
+	// OptionTypeCollection classifies slice/map/array option values.
+	OptionTypeCollection
+	// OptionTypeCustom classifies all remaining option value types.
+	OptionTypeCustom
+)
 
 const (
 	// None indicates no options.
@@ -212,6 +250,8 @@ func NewNamedParser(appname string, options Options) *Parser {
 		EnvNamespaceDelimiter: "_",
 		lookupGeneration:      1,
 		flagTags:              NewFlagTags(),
+		optionSort:            OptionSortByDeclaration,
+		optionTypeRank:        defaultOptionTypeRank(),
 	}
 
 	p.parent = p
@@ -255,6 +295,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.NoFlag:              FlagTagNoFlag,
 		p.flagTags.Optional:            FlagTagOptional,
 		p.flagTags.OptionalValue:       FlagTagOptionalValue,
+		p.flagTags.Order:               FlagTagOrder,
 		p.flagTags.Default:             FlagTagDefault,
 		p.flagTags.DefaultMask:         FlagTagDefaultMask,
 		p.flagTags.Env:                 FlagTagEnv,
@@ -294,6 +335,21 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 			c[target] = values
 		}
 	}
+}
+
+// SetOptionSort configures option order mode for grouped option presentation.
+func (p *Parser) SetOptionSort(mode OptionSortMode) {
+	p.optionSort = mode
+}
+
+// SetOptionTypeOrder customizes type rank used by OptionSortByType.
+func (p *Parser) SetOptionTypeOrder(order []OptionTypeClass) error {
+	rank, err := buildOptionTypeRank(order)
+	if err != nil {
+		return err
+	}
+	p.optionTypeRank = rank
+	return nil
 }
 
 type groupSpec struct {

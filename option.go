@@ -61,6 +61,11 @@ type Option struct {
 	// Cached default literal shown in help/man output.
 	defaultLiteral string
 
+	// If non-empty, the option consumes arguments until this exact token is
+	// reached (or until end-of-input). This supports find -exec style argument
+	// blocks. Only slice and slice-of-slices options are valid with terminator.
+	Terminator string
+
 	// The default value of the option.
 	Default []string
 
@@ -71,16 +76,16 @@ type Option struct {
 	// OptionalValue. This is only valid for non-boolean options.
 	OptionalValue []string
 
-	// If non-empty, the option consumes arguments until this exact token is
-	// reached (or until end-of-input). This supports find -exec style argument
-	// blocks. Only slice and slice-of-slices options are valid with terminator.
-	Terminator string
-
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
 
 	// The struct field which the option represents.
 	field reflect.StructField
+
+	// Display and completion priority within the option's group block.
+	// Positive values move options to the top, negative to the bottom,
+	// and zero keeps them in the normal sort mode.
+	Order int
 
 	// The short name of the option (a single character). If not 0, the
 	// option flag can be 'activated' using -<ShortName>. Either ShortName

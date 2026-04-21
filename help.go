@@ -422,7 +422,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				return
 			}
 
-			for _, info := range grp.options {
+			for _, info := range grp.Options() {
 				if !info.showInHelp() {
 					continue
 				}

@@ -120,7 +120,13 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 		shortprefix = "-"
 	}
 
-	for name, opt := range s.lookup.longNames {
+	options := c.collectOptionsForCompletion(s)
+
+	for _, opt := range options {
+		name := opt.LongNameWithNamespace()
+		if name == "" {
+			continue
+		}
 		if strings.HasPrefix(name, match) && !opt.Hidden {
 			results = append(results, Completion{
 				Item:        longprefix + name,
@@ -134,7 +140,11 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 	}
 
 	if short {
-		for name, opt := range s.lookup.shortNames {
+		for _, opt := range options {
+			if opt.ShortName == 0 {
+				continue
+			}
+			name := string(opt.ShortName)
 			if _, exist := repeats[name]; !exist && strings.HasPrefix(name, match) && !opt.Hidden {
 				results = append(results, Completion{
 					Item:        shortprefix + name,
@@ -145,6 +155,15 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 	}
 
 	return results
+}
+
+func (c *completion) collectOptionsForCompletion(s *parseState) []*Option {
+	var options []*Option
+	s.command.eachGroup(func(g *Group) {
+		options = append(options, g.Options()...)
+	})
+
+	return options
 }
 
 func (c *completion) completeNamesForLongPrefix(s *parseState, prefix string, match string) []Completion {
@@ -272,6 +291,7 @@ func (c *completion) complete(args []string) []Completion {
 
 	lastarg := s.args[len(s.args)-1]
 	var ret []Completion
+	optionNameCompletion := false
 
 	switch {
 	case opt != nil:
@@ -291,6 +311,7 @@ func (c *completion) complete(args []string) []Completion {
 				ret = c.completeValue(opt.value, prefix+sname, optname[n:])
 			} else {
 				ret = c.completeNamesForShortPrefix(s, prefix, optname)
+				optionNameCompletion = true
 			}
 		case hasArgument:
 			if islong {
@@ -304,8 +325,10 @@ func (c *completion) complete(args []string) []Completion {
 			}
 		case islong:
 			ret = c.completeNamesForLongPrefix(s, prefix, optname)
+			optionNameCompletion = true
 		default:
 			ret = c.completeNamesForShortPrefix(s, prefix, optname)
+			optionNameCompletion = true
 		}
 	case len(s.positional) > 0:
 		// Complete for positional argument
@@ -315,7 +338,9 @@ func (c *completion) complete(args []string) []Completion {
 		ret = c.completeCommands(s, lastarg)
 	}
 
-	sort.Sort(completions(ret))
+	if !optionNameCompletion || !c.parser.shouldSortOptionsForDisplay(c.collectOptionsForCompletion(s)) {
+		sort.Sort(completions(ret))
+	}
 	return ret
 }
 

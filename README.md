@@ -213,6 +213,38 @@ When global `EnvProvisioning` is enabled, use `auto-env:"false"` to opt out
 for a specific option.
 Boolean tag values accept `true/false`, `yes/no`, `y/n`, `1/0`, and `on/off`.
 
+## Option Sorting
+
+By default option order is unchanged (declaration order). You can configure
+sorting policy per parser:
+
+```go
+parser := flags.NewParser(&opts, flags.Default)
+parser.SetOptionSort(flags.OptionSortByNameAsc)
+```
+
+Supported modes:
+
+* `flags.OptionSortByDeclaration`
+* `flags.OptionSortByNameAsc`
+* `flags.OptionSortByNameDesc`
+* `flags.OptionSortByType`
+
+Use `order:"N"` on option fields for priority within a group block:
+
+* `order > 0` moves option toward top
+* `order < 0` moves option toward bottom
+* `order == 0` uses configured sort mode
+
+For `OptionSortByType`, type rank can be customized:
+
+```go
+_ = parser.SetOptionTypeOrder([]flags.OptionTypeClass{
+  flags.OptionTypeString,
+  flags.OptionTypeBool,
+})
+```
+
 ## Tag Customization
 
 If your structs already use tags for other libraries, you can remap flags

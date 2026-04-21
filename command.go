@@ -255,7 +255,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 				c.args = append(c.args, arg)
 
-				if len(mtag.Get(FlagTagRequired)) != 0 {
+				argsRequired, _, err := parseStructBoolTag(mtag, FlagTagRequired, sfield.Name)
+				if err != nil {
+					return true, err
+				}
+				if argsRequired {
 					c.ArgsRequired = true
 				}
 			}
@@ -337,7 +341,7 @@ func (c *Command) scan() error {
 func (c *Command) eachOption(f func(*Command, *Group, *Option)) {
 	c.eachCommand(func(c *Command) {
 		c.eachGroup(func(g *Group) {
-			for _, option := range g.options {
+			for _, option := range g.Options() {
 				f(c, g, option)
 			}
 		})

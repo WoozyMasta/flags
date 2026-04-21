@@ -24,6 +24,8 @@ const (
 	FlagTagOptional = "optional"
 	// FlagTagOptionalValue defines fallback value when optional arg is omitted.
 	FlagTagOptionalValue = "optional-value"
+	// FlagTagOrder sets display/completion priority order for options.
+	FlagTagOrder = "order"
 	// FlagTagDefault sets default option value (repeatable for slices/maps).
 	FlagTagDefault = "default"
 	// FlagTagDefaultMask customizes how default is shown in generated help.
@@ -95,6 +97,8 @@ type FlagTags struct {
 	Optional string
 	// OptionalValue maps to fallback optional value tag (default: "optional-value").
 	OptionalValue string
+	// Order maps to option sorting priority tag (default: "order").
+	Order string
 	// Default maps to default value tag (default: "default").
 	Default string
 	// DefaultMask maps to help default-mask tag (default: "default-mask").
@@ -159,6 +163,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		NoFlag:              prefix + FlagTagNoFlag,
 		Optional:            prefix + FlagTagOptional,
 		OptionalValue:       prefix + FlagTagOptionalValue,
+		Order:               prefix + FlagTagOrder,
 		Default:             prefix + FlagTagDefault,
 		DefaultMask:         prefix + FlagTagDefaultMask,
 		Env:                 prefix + FlagTagEnv,
@@ -211,6 +216,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.OptionalValue != "" {
 		d.OptionalValue = t.OptionalValue
+	}
+	if t.Order != "" {
+		d.Order = t.Order
 	}
 	if t.Default != "" {
 		d.Default = t.Default
