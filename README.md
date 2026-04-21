@@ -146,4 +146,4 @@ fmt.Printf("Remaining args: %s\n", strings.Join(args, " "))
 ```
 
 More information can be found in the godocs:
-<http://godoc.org/github.com/woozymasta/flags>
+<https://pkg.go.dev/github.com/woozymasta/flags>
