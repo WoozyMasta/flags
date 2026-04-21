@@ -1,5 +1,9 @@
+// SPDX-FileType: SOURCE
+// SPDX-FileCopyrightText: 2012 Jesse van den Kieboom
+// SPDX-FileCopyrightText: 2026 Maxim Levchenko (WoozyMasta)
+// SPDX-License-Identifier: BSD-3-Clause
+
 //go:build !windows || forceposix
-// +build !windows forceposix
 
 package flags
 
@@ -43,7 +47,7 @@ func stripOptionPrefix(optname string) (prefix string, name string, islong bool)
 
 // splitOption attempts to split the passed option into a name and an argument.
 // When there is no argument specified, hasArgument will be false.
-func splitOption(prefix string, option string, islong bool) (name string, split string, argument string, hasArgument bool) {
+func splitOption(_ string, option string, islong bool) (name string, split string, argument string, hasArgument bool) {
 	pos := strings.Index(option, "=")
 
 	if (islong && pos >= 0) || (!islong && pos == 1) {
