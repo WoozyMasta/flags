@@ -18,7 +18,7 @@ jobs:
           go-version: '1.26'
 
       - name: Run CI
-        run: make ci crosscompile
+        run: make ci test-race crosscompile
 
       - name: Extract changelog
         run: make release-notes > release.md
