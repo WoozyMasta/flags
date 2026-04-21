@@ -75,6 +75,10 @@ func TestGroupAdd(t *testing.T) {
 	if g.Options()[0].ShortName != 'g' {
 		t.Errorf("Expected short name `g' but got %v", g.Options()[0].ShortName)
 	}
+
+	if g.Data() != &grp {
+		t.Errorf("Expected data pointer %#v, but got %#v", &grp, g.Data())
+	}
 }
 
 func TestGroupNestedInline(t *testing.T) {

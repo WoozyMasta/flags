@@ -101,6 +101,11 @@ func (g *Group) Options() []*Option {
 	return g.options
 }
 
+// Data returns the user-provided struct pointer backing this group.
+func (g *Group) Data() any {
+	return g.data
+}
+
 // Find locates the subgroup with the given short description and returns it.
 // If no such group can be found Find will return nil. Note that the description
 // is matched case insensitively.
