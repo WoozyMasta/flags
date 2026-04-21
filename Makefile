@@ -1,17 +1,18 @@
 GO          ?= go
 LINTER      ?= golangci-lint
 ALIGNER     ?= betteralign
+VULNCHECK   ?= govulncheck
 BENCHSTAT   ?= benchstat
 BENCH_COUNT ?= 6
 BENCH_REF   ?= bench_baseline.txt
 
 .PHONY: test test-race test-short bench bench-fast bench-reset verify vet check ci \
-	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download \
-	tools tools-ci tool-golangci-lint tool-betteralign tool-benchstat \
+	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck \
+	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat \
 	release-notes
 
-check: verify tidy fmt vet lint-fix align-fix test
-ci: download tools-ci verify tidy-check fmt-check vet lint align test
+check: verify vulncheck tidy fmt vet lint-fix align-fix test
+ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test
 
 fmt:
 	gofmt -w .
@@ -81,14 +82,20 @@ align-fix:
 	-$(ALIGNER) -apply ./...
 	$(ALIGNER) ./...
 
-tools: tool-golangci-lint tool-betteralign tool-benchstat
-tools-ci: tool-golangci-lint tool-betteralign
+vulncheck:
+	$(VULNCHECK) ./...
+
+tools: tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat
+tools-ci: tool-golangci-lint tool-betteralign tool-govulncheck
 
 tool-golangci-lint:
 	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 tool-betteralign:
 	$(GO) install github.com/dkorunic/betteralign/cmd/betteralign@latest
+
+tool-govulncheck:
+	$(GO) install golang.org/x/vuln/cmd/govulncheck@latest
 
 tool-benchstat:
 	$(GO) install golang.org/x/perf/cmd/benchstat@latest
