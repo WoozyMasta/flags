@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/google/go-cmp/cmp"
 )
 
 func assertCallerInfo() (string, int) {
@@ -127,17 +127,10 @@ func assertParseFail(t *testing.T, typ ErrorType, msg string, data interface{}, 
 }
 
 func assertDiff(t *testing.T, actual, expected, msg string) {
-	if actual == expected {
+	diff := cmp.Diff(expected, actual)
+	if diff == "" {
 		return
 	}
 
-	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(actual, expected, false)
-
-	if len(diffs) == 0 {
-		return
-	}
-
-	pretty := dmp.DiffPrettyText(diffs)
-	assertErrorf(t, "Unexpected %s:\n\n%s", msg, pretty)
+	assertErrorf(t, "Unexpected %s (-expected +actual):\n%s", msg, diff)
 }

@@ -6,11 +6,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 type TestComplete struct {
@@ -294,8 +295,8 @@ func TestCompletion(t *testing.T) {
 		sort.Strings(items)
 		sort.Strings(test.Completed)
 
-		if !reflect.DeepEqual(items, test.Completed) {
-			t.Errorf("Args: %#v, %#v\n  Expected: %#v\n  Got:     %#v", test.Args, test.ShowDescriptions, test.Completed, items)
+		if diff := cmp.Diff(test.Completed, items); diff != "" {
+			t.Errorf("Args: %#v, showDescriptions=%v, mismatch (-expected +actual):\n%s", test.Args, test.ShowDescriptions, diff)
 		}
 	}
 }
@@ -342,8 +343,8 @@ func TestParserCompletion(t *testing.T) {
 
 		got := strings.Split(strings.Trim(<-out, "\n"), "\n")
 
-		if !reflect.DeepEqual(got, test.Completed) {
-			t.Errorf("Expected: %#v\nGot: %#v", test.Completed, got)
+		if diff := cmp.Diff(test.Completed, got); diff != "" {
+			t.Errorf("Completion output mismatch (-expected +actual):\n%s", diff)
 		}
 	}
 

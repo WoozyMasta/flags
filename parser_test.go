@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 type defaultOptions struct {
@@ -150,8 +152,8 @@ func TestDefaults(t *testing.T) {
 				opts.Slice = []int{}
 			}
 
-			if !reflect.DeepEqual(opts, test.expected) {
-				t.Errorf("%s:\nUnexpected options with arguments %+v\nexpected\n%+v\nbut got\n%+v\n", test.msg, test.args, test.expected, opts)
+			if diff := cmp.Diff(test.expected, opts); diff != "" {
+				t.Errorf("%s:\nUnexpected options with arguments %+v (-expected +actual):\n%s", test.msg, test.args, diff)
 			}
 		}
 	}
@@ -397,8 +399,8 @@ func TestEnvDefaults(t *testing.T) {
 				opts.Slice = []int{}
 			}
 
-			if !reflect.DeepEqual(opts, test.expected) {
-				t.Errorf("%s:\nUnexpected options with arguments %+v\nexpected\n%+v\nbut got\n%+v\n", test.msg, test.args, test.expected, opts)
+			if diff := cmp.Diff(test.expected, opts); diff != "" {
+				t.Errorf("%s:\nUnexpected options with arguments %+v (-expected +actual):\n%s", test.msg, test.args, diff)
 			}
 		}
 	}
@@ -757,8 +759,8 @@ func TestAllowBoolValues(t *testing.T) {
 			if opts.Value != test.expected {
 				t.Errorf("%s:\nExpected %v; got %v", test.msg, test.expected, opts.Value)
 			}
-			if len(test.expectedNonOptArgs) != len(nonOptArgs) && !reflect.DeepEqual(test.expectedNonOptArgs, nonOptArgs) {
-				t.Errorf("%s:\nUnexpected non-argument options\nexpected\n%+v\nbut got\n%+v\n", test.msg, test.expectedNonOptArgs, nonOptArgs)
+			if diff := cmp.Diff(test.expectedNonOptArgs, nonOptArgs, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("%s:\nUnexpected non-argument options (-expected +actual):\n%s", test.msg, diff)
 			}
 		} else {
 			if err == nil {
