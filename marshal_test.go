@@ -33,6 +33,49 @@ func (m marshalledError) MarshalFlag() (string, error) {
 	return "", newErrorf(ErrMarshal, "Failed to marshal")
 }
 
+type textMarshalled string
+
+func (m *textMarshalled) UnmarshalText(value []byte) error {
+	switch string(value) {
+	case "yes":
+		*m = "true"
+	case "no":
+		*m = "false"
+	default:
+		return fmt.Errorf("`%s' is not a valid value, please specify `yes' or `no'", string(value))
+	}
+
+	return nil
+}
+
+func (m textMarshalled) MarshalText() ([]byte, error) {
+	if m == "true" {
+		return []byte("yes"), nil
+	}
+
+	return []byte("no"), nil
+}
+
+type dualMarshalled string
+
+func (m *dualMarshalled) UnmarshalFlag(value string) error {
+	*m = dualMarshalled("flag:" + value)
+	return nil
+}
+
+func (m dualMarshalled) MarshalFlag() (string, error) {
+	return "from-flag-marshaler", nil
+}
+
+func (m *dualMarshalled) UnmarshalText(value []byte) error {
+	*m = dualMarshalled("text:" + string(value))
+	return nil
+}
+
+func (m dualMarshalled) MarshalText() ([]byte, error) {
+	return []byte("from-text-marshaler"), nil
+}
+
 func TestUnmarshal(t *testing.T) {
 	var opts = struct {
 		Value marshalled `short:"v"`
@@ -116,4 +159,48 @@ func TestMarshalError(t *testing.T) {
 	_, err := convertToString(o.value, o.tag)
 
 	assertError(t, err, ErrMarshal, "Failed to marshal")
+}
+
+func TestTextUnmarshalRoundTrip(t *testing.T) {
+	var opts = struct {
+		Value textMarshalled `short:"v"`
+	}{}
+
+	ret := assertParseSuccess(t, &opts, "-v=yes")
+	assertStringArray(t, ret, []string{})
+
+	if opts.Value != "true" {
+		t.Errorf("Expected Value to be \"true\"")
+	}
+
+	p := NewParser(&opts, Default)
+	o := p.Command.Groups()[0].Options()[0]
+	s, err := convertToString(o.value, o.tag)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	assertString(t, s, "yes")
+}
+
+func TestMarshalInterfacePriority(t *testing.T) {
+	var opts = struct {
+		Value dualMarshalled `short:"v"`
+	}{}
+
+	ret := assertParseSuccess(t, &opts, "-v=abc")
+	assertStringArray(t, ret, []string{})
+
+	assertString(t, string(opts.Value), "flag:abc")
+
+	p := NewParser(&opts, Default)
+	o := p.Command.Groups()[0].Options()[0]
+	s, err := convertToString(o.value, o.tag)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	assertString(t, s, "from-flag-marshaler")
 }

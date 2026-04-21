@@ -6,6 +6,7 @@
 package flags
 
 import (
+	"encoding"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -67,6 +68,15 @@ func convertMarshal(val reflect.Value) (bool, string, error) {
 			ret, err := marshaler.MarshalFlag()
 			return true, ret, err
 		}
+
+		if marshaler, ok := val.Interface().(encoding.TextMarshaler); ok {
+			ret, err := marshaler.MarshalText()
+			return true, string(ret), err
+		}
+	}
+
+	if val.IsValid() && val.Kind() != reflect.Ptr && val.CanAddr() {
+		return convertMarshal(val.Addr())
 	}
 
 	return false, "", nil
@@ -188,6 +198,17 @@ func convertUnmarshal(val string, retval reflect.Value) (bool, error) {
 			}
 
 			return true, unmarshaler.UnmarshalFlag(val)
+		}
+
+		if unmarshaler, ok := retval.Interface().(encoding.TextUnmarshaler); ok {
+			if retval.IsNil() {
+				retval.Set(reflect.New(retval.Type().Elem()))
+
+				// Re-assign from the new value
+				unmarshaler = retval.Interface().(encoding.TextUnmarshaler)
+			}
+
+			return true, unmarshaler.UnmarshalText([]byte(val))
 		}
 	}
 
