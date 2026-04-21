@@ -1,8 +1,8 @@
 # go-flags
 
-This library provides similar functionality to the builtin flag library of
-go, but provides much more functionality and nicer formatting. From the
-documentation:
+This library provides similar functionality to the builtin flag library of go,
+but provides much more functionality and nicer formatting.
+From the documentation:
 
 Package flags provides an extensive command line option parser.
 The flags package is similar in functionality to the go builtin flag package
@@ -11,25 +11,28 @@ succinct way of specifying command line options.
 
 Supported features:
 
-* Options with short names (-v)
-* Options with long names (--verbose)
+* Options with short names (`-v`)
+* Options with long names (`--verbose`)
 * Options with and without arguments (bool v.s. other type)
 * Options with optional arguments and default values
 * Multiple option groups each containing a set of options
 * Generate and print well-formatted help message
-* Passing remaining command line arguments after -- (optional)
+* Passing remaining command line arguments after `--` (optional)
 * Ignoring unknown command line options (optional)
-* Supports -I/usr/include -I=/usr/include -I /usr/include option argument specification
-* Supports multiple short options -aux
-* Supports all primitive go types (string, int{8..64}, uint{8..64}, float)
+* Supports `-I/usr/include` `-I=/usr/include` `-I /usr/include`
+  option argument specification
+* Supports multiple short options `-aux`
+* Supports all primitive go types
+  (string, `int{8..64}`, `uint{8..64}`, `float`)
 * Supports same option multiple times (can store in slice or last option counts)
 * Supports maps
 * Supports function callbacks
 * Supports namespaces for (nested) option groups
 
 The flags package uses structs, reflection and struct field tags
-to allow users to specify command line options. This results in very simple
-and concise specification of your application options. For example:
+to allow users to specify command line options.
+This results in very simple and concise specification
+of your application options. For example:
 
 ```go
 type Options struct {
@@ -37,10 +40,11 @@ type Options struct {
 }
 ```
 
-This specifies one option with a short name -v and a long name --verbose.
-When either -v or --verbose is found on the command line, a 'true' value
-will be appended to the Verbose field. e.g. when specifying -vvv, the
-resulting value of Verbose will be {[true, true, true]}.
+This specifies one option with a short name `-v` and a long name `--verbose`.
+When either `-v` or `--verbose` is found on the command line,
+a `true` value will be appended to the Verbose field. e.g.
+when specifying `-vvv`, the resulting value of Verbose will be
+`{[true, true, true]}`.
 
 > [!NOTE]  
 > this repository is a fork of
@@ -82,7 +86,7 @@ var opts struct {
   IntMap map[string]int `long:"intmap" description:"A map from string to int"`
 
   // Example of env variable
-  Thresholds  []int     `long:"thresholds" default:"1" default:"2" env:"THRESHOLD_VALUES"  env-delim:","`
+  Thresholds []int `long:"thresholds" default:"1" default:"2" env:"THRESHOLD_VALUES" env-delim:","`
 }
 
 // Callback which will invoke callto:<argument> to call a number.
