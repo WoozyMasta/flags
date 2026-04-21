@@ -1,6 +1,6 @@
 module github.com/jessevdk/go-flags
 
-go 1.25.0
+go 1.26
 
 require (
 	github.com/sergi/go-diff v1.4.0
