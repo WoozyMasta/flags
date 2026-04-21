@@ -266,6 +266,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.KeyValueDelimiter:   FlagTagKeyValueDelimiter,
 		p.flagTags.PassAfterNonOption:  FlagTagPassAfterNonOption,
 		p.flagTags.Unquote:             FlagTagUnquote,
+		p.flagTags.Terminator:          FlagTagTerminator,
 	}
 
 	for source, target := range alias {
@@ -726,6 +727,16 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 			value = &argument
 		}
 		err = option.Set(value)
+	case option.isTerminated():
+		if hasArgument {
+			return newErrorf(ErrExpectedArgument, "terminated option flag `%s' cannot use inline argument syntax", option)
+		}
+
+		args, collectErr := p.collectTerminatedArgs(s, option)
+		if collectErr != nil {
+			return collectErr
+		}
+		err = option.SetTerminated(args)
 	case hasArgument || (canarg && !s.eof()):
 		var arg string
 
@@ -769,6 +780,30 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 	}
 
 	return err
+}
+
+func (p *Parser) collectTerminatedArgs(s *parseState, option *Option) ([]string, error) {
+	args := make([]string, 0, 4)
+
+	for !s.eof() {
+		arg := s.pop()
+
+		if arg == option.Terminator {
+			break
+		}
+
+		if option.tag.Get(FlagTagUnquote) != "false" {
+			unquoted, err := unquoteIfPossible(arg)
+			if err != nil {
+				return nil, err
+			}
+			arg = unquoted
+		}
+
+		args = append(args, arg)
+	}
+
+	return args, nil
 }
 
 func (p *Parser) marshalError(option *Option, err error) *Error {

@@ -66,6 +66,8 @@ const (
 	FlagTagPassAfterNonOption = "pass-after-non-option"
 	// FlagTagUnquote controls automatic unquoting of string arguments.
 	FlagTagUnquote = "unquote"
+	// FlagTagTerminator marks an option that consumes arguments until terminator token.
+	FlagTagTerminator = "terminator"
 )
 
 const flagTagReadIniName = "_read-ini-name"
@@ -133,6 +135,8 @@ type FlagTags struct {
 	PassAfterNonOption string
 	// Unquote maps to string unquoting control tag (default: "unquote").
 	Unquote string
+	// Terminator maps to terminated-arguments tag (default: "terminator").
+	Terminator string
 }
 
 // NewFlagTags returns default tag names.
@@ -172,6 +176,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
 		PassAfterNonOption:  prefix + FlagTagPassAfterNonOption,
 		Unquote:             prefix + FlagTagUnquote,
+		Terminator:          prefix + FlagTagTerminator,
 	}
 }
 
@@ -264,6 +269,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Unquote != "" {
 		d.Unquote = t.Unquote
+	}
+	if t.Terminator != "" {
+		d.Terminator = t.Terminator
 	}
 
 	return d

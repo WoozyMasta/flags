@@ -635,6 +635,179 @@ func TestOptionAsArgument(t *testing.T) {
 	}
 }
 
+func TestTerminatedOptions(t *testing.T) {
+	type terminatedOpts struct {
+		Slice         []int      `short:"s" long:"slice" terminator:"END"`
+		MultipleSlice [][]string `short:"m" long:"multiple" terminator:";"`
+		Bool          bool       `short:"v"`
+	}
+
+	tests := []struct {
+		name                  string
+		parserOpts            Options
+		args                  []string
+		wantSlice             []int
+		wantMultipleSlice     [][]string
+		wantBool              bool
+		wantRest              []string
+		wantErrContains       string
+		wantErrContainsSecond string
+	}{
+		{
+			name: "terminators usage",
+			args: []string{
+				"-s", "1", "2", "3", "END",
+				"-m", "bin", "-xyz", "--foo", "bar", "-v", "foo bar", ";",
+				"-v",
+				"-m", "-xyz", "--foo",
+			},
+			wantSlice: []int{1, 2, 3},
+			wantMultipleSlice: [][]string{
+				{"bin", "-xyz", "--foo", "bar", "-v", "foo bar"},
+				{"-xyz", "--foo"},
+			},
+			wantBool: true,
+		},
+		{
+			name: "slice overwritten",
+			args: []string{
+				"-s", "1", "2", "END",
+				"-s", "3", "4",
+			},
+			wantSlice: []int{3, 4},
+		},
+		{
+			name: "terminator omitted for last option",
+			args: []string{
+				"-s", "1", "2", "3",
+			},
+			wantSlice: []int{1, 2, 3},
+		},
+		{
+			name: "short names jumbled",
+			args: []string{
+				"-vm", "--foo", "-v", "bar", ";",
+				"-s", "1", "2",
+			},
+			wantSlice:         []int{1, 2},
+			wantMultipleSlice: [][]string{{"--foo", "-v", "bar"}},
+			wantBool:          true,
+		},
+		{
+			name: "terminator must be a token",
+			args: []string{
+				"-m", "--foo", "-v;", "-v",
+			},
+			wantMultipleSlice: [][]string{{"--foo", "-v;", "-v"}},
+		},
+		{
+			name:       "double dash preserved inside terminated option",
+			parserOpts: PassDoubleDash,
+			args: []string{
+				"-m", "--foo", "--", "bar", ";",
+				"-v",
+				"--", "--foo", "bar",
+			},
+			wantMultipleSlice: [][]string{{"--foo", "--", "bar"}},
+			wantBool:          true,
+			wantRest:          []string{"--foo", "bar"},
+		},
+		{
+			name:                  "inline argument syntax rejected",
+			args:                  []string{"-m=foo", "bar"},
+			wantErrContains:       "terminated option flag",
+			wantErrContainsSecond: "cannot use inline argument syntax",
+		},
+		{
+			name:                  "inline argument syntax rejected for empty value",
+			args:                  []string{"-m=", "foo"},
+			wantErrContains:       "terminated option flag",
+			wantErrContainsSecond: "cannot use inline argument syntax",
+		},
+		{
+			name:              "no args",
+			args:              []string{"-m", ";", "-s", "END"},
+			wantMultipleSlice: [][]string{{}},
+		},
+		{
+			name:              "no args without terminator",
+			args:              []string{"-m"},
+			wantMultipleSlice: [][]string{{}},
+		},
+		{
+			name: "missing args in the middle",
+			args: []string{
+				"-m", "a", ";",
+				"-m", ";",
+				"-m", "b",
+			},
+			wantMultipleSlice: [][]string{{"a"}, {}, {"b"}},
+		},
+		{
+			name:              "empty string argument",
+			args:              []string{"-m", ""},
+			wantMultipleSlice: [][]string{{""}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := terminatedOpts{}
+			parser := NewParser(&opts, tt.parserOpts)
+
+			rest, err := parser.ParseArgs(tt.args)
+			if tt.wantErrContains != "" {
+				if err == nil {
+					t.Fatalf("expected parse error")
+				}
+				if !strings.Contains(err.Error(), tt.wantErrContains) {
+					t.Fatalf("expected error to contain %q, got %q", tt.wantErrContains, err.Error())
+				}
+				if tt.wantErrContainsSecond != "" && !strings.Contains(err.Error(), tt.wantErrContainsSecond) {
+					t.Fatalf("expected error to contain %q, got %q", tt.wantErrContainsSecond, err.Error())
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if opts.Bool != tt.wantBool {
+				t.Fatalf("expected Bool=%v, got %v", tt.wantBool, opts.Bool)
+			}
+
+			if diff := cmp.Diff(tt.wantSlice, opts.Slice, cmpopts.EquateEmpty()); diff != "" {
+				t.Fatalf("unexpected Slice (-expected +actual):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.wantMultipleSlice, opts.MultipleSlice, cmpopts.EquateEmpty()); diff != "" {
+				t.Fatalf("unexpected MultipleSlice (-expected +actual):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.wantRest, rest, cmpopts.EquateEmpty()); diff != "" {
+				t.Fatalf("unexpected rest args (-expected +actual):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestTerminatedOptionInvalidTag(t *testing.T) {
+	var opts struct {
+		Invalid int `short:"t" terminator:"END"`
+	}
+
+	parser := NewParser(&opts, None)
+	_, err := parser.ParseArgs(nil)
+
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+	if !strings.Contains(err.Error(), "must be a slice or slice of slices") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestUnknownFlagHandler(t *testing.T) {
 
 	var opts struct {
@@ -1040,6 +1213,26 @@ func TestSetTagPrefix(t *testing.T) {
 
 	if opts.Path != "tmp-path" {
 		t.Fatalf("expected tmp-path, got %q", opts.Path)
+	}
+}
+
+func TestSetTagPrefixTerminator(t *testing.T) {
+	var opts struct {
+		Exec []string `flag-short:"e" flag-terminator:";"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if err := p.SetTagPrefix("flag-"); err != nil {
+		t.Fatalf("unexpected set prefix error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"-e", "echo", "hello", ";"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if diff := cmp.Diff([]string{"echo", "hello"}, opts.Exec, cmpopts.EquateEmpty()); diff != "" {
+		t.Fatalf("unexpected terminated values (-expected +actual):\n%s", diff)
 	}
 }
 

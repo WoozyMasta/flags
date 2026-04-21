@@ -71,6 +71,7 @@ Common value types:
 * custom types via:
   * `flags.Unmarshaler` / `flags.Marshaler`
   * `encoding.TextUnmarshaler` / `encoding.TextMarshaler`
+* terminated option lists via `terminator:"..."` (`find -exec` style)
 
 Example map and slice options:
 
@@ -80,6 +81,16 @@ type Options struct {
   Labels  map[string]int `long:"label" description:"label:value pairs"`
 }
 ```
+
+Terminated list options:
+
+```go
+type Options struct {
+  Exec []string `long:"exec" terminator:";"`
+}
+```
+
+Then `--exec echo hello ; --other-flag` stores `["echo", "hello"]` in `Exec`.
 
 ## Positional Arguments
 

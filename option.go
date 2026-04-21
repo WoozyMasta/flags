@@ -71,6 +71,11 @@ type Option struct {
 	// OptionalValue. This is only valid for non-boolean options.
 	OptionalValue []string
 
+	// If non-empty, the option consumes arguments until this exact token is
+	// reached (or until end-of-input). This supports find -exec style argument
+	// blocks. Only slice and slice-of-slices options are valid with terminator.
+	Terminator string
+
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
 
@@ -284,17 +289,9 @@ func (option *Option) Set(value *string) error {
 	option.preventDefault = true
 	option.clearReferenceBeforeSet = false
 
-	if len(option.Choices) != 0 {
-		if !slices.Contains(option.Choices, *value) {
-			allowed := strings.Join(option.Choices[0:len(option.Choices)-1], ", ")
-
-			if len(option.Choices) > 1 {
-				allowed += " or " + option.Choices[len(option.Choices)-1]
-			}
-
-			return newErrorf(ErrInvalidChoice,
-				"Invalid value `%s' for option `%s'. Allowed values are: %s",
-				*value, option, allowed)
+	if value != nil {
+		if err := option.validateChoice(*value); err != nil {
+			return err
 		}
 	}
 
@@ -305,6 +302,55 @@ func (option *Option) Set(value *string) error {
 	}
 
 	return convert("", option.value, option.tag)
+}
+
+// SetTerminated sets all values collected for a terminated option.
+// For []T options this replaces the current slice value.
+// For [][]T options this appends one collected argument batch.
+func (option *Option) SetTerminated(values []string) error {
+	tp := option.value.Type()
+
+	if tp.Kind() != reflect.Slice {
+		return newErrorf(ErrInvalidTag,
+			"terminated flag `%s' must be a slice or slice of slices",
+			option.shortAndLongName())
+	}
+
+	option.isSet = true
+	option.preventDefault = true
+	option.clearReferenceBeforeSet = false
+
+	elemTp := tp.Elem()
+
+	if elemTp.Kind() == reflect.Slice {
+		elemVal := reflect.New(elemTp).Elem()
+		elemVal.Set(reflect.MakeSlice(elemTp, 0, len(values)))
+
+		for _, v := range values {
+			if err := option.validateChoice(v); err != nil {
+				return err
+			}
+			if err := convert(v, elemVal, option.tag); err != nil {
+				return err
+			}
+		}
+
+		option.value.Set(reflect.Append(option.value, elemVal))
+		return nil
+	}
+
+	option.empty()
+
+	for _, v := range values {
+		if err := option.validateChoice(v); err != nil {
+			return err
+		}
+		if err := convert(v, option.value, option.tag); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (option *Option) setDefault(value *string) error {
@@ -332,6 +378,10 @@ func (option *Option) canArgument() bool {
 	}
 
 	return !option.isBool()
+}
+
+func (option *Option) isTerminated() bool {
+	return option.Terminator != ""
 }
 
 func (option *Option) emptyValue() reflect.Value {
@@ -610,4 +660,21 @@ func (option *Option) isValidValue(arg string) error {
 		return fmt.Errorf("expected argument for flag `%s', but got option `%s'", option, arg)
 	}
 	return nil
+}
+
+func (option *Option) validateChoice(value string) error {
+	if len(option.Choices) == 0 || slices.Contains(option.Choices, value) {
+		return nil
+	}
+
+	allowed := option.Choices[0]
+
+	if len(option.Choices) > 1 {
+		allowed = strings.Join(option.Choices[0:len(option.Choices)-1], ", ")
+		allowed += " or " + option.Choices[len(option.Choices)-1]
+	}
+
+	return newErrorf(ErrInvalidChoice,
+		"Invalid value `%s' for option `%s'. Allowed values are: %s",
+		value, option, allowed)
 }

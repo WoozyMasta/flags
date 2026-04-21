@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning][].
   (with `flags.Marshaler` / `flags.Unmarshaler` precedence).
 * `examples/zsh-completion` template.
 * Benchmarks for core parsing/help/INI flows.
+* `terminator` option tag for find-style terminated argument lists
+  (supports both `[]T` and `[][]T` option targets).
 
 ### Changed
 
