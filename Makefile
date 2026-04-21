@@ -6,10 +6,20 @@ BENCHSTAT   ?= benchstat
 BENCH_COUNT ?= 6
 BENCH_REF   ?= bench_baseline.txt
 
+TARGETS ?= \
+	linux/arm/7 \
+	linux/arm/5 \
+	windows/386 \
+	windows/amd64 \
+	darwin/amd64 \
+	freebsd/amd64 \
+	aix/ppc64 \
+	solaris/amd64
+
 .PHONY: test test-race test-short bench bench-fast bench-reset verify vet check ci \
 	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck \
 	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat \
-	release-notes
+	release-notes crosscompile
 
 check: verify vulncheck tidy fmt vet lint-fix align-fix test
 ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test
@@ -116,3 +126,17 @@ release-notes:
 	function flush() { if (buf != "") { print buf; buf = "" } } \
 	END { flush() } \
 	' CHANGELOG.md
+
+crosscompile:
+	@set -e; \
+	for target in $(TARGETS); do \
+		IFS=/; set -- $$target; unset IFS; \
+		goos=$$1; goarch=$$2; goarm=$$3; \
+		if [ -n "$$goarm" ]; then \
+			echo "# $$goos $$goarch v$$goarm"; \
+			GOOS=$$goos GOARCH=$$goarch GOARM=$$goarm $(GO) build ./...; \
+		else \
+			echo "# $$goos $$goarch"; \
+			GOOS=$$goos GOARCH=$$goarch $(GO) build ./...; \
+		fi; \
+	done
