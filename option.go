@@ -1,3 +1,7 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
@@ -5,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -13,46 +18,29 @@ import (
 // long name as well as a default value and whether an argument for this
 // flag is optional.
 type Option struct {
+	// Parsed struct tags associated with this option.
+	tag multiTag
+
+	// The group which the option belongs to
+	group *Group
+
+	// The struct field value which the option represents.
+	value reflect.Value
+
 	// The description of the option flag. This description is shown
 	// automatically in the built-in help.
 	Description string
-
-	// The short name of the option (a single character). If not 0, the
-	// option flag can be 'activated' using -<ShortName>. Either ShortName
-	// or LongName needs to be non-empty.
-	ShortName rune
 
 	// The long name of the option. If not "", the option flag can be
 	// activated using --<LongName>. Either ShortName or LongName needs
 	// to be non-empty.
 	LongName string
 
-	// The default value of the option.
-	Default []string
-
 	// The optional environment default value key name.
 	EnvDefaultKey string
 
 	// The optional delimiter string for EnvDefaultKey values.
 	EnvDefaultDelim string
-
-	// If true, specifies that the argument to an option flag is optional.
-	// When no argument to the flag is specified on the command line, the
-	// value of OptionalValue will be set in the field this option represents.
-	// This is only valid for non-boolean options.
-	OptionalArgument bool
-
-	// The optional value of the option. The optional value is used when
-	// the option flag is marked as having an OptionalArgument. This means
-	// that when the flag is specified, but no option argument is given,
-	// the value of the field this option represents will be set to
-	// OptionalValue. This is only valid for non-boolean options.
-	OptionalValue []string
-
-	// If true, the option _must_ be specified on the command line. If the
-	// option is not specified, the parser will generate an ErrRequired type
-	// error.
-	Required bool
 
 	// A name for the value of an option shown in the Help as --flag [ValueName]
 	ValueName string
@@ -62,31 +50,58 @@ type Option struct {
 	// passwords.
 	DefaultMask string
 
+	// Cached default literal shown in help/man output.
+	defaultLiteral string
+
+	// The default value of the option.
+	Default []string
+
+	// The optional value of the option. The optional value is used when
+	// the option flag is marked as having an OptionalArgument. This means
+	// that when the flag is specified, but no option argument is given,
+	// the value of the field this option represents will be set to
+	// OptionalValue. This is only valid for non-boolean options.
+	OptionalValue []string
+
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
-
-	// If true, the option is not displayed in the help or man page
-	Hidden bool
-
-	// The group which the option belongs to
-	group *Group
 
 	// The struct field which the option represents.
 	field reflect.StructField
 
-	// The struct field value which the option represents.
-	value reflect.Value
+	// The short name of the option (a single character). If not 0, the
+	// option flag can be 'activated' using -<ShortName>. Either ShortName
+	// or LongName needs to be non-empty.
+	ShortName rune
+
+	// If true, specifies that the argument to an option flag is optional.
+	// When no argument to the flag is specified on the command line, the
+	// value of OptionalValue will be set in the field this option represents.
+	// This is only valid for non-boolean options.
+	OptionalArgument bool
+
+	// If true, the option _must_ be specified on the command line. If the
+	// option is not specified, the parser will generate an ErrRequired type
+	// error.
+	Required bool
+
+	// If true, the option is not displayed in the help or man page
+	Hidden bool
 
 	// Determines if the option will be always quoted in the INI output
 	iniQuote bool
 
-	tag                     multiTag
-	isSet                   bool
-	isSetDefault            bool
-	preventDefault          bool
-	clearReferenceBeforeSet bool
+	// Whether the option has been explicitly set by parsing.
+	isSet bool
 
-	defaultLiteral string
+	// Whether the current value was set from defaults.
+	isSetDefault bool
+
+	// Whether applying parser defaults is disabled for this option.
+	preventDefault bool
+
+	// Whether map/slice values should be cleared before the next set.
+	clearReferenceBeforeSet bool
 }
 
 // LongNameWithNamespace returns the option's long name with the group namespaces
@@ -251,16 +266,7 @@ func (option *Option) Set(value *string) error {
 	option.clearReferenceBeforeSet = false
 
 	if len(option.Choices) != 0 {
-		found := false
-
-		for _, choice := range option.Choices {
-			if choice == *value {
-				found = true
-				break
-			}
-		}
-
-		if !found {
+		if !slices.Contains(option.Choices, *value) {
 			allowed := strings.Join(option.Choices[0:len(option.Choices)-1], ", ")
 
 			if len(option.Choices) > 1 {
@@ -384,7 +390,9 @@ func (option *Option) valueIsDefault() bool {
 
 	if len(option.Default) != 0 {
 		for _, v := range option.Default {
-			convert(v, checkval, option.tag)
+			if err := convert(v, checkval, option.tag); err != nil {
+				return false
+			}
 		}
 	}
 
@@ -395,7 +403,6 @@ func (option *Option) isUnmarshaler() Unmarshaler {
 	v := option.value
 
 	for v.CanInterface() {
-
 		i := v.Interface()
 
 		if u, ok := i.(Unmarshaler); ok {
@@ -416,7 +423,6 @@ func (option *Option) isValueValidator() ValueValidator {
 	v := option.value
 
 	for v.CanInterface() {
-
 		i := v.Interface()
 
 		if u, ok := i.(ValueValidator); ok {
@@ -487,7 +493,7 @@ func (option *Option) call(value *string) error {
 		retval = option.value.Call([]reflect.Value{val})
 	}
 
-	if len(retval) == 1 && retval[0].Type() == reflect.TypeOf((*error)(nil)).Elem() {
+	if len(retval) == 1 && retval[0].Type() == reflect.TypeFor[error]() {
 		if retval[0].Interface() == nil {
 			return nil
 		}
@@ -524,7 +530,7 @@ func (option *Option) updateDefaultLiteral() {
 		l := len(defs) - 1
 
 		var defSb532 strings.Builder
-		for i := 0; i < l; i++ {
+		for i := range l {
 			defSb532.WriteString(quoteIfNeeded(defs[i]) + ", ")
 		}
 		def += defSb532.String()

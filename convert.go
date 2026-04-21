@@ -75,7 +75,7 @@ func convertToString(val reflect.Value, options multiTag) (string, error) {
 	tp := val.Type()
 
 	// Support for time.Duration
-	if tp == reflect.TypeOf((*time.Duration)(nil)).Elem() {
+	if tp == reflect.TypeFor[time.Duration]() {
 		stringer := val.Interface().(fmt.Stringer)
 		return stringer.String(), nil
 	}
@@ -201,7 +201,7 @@ func convert(val string, retval reflect.Value, options multiTag) error {
 	tp := retval.Type()
 
 	// Support for time.Duration
-	if tp == reflect.TypeOf((*time.Duration)(nil)).Elem() {
+	if tp == reflect.TypeFor[time.Duration]() {
 		parsed, err := time.ParseDuration(val)
 
 		if err != nil {
@@ -339,16 +339,6 @@ func quoteIfNeeded(s string) string {
 	}
 
 	return s
-}
-
-func quoteIfNeededV(s []string) []string {
-	ret := make([]string, len(s))
-
-	for i, v := range s {
-		ret[i] = quoteIfNeeded(v)
-	}
-
-	return ret
 }
 
 func quoteV(s []string) []string {

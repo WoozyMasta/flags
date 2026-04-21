@@ -1,3 +1,7 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
@@ -65,7 +69,7 @@ func (f *Filename) Complete(match string) []Completion {
 	ret, _ := filepath.Glob(match + "*")
 	if len(ret) == 1 {
 		if info, err := os.Stat(ret[0]); err == nil && info.IsDir() {
-			ret[0] = ret[0] + "/"
+			ret[0] += "/"
 		}
 	}
 	return completionsWithoutDescriptions(ret)
@@ -255,15 +259,17 @@ func (c *completion) complete(args []string) []Completion {
 	lastarg := s.args[len(s.args)-1]
 	var ret []Completion
 
-	if opt != nil {
+	switch {
+	case opt != nil:
 		// Completion for the argument of 'opt'
 		ret = c.completeValue(opt.value, "", lastarg)
-	} else if argumentStartsOption(lastarg) {
+	case argumentStartsOption(lastarg):
 		// Complete the option
 		prefix, optname, islong := stripOptionPrefix(lastarg)
 		optname, split, argument := splitOption(prefix, optname, islong)
 
-		if argument == nil && !islong {
+		switch {
+		case argument == nil && !islong:
 			rname, n := utf8.DecodeRuneInString(optname)
 			sname := string(rname)
 
@@ -272,7 +278,7 @@ func (c *completion) complete(args []string) []Completion {
 			} else {
 				ret = c.completeNamesForShortPrefix(s, prefix, optname)
 			}
-		} else if argument != nil {
+		case argument != nil:
 			if islong {
 				opt = s.lookup.longNames[optname]
 			} else {
@@ -282,15 +288,15 @@ func (c *completion) complete(args []string) []Completion {
 			if opt != nil {
 				ret = c.completeValue(opt.value, prefix+optname+split, *argument)
 			}
-		} else if islong {
+		case islong:
 			ret = c.completeNamesForLongPrefix(s, prefix, optname)
-		} else {
+		default:
 			ret = c.completeNamesForShortPrefix(s, prefix, optname)
 		}
-	} else if len(s.positional) > 0 {
+	case len(s.positional) > 0:
 		// Complete for positional argument
 		ret = c.completeValue(s.positional[0].value, "", lastarg)
-	} else if len(s.command.commands) > 0 {
+	case len(s.command.commands) > 0:
 		// Complete for command
 		ret = c.completeCommands(s, lastarg)
 	}

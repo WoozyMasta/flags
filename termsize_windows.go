@@ -1,5 +1,9 @@
 //go:build windows
 
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
@@ -9,34 +13,34 @@ import (
 )
 
 type (
-	SHORT int16
-	WORD  uint16
+	short int16
+	word  uint16
 
-	SMALL_RECT struct {
-		Left   SHORT
-		Top    SHORT
-		Right  SHORT
-		Bottom SHORT
+	smallRect struct {
+		Left   short
+		Top    short
+		Right  short
+		Bottom short
 	}
 
-	COORD struct {
-		X SHORT
-		Y SHORT
+	coord struct {
+		X short
+		Y short
 	}
 
-	CONSOLE_SCREEN_BUFFER_INFO struct {
-		Size              COORD
-		CursorPosition    COORD
-		Attributes        WORD
-		Window            SMALL_RECT
-		MaximumWindowSize COORD
+	consoleScreenBufferInfo struct {
+		Size              coord
+		CursorPosition    coord
+		Attributes        word
+		Window            smallRect
+		MaximumWindowSize coord
 	}
 )
 
 var kernel32DLL = syscall.NewLazyDLL("kernel32.dll")
 var getConsoleScreenBufferInfoProc = kernel32DLL.NewProc("GetConsoleScreenBufferInfo")
 
-func getError(r1, r2 uintptr, lastErr error) error {
+func getError(r1, _ uintptr, lastErr error) error {
 	// If the function fails, the return value is zero.
 	if r1 == 0 {
 		if lastErr != nil {
@@ -57,8 +61,8 @@ func getStdHandle(stdhandle int) (uintptr, error) {
 
 // GetConsoleScreenBufferInfo retrieves information about the specified console screen buffer.
 // http://msdn.microsoft.com/en-us/library/windows/desktop/ms683171(v=vs.85).aspx
-func GetConsoleScreenBufferInfo(handle uintptr) (*CONSOLE_SCREEN_BUFFER_INFO, error) {
-	var info CONSOLE_SCREEN_BUFFER_INFO
+func getConsoleScreenBufferInfo(handle uintptr) (*consoleScreenBufferInfo, error) {
+	var info consoleScreenBufferInfo
 	if err := getError(getConsoleScreenBufferInfoProc.Call(handle, uintptr(unsafe.Pointer(&info)), 0)); err != nil {
 		return nil, err
 	}
@@ -75,7 +79,7 @@ func getTerminalColumns() int {
 		return defaultTermSize
 	}
 
-	info, err := GetConsoleScreenBufferInfo(stdoutHandle)
+	info, err := getConsoleScreenBufferInfo(stdoutHandle)
 	if err != nil {
 		return defaultTermSize
 	}

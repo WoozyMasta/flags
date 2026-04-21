@@ -1,3 +1,7 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -44,22 +48,23 @@ func (p *Point) UnmarshalFlag(value string) error {
 	return nil
 }
 
+//nolint:unparam // required by flags.Marshaler interface
 func (p Point) MarshalFlag() (string, error) {
 	return fmt.Sprintf("%d,%d", p.X, p.Y), nil
 }
 
 type Options struct {
-	// Example of verbosity with level
-	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
-
-	// Example of optional value
-	User string `short:"u" long:"user" description:"User name" optional:"yes" optional-value:"pancake"`
-
 	// Example of map with multiple default values
 	Users map[string]string `long:"users" description:"User e-mail map" default:"system:system@example.org" default:"admin:admin@example.org"`
 
 	// Example of option group
 	Editor EditorOptions `group:"Editor Options"`
+
+	// Example of optional value
+	User string `short:"u" long:"user" description:"User name" optional:"yes" optional-value:"pancake"`
+
+	// Example of verbosity with level
+	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
 
 	// Example of custom type Marshal/Unmarshal
 	Point Point `long:"point" description:"A x,y point" default:"1,2"`

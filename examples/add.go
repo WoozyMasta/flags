@@ -1,3 +1,8 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package main demonstrates go-flags usage with subcommands.
 package main
 
 import (
@@ -10,13 +15,14 @@ type AddCommand struct {
 
 var addCommand AddCommand
 
+//nolint:unparam // required by flags.Commander interface
 func (x *AddCommand) Execute(args []string) error {
 	fmt.Printf("Adding (all=%v): %#v\n", x.All, args)
 	return nil
 }
 
 func init() {
-	parser.AddCommand("add",
+	_, _ = parser.AddCommand("add",
 		"Add a file",
 		"The add command adds a file to the repository. Use -a to add all files.",
 		&addCommand)

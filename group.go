@@ -21,6 +21,12 @@ var ErrNotPointerToStruct = errors.New("provided data is not a pointer to struct
 // more structure to options both for the user (as displayed in the help message)
 // and for you, since groups can be nested.
 type Group struct {
+	// The parent of the group or nil if it has no parent
+	parent any
+
+	// The user-provided struct pointer backing this group.
+	data any
+
 	// A short description of the group. The
 	// short description is primarily used in the built-in generated help
 	// message
@@ -37,22 +43,17 @@ type Group struct {
 	// The environment namespace of the group
 	EnvNamespace string
 
-	// If true, the group is not displayed in the help or man page
-	Hidden bool
-
-	// The parent of the group or nil if it has no parent
-	parent any
-
 	// All the options in the group
 	options []*Option
 
 	// All the subgroups
 	groups []*Group
 
+	// If true, the group is not displayed in the help or man page
+	Hidden bool
+
 	// Whether the group represents the built-in help group
 	isBuiltinHelp bool
-
-	data any
 }
 
 type scanHandler func(reflect.Value, *reflect.StructField) (bool, error)

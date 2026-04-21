@@ -45,13 +45,16 @@ func stripOptionPrefix(optname string) (prefix string, name string, islong bool)
 	// nicely.
 	possplit := 0
 
-	if strings.HasPrefix(optname, "--") {
+	switch {
+	case strings.HasPrefix(optname, "--"):
 		possplit = 2
 		islong = true
-	} else if strings.HasPrefix(optname, "-") {
+
+	case strings.HasPrefix(optname, "-"):
 		possplit = 1
 		islong = false
-	} else if strings.HasPrefix(optname, "/") {
+
+	case strings.HasPrefix(optname, "/"):
 		possplit = 1
 		islong = len(optname) > 2
 	}

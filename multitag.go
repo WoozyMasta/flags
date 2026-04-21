@@ -1,3 +1,7 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
@@ -5,8 +9,8 @@ import (
 )
 
 type multiTag struct {
-	value string
 	cache map[string][]string
+	value string
 }
 
 func newMultiTag(v string) multiTag {

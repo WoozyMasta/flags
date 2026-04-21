@@ -1,3 +1,7 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
@@ -58,9 +62,9 @@ const (
 // IniParser is a utility to read and write flags options from and to ini
 // formatted strings.
 type IniParser struct {
+	parser          *Parser
 	ParseAsDefaults bool // override default flags
 
-	parser *Parser
 }
 
 type iniValue struct {
@@ -73,8 +77,8 @@ type iniValue struct {
 type iniSection []iniValue
 
 type ini struct {
-	File     string
 	Sections map[string]iniSection
+	File     string
 }
 
 // NewIniParser creates a new ini parser for a given Parser.
@@ -231,12 +235,12 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 		}
 
 		if !sectionwritten {
-			fmt.Fprintf(writer, "[%s]\n", sname)
+			_, _ = fmt.Fprintf(writer, "[%s]\n", sname)
 			sectionwritten = true
 		}
 
 		if comments && len(option.Description) != 0 {
-			fmt.Fprintf(writer, "; %s\n", option.Description)
+			_, _ = fmt.Fprintf(writer, "; %s\n", option.Description)
 		}
 
 		oname := optionIniName(option)
@@ -287,12 +291,12 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 		}
 
 		if comments {
-			fmt.Fprintln(writer)
+			_, _ = fmt.Fprintln(writer)
 		}
 	}
 
 	if sectionwritten && !comments {
-		fmt.Fprintln(writer)
+		_, _ = fmt.Fprintln(writer)
 	}
 }
 
@@ -306,15 +310,15 @@ func writeOption(writer io.Writer, optionName string, optionType reflect.Kind, o
 		comment = "; "
 	}
 
-	fmt.Fprintf(writer, "%s%s =", comment, optionName)
+	_, _ = fmt.Fprintf(writer, "%s%s =", comment, optionName)
 
 	if optionKey != "" {
-		fmt.Fprintf(writer, " %s:%s", optionKey, optionValue)
+		_, _ = fmt.Fprintf(writer, " %s:%s", optionKey, optionValue)
 	} else if optionValue != "" {
-		fmt.Fprintf(writer, " %s", optionValue)
+		_, _ = fmt.Fprintf(writer, " %s", optionValue)
 	}
 
-	fmt.Fprintln(writer)
+	_, _ = fmt.Fprintln(writer)
 }
 
 func writeCommandIni(command *Command, namespace string, writer io.Writer, options IniOptions) {
@@ -352,7 +356,9 @@ func writeIniToFile(parser *IniParser, filename string, options IniOptions) erro
 		return err
 	}
 
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	writeIni(parser, file, options)
 
@@ -366,7 +372,9 @@ func readIniFromFile(filename string) (*ini, error) {
 		return nil, err
 	}
 
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	return readIni(file, filename)
 }
@@ -499,7 +507,7 @@ func (i *IniParser) matchingGroups(name string) []*Group {
 func (i *IniParser) parse(ini *ini) error {
 	p := i.parser
 
-	p.eachOption(func(cmd *Command, group *Group, option *Option) {
+	p.eachOption(func(_ *Command, _ *Group, option *Option) {
 		option.clearReferenceBeforeSet = true
 	})
 
@@ -554,28 +562,26 @@ func (i *IniParser) parse(ini *ini) error {
 
 			if !opt.canArgument() && len(inival.Value) == 0 {
 				pval = nil
-			} else {
-				if opt.value.Type().Kind() == reflect.Map {
-					parts := strings.SplitN(inival.Value, ":", 2)
+			} else if opt.value.Type().Kind() == reflect.Map {
+				parts := strings.SplitN(inival.Value, ":", 2)
 
-					// only handle unquoting
-					if len(parts) == 2 && parts[1][0] == '"' {
-						if v, err := strconv.Unquote(parts[1]); err == nil {
-							parts[1] = v
+				// only handle unquoting
+				if len(parts) == 2 && parts[1][0] == '"' {
+					if v, err := strconv.Unquote(parts[1]); err == nil {
+						parts[1] = v
 
-							inival.Quoted = true
-						} else {
-							return &IniError{
-								Message:    err.Error(),
-								File:       ini.File,
-								LineNumber: inival.LineNumber,
-							}
+						inival.Quoted = true
+					} else {
+						return &IniError{
+							Message:    err.Error(),
+							File:       ini.File,
+							LineNumber: inival.LineNumber,
 						}
-
-						s := parts[0] + ":" + parts[1]
-
-						pval = &s
 					}
+
+					s := parts[0] + ":" + parts[1]
+
+					pval = &s
 				}
 			}
 

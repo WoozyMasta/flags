@@ -1,3 +1,7 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
@@ -104,11 +108,11 @@ func (e ErrorType) Error() string {
 // Error represents a parser error. The error returned from Parse is of this
 // type. The error contains both a Type and Message.
 type Error struct {
-	// The type of error
-	Type ErrorType
-
 	// The error message
 	Message string
+
+	// The type of error
+	Type ErrorType
 }
 
 // Error returns the error's message

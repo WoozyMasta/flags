@@ -19,20 +19,9 @@ import (
 // A Parser provides command line option parsing. It can contain several
 // option groups each with their own set of options.
 type Parser struct {
+	internalError error
 	// Embedded, see Command for more information
 	*Command
-
-	// A usage string to be displayed in the help message.
-	Usage string
-
-	// Option flags changing the behavior of the parser.
-	Options Options
-
-	// NamespaceDelimiter separates group namespaces and option long names
-	NamespaceDelimiter string
-
-	// EnvNamespaceDelimiter separates group env namespaces and env keys
-	EnvNamespaceDelimiter string
 
 	// UnknownOptionsHandler is a function which gets called when the parser
 	// encounters an unknown option. The function receives the unknown option
@@ -57,7 +46,17 @@ type Parser struct {
 	// command to be executed when parsing has finished.
 	CommandHandler func(command Commander, args []string) error
 
-	internalError error
+	// A usage string to be displayed in the help message.
+	Usage string
+
+	// NamespaceDelimiter separates group namespaces and option long names
+	NamespaceDelimiter string
+
+	// EnvNamespaceDelimiter separates group env namespaces and env keys
+	EnvNamespaceDelimiter string
+
+	// Option flags changing the behavior of the parser.
+	Options Options
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -124,14 +123,14 @@ const (
 )
 
 type parseState struct {
+	lookup lookup
+	err    error
+
+	command    *Command
 	arg        string
 	args       []string
 	retargs    []string
 	positional []*Arg
-	err        error
-
-	command *Command
-	lookup  lookup
 }
 
 // Parse is a convenience function to parse command line options with default
@@ -212,7 +211,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		return nil, p.internalError
 	}
 
-	p.eachOption(func(c *Command, g *Group, option *Option) {
+	p.eachOption(func(_ *Command, _ *Group, option *Option) {
 		option.clearReferenceBeforeSet = true
 		option.updateDefaultLiteral()
 	})
@@ -252,7 +251,9 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		// When PassDoubleDash is set and we encounter a --, then
 		// simply append all the rest as arguments and break out
 		if (p.Options&PassDoubleDash) != None && arg == "--" {
-			s.addArgs(s.args...)
+			if err = s.addArgs(s.args...); err != nil {
+				break
+			}
 			break
 		}
 
@@ -299,7 +300,10 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			}
 
 			if ignoreUnknown {
-				s.addArgs(arg)
+				if err = s.addArgs(arg); err != nil {
+					s.err = err
+					break
+				}
 			} else if p.UnknownOptionHandler != nil {
 				modifiedArgs, err := p.UnknownOptionHandler(optname, strArgument{argument}, s.args)
 
@@ -314,7 +318,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	}
 
 	if s.err == nil {
-		p.eachOption(func(c *Command, g *Group, option *Option) {
+		p.eachOption(func(_ *Command, _ *Group, option *Option) {
 			err := option.clearDefault()
 			if err != nil {
 				if _, ok := err.(*Error); !ok {
@@ -324,7 +328,9 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			}
 		})
 
-		s.checkRequired(p)
+		if reqErr := s.checkRequired(p); reqErr != nil {
+			s.err = reqErr
+		}
 	}
 
 	var reterr error
@@ -371,14 +377,6 @@ func (p *parseState) pop() string {
 	p.args = p.args[1:]
 
 	return p.arg
-}
-
-func (p *parseState) peek() string {
-	if p.eof() {
-		return ""
-	}
-
-	return p.args[0]
 }
 
 func (p *parseState) checkRequired(parser *Parser) error {
@@ -497,13 +495,14 @@ func (p *parseState) estimateCommand() error {
 		msg = fmt.Sprintf("Unknown command `%s'", p.retargs[0])
 		errtype = ErrUnknownCommand
 
-		if float32(l)/float32(len(c)) < 0.5 {
+		switch {
+		case float32(l)/float32(len(c)) < 0.5:
 			msg = fmt.Sprintf("%s, did you mean `%s'?", msg, c)
-		} else if len(cmdnames) == 1 {
+		case len(cmdnames) == 1:
 			msg = fmt.Sprintf("%s. You should use the %s command",
 				msg,
 				cmdnames[0])
-		} else if len(cmdnames) > 1 {
+		case len(cmdnames) > 1:
 			msg = fmt.Sprintf("%s. Please specify one command of: %s or %s",
 				msg,
 				strings.Join(cmdnames[:len(cmdnames)-1], ", "),
@@ -512,9 +511,10 @@ func (p *parseState) estimateCommand() error {
 	} else {
 		errtype = ErrCommandRequired
 
-		if len(cmdnames) == 1 {
+		switch {
+		case len(cmdnames) == 1:
 			msg = fmt.Sprintf("Please specify the %s command", cmdnames[0])
-		} else if len(cmdnames) > 1 {
+		case len(cmdnames) > 1:
 			msg = fmt.Sprintf("Please specify one command of: %s or %s",
 				strings.Join(cmdnames[:len(cmdnames)-1], ", "),
 				cmdnames[len(cmdnames)-1])
@@ -524,13 +524,14 @@ func (p *parseState) estimateCommand() error {
 	return newError(errtype, msg)
 }
 
-func (p *Parser) parseOption(s *parseState, name string, option *Option, canarg bool, argument *string) (err error) {
-	if !option.canArgument() {
+func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg bool, argument *string) (err error) {
+	switch {
+	case !option.canArgument():
 		if argument != nil && (p.Options&AllowBoolValues) == None {
 			return newErrorf(ErrNoArgumentForBool, "bool flag `%s' cannot have an argument", option)
 		}
 		err = option.Set(argument)
-	} else if argument != nil || (canarg && !s.eof()) {
+	case argument != nil || (canarg && !s.eof()):
 		var arg string
 
 		if argument != nil {
@@ -539,7 +540,7 @@ func (p *Parser) parseOption(s *parseState, name string, option *Option, canarg 
 			arg = s.pop()
 
 			if validationErr := option.isValidValue(arg); validationErr != nil {
-				return newErrorf(ErrExpectedArgument, validationErr.Error())
+				return newErrorf(ErrExpectedArgument, "%s", validationErr)
 			} else if p.Options&PassDoubleDash != 0 && arg == "--" {
 				return newErrorf(ErrExpectedArgument, "expected argument for flag `%s', but got double dash `--'", option)
 			}
@@ -552,7 +553,7 @@ func (p *Parser) parseOption(s *parseState, name string, option *Option, canarg 
 		if err == nil {
 			err = option.Set(&arg)
 		}
-	} else if option.OptionalArgument {
+	case option.OptionalArgument:
 		option.empty()
 
 		for _, v := range option.OptionalValue {
@@ -562,7 +563,7 @@ func (p *Parser) parseOption(s *parseState, name string, option *Option, canarg 
 				break
 			}
 		}
-	} else {
+	default:
 		err = newErrorf(ErrExpectedArgument, "expected argument for flag `%s'", option)
 	}
 
@@ -688,7 +689,9 @@ func (p *Parser) parseNonOption(s *parseState) error {
 
 			return nil
 		} else if !s.command.SubcommandsOptional {
-			s.addArgs(s.arg)
+			if err := s.addArgs(s.arg); err != nil {
+				return err
+			}
 			return newErrorf(ErrUnknownCommand, "Unknown command `%s'", s.arg)
 		}
 	}
@@ -708,9 +711,9 @@ func (p *Parser) printError(err error) error {
 		flagsErr, ok := err.(*Error)
 
 		if ok && flagsErr.Type == ErrHelp {
-			fmt.Fprintln(os.Stdout, err)
+			_, _ = fmt.Fprintln(os.Stdout, err)
 		} else {
-			fmt.Fprintln(os.Stderr, err)
+			_, _ = fmt.Fprintln(os.Stderr, err)
 		}
 	}
 

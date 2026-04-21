@@ -1,7 +1,12 @@
+// Copyright 2012 Jesse van den Kieboom. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package flags
 
 import (
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,17 +20,23 @@ type Command struct {
 	// Embedded, see Group for more information
 	*Group
 
-	// The name by which the command can be invoked
-	Name string
-
 	// The active sub command (set by parsing) or nil
 	Active *Command
 
-	// Whether subcommands are optional
-	SubcommandsOptional bool
+	// The name by which the command can be invoked
+	Name string
 
 	// Aliases for the command
 	Aliases []string
+
+	// All direct subcommands of this command.
+	commands []*Command
+
+	// Positional arguments declared for this command.
+	args []*Arg
+
+	// Whether subcommands are optional
+	SubcommandsOptional bool
 
 	// Whether positional arguments are required
 	ArgsRequired bool
@@ -36,9 +47,8 @@ type Command struct {
 	// cannot be turned off when PassAfterNonOption Parser flag is set.
 	PassAfterNonOption bool
 
-	commands            []*Command
+	// Whether the built-in help group has already been attached.
 	hasBuiltinHelpGroup bool
-	args                []*Arg
 }
 
 // Commander is an interface which can be implemented by any command added in
@@ -440,13 +450,7 @@ func (c *Command) match(name string) bool {
 		return true
 	}
 
-	for _, v := range c.Aliases {
-		if v == name {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(c.Aliases, name)
 }
 
 func (c *Command) hasHelpOptions() bool {
