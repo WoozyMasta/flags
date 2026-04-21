@@ -55,8 +55,8 @@ func (p Point) MarshalFlag() (string, error) {
 }
 
 type Options struct {
-	// Example of map with multiple default values
-	Users map[string]string `long:"users" description:"User e-mail map" default:"system:system@example.org" default:"admin:admin@example.org"`
+	// Example of map defaults set in code with stable help text
+	Users map[string]string `long:"users" description:"User e-mail map" default-mask:"system:system@example.org, admin:admin@example.org"`
 
 	// Example of option group
 	Editor EditorOptions `group:"Editor Options"`
@@ -71,7 +71,12 @@ type Options struct {
 	Point Point `long:"point" description:"A x,y point" default:"1,2"`
 }
 
-var options Options
+var options = Options{
+	Users: map[string]string{
+		"system": "system@example.org",
+		"admin":  "admin@example.org",
+	},
+}
 
 var parser = flags.NewParser(&options, flags.Default)
 
