@@ -1,190 +1,243 @@
 # flags
 
-This library provides similar functionality to the builtin flag library of go,
-but provides much more functionality and nicer formatting.
-From the documentation:
+Reflection-based command-line parser for Go.
 
-Package flags provides an extensive command line option parser.
-The flags package is similar in functionality to the go builtin flag package
-but provides more options and uses reflection to provide a convenient and
-succinct way of specifying command line options.
+It supports flags, positional arguments, groups, subcommands, INI files,
+shell completion, and man/help generation.
 
-Supported features:
+## Installation
 
-* Options with short names (`-v`)
-* Options with long names (`--verbose`)
-* Options with and without arguments (bool v.s. other type)
-* Options with optional arguments and default values
-* Multiple option groups each containing a set of options
-* Generate and print well-formatted help message
-* Passing remaining command line arguments after `--` (optional)
-* Ignoring unknown command line options (optional)
-* Supports `-I/usr/include` `-I=/usr/include` `-I /usr/include`
-  option argument specification
-* Supports multiple short options `-aux`
-* Supports all primitive go types
-  (string, `int{8..64}`, `uint{8..64}`, `float`)
-* Supports same option multiple times (can store in slice or last option counts)
-* Supports maps
-* Supports function callbacks
-* Supports namespaces for (nested) option groups
+```bash
+go get github.com/woozymasta/flags
+```
 
-The flags package uses structs, reflection and struct field tags
-to allow users to specify command line options.
-This results in very simple and concise specification
-of your application options. For example:
+## Quick Start
 
 ```go
+package main
+
+import (
+  "errors"
+  "fmt"
+  "os"
+
+  "github.com/woozymasta/flags"
+)
+
 type Options struct {
-  Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
+  Verbose []bool `short:"v" long:"verbose" description:"Enable verbose output"`
+  Name    string `short:"n" long:"name" required:"true" description:"User name"`
+}
+
+func main() {
+  var opts Options
+  parser := flags.NewParser(&opts, flags.Default)
+
+  rest, err := parser.Parse()
+  if err != nil {
+    var ferr *flags.Error
+    if ok := errors.As(err, &ferr); ok && ferr.Type == flags.ErrHelp {
+      os.Exit(0)
+    }
+    os.Exit(1)
+  }
+
+  fmt.Printf("verbose level: %d\n", len(opts.Verbose))
+  fmt.Printf("name: %s\n", opts.Name)
+  fmt.Printf("rest args: %v\n", rest)
 }
 ```
 
-This specifies one option with a short name `-v` and a long name `--verbose`.
-When either `-v` or `--verbose` is found on the command line,
-a `true` value will be appended to the Verbose field. e.g.
-when specifying `-vvv`, the resulting value of Verbose will be
-`{[true, true, true]}`.
+## Core Features
 
-> [!NOTE]  
-> this repository is a fork of
-> [`github.com/jessevdk/go-flags`](https://github.com/jessevdk/go-flags).
+* Short and long flags (`-v`, `--verbose`)
+* Optional and required arguments
+* Slices and maps as option values
+* Positional arguments
+* Nested option groups
+* Commands and subcommands
+* Defaults from tags and environment variables
+* INI parse/write support
+* Bash/Zsh completion
+* Help and man page generation
 
-## Example
+## Option Values
 
-```go
-var opts struct {
-  // Slice of bool will append 'true' each time the option
-  // is encountered (can be set multiple times, like -vvv)
-  Verbose []bool `short:"v" long:"verbose" description:"Show verbose debug information"`
+Common value types:
 
-  // Example of automatic marshalling to desired type (uint)
-  Offset uint `long:"offset" description:"Offset"`
+* primitive scalars (`string`, `int*`, `uint*`, `float*`, `bool`)
+* slices (option can be repeated)
+* maps (default key/value delimiter is `:`)
+* custom types via:
+  * `flags.Unmarshaler` / `flags.Marshaler`
+  * `encoding.TextUnmarshaler` / `encoding.TextMarshaler`
 
-  // Example of a callback, called each time the option is found.
-  Call func(string) `short:"c" description:"Call phone number"`
-
-  // Example of a required flag
-  Name string `short:"n" long:"name" description:"A name" required:"true"`
-
-  // Example of a flag restricted to a pre-defined set of strings
-  Animal string `long:"animal" choice:"cat" choice:"dog"`
-
-  // Example of a value name
-  File string `short:"f" long:"file" description:"A file" value-name:"FILE"`
-
-  // Example of a pointer
-  Ptr *int `short:"p" description:"A pointer to an integer"`
-
-  // Example of a slice of strings
-  StringSlice []string `short:"s" description:"A slice of strings"`
-
-  // Example of a slice of pointers
-  PtrSlice []*string `long:"ptrslice" description:"A slice of pointers to string"`
-
-  // Example of a map
-  IntMap map[string]int `long:"intmap" description:"A map from string to int"`
-
-  // Example of env variable
-  Thresholds []int `long:"thresholds" default:"1" default:"2" env:"THRESHOLD_VALUES" env-delim:","`
-}
-
-// Callback which will invoke callto:<argument> to call a number.
-// Note that this works just on OS X (and probably only with
-// Skype) but it shows the idea.
-opts.Call = func(num string) {
-  cmd := exec.Command("open", "callto:"+num)
-  cmd.Start()
-  cmd.Process.Release()
-}
-
-// Make some fake arguments to parse.
-args := []string{
-  "-vv",
-  "--offset=5",
-  "-n", "Me",
-  "--animal", "dog", // anything other than "cat" or "dog" will raise an error
-  "-p", "3",
-  "-s", "hello",
-  "-s", "world",
-  "--ptrslice", "hello",
-  "--ptrslice", "world",
-  "--intmap", "a:1",
-  "--intmap", "b:5",
-  "arg1",
-  "arg2",
-  "arg3",
-}
-
-// Parse flags from `args'. Note that here we use flags.ParseArgs for
-// the sake of making a working example. Normally, you would simply use
-// flags.Parse(&opts) which uses os.Args
-args, err := flags.ParseArgs(&opts, args)
-
-if err != nil {
-  panic(err)
-}
-
-fmt.Printf("Verbosity: %v\n", opts.Verbose)
-fmt.Printf("Offset: %d\n", opts.Offset)
-fmt.Printf("Name: %s\n", opts.Name)
-fmt.Printf("Animal: %s\n", opts.Animal)
-fmt.Printf("Ptr: %d\n", *opts.Ptr)
-fmt.Printf("StringSlice: %v\n", opts.StringSlice)
-fmt.Printf("PtrSlice: [%v %v]\n", *opts.PtrSlice[0], *opts.PtrSlice[1])
-fmt.Printf("IntMap: [a:%v b:%v]\n", opts.IntMap["a"], opts.IntMap["b"])
-fmt.Printf("Remaining args: %s\n", strings.Join(args, " "))
-
-// Output: Verbosity: [true true]
-// Offset: 5
-// Name: Me
-// Ptr: 3
-// StringSlice: [hello world]
-// PtrSlice: [hello world]
-// IntMap: [a:1 b:5]
-// Remaining args: arg1 arg2 arg3
-```
-
-More information can be found in the godocs:
-<https://pkg.go.dev/github.com/woozymasta/flags>
-
-## Shell completion
-
-Use `WriteNamedCompletion` to generate shell script output from your app:
+Example map and slice options:
 
 ```go
 type Options struct {
-  Completion string `long:"completion" choice:"bash" choice:"zsh"`
+  Include []string       `short:"I" description:"Include path"`
+  Labels  map[string]int `long:"label" description:"label:value pairs"`
 }
+```
 
+## Positional Arguments
+
+Use `positional-args:"yes"` on a struct field:
+
+```go
+type Options struct {
+  Args struct {
+    Input  string
+    Output string
+  } `positional-args:"yes" required:"yes"`
+}
+```
+
+## Groups
+
+Group options for help readability and logical structure:
+
+```go
+type Options struct {
+  Global bool `long:"global"`
+
+  Database struct {
+    Host string `long:"host"`
+    Port int    `long:"port"`
+  } `group:"Database"`
+}
+```
+
+You can also add groups programmatically with `parser.AddGroup(...)`.
+
+## Commands
+
+Two ways:
+
+1. Struct tag: `command:"name"`
+1. Programmatic: `parser.AddCommand(...)`
+
+Example:
+
+```go
+type Options struct {
+  Add struct {
+    Force bool `short:"f" long:"force"`
+  } `command:"add" description:"Add an item"`
+}
+```
+
+If command type implements `Execute(args []string) error`, it will be called.
+
+## Defaults
+
+Use `default:"..."` to define fallback values:
+
+```go
+type Options struct {
+  Port    int      `long:"port" default:"8080"`
+  Servers []string `long:"server" default:"a.example" default:"b.example"`
+}
+```
+
+For map values, key/value delimiter is `:` by default (can be changed with
+`key-value-delimiter:"="`).
+
+If you need to keep pre-populated values and apply defaults only to empty
+fields, enable parser option `flags.DefaultsIfEmpty`.
+This is useful for non-empty/non-nil prefilled structs in integration code.
+
+## Environment Variables
+
+Use `env:"..."` to override defaults from environment:
+
+```go
+type Options struct {
+  Port  int      `long:"port" default:"8080" env:"APP_PORT"`
+  Hosts []string `long:"host" env:"APP_HOSTS" env-delim:","`
+}
+```
+
+Use `env-namespace` on groups to prefix env names:
+
+```go
+type Options struct {
+  DB struct {
+    Host string `long:"host" env:"HOST"`
+    Port int    `long:"port" env:"PORT"`
+  } `group:"Database" env-namespace:"DB"`
+}
+```
+
+With defaults, that resolves to `DB_HOST` and `DB_PORT`.
+
+## INI
+
+INI support is available via `NewIniParser(...)`:
+
+```go
+parser := flags.NewParser(&opts, flags.Default)
+ini := flags.NewIniParser(parser)
+_ = ini.ParseFile("app.ini")
+```
+
+Useful INI tags:
+
+* `ini-name:"..."` to override key name in INI
+* `no-ini:"true"` to exclude a field from INI processing
+
+## Help
+
+Help:
+
+```go
+parser := flags.NewParser(&opts, flags.Default)
+parser.WriteHelp(os.Stdout)
+```
+
+## Man Pages
+
+Generate a man page:
+
+```go
+parser := flags.NewParser(&opts, flags.Default)
+parser.WriteManPage(os.Stdout)
+```
+
+## Shell Completion
+
+Generate shell script output from your app:
+
+```go
 if opts.Completion != "" {
   _ = parser.WriteNamedCompletion(
     os.Stdout,
     flags.CompletionShell(opts.Completion),
-    "myapp")
+    "myapp",
+  )
   return
 }
 ```
 
-Generate and use:
+Use it:
 
 ```bash
-# write to file
 ./myapp --completion bash > ./myapp.bash
-
-# load directly in current shell
 source <(./myapp --completion bash)
 ```
 
-Raw completion mode (used by shell templates):
+Raw completion mode:
 
 ```bash
-GO_FLAGS_COMPLETION=1 ./myapp --env pr
+GO_FLAGS_COMPLETION=1 ./myapp --some-arg prefix
 ```
 
-For custom argument value completion (beyond built-in flag/command completion),
-implement `flags.Completer` on your value type.
-
-Ready templates:
+Templates:
 [`examples/bash-completion`](examples/bash-completion),
 [`examples/zsh-completion`](examples/zsh-completion).
+
+## Documentation and Examples
+
+* API docs: <https://pkg.go.dev/github.com/woozymasta/flags>
+* Example app: [`examples/main.go`](examples/main.go)
