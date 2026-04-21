@@ -89,8 +89,10 @@ Value and default tags:
   - `env-delim`: split `env` value by delimiter for slice/map fields
   - `value-name`: placeholder name shown in help
   - `choice`: allowed value constraint (repeatable), for example
-    “long:"animal" choice:"cat" choice:"dog"“
+    `long:"animal" choice:"cat" choice:"dog"`
   - `base`: radix for integer parsing, default `10`
+  - `key-value-delimiter`: delimiter used when parsing map values, default `:`
+  - `unquote`: when set to `false`, disables automatic unquoting of argument values
 
 INI tags:
 
@@ -104,6 +106,8 @@ Group and command tags:
   - `env-namespace`: prefix environment variable names inside group hierarchy
   - `command`: treat struct field as a command
   - `subcommands-optional`: make subcommands under this command optional
+  - `pass-after-non-option`: for this command, stop option parsing after the
+    first non-option argument
   - `alias`: extra command name (repeatable)
   - `positional-args`: map trailing positional arguments into struct fields
   - `positional-arg-name`: placeholder label for positional help
