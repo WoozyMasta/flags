@@ -280,9 +280,22 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 			shortDescription := mtag.Get(FlagTagDescription)
 			longDescription := mtag.Get(FlagTagLongDescription)
-			subcommandsOptional := mtag.Get(FlagTagSubCommandsOptional)
 			aliases := mtag.GetMany(FlagTagAlias)
-			passAfterNonOption := mtag.Get(FlagTagPassAfterNonOption)
+
+			subcommandsOptional, _, err := parseStructBoolTag(mtag, FlagTagSubCommandsOptional, sfield.Name)
+			if err != nil {
+				return true, err
+			}
+
+			passAfterNonOption, _, err := parseStructBoolTag(mtag, FlagTagPassAfterNonOption, sfield.Name)
+			if err != nil {
+				return true, err
+			}
+
+			hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, sfield.Name)
+			if err != nil {
+				return true, err
+			}
 
 			subc, err := c.AddCommand(subcommand, shortDescription, longDescription, ptrval.Interface())
 
@@ -290,9 +303,9 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				return true, err
 			}
 
-			subc.Hidden = mtag.Get(FlagTagHidden) != ""
+			subc.Hidden = hidden
 
-			if len(subcommandsOptional) > 0 {
+			if subcommandsOptional {
 				subc.SubcommandsOptional = true
 			}
 
@@ -300,7 +313,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				subc.Aliases = aliases
 			}
 
-			if len(passAfterNonOption) > 0 {
+			if passAfterNonOption {
 				subc.PassAfterNonOption = true
 			}
 

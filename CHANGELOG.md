@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning][].
 * Option tag `auto-env:"true"` for per-flag env key derivation from `long`
   without enabling the global parser option.
 * `auto-env:"false"` per-option opt-out when global `EnvProvisioning` is enabled.
+* Unified boolean tag parsing for option/group/command boolean tags
+  (`true/false`, `yes/no`, `y/n`, `1/0`, `on/off`) with validation errors
+  for invalid values.
 
 ### Changed
 

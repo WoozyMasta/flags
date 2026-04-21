@@ -7,6 +7,7 @@ package flags
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"unicode"
@@ -231,8 +232,31 @@ func (g *Group) eachGroup(f func(*Group)) {
 	}
 }
 
-func isStringFalsy(s string) bool {
-	return s == "" || s == "false" || s == "no" || s == "0"
+func parseBoolTagValue(raw string) (bool, bool, error) {
+	if raw == "" {
+		return false, false, nil
+	}
+
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "true", "t", "yes", "y", "on":
+		return true, true, nil
+	case "0", "false", "f", "no", "n", "off":
+		return false, true, nil
+	default:
+		return false, true, fmt.Errorf("unsupported boolean value %q", raw)
+	}
+}
+
+func parseStructBoolTag(mtag multiTag, tagName string, fieldName string) (bool, bool, error) {
+	raw := mtag.Get(tagName)
+	value, set, err := parseBoolTagValue(raw)
+	if err != nil {
+		return false, false, newErrorf(ErrInvalidTag,
+			"invalid boolean value `%s' for tag `%s' on field `%s'",
+			raw, tagName, fieldName)
+	}
+
+	return value, set, nil
 }
 
 func autoEnvKeyFromLongName(longName string) string {
@@ -330,18 +354,32 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		valueName := mtag.Get(FlagTagValueName)
 		defaultMask := mtag.Get(FlagTagDefaultMask)
 
-		optional := !isStringFalsy(mtag.Get(FlagTagOptional))
-		required := !isStringFalsy(mtag.Get(FlagTagRequired))
+		optional, _, err := parseStructBoolTag(mtag, FlagTagOptional, field.Name)
+		if err != nil {
+			return err
+		}
+
+		required, _, err := parseStructBoolTag(mtag, FlagTagRequired, field.Name)
+		if err != nil {
+			return err
+		}
+
 		choices := mtag.GetMany(FlagTagChoice)
-		hidden := !isStringFalsy(mtag.Get(FlagTagHidden))
+		hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, field.Name)
+		if err != nil {
+			return err
+		}
 
 		envKey := mtag.Get(FlagTagEnv)
-		autoEnvTag := mtag.Get(FlagTagAutoEnv)
-		hasAutoEnvTag := autoEnvTag != ""
-		autoEnv := !isStringFalsy(autoEnvTag)
+		autoEnv, hasAutoEnvTag, err := parseStructBoolTag(mtag, FlagTagAutoEnv, field.Name)
+		if err != nil {
+			return err
+		}
+
 		if p := g.parser(); p != nil && (p.Options&EnvProvisioning) != None && !hasAutoEnvTag {
 			autoEnv = true
 		}
+
 		if envKey == "" && autoEnv {
 			if longname == "" {
 				return newErrorf(ErrInvalidTag,
@@ -469,7 +507,11 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 
 		group.Namespace = mtag.Get(FlagTagNamespace)
 		group.EnvNamespace = mtag.Get(FlagTagEnvNamespace)
-		group.Hidden = mtag.Get(FlagTagHidden) != ""
+		hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, sfield.Name)
+		if err != nil {
+			return true, err
+		}
+		group.Hidden = hidden
 
 		return true, nil
 	}

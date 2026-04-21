@@ -764,6 +764,33 @@ func TestCommandLocalPassAfterNonOptionNest2(t *testing.T) {
 	assertStringArray(t, ret, []string{"x"})
 }
 
+func TestCommandBooleanTagsNoValues(t *testing.T) {
+	var opts struct {
+		Cmd struct {
+			Positional struct {
+				Args []string
+			} `positional-args:"yes"`
+		} `command:"cmd" pass-after-non-option:"no" subcommands-optional:"no"`
+	}{}
+
+	assertParseFail(t, ErrUnknownFlag, "unknown flag `x'", &opts, "cmd", "arg1", "-x")
+}
+
+func TestCommandBooleanTagsInvalidValue(t *testing.T) {
+	var opts struct {
+		Cmd struct{} `command:"cmd" pass-after-non-option:"maybe"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
 func TestCommandArgsReturnsCopyOfSlice(t *testing.T) {
 	var opts struct {
 		Cmd struct {

@@ -211,6 +211,7 @@ type Options struct {
 
 When global `EnvProvisioning` is enabled, use `auto-env:"false"` to opt out
 for a specific option.
+Boolean tag values accept `true/false`, `yes/no`, `y/n`, `1/0`, and `on/off`.
 
 ## Tag Customization
 

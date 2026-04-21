@@ -651,6 +651,21 @@ func TestEnvProvisioningAutoEnvFalseSkipsLongValidation(t *testing.T) {
 	}
 }
 
+func TestAutoEnvTagInvalidValue(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" auto-env:"maybe"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
 func TestDefaultsIfEmptyPrefilledAndCLI(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()
