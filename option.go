@@ -217,7 +217,7 @@ func (option *Option) String() string {
 }
 
 // Value returns the option value as an interface{}.
-func (option *Option) Value() interface{} {
+func (option *Option) Value() any {
 	return option.value.Interface()
 }
 
@@ -394,10 +394,7 @@ func (option *Option) valueIsDefault() bool {
 func (option *Option) isUnmarshaler() Unmarshaler {
 	v := option.value
 
-	for {
-		if !v.CanInterface() {
-			break
-		}
+	for v.CanInterface() {
 
 		i := v.Interface()
 
@@ -418,10 +415,7 @@ func (option *Option) isUnmarshaler() Unmarshaler {
 func (option *Option) isValueValidator() ValueValidator {
 	v := option.value
 
-	for {
-		if !v.CanInterface() {
-			break
-		}
+	for v.CanInterface() {
 
 		i := v.Interface()
 
@@ -529,9 +523,11 @@ func (option *Option) updateDefaultLiteral() {
 	} else if len(defs) != 0 {
 		l := len(defs) - 1
 
+		var defSb532 strings.Builder
 		for i := 0; i < l; i++ {
-			def += quoteIfNeeded(defs[i]) + ", "
+			defSb532.WriteString(quoteIfNeeded(defs[i]) + ", ")
 		}
+		def += defSb532.String()
 
 		def += quoteIfNeeded(defs[l])
 	}
@@ -562,7 +558,7 @@ func (option *Option) isValidValue(arg string) error {
 	if validator := option.isValueValidator(); validator != nil {
 		return validator.IsValidValue(arg)
 	}
-	if argumentIsOption(arg) && !(option.isSignedNumber() && len(arg) > 1 && arg[0] == '-' && arg[1] >= '0' && arg[1] <= '9') {
+	if argumentIsOption(arg) && (!option.isSignedNumber() || len(arg) <= 1 || arg[0] != '-' || arg[1] < '0' || arg[1] > '9') {
 		return fmt.Errorf("expected argument for flag `%s', but got option `%s'", option, arg)
 	}
 	return nil

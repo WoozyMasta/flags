@@ -11,6 +11,7 @@ import (
 	"path"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -137,7 +138,7 @@ type parseState struct {
 // settings. The provided data is a pointer to a struct representing the
 // default option group (named "Application Options"). For more control, use
 // flags.NewParser.
-func Parse(data interface{}) ([]string, error) {
+func Parse(data any) ([]string, error) {
 	return NewParser(data, Default).Parse()
 }
 
@@ -147,7 +148,7 @@ func Parse(data interface{}) ([]string, error) {
 // the list of command line arguments to parse. If you just want to parse the
 // default program command line arguments (i.e. os.Args), then use flags.Parse
 // instead. For more control, use flags.NewParser.
-func ParseArgs(data interface{}, args []string) ([]string, error) {
+func ParseArgs(data any, args []string) ([]string, error) {
 	return NewParser(data, Default).ParseArgs(args)
 }
 
@@ -157,7 +158,7 @@ func ParseArgs(data interface{}, args []string) ([]string, error) {
 // default option group (named "Application Options"), or nil if the default
 // group should not be added. The options parameter specifies a set of options
 // for the parser.
-func NewParser(data interface{}, options Options) *Parser {
+func NewParser(data any, options Options) *Parser {
 	p := NewNamedParser(path.Base(os.Args[0]), options)
 
 	if data != nil {
@@ -184,7 +185,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		EnvNamespaceDelimiter: "_",
 	}
 
-	p.Command.parent = p
+	p.parent = p
 
 	return p
 }
@@ -413,12 +414,12 @@ func (p *parseState) checkRequired(parser *Parser) error {
 						var arguments string
 
 						if arg.Required > 1 {
-							arguments = "arguments, but got only " + fmt.Sprintf("%d", arg.value.Len())
+							arguments = "arguments, but got only " + strconv.Itoa(arg.value.Len())
 						} else {
 							arguments = "argument"
 						}
 
-						reqnames = append(reqnames, "`"+arg.Name+" (at least "+fmt.Sprintf("%d", arg.Required)+" "+arguments+")`")
+						reqnames = append(reqnames, "`"+arg.Name+" (at least "+strconv.Itoa(arg.Required)+" "+arguments+")`")
 					} else if arg.RequiredMaximum != -1 && arg.value.Len() > arg.RequiredMaximum {
 						if arg.RequiredMaximum == 0 {
 							reqnames = append(reqnames, "`"+arg.Name+" (zero arguments)`")
@@ -426,12 +427,12 @@ func (p *parseState) checkRequired(parser *Parser) error {
 							var arguments string
 
 							if arg.RequiredMaximum > 1 {
-								arguments = "arguments, but got " + fmt.Sprintf("%d", arg.value.Len())
+								arguments = "arguments, but got " + strconv.Itoa(arg.value.Len())
 							} else {
 								arguments = "argument"
 							}
 
-							reqnames = append(reqnames, "`"+arg.Name+" (at most "+fmt.Sprintf("%d", arg.RequiredMaximum)+" "+arguments+")`")
+							reqnames = append(reqnames, "`"+arg.Name+" (at most "+strconv.Itoa(arg.RequiredMaximum)+" "+arguments+")`")
 						}
 					}
 				} else {

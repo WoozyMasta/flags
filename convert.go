@@ -114,9 +114,10 @@ func convertToString(val reflect.Value, options multiTag) (string, error) {
 
 		ret := "["
 
+		var retSb117 strings.Builder
 		for i := 0; i < val.Len(); i++ {
 			if i != 0 {
-				ret += ", "
+				retSb117.WriteString(", ")
 			}
 
 			item, err := convertToString(val.Index(i), options)
@@ -125,16 +126,18 @@ func convertToString(val reflect.Value, options multiTag) (string, error) {
 				return "", err
 			}
 
-			ret += item
+			retSb117.WriteString(item)
 		}
+		ret += retSb117.String()
 
 		return ret + "]", nil
 	case reflect.Map:
 		ret := "{"
 
+		var retSb135 strings.Builder
 		for i, key := range val.MapKeys() {
 			if i != 0 {
-				ret += ", "
+				retSb135.WriteString(", ")
 			}
 
 			keyitem, err := convertToString(key, options)
@@ -149,8 +152,9 @@ func convertToString(val reflect.Value, options multiTag) (string, error) {
 				return "", err
 			}
 
-			ret += keyitem + ":" + item
+			retSb135.WriteString(keyitem + ":" + item)
 		}
+		ret += retSb135.String()
 
 		return ret + "}", nil
 	case reflect.Ptr:

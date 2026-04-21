@@ -487,7 +487,6 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				if len(c.Aliases) > 0 {
 					fmt.Fprintf(wr, " (aliases: %s)", strings.Join(c.Aliases, ", "))
 				}
-
 			}
 
 			fmt.Fprintln(wr)

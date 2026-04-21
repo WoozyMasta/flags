@@ -22,7 +22,7 @@ func manQuoteLines(s string) string {
 }
 
 func manQuote(s string) string {
-	return strings.Replace(s, "\\", "\\\\", -1)
+	return strings.ReplaceAll(s, "\\", "\\\\")
 }
 
 func formatForMan(wr io.Writer, s string, quoter func(s string) string) {
@@ -213,7 +213,7 @@ func (p *Parser) WriteManPage(wr io.Writer) {
 
 	fmt.Fprintln(wr, ".SH OPTIONS")
 
-	writeManPageOptions(wr, p.Command.Group)
+	writeManPageOptions(wr, p.Group)
 
 	if len(p.visibleCommands()) > 0 {
 		fmt.Fprintln(wr, ".SH COMMANDS")

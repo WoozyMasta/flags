@@ -88,7 +88,7 @@ func NewIniParser(p *Parser) *IniParser {
 // settings from an ini formatted file. The provided data is a pointer to a struct
 // representing the default option group (named "Application Options"). For
 // more control, use flags.NewParser.
-func IniParse(filename string, data interface{}) error {
+func IniParse(filename string, data any) error {
 	p := NewParser(data, Default)
 
 	return NewIniParser(p).ParseFile(filename)
@@ -521,7 +521,7 @@ func (i *IniParser) parse(ini *ini) error {
 
 			for _, group := range groups {
 				opt = group.optionByName(inival.Name, func(o *Option, n string) bool {
-					return strings.ToLower(o.tag.Get("ini-name")) == strings.ToLower(n)
+					return strings.EqualFold(o.tag.Get("ini-name"), n)
 				})
 
 				if opt != nil && len(opt.tag.Get("no-ini")) != 0 {
@@ -536,7 +536,7 @@ func (i *IniParser) parse(ini *ini) error {
 			if opt == nil {
 				if (p.Options & IgnoreUnknown) == None {
 					return &IniError{
-						Message:    fmt.Sprintf("unknown option: %s", inival.Name),
+						Message:    "unknown option: " + inival.Name,
 						File:       ini.File,
 						LineNumber: inival.LineNumber,
 					}
