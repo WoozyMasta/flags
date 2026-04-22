@@ -276,6 +276,26 @@ If you need to keep pre-populated values and apply defaults only to empty
 fields, enable parser option `flags.DefaultsIfEmpty`.
 This is useful for non-empty/non-nil prefilled structs in integration code.
 
+For config-first flows (for example JSON/YAML -> flags), use:
+
+* `flags.RequiredFromValues` to treat non-empty prefilled values as satisfying
+  `required`.
+* `flags.ConfiguredValues` as a convenience alias for
+  `flags.DefaultsIfEmpty | flags.RequiredFromValues`.
+
+Minimal mixed configuration pattern:
+
+```go
+cfg := Config{}
+// json.Unmarshal(...) or yaml.Unmarshal(...) into cfg
+
+parser := flags.NewParser(&cfg, flags.Default|flags.ConfiguredValues)
+_, err := parser.Parse()
+```
+
+Note: for scalar zero values (`0`, `false`, `""`) Go cannot distinguish
+"not provided" from "explicitly set to zero" without pointer fields.
+
 ## Environment Variables
 
 Use `env:"..."` to override defaults from environment:

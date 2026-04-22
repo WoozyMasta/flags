@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning][].
 * Global environment variable prefix support via `Parser.SetEnvPrefix(...)`.
 * Dynamic defaults via `DefaultProvider`.
 * Parser option `DefaultsIfEmpty` to apply defaults only to empty values.
+* Parser option `RequiredFromValues` to treat non-empty prefilled values as
+  satisfying `required`, plus convenience alias `ConfiguredValues`
+  (`DefaultsIfEmpty | RequiredFromValues`) for config-first flows.
 * `Group.Data()` accessor.
 * Support for `encoding.TextMarshaler` / `encoding.TextUnmarshaler`
   (with `flags.Marshaler` / `flags.Unmarshaler` precedence).

@@ -803,6 +803,57 @@ func TestDefaultsIfEmptyCollections(t *testing.T) {
 	}
 }
 
+func TestRequiredFromValuesPrefilledSatisfiesRequired(t *testing.T) {
+	var opts struct {
+		Value string `json:"value,omitempty" long:"value" required:"yes"`
+	}
+
+	opts.Value = "from-config"
+
+	parser := NewParser(&opts, RequiredFromValues)
+	if _, err := parser.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Value != "from-config" {
+		t.Fatalf("expected prefilled value to be preserved, got %q", opts.Value)
+	}
+}
+
+func TestRequiredFromValuesEmptyStillFailsRequired(t *testing.T) {
+	var opts struct {
+		Value string `json:"value,omitempty" long:"value" required:"yes"`
+	}
+
+	parser := NewParser(&opts, RequiredFromValues)
+	_, err := parser.ParseArgs(nil)
+	if err == nil {
+		t.Fatalf("expected required parse error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrRequired {
+		t.Fatalf("expected ErrRequired, got %v", err)
+	}
+}
+
+func TestConfiguredValuesAliasKeepsPrefilledAndSatisfiesRequired(t *testing.T) {
+	var opts struct {
+		Value string `json:"value,omitempty" long:"value" required:"yes" default:"from-tag"`
+	}
+
+	opts.Value = "from-config"
+
+	parser := NewParser(&opts, ConfiguredValues)
+	if _, err := parser.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Value != "from-config" {
+		t.Fatalf("expected prefilled value to survive defaults, got %q", opts.Value)
+	}
+}
+
 type CustomFlag struct {
 	Value string
 }

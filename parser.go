@@ -219,6 +219,11 @@ const (
 	// they were explicitly set on the command line.
 	DefaultsIfEmpty
 
+	// RequiredFromValues treats pre-populated non-empty option values as
+	// satisfying `required` checks, even when the option was not explicitly
+	// set by CLI/env/default processing.
+	RequiredFromValues
+
 	// KeepDescriptionWhitespace keeps leading/trailing whitespace in
 	// help-rendered descriptions instead of trimming each line before wrapping.
 	// This is useful for preserving indentation in lists and code examples.
@@ -263,6 +268,13 @@ const (
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
+
+	// ConfiguredValues is a convenience mode for config-first flows
+	// (for example YAML/JSON prefill before Parse):
+	//   - keep prefilled values intact (DefaultsIfEmpty)
+	//   - treat non-empty prefilled values as satisfying `required`
+	//     (RequiredFromValues)
+	ConfiguredValues = DefaultsIfEmpty | RequiredFromValues
 )
 
 const (
@@ -811,7 +823,14 @@ func (p *parseState) checkRequired(parser *Parser) error {
 	for c != nil {
 		c.eachGroup(func(g *Group) {
 			for _, option := range g.options {
-				if !option.isSet && option.Required {
+				missingRequired := !option.isSet
+				if missingRequired &&
+					(parser.Options&RequiredFromValues) != None &&
+					!option.isEmpty() {
+					missingRequired = false
+				}
+
+				if missingRequired && option.Required {
 					required = append(required, option)
 				}
 			}
