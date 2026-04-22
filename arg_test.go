@@ -161,3 +161,67 @@ func TestPositionalRequiredRestRangeEmptyFail(t *testing.T) {
 
 	assertError(t, err, ErrRequired, "the required argument `Rest (zero arguments)` was not provided")
 }
+
+func TestPositionalDefaultValue(t *testing.T) {
+	var opts = struct {
+		Positional struct {
+			Output string `positional-arg-name:"output" default:"foo.txt"`
+		} `positional-args:"yes" required:"yes"`
+	}{}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if opts.Positional.Output != "foo.txt" {
+		t.Fatalf("expected default positional value, got %q", opts.Positional.Output)
+	}
+}
+
+func TestPositionalDefaultNotOverriddenByTagWhenProvided(t *testing.T) {
+	var opts = struct {
+		Positional struct {
+			Output string `positional-arg-name:"output" default:"foo.txt"`
+		} `positional-args:"yes" required:"yes"`
+	}{}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{"bar.txt"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if opts.Positional.Output != "bar.txt" {
+		t.Fatalf("expected positional arg to override default, got %q", opts.Positional.Output)
+	}
+}
+
+func TestPositionalDefaultsList(t *testing.T) {
+	var opts = struct {
+		Positional struct {
+			Filters []string `positional-arg-name:"filter" defaults:"one;two;three"`
+		} `positional-args:"yes"`
+	}{}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertStringArray(t, opts.Positional.Filters, []string{"one", "two", "three"})
+}
+
+func TestPositionalDefaultAndDefaultsConflict(t *testing.T) {
+	var opts = struct {
+		Positional struct {
+			Output string `positional-arg-name:"output" default:"foo.txt" defaults:"bar.txt;baz.txt"`
+		} `positional-args:"yes"`
+	}{}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{})
+	assertError(t, err, ErrInvalidTag, "field `Output' cannot mix `default' and `defaults' tags")
+}

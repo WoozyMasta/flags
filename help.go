@@ -1000,7 +1000,12 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					descPrefix := strings.Repeat(" ", descStart)
 
 					_, _ = wr.WriteString(descPadding)
-					argDesc := wrapText(arg.Description, descWidth, descPrefix, trimDescriptions)
+					argDescription := arg.Description
+					if def := arg.defaultLiteral(); def != "" {
+						argDescription += " (default: " + def + ")"
+					}
+
+					argDesc := wrapText(argDescription, descWidth, descPrefix, trimDescriptions)
 					_, _ = wr.WriteString(p.colorizeHelp(argDesc, p.helpColorScheme.ArgumentDesc))
 				} else {
 					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))

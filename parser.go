@@ -715,8 +715,16 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			}
 		})
 
-		if reqErr := s.checkRequired(p); reqErr != nil {
-			s.err = reqErr
+		if s.err == nil {
+			if err := s.applyPositionalDefaults((p.Options & DefaultsIfEmpty) != None); err != nil {
+				s.err = err
+			}
+		}
+
+		if s.err == nil {
+			if reqErr := s.checkRequired(p); reqErr != nil {
+				s.err = reqErr
+			}
 		}
 	}
 
@@ -1105,6 +1113,34 @@ func (p *parseState) addArgs(args ...string) error {
 	}
 
 	p.retargs = append(p.retargs, args...)
+	return nil
+}
+
+func (p *parseState) applyPositionalDefaults(defaultsIfEmpty bool) error {
+	for len(p.positional) > 0 {
+		arg := p.positional[0]
+
+		if len(arg.Default) == 0 {
+			break
+		}
+
+		if err := arg.applyDefault(defaultsIfEmpty); err != nil {
+			p.err = newErrorf(
+				ErrMarshal,
+				"invalid default for argument `%s': %v",
+				arg.Name,
+				err,
+			)
+			return p.err
+		}
+
+		p.positional = p.positional[1:]
+
+		if arg.isRemaining() {
+			break
+		}
+	}
+
 	return nil
 }
 

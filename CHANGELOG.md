@@ -73,6 +73,8 @@ and this project adheres to [Semantic Versioning][].
   and shell-detect options `DetectShellFlagStyle` / `DetectShellEnvStyle`.
 * Long option-name length guard with parser-level override:
   `Parser.SetMaxLongNameLength(...)`.
+* Positional arguments now support `default` / `defaults` tags,
+  including rendering positional defaults in built-in help output.
 
 ### Changed
 

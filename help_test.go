@@ -908,6 +908,33 @@ func TestHelpDefaultMask(t *testing.T) {
 	}
 }
 
+func TestHelpPositionalDefault(t *testing.T) {
+	var opts struct {
+		Args struct {
+			Output string `positional-arg-name:"output" description:"Output file path" default:"foo.txt"`
+		} `positional-args:"yes"`
+	}
+
+	p := NewNamedParser("PositionalDefaultHelp", HelpFlag)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err := p.ParseArgs([]string{"--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	if !strings.Contains(flagsErr.Message, "Output file path (default: foo.txt)") {
+		t.Fatalf("expected positional default in help output, got:\n%s", flagsErr.Message)
+	}
+}
+
 func TestWroteHelp(t *testing.T) {
 	type testInfo struct {
 		value  error

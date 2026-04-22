@@ -220,6 +220,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 				required := -1
 				requiredMaximum := -1
+				delimiter := parserTagListDelimiter(c.parser())
+				def, err := collectTagValues(m, FlagTagDefault, FlagTagDefaults, field.Name, delimiter)
+				if err != nil {
+					return true, err
+				}
 
 				sreq := m.Get(FlagTagRequired)
 
@@ -246,6 +251,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				arg := &Arg{
 					Name:            name,
 					Description:     m.Get(FlagTagDescription),
+					Default:         def,
 					Required:        required,
 					RequiredMaximum: requiredMaximum,
 

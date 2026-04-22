@@ -120,8 +120,13 @@ All struct tags are configurable:
 ### Positional-argument tags
 
 * `positional-args`: marks nested struct as positional argument container.
-* `required`: requires positional values to be provided by user.
+* `required`: for positional args you can use `yes/no`, `1` (required), `N`
+  (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
 * `positional-arg-name`: custom display name for usage/help placeholders.
+* `description`: help/docs description for the positional argument.
+* `default`: legacy repeatable fallback value tag for positional argument.
+* `defaults`: preferred delimiter-separated fallback values for positional
+  argument.
 
 ### Tag conflicts
 
