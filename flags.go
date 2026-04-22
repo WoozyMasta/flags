@@ -155,6 +155,8 @@ For post-scan programmatic adjustments, implement [Configurer] on your
 options/group/command data type and mutate option metadata via parser APIs.
 Common runtime setters are available on [Option] (for example names, aliases,
 defaults, env bindings, choices, required/hidden flags, and order).
+Command/group/arg metadata can also be tuned at runtime via setters on
+[Command], [Group], and [Arg].
 
 # Commands
 

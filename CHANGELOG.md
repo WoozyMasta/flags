@@ -80,7 +80,7 @@ and this project adheres to [Semantic Versioning][].
 * Programmatic post-scan parser configuration via `Configurer`,
   with explicit `Parser.Validate()` and `Parser.Rebuild()` APIs.
 * Baseline runtime option setter API for common metadata updates
-  (names/aliases/defaults/env/choices/required/hidden/order/etc.).
+  (options, commands, groups, and positional args metadata).
 
 ### Changed
 

@@ -57,6 +57,12 @@ type Group struct {
 
 type scanHandler func(reflect.Value, *reflect.StructField) (bool, error)
 
+func (g *Group) touchLookupCache() {
+	if p := g.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+}
+
 // AddGroup adds a new group to the command with the given name and data. The
 // data needs to be a pointer to a struct from which the fields indicate which
 // options are in the group.
@@ -76,6 +82,33 @@ func (g *Group) AddGroup(shortDescription string, longDescription string, data a
 	}
 
 	return group, nil
+}
+
+// SetShortDescription updates group short description used in help/docs output.
+func (g *Group) SetShortDescription(description string) {
+	g.ShortDescription = description
+}
+
+// SetLongDescription updates group long description used in docs output.
+func (g *Group) SetLongDescription(description string) {
+	g.LongDescription = description
+}
+
+// SetNamespace updates long-option namespace prefix for child options.
+func (g *Group) SetNamespace(namespace string) {
+	g.Namespace = namespace
+	g.touchLookupCache()
+}
+
+// SetEnvNamespace updates env-variable namespace prefix for child options.
+func (g *Group) SetEnvNamespace(namespace string) {
+	g.EnvNamespace = namespace
+	g.touchLookupCache()
+}
+
+// SetHidden controls group visibility in help/completion/docs.
+func (g *Group) SetHidden(hidden bool) {
+	g.Hidden = hidden
 }
 
 // AddOption adds a new option to this group.

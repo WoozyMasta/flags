@@ -393,18 +393,35 @@ _ = parser.SetFlagTags(tags)
 
 ## Programmatic Configuration
 
-If tags are not enough, implement `flags.Configurer` on your options/group/
-command struct:
+If tags are not enough, implement `flags.Configurer`
+on your options/group/command struct:
 
 ```go
 type Options struct {
-  Port int `long:"port"`
+  Verbose bool `long:"verbose"`
+  Run struct{} `command:"run" description:"Run workload"`
+  Args struct {
+    Target string
+  } `positional-args:"yes"`
 }
 
 func (o *Options) ConfigureFlags(p *flags.Parser) error {
-  if opt := p.FindOptionByLongName("port"); opt != nil {
-    opt.Default = []string{"8080"}
+  if opt := p.FindOptionByLongName("verbose"); opt != nil {
+    opt.AddLongAlias("debug")
+    opt.SetEnv("APP_VERBOSE", "")
   }
+
+  if cmd := p.Find("run"); cmd != nil {
+    cmd.AddAlias("execute")
+    cmd.SetShortDescription("Execute workload")
+  }
+
+  args := p.Command.Args()
+  if len(args) > 0 {
+    args[0].SetName("target")
+    args[0].SetDefault("local")
+  }
+
   return nil
 }
 ```
@@ -418,6 +435,14 @@ Core option setters are available for runtime tuning:
 `SetShortAliases`, `AddShortAlias`, `SetRequired`, `SetHidden`,
 `SetDescription`, `SetDefault`, `SetDefaultMask`, `SetEnv`, `SetChoices`,
 `SetOptional`, `SetValueName`, `SetOrder`, `SetTerminator`.
+
+Command/group/arg setters are also available:
+`Command.SetName`, `Command.SetAliases`, `Command.AddAlias`,
+`Command.SetHidden`, `Command.SetSubcommandsOptional`,
+`Command.SetPassAfterNonOption`, `Command.SetArgsRequired`,
+`Group.SetNamespace`, `Group.SetEnvNamespace`, `Group.SetHidden`,
+`Arg.SetName`, `Arg.SetDescription`, `Arg.SetDefault`,
+`Arg.SetRequired`, `Arg.SetRequiredRange`.
 
 ## INI
 

@@ -31,6 +31,51 @@ type Arg struct {
 	RequiredMaximum int
 }
 
+// SetName updates positional argument name used in usage/help placeholders.
+func (a *Arg) SetName(name string) {
+	a.Name = name
+}
+
+// SetDescription updates positional argument description used in help/docs.
+func (a *Arg) SetDescription(description string) {
+	a.Description = description
+}
+
+// SetDefault replaces positional argument default values.
+func (a *Arg) SetDefault(values ...string) {
+	a.Default = append(a.Default[:0], values...)
+}
+
+// SetRequired toggles required state for positional argument.
+func (a *Arg) SetRequired(required bool) {
+	if required {
+		a.Required = 1
+		a.RequiredMaximum = -1
+		return
+	}
+
+	a.Required = -1
+	a.RequiredMaximum = -1
+}
+
+// SetRequiredRange sets positional required bounds.
+// Use requiredMax = -1 for "at least requiredMin".
+func (a *Arg) SetRequiredRange(requiredMin int, requiredMax int) error {
+	if requiredMin < 0 {
+		return newErrorf(ErrInvalidTag, "required min must be >= 0, got %d", requiredMin)
+	}
+	if requiredMax < -1 {
+		return newErrorf(ErrInvalidTag, "required max must be >= -1, got %d", requiredMax)
+	}
+	if requiredMax != -1 && requiredMax < requiredMin {
+		return newErrorf(ErrInvalidTag, "required max %d must be >= min %d", requiredMax, requiredMin)
+	}
+
+	a.Required = requiredMin
+	a.RequiredMaximum = requiredMax
+	return nil
+}
+
 func (a *Arg) isRemaining() bool {
 	return a.value.Type().Kind() == reflect.Slice
 }

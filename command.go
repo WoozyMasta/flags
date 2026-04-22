@@ -83,6 +83,12 @@ type lookup struct {
 	commands map[string]*Command
 }
 
+func (c *Command) touchLookupCache() {
+	if p := c.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+}
+
 // AddCommand adds a new command to the parser with the given name and data. The
 // data needs to be a pointer to a struct from which the fields indicate which
 // options are in the command. The provided data can implement the Command and
@@ -103,6 +109,54 @@ func (c *Command) AddCommand(command string, shortDescription string, longDescri
 	}
 
 	return cmd, nil
+}
+
+// SetName updates command name used for lookup and help output.
+func (c *Command) SetName(name string) {
+	c.Name = name
+	c.touchLookupCache()
+}
+
+// SetAliases replaces command aliases used for lookup and help output.
+func (c *Command) SetAliases(aliases ...string) {
+	c.Aliases = append(c.Aliases[:0], aliases...)
+	c.touchLookupCache()
+}
+
+// AddAlias appends one command alias.
+func (c *Command) AddAlias(alias string) {
+	c.Aliases = append(c.Aliases, alias)
+	c.touchLookupCache()
+}
+
+// SetShortDescription updates command short description.
+func (c *Command) SetShortDescription(description string) {
+	c.ShortDescription = description
+}
+
+// SetLongDescription updates command long description.
+func (c *Command) SetLongDescription(description string) {
+	c.LongDescription = description
+}
+
+// SetHidden controls command visibility in help/completion/docs.
+func (c *Command) SetHidden(hidden bool) {
+	c.Hidden = hidden
+}
+
+// SetSubcommandsOptional configures whether subcommand selection is optional.
+func (c *Command) SetSubcommandsOptional(optional bool) {
+	c.SubcommandsOptional = optional
+}
+
+// SetPassAfterNonOption configures command-local strict POSIX pass-through behavior.
+func (c *Command) SetPassAfterNonOption(enabled bool) {
+	c.PassAfterNonOption = enabled
+}
+
+// SetArgsRequired configures whether positional args are required by default.
+func (c *Command) SetArgsRequired(required bool) {
+	c.ArgsRequired = required
 }
 
 // AddGroup adds a new group to the command with the given name and data. The
