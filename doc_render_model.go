@@ -324,5 +324,5 @@ func docNow() time.Time {
 		panic(fmt.Sprintf("Invalid SOURCE_DATE_EPOCH: %s", err))
 	}
 
-	return time.Unix(sde, 0)
+	return time.Unix(sde, 0).UTC()
 }
