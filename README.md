@@ -39,20 +39,57 @@ type Options struct {
 
 func main() {
   var opts Options
+  // flags.Default enables HelpFlag, PrintErrors and PassDoubleDash.
   parser := flags.NewParser(&opts, flags.Default)
 
   rest, err := parser.Parse()
   if err != nil {
     var ferr *flags.Error
+    // ErrHelp is a benign control-flow error: help was shown.
     if ok := errors.As(err, &ferr); ok && ferr.Type == flags.ErrHelp {
       os.Exit(0)
     }
+    // With flags.Default, parse errors are already printed once by the parser.
     os.Exit(1)
   }
 
   fmt.Printf("verbose level: %d\n", len(opts.Verbose))
   fmt.Printf("name: %s\n", opts.Name)
   fmt.Printf("rest args: %v\n", rest)
+}
+```
+
+## Error Handling
+
+Recommended pattern with `flags.Default`:
+
+```go
+rest, err := parser.Parse()
+if err != nil {
+  var ferr *flags.Error
+  if errors.As(err, &ferr) && ferr.Type == flags.ErrHelp {
+    os.Exit(0)
+  }
+  // Do not print err again: flags.Default includes PrintErrors.
+  os.Exit(1)
+}
+_ = rest
+```
+
+If you want full control over error output (single custom logger/format),
+disable built-in printing:
+
+```go
+parser := flags.NewParser(&opts, flags.Default &^ flags.PrintErrors)
+_, err := parser.Parse()
+if err != nil {
+  var ferr *flags.Error
+  if errors.As(err, &ferr) && ferr.Type == flags.ErrHelp {
+    fmt.Fprintln(os.Stdout, ferr)
+    os.Exit(0)
+  }
+  fmt.Fprintln(os.Stderr, err)
+  os.Exit(1)
 }
 ```
 

@@ -1507,6 +1507,42 @@ func TestPrintErrorsToStdout(t *testing.T) {
 	}
 }
 
+func TestPrintErrorsInternalParserErrorDestination(t *testing.T) {
+	type invalidOptions struct {
+		One bool `long:"dup"`
+		Two bool `long:"dup"`
+	}
+
+	stdout, stderr := captureStdIO(t, func() {
+		p := NewParser(&invalidOptions{}, Default)
+		_, _ = p.ParseArgs(nil)
+	})
+
+	if stdout != "" {
+		t.Fatalf("expected empty stdout for internal parser error with default options, got %q", stdout)
+	}
+
+	if !strings.Contains(stderr, "same long name") {
+		t.Fatalf("expected internal parser error on stderr, got %q", stderr)
+	}
+}
+
+func TestNoPrintErrorsInternalParserErrorSilent(t *testing.T) {
+	type invalidOptions struct {
+		One bool `long:"dup"`
+		Two bool `long:"dup"`
+	}
+
+	stdout, stderr := captureStdIO(t, func() {
+		p := NewParser(&invalidOptions{}, None)
+		_, _ = p.ParseArgs(nil)
+	})
+
+	if stdout != "" || stderr != "" {
+		t.Fatalf("expected no output when PrintErrors is disabled, got stdout=%q stderr=%q", stdout, stderr)
+	}
+}
+
 func TestSetTerminalTitleUsesParserName(t *testing.T) {
 	p := NewNamedParser("title-from-name", SetTerminalTitle)
 

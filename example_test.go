@@ -2,6 +2,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -107,4 +108,28 @@ func Example() {
 	// Args.ID: id
 	// Args.Num: 10
 	// Args.Rest: [remaining1 remaining2]
+}
+
+func Example_errorHandling() {
+	var opts struct {
+		Name string `long:"name" required:"yes"`
+	}
+
+	parser := NewParser(&opts, Default&^PrintErrors)
+	_, err := parser.ParseArgs([]string{"--help"})
+
+	if err != nil {
+		var ferr *Error
+		if errors.As(err, &ferr) && ferr.Type == ErrHelp {
+			fmt.Println("help requested")
+			return
+		}
+
+		fmt.Println("parse error")
+		return
+	}
+
+	fmt.Println("ok")
+
+	// Output: help requested
 }

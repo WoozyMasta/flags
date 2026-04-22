@@ -85,6 +85,7 @@ Value and default tags:
   - `optional-value`: value used when optional option appears without explicit argument
   - `order`: display/completion priority in group block sorting
   - `default`: default value (repeat for slice/map entries)
+  - `defaults`: delimiter-separated default list (non-repeatable)
   - `default-mask`: display replacement for default in help; `-` hides default entirely
   - `env`: environment variable that overrides default value
   - `auto-env`: derive environment variable from `long` name when enabled
@@ -92,9 +93,14 @@ Value and default tags:
   - `value-name`: placeholder name shown in help
   - `choice`: allowed value constraint (repeatable), for example
     `long:"animal" choice:"cat" choice:"dog"`
+  - `choices`: delimiter-separated allowed values (non-repeatable)
   - `base`: radix for integer parsing, default `10`
   - `key-value-delimiter`: delimiter used when parsing map values, default `:`
   - `unquote`: when set to `false`, disables automatic unquoting of argument values
+  - `short-alias`: extra short option name (repeatable)
+  - `short-aliases`: delimiter-separated short aliases (non-repeatable)
+  - `long-alias`: extra long option name (repeatable)
+  - `long-aliases`: delimiter-separated long aliases (non-repeatable)
 
 INI tags:
 
@@ -111,12 +117,30 @@ Group and command tags:
   - `pass-after-non-option`: for this command, stop option parsing after the
     first non-option argument
   - `alias`: extra command name (repeatable)
+  - `aliases`: delimiter-separated command aliases (non-repeatable)
   - `positional-args`: map trailing positional arguments into struct fields
   - `positional-arg-name`: placeholder label for positional help
 
 For `positional-args`, arguments are optional by default.
 Use `required` either on the positional struct field or on individual fields.
 For a trailing slice field, `required:"N"` means at least `N` values.
+
+# Error Handling
+
+With [Default] parser options, [PrintErrors] is enabled and parse errors are
+printed by the parser. A typical pattern is:
+
+	_, err := parser.Parse()
+	if err != nil {
+		var ferr *Error
+		if errors.As(err, &ferr) && ferr.Type == ErrHelp {
+			os.Exit(0)
+		}
+		os.Exit(1)
+	}
+
+If you need full control over output formatting/routing, disable [PrintErrors]
+and print returned errors yourself.
 
 # Option Groups
 

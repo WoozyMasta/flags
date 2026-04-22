@@ -587,7 +587,7 @@ func (p *Parser) Parse() ([]string, error) {
 // It is up to the caller to exit the program if so desired.
 func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	if p.internalError != nil {
-		return nil, p.internalError
+		return nil, p.printError(p.internalError)
 	}
 
 	p.eachOption(func(_ *Command, _ *Group, option *Option) {
