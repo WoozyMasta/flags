@@ -68,6 +68,9 @@ Built-in help output can be tuned with parser flags:
 * `ShowCommandAliases`: show aliases in the `Available commands` section
   even when command description is empty.
 * `ShowRepeatableInHelp`: append `repeatable` marker for slice/map options.
+* `ColorHelp`: enable ANSI-colored built-in help output.
+  Use `SetHelpColorScheme(...)` to provide custom colors/styles.
+  Built-ins: `DefaultHelpColorScheme()` and `HighContrastHelpColorScheme()`.
 * `SetTerminalTitle`: set terminal window title during parsing.
   Uses parser `Name` by default, or `parser.TerminalTitle` when provided.
 
@@ -77,7 +80,8 @@ Example:
 parser := flags.NewParser(&opts, flags.Default|
   flags.PrintHelpOnStderr|
   flags.ShowCommandAliases|
-  flags.ShowRepeatableInHelp)
+  flags.ShowRepeatableInHelp|
+  flags.ColorHelp)
 ```
 
 ## Struct Tags Reference

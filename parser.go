@@ -57,6 +57,9 @@ type Parser struct {
 	// Active struct-tag mapping used while scanning option metadata.
 	flagTags FlagTags
 
+	// Active color scheme for built-in help rendering.
+	helpColorScheme HelpColorScheme
+
 	// A usage string to be displayed in the help message.
 	Usage string
 
@@ -210,6 +213,9 @@ const (
 	// in built-in help output for collection options (slice/map).
 	ShowRepeatableInHelp
 
+	// ColorHelp enables ANSI-colored built-in help output.
+	ColorHelp
+
 	// SetTerminalTitle updates terminal window title during ParseArgs using
 	// TerminalTitle or parser Name.
 	SetTerminalTitle
@@ -281,6 +287,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		EnvNamespaceDelimiter: "_",
 		lookupGeneration:      1,
 		flagTags:              NewFlagTags(),
+		helpColorScheme:       DefaultHelpColorScheme(),
 		optionSort:            OptionSortByDeclaration,
 		optionTypeRank:        defaultOptionTypeRank(),
 		TagListDelimiter:      ';',
@@ -313,6 +320,11 @@ func (p *Parser) SetFlagTags(tags FlagTags) error {
 // "MY_APP_PORT", and grouped keys become "MY_APP_<GROUP>_<KEY>".
 func (p *Parser) SetEnvPrefix(prefix string) {
 	p.EnvPrefix = prefix
+}
+
+// SetHelpColorScheme configures color roles used by built-in help rendering.
+func (p *Parser) SetHelpColorScheme(scheme HelpColorScheme) {
+	p.helpColorScheme = scheme
 }
 
 // SetTagListDelimiter sets delimiter for list-based struct tags such as

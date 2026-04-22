@@ -76,6 +76,8 @@ type AdvancedOptions struct {
 		Plan  bool `long:"plan" description:"Show execution plan only"`
 	} `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
 	Zeta bool `long:"zeta" description:"Example bool flag for sort demo"`
+
+	HelpColor string `long:"help-color" choices:"none;default;contrast;light" default:"none" description:"Color scheme for built-in help output"`
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {
@@ -116,9 +118,66 @@ func applySortMode(p *flags.Parser, mode string) error {
 	return nil
 }
 
+func applyHelpColorMode(p *flags.Parser, mode string) error {
+	switch mode {
+	case "", "none":
+		p.Options &^= flags.ColorHelp
+	case "default":
+		p.Options |= flags.ColorHelp
+		p.SetHelpColorScheme(flags.DefaultHelpColorScheme())
+	case "contrast":
+		p.Options |= flags.ColorHelp
+		p.SetHelpColorScheme(flags.HighContrastHelpColorScheme())
+	case "light":
+		p.Options |= flags.ColorHelp
+		p.SetHelpColorScheme(flags.HelpColorScheme{
+			BaseText:        flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack, UseBG: true, BG: flags.ColorBrightWhite},
+			OptionShort:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			OptionLong:      flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			OptionDesc:      flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
+			OptionEnv:       flags.HelpTextStyle{UseFG: true, FG: flags.ColorCyan},
+			OptionDefault:   flags.HelpTextStyle{UseFG: true, FG: flags.ColorMagenta},
+			OptionChoices:   flags.HelpTextStyle{UseFG: true, FG: flags.ColorGreen, Bold: true},
+			UsageHeader:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true},
+			UsageText:       flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack, Bold: true},
+			CommandsHeader:  flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			CommandName:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			CommandDesc:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow},
+			ArgumentsHeader: flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true},
+			ArgumentName:    flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, Bold: true},
+			ArgumentDesc:    flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
+			GroupHeader:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true, Underline: true},
+		})
+	default:
+		return fmt.Errorf("unknown help color mode %q", mode)
+	}
+
+	return nil
+}
+
+func detectHelpColorArg(args []string) (string, bool) {
+	for i, arg := range args {
+		if v, ok := strings.CutPrefix(arg, "--help-color="); ok {
+			return v, true
+		}
+
+		if arg == "--help-color" && i+1 < len(args) {
+			return args[i+1], true
+		}
+	}
+
+	return "", false
+}
+
 func demoOutput(args []string, p *flags.Parser) (bool, error) {
 	docFormat := ""
 	docStyle := ""
+
+	if mode, ok := detectHelpColorArg(args); ok {
+		if err := applyHelpColorMode(p, mode); err != nil {
+			return true, err
+		}
+	}
 
 	for _, arg := range args {
 		if mode, ok := strings.CutPrefix(arg, "--demo-help="); ok {
@@ -186,6 +245,12 @@ func resolveDocMode(format, style string) (flags.DocFormat, string, error) {
 func main() {
 	opts := &AdvancedOptions{}
 	p := newParser(opts)
+	if mode, ok := detectHelpColorArg(os.Args[1:]); ok {
+		if err := applyHelpColorMode(p, mode); err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
 
 	handled, err := demoOutput(os.Args[1:], p)
 	if handled {

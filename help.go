@@ -187,6 +187,9 @@ func optionIsRepeatable(option *Option) bool {
 
 func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alignmentInfo, trimDescriptions bool) {
 	line := &bytes.Buffer{}
+	shortToken := ""
+	longToken := ""
+	choicesToken := ""
 
 	prefix := paddingBeforeOption
 
@@ -203,6 +206,7 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 	if option.ShortName != 0 {
 		line.WriteRune(defaultShortOptDelimiter)
 		line.WriteRune(option.ShortName)
+		shortToken = string(defaultShortOptDelimiter) + string(option.ShortName)
 	} else if info.hasShort {
 		line.WriteString("  ")
 	}
@@ -217,7 +221,8 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 		}
 
 		line.WriteString(defaultLongOptDelimiter)
-		line.WriteString(option.LongNameWithNamespace())
+		longToken = option.LongNameWithNamespace()
+		line.WriteString(longToken)
 	}
 
 	if option.canArgument() {
@@ -228,12 +233,24 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 		}
 
 		if len(option.Choices) > 0 {
-			line.WriteString("[" + strings.Join(option.Choices, "|") + "]")
+			choicesToken = "[" + strings.Join(option.Choices, "|") + "]"
+			line.WriteString(choicesToken)
 		}
 	}
 
 	written := line.Len()
-	_, _ = line.WriteTo(writer)
+	lineText := line.String()
+	if shortToken != "" {
+		lineText = strings.Replace(lineText, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
+	}
+	if longToken != "" {
+		coloredLong := defaultLongOptDelimiter + longToken
+		lineText = strings.Replace(lineText, coloredLong, p.colorizeHelp(coloredLong, p.helpColorScheme.OptionLong), 1)
+	}
+	if choicesToken != "" {
+		lineText = strings.Replace(lineText, choicesToken, p.colorizeHelp(choicesToken, p.helpColorScheme.OptionChoices), 1)
+	}
+	_, _ = writer.WriteString(lineText)
 
 	if option.Description != "" {
 		dw := descstart - written
@@ -276,10 +293,26 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 			desc += " (repeatable)"
 		}
 
-		_, _ = writer.WriteString(wrapText(desc,
+		desc = wrapText(desc,
 			info.terminalColumns-descstart,
 			strings.Repeat(" ", descstart),
-			trimDescriptions))
+			trimDescriptions)
+
+		if def != "" {
+			defaultFrag := fmt.Sprintf("default: %v", def)
+			desc = strings.Replace(desc, defaultFrag, p.colorizeHelp(defaultFrag, p.helpColorScheme.OptionDefault), 1)
+		}
+		if envDef != "" {
+			envFrag := strings.TrimSpace(envDef)
+			desc = strings.Replace(desc, envFrag, p.colorizeHelp(envFrag, p.helpColorScheme.OptionEnv), 1)
+		}
+		if (p.Options&ShowRepeatableInHelp) != None && optionIsRepeatable(option) {
+			repeatableFrag := "repeatable"
+			desc = strings.Replace(desc, repeatableFrag, p.colorizeHelp(repeatableFrag, p.helpColorScheme.OptionChoices), 1)
+		}
+
+		desc = p.colorizeHelp(desc, p.helpColorScheme.OptionDesc)
+		_, _ = writer.WriteString(desc)
 	}
 
 	_, _ = writer.WriteString("\n")
@@ -314,6 +347,13 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	}
 
 	wr := bufio.NewWriter(writer)
+	basePrefix := ""
+	if (p.Options & ColorHelp) != None {
+		basePrefix = helpStylePrefix(p.helpColorScheme.BaseText)
+		if basePrefix != "" {
+			_, _ = wr.WriteString(basePrefix)
+		}
+	}
 	aligninfo := p.getAlignmentInfo()
 	trimDescriptions := (p.Options & KeepDescriptionWhitespace) == None
 
@@ -324,7 +364,14 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	}
 
 	if p.Name != "" {
-		_, _ = wr.WriteString("Usage:\n")
+		_, _ = wr.WriteString(p.colorizeHelp("Usage:", p.helpColorScheme.UsageHeader))
+		if basePrefix != "" && p.helpColorScheme.BaseText.UseBG {
+			pad := aligninfo.terminalColumns - utf8.RuneCountInString("Usage:")
+			if pad > 0 {
+				_, _ = wr.WriteString(strings.Repeat(" ", pad))
+			}
+		}
+		_, _ = wr.WriteString("\n")
 		_, _ = wr.WriteString(" ")
 
 		allcmd := p.Command
@@ -345,9 +392,14 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			}
 
 			if len(usage) != 0 {
-				_, _ = fmt.Fprintf(wr, " %s %s", allcmd.Name, usage)
+				_, _ = fmt.Fprintf(
+					wr,
+					" %s %s",
+					p.colorizeHelp(allcmd.Name, p.helpColorScheme.UsageText),
+					p.colorizeHelp(usage, p.helpColorScheme.UsageText),
+				)
 			} else {
-				_, _ = fmt.Fprintf(wr, " %s", allcmd.Name)
+				_, _ = fmt.Fprintf(wr, " %s", p.colorizeHelp(allcmd.Name, p.helpColorScheme.UsageText))
 			}
 
 			if len(allcmd.args) > 0 {
@@ -367,12 +419,12 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 				if !allcmd.ArgsRequired {
 					if arg.Required > 0 {
-						_, _ = fmt.Fprintf(wr, "%s", name)
+						_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(name, p.helpColorScheme.UsageText))
 					} else {
-						_, _ = fmt.Fprintf(wr, "[%s]", name)
+						_, _ = fmt.Fprintf(wr, "[%s]", p.colorizeHelp(name, p.helpColorScheme.UsageText))
 					}
 				} else {
-					_, _ = fmt.Fprintf(wr, "%s", name)
+					_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(name, p.helpColorScheme.UsageText))
 				}
 			}
 
@@ -388,7 +440,13 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				visibleCommands := allcmd.visibleCommands()
 
 				if len(visibleCommands) > 3 {
-					_, _ = fmt.Fprintf(wr, " %scommand%s", co, cc)
+					_, _ = fmt.Fprintf(
+						wr,
+						" %s%s%s",
+						co,
+						p.colorizeHelp("command", p.helpColorScheme.UsageText),
+						cc,
+					)
 				} else {
 					subcommands := allcmd.sortedVisibleCommands()
 					names := make([]string, len(subcommands))
@@ -397,7 +455,13 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						names[i] = subc.Name
 					}
 
-					_, _ = fmt.Fprintf(wr, " %s%s%s", co, strings.Join(names, " | "), cc)
+					_, _ = fmt.Fprintf(
+						wr,
+						" %s%s%s",
+						co,
+						p.colorizeHelp(strings.Join(names, " | "), p.helpColorScheme.UsageText),
+						cc,
+					)
 				}
 			}
 
@@ -414,7 +478,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				"",
 				trimDescriptions)
 
-			_, _ = fmt.Fprintln(wr, t)
+			_, _ = fmt.Fprintln(wr, p.colorizeHelp(t, p.helpColorScheme.LongDescription))
 		}
 	}
 
@@ -438,7 +502,12 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				}
 
 				if printcmd {
-					_, _ = fmt.Fprintf(wr, "\n[%s command options]\n", c.Name)
+					header := fmt.Sprintf("[%s command options]", c.Name)
+					_, _ = fmt.Fprintf(
+						wr,
+						"\n%s\n",
+						p.colorizeHelp(header, p.helpColorScheme.SubcommandOptionsHeader),
+					)
 					aligninfo.indent = true
 					printcmd = false
 				}
@@ -450,7 +519,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						_, _ = wr.WriteString("    ")
 					}
 
-					_, _ = fmt.Fprintf(wr, "%s:\n", grp.ShortDescription)
+					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.ShortDescription, p.helpColorScheme.GroupHeader))
 					first = false
 				}
 
@@ -467,9 +536,9 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 		if len(args) > 0 {
 			if c == p.Command {
-				_, _ = fmt.Fprintf(wr, "\nArguments:\n")
+				_, _ = fmt.Fprintf(wr, "\n%s:\n", p.colorizeHelp("Arguments", p.helpColorScheme.ArgumentsHeader))
 			} else {
-				_, _ = fmt.Fprintf(wr, "\n[%s command arguments]\n", c.Name)
+				_, _ = fmt.Fprintf(wr, "\n[%s]\n", p.colorizeHelp(c.Name+" command arguments", p.helpColorScheme.ArgumentsHeader))
 			}
 
 			descStart := aligninfo.descriptionStart() + paddingBeforeOption
@@ -480,7 +549,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 				if len(arg.Description) > 0 {
 					argPrefix += ":"
-					_, _ = wr.WriteString(argPrefix)
+					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
 
 					// Space between "arg:" and the description start
 					descPadding := strings.Repeat(" ", descStart-len(argPrefix))
@@ -490,9 +559,10 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					descPrefix := strings.Repeat(" ", descStart)
 
 					_, _ = wr.WriteString(descPadding)
-					_, _ = wr.WriteString(wrapText(arg.Description, descWidth, descPrefix, trimDescriptions))
+					argDesc := wrapText(arg.Description, descWidth, descPrefix, trimDescriptions)
+					_, _ = wr.WriteString(p.colorizeHelp(argDesc, p.helpColorScheme.ArgumentDesc))
 				} else {
-					_, _ = wr.WriteString(argPrefix)
+					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
 				}
 
 				_, _ = fmt.Fprintln(wr)
@@ -508,23 +578,32 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		maxnamelen := maxCommandLength(scommands)
 
 		_, _ = fmt.Fprintln(wr)
-		_, _ = fmt.Fprintln(wr, "Available commands:")
+		_, _ = fmt.Fprintln(wr, p.colorizeHelp("Available commands:", p.helpColorScheme.CommandsHeader))
 
 		for _, c := range scommands {
-			_, _ = fmt.Fprintf(wr, "  %s", c.Name)
+			_, _ = fmt.Fprintf(wr, "  %s", p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
 
 			if len(c.ShortDescription) > 0 {
 				pad := strings.Repeat(" ", maxnamelen-len(c.Name))
-				_, _ = fmt.Fprintf(wr, "%s  %s", pad, c.ShortDescription)
+				_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(c.ShortDescription, p.helpColorScheme.CommandDesc))
 			}
 
 			if len(c.Aliases) > 0 &&
 				(len(c.ShortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
-				_, _ = fmt.Fprintf(wr, " (aliases: %s)", strings.Join(c.Aliases, ", "))
+				aliases := fmt.Sprintf(" (aliases: %s)", strings.Join(c.Aliases, ", "))
+				_, _ = fmt.Fprintf(
+					wr,
+					"%s",
+					p.colorizeHelp(aliases, p.helpColorScheme.CommandAliases),
+				)
 			}
 
 			_, _ = fmt.Fprintln(wr)
 		}
+	}
+
+	if basePrefix != "" {
+		_, _ = wr.WriteString("\x1b[0m")
 	}
 
 	_ = wr.Flush()

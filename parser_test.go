@@ -686,6 +686,23 @@ func TestAutoEnvTagInvalidValue(t *testing.T) {
 	}
 }
 
+func TestHelpWithEnvProvisioningDoesNotPanic(t *testing.T) {
+	var opts struct {
+		Value string `long:"value"`
+	}
+
+	p := NewParser(&opts, HelpFlag|EnvProvisioning)
+	_, err := p.ParseArgs([]string{"--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+}
+
 func TestDefaultsIfEmptyPrefilledAndCLI(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()

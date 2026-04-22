@@ -96,14 +96,17 @@ func (c *Command) addHelpGroup(showHelp func() error) *Group {
 	// Windows CLI applications typically use /? for help, so make both
 	// that available as well as the POSIX style h and help.
 	var help struct {
-		ShowHelpWindows func() error `short:"?" description:"Show this help message"`
-		ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message"`
+		ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false"`
+		ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
 	}
 
 	help.ShowHelpWindows = showHelp
 	help.ShowHelpPosix = showHelp
 
-	ret, _ := c.AddGroup("Help Options", "", &help)
+	ret, err := c.AddGroup("Help Options", "", &help)
+	if err != nil {
+		return nil
+	}
 	ret.isBuiltinHelp = true
 
 	return ret

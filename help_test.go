@@ -266,6 +266,106 @@ func TestHelpShowsCommandAliasesWithoutDescription(t *testing.T) {
 	}
 }
 
+func TestHelpColorEnabled(t *testing.T) {
+	var opts struct {
+		Name string   `long:"name" description:"Name value"`
+		Tags []string `long:"tag" description:"Tag value"`
+		Mode string   `long:"mode" choice:"fast" choice:"safe" description:"Mode"`
+		Run  struct{} `command:"run" alias:"r" description:"Run task"`
+		Args struct {
+			Input string `positional-arg-name:"input" description:"Input resource"`
+		} `positional-args:"yes"`
+	}
+
+	p := NewNamedParser("ColorHelp", ColorHelp|ShowRepeatableInHelp)
+	p.LongDescription = "Color help parser long description"
+	p.SetHelpColorScheme(HelpColorScheme{
+		BaseText:                HelpTextStyle{},
+		LongDescription:         HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
+		SubcommandOptionsHeader: HelpTextStyle{UseFG: true, FG: ColorBrightMagenta},
+		OptionLong:              HelpTextStyle{UseFG: true, FG: ColorRed, Bold: true},
+		OptionChoices:           HelpTextStyle{UseFG: true, FG: ColorGreen, Bold: true},
+		OptionDefault:           HelpTextStyle{UseFG: true, FG: ColorMagenta},
+		OptionEnv:               HelpTextStyle{UseFG: true, FG: ColorBlue},
+		GroupHeader:             HelpTextStyle{UseFG: true, FG: ColorYellow, Bold: true},
+		CommandsHeader:          HelpTextStyle{UseFG: true, FG: ColorCyan, Bold: true},
+		CommandName:             HelpTextStyle{UseFG: true, FG: ColorCyan, Bold: true},
+		CommandAliases:          HelpTextStyle{UseFG: true, FG: ColorBrightMagenta},
+		UsageHeader:             HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
+		UsageText:               HelpTextStyle{UseFG: true, FG: ColorBrightBlue, Bold: true},
+		OptionDesc:              HelpTextStyle{},
+		ArgumentsHeader:         HelpTextStyle{UseFG: true, FG: ColorYellow, Bold: true},
+		ArgumentName:            HelpTextStyle{UseFG: true, FG: ColorYellow, Bold: true},
+		ArgumentDesc:            HelpTextStyle{UseFG: true, FG: ColorBlue},
+	})
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+	got := out.String()
+
+	wantLong := applyHelpTextStyle(defaultLongOptDelimiter+"name", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.OptionLong))
+	if !strings.Contains(got, wantLong) {
+		t.Fatalf("expected colored long flag token %q, got:\n%s", wantLong, got)
+	}
+
+	wantChoices := applyHelpTextStyle("[fast|safe]", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.OptionChoices))
+	if !strings.Contains(got, wantChoices) {
+		t.Fatalf("expected colored choices token %q, got:\n%s", wantChoices, got)
+	}
+
+	wantRepeatable := applyHelpTextStyle("repeatable", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.OptionChoices))
+	if !strings.Contains(got, wantRepeatable) {
+		t.Fatalf("expected colored repeatable marker %q, got:\n%s", wantRepeatable, got)
+	}
+
+	wantArgKey := applyHelpTextStyle("  input:", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.ArgumentName))
+	if !strings.Contains(got, wantArgKey) {
+		t.Fatalf("expected colored argument key %q, got:\n%s", wantArgKey, got)
+	}
+
+	wantArgDesc := applyHelpTextStyle("Input resource", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.ArgumentDesc))
+	if !strings.Contains(got, wantArgDesc) {
+		t.Fatalf("expected colored argument description %q, got:\n%s", wantArgDesc, got)
+	}
+
+	wantUsageString := applyHelpTextStyle("ColorHelp", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.UsageText))
+	if !strings.Contains(got, wantUsageString) {
+		t.Fatalf("expected colored usage string %q, got:\n%s", wantUsageString, got)
+	}
+
+	wantLongDesc := applyHelpTextStyle("Color help parser long description", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.LongDescription))
+	if !strings.Contains(got, wantLongDesc) {
+		t.Fatalf("expected colored long description %q, got:\n%s", wantLongDesc, got)
+	}
+
+	wantAliases := applyHelpTextStyle(" (aliases: r)", mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.CommandAliases))
+	if !strings.Contains(got, wantAliases) {
+		t.Fatalf("expected colored command aliases %q, got:\n%s", wantAliases, got)
+	}
+}
+
+func TestHelpColorDisabled(t *testing.T) {
+	var opts struct {
+		Name string `long:"name" description:"Name value"`
+	}
+
+	p := NewNamedParser("ColorHelp", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	if strings.Contains(out.String(), "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences when ColorHelp is disabled:\n%s", out.String())
+	}
+}
+
 func TestMan(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()
