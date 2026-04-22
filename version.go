@@ -63,6 +63,8 @@ const (
 
 // VersionInfo represents build/version metadata of the running binary.
 type VersionInfo struct {
+	// RevisionTime is VCS revision time in UTC when available.
+	RevisionTime time.Time
 	// File is executable path/name (usually os.Args[0]).
 	File string
 	// Path is the main package path of the running binary.
@@ -73,10 +75,6 @@ type VersionInfo struct {
 	Version string
 	// Revision is VCS revision (commit SHA).
 	Revision string
-	// RevisionTime is VCS revision time in UTC when available.
-	RevisionTime time.Time
-	// Modified reports whether source tree was dirty at build time.
-	Modified bool
 	// GoVersion is the Go toolchain version used for build.
 	GoVersion string
 	// URL is repository URL inferred from module path unless overridden.
@@ -85,6 +83,8 @@ type VersionInfo struct {
 	GOOS string
 	// GOARCH is build target architecture.
 	GOARCH string
+	// Modified reports whether source tree was dirty at build time.
+	Modified bool
 }
 
 // VersionInfo returns detected build metadata merged with parser-level overrides.

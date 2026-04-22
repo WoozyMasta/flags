@@ -72,6 +72,9 @@ type Parser struct {
 	// If empty, parser Name is used.
 	TerminalTitle string
 
+	// Cached version metadata (auto-detected and/or overridden).
+	versionInfo VersionInfo
+
 	// MaxLongNameLength limits allowed rune length of option `long` names.
 	// Zero disables the limit.
 	MaxLongNameLength int
@@ -81,6 +84,9 @@ type Parser struct {
 
 	// Option flags changing the behavior of the parser.
 	Options Options
+
+	// Configured set of fields rendered by built-in version output.
+	versionFields VersionFields
 
 	// TagListDelimiter splits values for list-based struct tags such as
 	// defaults/choices/aliases.
@@ -103,12 +109,6 @@ type Parser struct {
 
 	// Prevents recursive configurator execution.
 	configuring bool
-
-	// Cached version metadata (auto-detected and/or overridden).
-	versionInfo VersionInfo
-
-	// Configured set of fields rendered by built-in version output.
-	versionFields VersionFields
 
 	// Set by built-in version option handler during parse.
 	versionRequested bool
