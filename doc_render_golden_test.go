@@ -15,10 +15,12 @@ import (
 )
 
 func TestWriteDocBuiltinTemplatesGolden(t *testing.T) {
-	t.Parallel()
 	if runtime.GOOS == "windows" && defaultLongOptDelimiter != "--" {
 		t.Skip("run with -tags forceposix to validate unix doc snapshots on windows")
 	}
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	os.Setenv("SOURCE_DATE_EPOCH", "1700000000")
 
 	var opts struct {
 		Verbose bool              `short:"v" long:"verbose" description:"Enable verbose output"`

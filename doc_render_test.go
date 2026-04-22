@@ -403,7 +403,8 @@ func TestWriteDocIncludeHidden(t *testing.T) {
 		t.Fatalf("unexpected write doc error: %v", err)
 	}
 
-	for _, needle := range []string{"/hidden", "### internal"} {
+	hiddenFlag := string(defaultLongOptDelimiter) + "hidden"
+	for _, needle := range []string{hiddenFlag, "### internal"} {
 		if !strings.Contains(withHidden.String(), needle) {
 			t.Fatalf("expected %q in hidden-enabled output, got:\n%s", needle, withHidden.String())
 		}
