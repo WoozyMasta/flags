@@ -935,6 +935,48 @@ func TestHelpPositionalDefault(t *testing.T) {
 	}
 }
 
+func TestWriteHelpWithOnlyPositionalArgsNoPanic(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Bar string `description:"bar"`
+		} `positional-args:"yes"`
+	}
+
+	p := NewNamedParser("help-positional-only", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	if !strings.Contains(got, "Arguments:") || !strings.Contains(got, "Bar:") {
+		t.Fatalf("unexpected help output:\n%s", got)
+	}
+}
+
+func TestWriteHelpWithOnlyPositionalArgsUnicodeNameNoPanic(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Bar string `positional-arg-name:"путь" description:"bar"`
+		} `positional-args:"yes"`
+	}
+
+	p := NewNamedParser("help-positional-only-unicode", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	if !strings.Contains(got, "Arguments:") || !strings.Contains(got, "путь:") {
+		t.Fatalf("unexpected help output:\n%s", got)
+	}
+}
+
 func TestWroteHelp(t *testing.T) {
 	type testInfo struct {
 		value  error

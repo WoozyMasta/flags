@@ -993,7 +993,10 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
 
 					// Space between "arg:" and the description start
-					descPadding := strings.Repeat(" ", descStart-len(argPrefix))
+					descPadding := strings.Repeat(
+						" ",
+						max(descStart-utf8.RuneCountInString(argPrefix), 1),
+					)
 					// How much space the description gets before wrapping
 					descWidth := aligninfo.terminalColumns - 1 - descStart
 					// Whitespace to which we can indent new description lines
