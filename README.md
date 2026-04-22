@@ -4,17 +4,14 @@ Reflection-based command-line parser for Go.
 
 ## Core Features
 
-* Short and long flags (`-v`, `--verbose`)
-* Optional and required arguments
-* Slices and maps as option values
-* Positional arguments
-* Nested option groups
-* Commands and subcommands
-* Defaults from tags and environment variables
-* INI parse/write support
-* Bash/Zsh completion script generation
-* Help output and template-based documentation rendering (man/markdown/html)
-* Configurable parse output routing for help/errors (`stdout` or `stderr`)
+* POSIX-inspired command-line parsing
+* getopt/getopt_long-style flags with practical Go extensions
+* Short and long flags with optional/required values
+* Repeatable slice/map options and typed defaults
+* Structured CLI design: commands, subcommands, groups, and positional args
+* Flexible input sources: flags, environment variables, and INI
+* Rich help, completion, and documentation output (man/markdown/html)
+* Custom value parsing with standard Go interfaces
 
 ## Installation
 
