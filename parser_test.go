@@ -426,6 +426,33 @@ func TestEnvDefaults(t *testing.T) {
 	}
 }
 
+func TestEnvInvalidChoiceReturnsError(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	var opts struct {
+		Mode string `long:"mode" env:"APP_MODE" choice:"fast" choice:"safe" required:"yes"`
+	}
+
+	_ = os.Setenv("APP_MODE", "broken")
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs(nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	if flagsErr.Type != ErrInvalidChoice {
+		t.Fatalf("expected ErrInvalidChoice, got %v (%s)", flagsErr.Type, flagsErr.Message)
+	}
+}
+
 func TestEnvPrefix(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()
