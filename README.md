@@ -484,6 +484,7 @@ Common help behavior flags:
 
 * `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
 * `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
+* `VersionFlag`: add built-in `-V/--version` output (`ErrVersion`).
 * `ShowCommandAliases`: show command aliases in the `Available commands`
   section.
 * `ShowRepeatableInHelp`: append a `repeatable` marker for slice/map options.
@@ -541,6 +542,82 @@ parser.SetHelpEnvRenderStyle(flags.RenderStyleWindows)
 (delimiters/parsing behavior on Windows).
 It is useful for deterministic tests/builds.
 Runtime render-style APIs only change presentation in help/docs.
+
+## Version
+
+Built-in version output is enabled with `flags.VersionFlag`.
+It adds `-V/--version` to `Help Options` and returns `ErrVersion`.
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
+```
+
+By default, built-in `-V/--version` uses a compact field set:
+`flags.VersionFieldsCore`.
+You can switch to all fields or a custom mask:
+
+```go
+parser.SetVersionFields(flags.VersionFieldsAll)
+// or:
+parser.SetVersionFields(flags.VersionFieldVersion | flags.VersionFieldCommit)
+```
+
+`VersionFieldTarget` prints build target as `GOOS/GOARCH`.
+
+Default metadata source is `runtime/debug.ReadBuildInfo()`.
+For best auto-discovery results, build with `-buildvcs=auto`.
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
+```
+
+If both help and version are provided, help has priority:
+`-h/--help` wins over `-V/--version`.
+
+For reproducible release metadata, set explicit values via setters.
+Typical pattern:
+
+```go
+package buildvars
+
+var (
+  Version = "dev"
+  Commit  = "unknown"
+  URL     = "https://github.com/example/project"
+)
+```
+
+```go
+package main
+
+func main() {
+  parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
+  parser.SetVersion(buildvars.Version)
+  parser.SetVersionCommit(buildvars.Commit)
+  parser.SetVersionURL(buildvars.URL)
+}
+```
+
+Manual output can also be rendered with explicit field selection:
+
+```go
+parser.WriteVersion(os.Stdout, flags.VersionFieldsCore)
+```
+
+Example bash variables and build command (ldflags -> your buildvars):
+
+```bash
+MODULE="$(GOWORK=off go list -m -f '{{.Path}}')"
+VERSION="$(git describe --match 'v[0-9]*' --dirty='.m' --always --tags 2>/dev/null || echo v0.0.0)"
+COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
+URL="https://$MODULE"
+
+go build -buildvcs=auto \
+  -ldflags "-X ${MODULE}/internal/buildvars.Version=${VERSION} \
+  -X ${MODULE}/internal/buildvars.Commit=${COMMIT} \
+  -X ${MODULE}/internal/buildvars.URL=${URL}" \
+  ./...
+```
 
 ## Shell Completion
 

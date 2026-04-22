@@ -57,8 +57,30 @@ func splitOption(_ string, option string, islong bool) (name string, split strin
 	return option, "", "", false
 }
 
-// addHelpGroup adds a new group that contains default help parameters.
-func (c *Command) addHelpGroup(showHelp func() error) *Group {
+// addHelpGroup adds a new group that contains default help/version parameters.
+func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) *Group {
+	includeVersion := false
+	if p := c.parser(); p != nil && (p.Options&VersionFlag) != None && showVersion != nil {
+		includeVersion = true
+	}
+
+	if includeVersion {
+		var help struct {
+			ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
+			ShowVersion func() error `short:"V" long:"version" description:"Show version information" auto-env:"false"`
+		}
+
+		help.ShowHelp = showHelp
+		help.ShowVersion = showVersion
+		ret, err := c.AddGroup("Help Options", "", &help)
+		if err != nil {
+			return nil
+		}
+		ret.isBuiltinHelp = true
+
+		return ret
+	}
+
 	var help struct {
 		ShowHelp func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
 	}

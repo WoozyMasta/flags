@@ -56,6 +56,9 @@ const (
 	// contains the help message).
 	ErrHelp
 
+	// ErrVersion indicates that the built-in version output was shown.
+	ErrVersion
+
 	// ErrNoArgumentForBool indicates that an argument was given for a
 	// boolean flag (which don't not take any arguments).
 	ErrNoArgumentForBool
@@ -103,6 +106,8 @@ func (e ErrorType) String() string {
 		return "marshal"
 	case ErrHelp:
 		return "help"
+	case ErrVersion:
+		return "version"
 	case ErrNoArgumentForBool:
 		return "no argument for bool"
 	case ErrRequired:

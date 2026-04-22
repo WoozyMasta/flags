@@ -1520,6 +1520,85 @@ func TestPrintErrorsDestination(t *testing.T) {
 	}
 }
 
+func TestVersionFlagPrintsVersionAndOverridesOtherFlags(t *testing.T) {
+	var opts struct {
+		Value string `long:"value"`
+	}
+
+	parser := NewNamedParser("version-test", VersionFlag|PrintErrors)
+	_, _ = parser.AddGroup("Application Options", "", &opts)
+	parser.SetVersion("v1.2.3")
+	parser.SetVersionCommit("deadbeef")
+	parser.SetVersionURL("https://example.test/repo")
+
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--version", "--unknown"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for version output, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "version:  v1.2.3") {
+		t.Fatalf("expected version output, got %q", stdout)
+	}
+	if strings.Contains(stdout, "unknown flag") {
+		t.Fatalf("expected version to override other flags, got %q", stdout)
+	}
+
+	stdout, stderr = captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--unknown", "--version"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for version output, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "version:  v1.2.3") {
+		t.Fatalf("expected version output when version is after invalid flags, got %q", stdout)
+	}
+}
+
+func TestVersionFlagSkipsRequiredChecks(t *testing.T) {
+	var opts struct {
+		ReleaseID string `long:"release-id" required:"yes"`
+	}
+
+	parser := NewNamedParser("version-test-required", VersionFlag|PrintErrors)
+	_, _ = parser.AddGroup("Application Options", "", &opts)
+	parser.SetVersion("v1.2.3")
+
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--version"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for version output, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "version:  v1.2.3") {
+		t.Fatalf("expected version output, got %q", stdout)
+	}
+	if strings.Contains(stdout, "required flag") {
+		t.Fatalf("expected required checks to be skipped for version output, got %q", stdout)
+	}
+}
+
+func TestHelpTakesPriorityOverVersion(t *testing.T) {
+	parser := NewNamedParser("priority-test", HelpFlag|VersionFlag|PrintErrors)
+
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--version", "--help"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "Usage:") {
+		t.Fatalf("expected help output, got %q", stdout)
+	}
+	if strings.Contains(stdout, "version:") {
+		t.Fatalf("expected help to win over version, got %q", stdout)
+	}
+}
+
 func TestPrintErrorsHelpToStderr(t *testing.T) {
 	var opts struct {
 		Value bool `long:"value"`

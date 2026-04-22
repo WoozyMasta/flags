@@ -85,6 +85,7 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 	p := flags.NewNamedParser(
 		"advanced-cli",
 		flags.Default|
+			flags.VersionFlag|
 			flags.EnvProvisioning|
 			flags.KeepDescriptionWhitespace|
 			flags.DetectShellFlagStyle|
@@ -92,6 +93,8 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 	)
 	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block"
 	p.SetEnvPrefix("DEMO_APP")
+	p.SetVersionURL("https://github.com/woozymasta/flags")
+	p.SetVersionFields(flags.VersionFieldsAll)
 	if err := p.SetMaxLongNameLength(256); err != nil {
 		panic(err)
 	}
@@ -274,7 +277,7 @@ func main() {
 
 	if _, err := p.Parse(); err != nil {
 		var flagsErr *flags.Error
-		if errors.As(err, &flagsErr) && flagsErr.Type == flags.ErrHelp {
+		if errors.As(err, &flagsErr) && (flagsErr.Type == flags.ErrHelp || flagsErr.Type == flags.ErrVersion) {
 			os.Exit(0)
 		}
 		os.Exit(1)

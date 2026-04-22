@@ -103,6 +103,15 @@ type Parser struct {
 
 	// Prevents recursive configurator execution.
 	configuring bool
+
+	// Cached version metadata (auto-detected and/or overridden).
+	versionInfo VersionInfo
+
+	// Configured set of fields rendered by built-in version output.
+	versionFields VersionFields
+
+	// Set by built-in version option handler during parse.
+	versionRequested bool
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -182,6 +191,10 @@ const (
 	// will also be automatically printed to os.Stdout unless PrintHelpOnStderr
 	// is set.
 	HelpFlag = 1 << iota
+
+	// VersionFlag adds built-in -V/--version option to the Help Options group.
+	// When specified, parser returns ErrVersion and the version message.
+	VersionFlag
 
 	// PassDoubleDash passes all arguments after a double dash, --, as
 	// remaining command line arguments (i.e. they will not be parsed for
@@ -352,6 +365,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		TagListDelimiter:      ';',
 		helpFlagStyle:         RenderStyleAuto,
 		helpEnvStyle:          RenderStyleAuto,
+		versionFields:         VersionFieldsCore,
 		configDirty:           true,
 	}
 
@@ -635,9 +649,11 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		}
 	})
 
-	// Add built-in help group to all commands if necessary
-	if (p.Options & HelpFlag) != None {
-		p.addHelpGroups(p.showBuiltinHelp)
+	p.versionRequested = false
+
+	// Add built-in help/version group to all commands if necessary.
+	if (p.Options & (HelpFlag | VersionFlag)) != None {
+		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
 	}
 
 	compval := os.Getenv("GO_FLAGS_COMPLETION")
@@ -717,13 +733,19 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 			if parseErr.Type != ErrUnknownFlag || (!ignoreUnknown && p.UnknownOptionHandler == nil) {
 				s.err = parseErr
-				break
+				if (p.Options & VersionFlag) == None {
+					break
+				}
+				continue
 			}
 
 			if ignoreUnknown {
 				if err = s.addArgs(arg); err != nil {
 					s.err = err
-					break
+					if (p.Options & VersionFlag) == None {
+						break
+					}
+					continue
 				}
 			} else if p.UnknownOptionHandler != nil {
 				modifiedArgs, err := p.UnknownOptionHandler(optname, strArgument{
@@ -733,12 +755,25 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 				if err != nil {
 					s.err = err
-					break
+					if (p.Options & VersionFlag) == None {
+						break
+					}
+					continue
 				}
 
 				s.args = modifiedArgs
 			}
 		}
+	}
+
+	if p.versionRequested {
+		if s.err != nil {
+			if flagsErr, ok := s.err.(*Error); ok && flagsErr.Type == ErrHelp {
+				return nil, p.printError(s.err)
+			}
+		}
+
+		return nil, p.printError(p.showBuiltinVersion())
 	}
 
 	if s.err == nil {
@@ -1324,6 +1359,18 @@ func (p *Parser) showBuiltinHelp() error {
 	return newError(ErrHelp, b.String())
 }
 
+func (p *Parser) showBuiltinVersion() error {
+	var b bytes.Buffer
+
+	p.WriteVersion(&b, p.versionFields)
+	return newError(ErrVersion, b.String())
+}
+
+func (p *Parser) markVersionRequested() error {
+	p.versionRequested = true
+	return nil
+}
+
 func (p *Parser) printError(err error) error {
 	if err != nil && (p.Options&PrintErrors) != None {
 		_, _ = fmt.Fprintln(p.errorWriter(err), err)
@@ -1335,7 +1382,7 @@ func (p *Parser) printError(err error) error {
 func (p *Parser) errorWriter(err error) io.Writer {
 	flagsErr, ok := err.(*Error)
 
-	if ok && flagsErr.Type == ErrHelp {
+	if ok && (flagsErr.Type == ErrHelp || flagsErr.Type == ErrVersion) {
 		if (p.Options & PrintHelpOnStderr) != None {
 			return os.Stderr
 		}

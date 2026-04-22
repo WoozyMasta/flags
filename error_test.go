@@ -16,6 +16,7 @@ func TestErrorTypeStringAndError(t *testing.T) {
 		{ErrUnknownGroup, "unknown group"},
 		{ErrMarshal, "marshal"},
 		{ErrHelp, "help"},
+		{ErrVersion, "version"},
 		{ErrNoArgumentForBool, "no argument for bool"},
 		{ErrRequired, "required"},
 		{ErrShortNameTooLong, "short name too long"},

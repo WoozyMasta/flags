@@ -91,14 +91,36 @@ func splitOption(prefix string, option string, islong bool) (name string, split 
 	return option, "", "", false
 }
 
-// addHelpGroup adds a new group that contains default help parameters.
-func (c *Command) addHelpGroup(showHelp func() error) *Group {
+// addHelpGroup adds a new group that contains default help/version parameters.
+func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) *Group {
 	style := RenderStyleWindows
 	if parser := c.parser(); parser != nil {
 		style = parser.resolveFlagRenderStyle()
 	}
 
+	includeVersion := false
+	if p := c.parser(); p != nil && (p.Options&VersionFlag) != None && showVersion != nil {
+		includeVersion = true
+	}
+
 	if style == RenderStylePOSIX {
+		if includeVersion {
+			var help struct {
+				ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
+				ShowVersion func() error `short:"V" long:"version" description:"Show version information" auto-env:"false"`
+			}
+
+			help.ShowHelp = showHelp
+			help.ShowVersion = showVersion
+			ret, err := c.AddGroup("Help Options", "", &help)
+			if err != nil {
+				return nil
+			}
+			ret.isBuiltinHelp = true
+
+			return ret
+		}
+
 		var help struct {
 			ShowHelp func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
 		}
@@ -115,6 +137,26 @@ func (c *Command) addHelpGroup(showHelp func() error) *Group {
 
 	// Windows CLI applications typically use /? for help, so make both
 	// that available as well as the POSIX style h and help.
+	if includeVersion {
+		var help struct {
+			ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false"`
+			ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
+			ShowVersion     func() error `short:"V" long:"version" description:"Show version information" auto-env:"false"`
+		}
+
+		help.ShowHelpWindows = showHelp
+		help.ShowHelpPosix = showHelp
+		help.ShowVersion = showVersion
+
+		ret, err := c.AddGroup("Help Options", "", &help)
+		if err != nil {
+			return nil
+		}
+		ret.isBuiltinHelp = true
+
+		return ret
+	}
+
 	var help struct {
 		ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false"`
 		ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`

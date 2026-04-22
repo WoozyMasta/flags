@@ -430,14 +430,14 @@ func (c *Command) eachActiveGroup(f func(cc *Command, g *Group)) {
 	}
 }
 
-func (c *Command) addHelpGroups(showHelp func() error) {
+func (c *Command) addHelpGroups(showHelp func() error, showVersion func() error) {
 	if !c.hasBuiltinHelpGroup {
-		c.addHelpGroup(showHelp)
+		c.addHelpGroup(showHelp, showVersion)
 		c.hasBuiltinHelpGroup = true
 	}
 
 	for _, cc := range c.commands {
-		cc.addHelpGroups(showHelp)
+		cc.addHelpGroups(showHelp, showVersion)
 	}
 }
 
