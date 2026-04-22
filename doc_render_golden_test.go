@@ -143,10 +143,8 @@ func TestWriteDocBuiltinTemplatesGolden(t *testing.T) {
 
 func normalizeNewlines(in string) string {
 	in = strings.ReplaceAll(in, "\r\n", "\n")
-	if !strings.HasSuffix(in, "\n") {
-		in += "\n"
-	}
-	return in
+	in = strings.TrimRight(in, "\n")
+	return in + "\n"
 }
 
 func normalizeMarkdown(in string) string {
