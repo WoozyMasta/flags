@@ -73,6 +73,10 @@ type Parser struct {
 	// If empty, parser Name is used.
 	TerminalTitle string
 
+	// MaxLongNameLength limits allowed rune length of option `long` names.
+	// Zero disables the limit.
+	MaxLongNameLength int
+
 	// Monotonic generation used to invalidate cached lookup maps.
 	lookupGeneration uint64
 
@@ -219,6 +223,14 @@ const (
 	// in built-in help output for collection options (slice/map).
 	ShowRepeatableInHelp
 
+	// ShowChoiceListInHelp forces rendering choices as a vertical list
+	// in built-in help output.
+	ShowChoiceListInHelp
+
+	// HideEnvInHelp suppresses environment variable placeholders in built-in
+	// help output.
+	HideEnvInHelp
+
 	// ColorHelp enables ANSI-colored built-in help output.
 	ColorHelp
 
@@ -237,6 +249,12 @@ const (
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
+)
+
+const (
+	// DefaultMaxLongNameLength is the default maximum length for `long` names.
+	// Set parser MaxLongNameLength to 0 to disable this limit.
+	DefaultMaxLongNameLength = 32
 )
 
 type parseState struct {
@@ -299,6 +317,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		Options:               options,
 		NamespaceDelimiter:    ".",
 		EnvNamespaceDelimiter: "_",
+		MaxLongNameLength:     DefaultMaxLongNameLength,
 		lookupGeneration:      1,
 		flagTags:              NewFlagTags(),
 		helpColorScheme:       DefaultHelpColorScheme(),
@@ -353,6 +372,27 @@ func (p *Parser) SetHelpFlagRenderStyle(style RenderStyle) {
 // built-in help and doc templates.
 func (p *Parser) SetHelpEnvRenderStyle(style RenderStyle) {
 	p.helpEnvStyle = style
+}
+
+// SetMaxLongNameLength sets the maximum allowed length for option `long` names.
+// Value 0 disables the limit. Negative values are rejected.
+// Existing parser groups/commands are rescanned so the new rule is applied
+// immediately.
+func (p *Parser) SetMaxLongNameLength(length int) error {
+	if length < 0 {
+		return errors.New("max long name length cannot be negative")
+	}
+
+	prev := p.MaxLongNameLength
+	p.MaxLongNameLength = length
+
+	if err := p.rebuildTree(); err != nil {
+		p.MaxLongNameLength = prev
+		_ = p.rebuildTree()
+		return err
+	}
+
+	return nil
 }
 
 // SetTagListDelimiter sets delimiter for list-based struct tags such as

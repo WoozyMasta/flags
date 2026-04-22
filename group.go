@@ -339,6 +339,19 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		longname := mtag.Get(FlagTagLong)
 		shortname := mtag.Get(FlagTagShort)
 
+		if longname != "" {
+			maxLong := 0
+			if p := g.parser(); p != nil {
+				maxLong = p.MaxLongNameLength
+			}
+
+			if maxLong > 0 && utf8.RuneCountInString(longname) > maxLong {
+				return newErrorf(ErrInvalidTag,
+					"long flag name `%s' exceeds max length %d (use SetMaxLongNameLength to override)",
+					longname, maxLong)
+			}
+		}
+
 		// Need at least either a short or long name
 		if longname == "" && shortname == "" && mtag.Get(FlagTagIniName) == "" {
 			continue

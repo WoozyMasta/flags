@@ -45,11 +45,13 @@ type AdvancedOptions struct {
 		Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
 	} `positional-args:"yes" required:"yes"`
 
-	Alpha    string       `long:"alpha" description:"Example string flag for sort demo" default:"a"`
-	Profile  string       `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
-	Region   string       `long:"region" description:"Cloud region" env:"APP_REGION" default:"eu-west-1"`
-	Token    DynamicToken `long:"token" description:"Dynamic default token"`
-	Strategy string       `long:"deployment-strategy-with-very-long-name" value-name:"STRATEGY_PROFILE_NAME" description:"Deployment strategy selector with long value" default:"rolling-update-with-pre-drain-and-post-verify"`
+	Alpha            string       `long:"alpha" description:"Example string flag for sort demo" default:"a"`
+	Profile          string       `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
+	Region           string       `long:"region" description:"Cloud region" env:"APP_REGION" default:"eu-west-1"`
+	Token            DynamicToken `long:"token" description:"Dynamic default token"`
+	Strategy         string       `long:"deployment-strategy-with-very-long-name" value-name:"STRATEGY_PROFILE_NAME" description:"Deployment strategy selector with long value" default:"rolling-update-with-pre-drain-and-post-verify"`
+	FormatPolicy     string       `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" description:"Output format negotiation policy for generated artifacts" choices:"prefer-human-readable-markdown-with-inline-metadata;prefer-machine-readable-json-with-stable-field-order;prefer-manpage-compatible-plain-text-with-unicode-disabled" default:"prefer-machine-readable-json-with-stable-field-order"`
+	TemplateStrategy string       `long:"profile-template-selection-strategy-for-runtime-environments" value-name:"PROFILE_TEMPLATE_SELECTION_STRATEGY_NAME" description:"Profile template selection strategy for runtime environments" optional:"yes" optional-value:"prefer-latest-template-compatible-with-runtime-features" choices:"prefer-latest-template-compatible-with-runtime-features;prefer-template-locked-to-application-major-version;prefer-template-selected-by-explicit-environment-marker"`
 
 	ManualEnvOnly string `long:"manual-env-only" description:"Explicit opt-out from global auto env" auto-env:"false" default:"local" order:"-40"`
 	ReleaseID     string `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
@@ -91,6 +93,9 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 	)
 	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block"
 	p.SetEnvPrefix("DEMO_APP")
+	if err := p.SetMaxLongNameLength(256); err != nil {
+		panic(err)
+	}
 
 	_, err := p.AddGroup("Application Options", "Advanced feature demo", opts)
 	if err != nil {

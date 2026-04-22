@@ -27,11 +27,11 @@ const (
 )
 
 type optionRenderFormat struct {
-	shortDelimiter rune
 	longDelimiter  string
-	nameDelimiter  rune
 	envPrefix      string
 	envSuffix      string
+	shortDelimiter rune
+	nameDelimiter  rune
 }
 
 func (p *Parser) resolveFlagRenderStyle() RenderStyle {

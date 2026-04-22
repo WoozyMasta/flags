@@ -379,6 +379,7 @@ Common help behavior flags:
 * `ShowCommandAliases`: show command aliases in the `Available commands`
   section.
 * `ShowRepeatableInHelp`: append a `repeatable` marker for slice/map options.
+* `HideEnvInHelp`: hide env placeholders (`$ENV`/`%ENV%`) in built-in help.
 * `SetTerminalTitle`: set terminal title during parsing (uses parser `Name`
   or `parser.TerminalTitle`).
 

@@ -61,6 +61,8 @@ and this project adheres to [Semantic Versioning][].
   is enabled.
 * Parser options `ShowCommandAliases` and `ShowRepeatableInHelp` to
   enrich built-in help with command alias list and repeatable markers.
+* Parser option `HideEnvInHelp` to suppress env placeholders
+  in built-in help output.
 * Parser option `ColorHelp` and configurable help color schemes via
   `SetHelpColorScheme(...)` (`DefaultHelpColorScheme`,
   `HighContrastHelpColorScheme`).
@@ -69,6 +71,8 @@ and this project adheres to [Semantic Versioning][].
 * Runtime render-style controls for help/doc output:
   `SetHelpFlagRenderStyle(...)`, `SetHelpEnvRenderStyle(...)`,
   and shell-detect options `DetectShellFlagStyle` / `DetectShellEnvStyle`.
+* Long option-name length guard with parser-level override:
+  `Parser.SetMaxLongNameLength(...)`.
 
 ### Changed
 
@@ -80,12 +84,18 @@ and this project adheres to [Semantic Versioning][].
 * CI/checking pipeline was modernized (linting, alignment, cross-platform jobs).
 * `WriteManPage` / `DocFormatMan` default rendering now goes through template
   execution path (`man/default`) instead of legacy writer implementation.
+* ⚠️ **breaking**: default maximum `long` flag length is now `32`.
+  For longer names, configure parser limit explicitly via
+  `Parser.SetMaxLongNameLength(...)`.
 
 ### Fixed
 
 * `examples/main.go` now checks help errors via `*flags.Error` + `errors.As`.
 * Duplicate `default` struct tags in examples were removed.
 * Windows `gofmt` instability fixed via `.gitattributes` (LF normalization).
+* Built-in help rendering for long option signatures
+  (including long `choice` lists and value placeholders)
+  now wraps more predictably and keeps the description column readable.
 
 [Unreleased]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.1...HEAD
 

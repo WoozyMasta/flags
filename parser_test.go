@@ -1734,6 +1734,72 @@ func TestSetTagListDelimiterRejectsNUL(t *testing.T) {
 	}
 }
 
+func TestDefaultMaxLongNameLengthRejectsLongTag(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-long-option-name-is-definitely-over-thirty-two-chars"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+
+	if !strings.Contains(flagsErr.Message, "exceeds max length") {
+		t.Fatalf("expected long-name length validation error, got: %s", flagsErr.Message)
+	}
+}
+
+func TestSetMaxLongNameLengthAllowsLongTag(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-long-option-name-is-definitely-over-thirty-two-chars"`
+	}
+
+	p := NewNamedParser("longname", None)
+	if err := p.SetMaxLongNameLength(128); err != nil {
+		t.Fatalf("unexpected set max long name length error: %v", err)
+	}
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"--this-long-option-name-is-definitely-over-thirty-two-chars=value"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Value != "value" {
+		t.Fatalf("expected parsed long option value, got %q", opts.Value)
+	}
+}
+
+func TestSetMaxLongNameLengthZeroDisablesLimit(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-long-option-name-is-definitely-over-thirty-two-chars"`
+	}
+
+	p := NewNamedParser("longname", None)
+	if err := p.SetMaxLongNameLength(0); err != nil {
+		t.Fatalf("unexpected set max long name length error: %v", err)
+	}
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"--this-long-option-name-is-definitely-over-thirty-two-chars=value"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Value != "value" {
+		t.Fatalf("expected parsed long option value, got %q", opts.Value)
+	}
+}
+
 func TestDefaultAndDefaultsTagsConflict(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" default:"one" defaults:"two;three"`

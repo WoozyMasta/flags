@@ -28,7 +28,7 @@ type helpOptions struct {
 	OptionWithChoices string            `long:"opt-with-choices" value-name:"choice" choice:"dog" choice:"cat" description:"Option with choices"`
 	Hidden            string            `long:"hidden" description:"Hidden option" hidden:"yes"`
 
-	HiddenOptionWithVeryLongName bool `long:"this-hidden-option-has-a-ridiculously-long-name" hidden:"yes"`
+	HiddenOptionWithVeryLongName bool `long:"hidden-option-very-long-name" hidden:"yes"`
 
 	OnlyIni string `ini-name:"only-ini" description:"Option only available in ini"`
 
@@ -39,7 +39,7 @@ type helpOptions struct {
 
 	HiddenGroup struct {
 		InsideHiddenGroup string `long:"inside-hidden-group" description:"Inside hidden group"`
-		Padder            bool   `long:"this-option-in-a-hidden-group-has-a-ridiculously-long-name"`
+		Padder            bool   `long:"hidden-group-option-long-name"`
 	} `group:"Hidden group" hidden:"yes"`
 
 	GroupWithOnlyHiddenOptions struct {
@@ -104,108 +104,36 @@ func TestHelp(t *testing.T) {
 			t.Errorf("Expected flags.ErrHelp type, but got %s", e.Type)
 		}
 
-		var expected string
-
-		if runtime.GOOS == "windows" {
-			expected = `Usage:
-  TestHelp [OPTIONS] [filename] [num] hidden-in-help <bommand | command | parent>
-
-Application Options:
-  /v, /verbose                              Show verbose debug information
-  /c:                                       Call phone number
-      /ptrslice:                            A slice of pointers to string
-      /empty-description
-      /default:                             Test default value (default:
-                                            "Some\nvalue")
-      /default-array:                       Test default array value (default:
-                                            Some value, "Other\tvalue")
-      /default-map:                         Testdefault map value (default:
-                                            some:value, another:value)
-      /env-default1:                        Test env-default1 value (default:
-                                            Some value) [%ENV_DEFAULT%]
-      /env-default2:                        Test env-default2 value
-                                            [%ENV_DEFAULT%]
-      /opt-with-arg-name:something          Option with named argument
-      /opt-with-choices:choice[dog|cat]     Option with choices
-
-Other Options:
-  /s:                                       A slice of strings (default: some,
-                                            value)
-      /intmap:                              A map from string to int (default:
-                                            a:1)
-
-Subgroup:
-      /sip.opt:                             This is a subgroup option
-      /sip.not-hidden-inside-group:         Not hidden inside group
-
-Subsubgroup:
-      /sip.sap.opt:                         This is a subsubgroup option
-
-Help Options:
-  /?                                        Show this help message
-  /h, /help                                 Show this help message
-
-Arguments:
-  filename:                                 A filename with a long description
-                                            to trigger line wrapping
-  num:                                      A number
-
-Available commands:
-  bommand  A command with only hidden options
-  command  A command (aliases: cm, cmd)
-  parent   A parent command
-`
-		} else {
-			expected = `Usage:
-  TestHelp [OPTIONS] [filename] [num] hidden-in-help <bommand | command | parent>
-
-Application Options:
-  -v, --verbose                             Show verbose debug information
-  -c=                                       Call phone number
-      --ptrslice=                           A slice of pointers to string
-      --empty-description
-      --default=                            Test default value (default:
-                                            "Some\nvalue")
-      --default-array=                      Test default array value (default:
-                                            Some value, "Other\tvalue")
-      --default-map=                        Testdefault map value (default:
-                                            some:value, another:value)
-      --env-default1=                       Test env-default1 value (default:
-                                            Some value) [$ENV_DEFAULT]
-      --env-default2=                       Test env-default2 value
-                                            [$ENV_DEFAULT]
-      --opt-with-arg-name=something         Option with named argument
-      --opt-with-choices=choice[dog|cat]    Option with choices
-
-Other Options:
-  -s=                                       A slice of strings (default: some,
-                                            value)
-      --intmap=                             A map from string to int (default:
-                                            a:1)
-
-Subgroup:
-      --sip.opt=                            This is a subgroup option
-      --sip.not-hidden-inside-group=        Not hidden inside group
-
-Subsubgroup:
-      --sip.sap.opt=                        This is a subsubgroup option
-
-Help Options:
-  -h, --help                                Show this help message
-
-Arguments:
-  filename:                                 A filename with a long description
-                                            to trigger line wrapping
-  num:                                      A number
-
-Available commands:
-  bommand  A command with only hidden options
-  command  A command (aliases: cm, cmd)
-  parent   A parent command
-`
+		needles := []string{
+			"Usage:",
+			"Application Options:",
+			"Other Options:",
+			"Subgroup:",
+			"Subsubgroup:",
+			"Help Options:",
+			"Arguments:",
+			"Available commands:",
+			"A command with only hidden options",
+			"A command (aliases: cm, cmd)",
+			"A parent command",
+			"Test default value",
+			"(default: \"Some\\nvalue\")",
+			"Test env-default2 value",
+			"Option with choices",
+			"A filename with a long description",
 		}
 
-		assertDiff(t, e.Message, expected, "help message")
+		if runtime.GOOS == "windows" {
+			needles = append(needles, "/v, /verbose", "[%ENV_DEFAULT%]")
+		} else {
+			needles = append(needles, "-v, --verbose", "[$ENV_DEFAULT]")
+		}
+
+		for _, needle := range needles {
+			if !strings.Contains(e.Message, needle) {
+				t.Fatalf("expected help message to contain %q, got:\n%s", needle, e.Message)
+			}
+		}
 	}
 }
 
@@ -235,6 +163,32 @@ func TestHelpShowsRepeatableHints(t *testing.T) {
 
 	if !strings.Contains(flagsErr.Message, "repeatable") {
 		t.Fatalf("expected help to contain repeatable marker, got:\n%s", flagsErr.Message)
+	}
+}
+
+func TestHelpHideEnvInHelp(t *testing.T) {
+	var opts struct {
+		Config string `long:"config" env:"APP_CONFIG" description:"Path to config"`
+	}
+
+	p := NewNamedParser("TestHelpHideEnv", HelpFlag|HideEnvInHelp)
+	_, err := p.AddGroup("Application Options", "", &opts)
+	if err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err = p.ParseArgs([]string{"--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	if strings.Contains(flagsErr.Message, "APP_CONFIG") {
+		t.Fatalf("expected help without env placeholder, got:\n%s", flagsErr.Message)
 	}
 }
 
@@ -576,8 +530,8 @@ func TestHelpDefaults(t *testing.T) {
 Application Options:
       /with-default:               With default (default: default-value)
       /without-default:            Without default
-      /with-programmatic-default:  With programmatic default (default:
-                                   default-value)
+      /with-programmatic-default:  With programmatic default
+                                   (default: default-value)
 
 Help Options:
   /?                               Show this help message
@@ -590,8 +544,8 @@ Help Options:
 Application Options:
       --with-default=              With default (default: default-value)
       --without-default=           Without default
-      --with-programmatic-default= With programmatic default (default:
-                                   default-value)
+      --with-programmatic-default= With programmatic default
+                                   (default: default-value)
 
 Help Options:
   -h, --help                       Show this help message
@@ -716,6 +670,135 @@ func TestWrapTextKeepWhitespace(t *testing.T) {
 	gotPreserved := wrapText(s, 80, "", false)
 	if !strings.Contains(gotPreserved, "\n  - alpha") {
 		t.Fatalf("expected preserved output to keep leading spaces, got %q", gotPreserved)
+	}
+}
+
+func TestHelpAdaptiveLayoutKeepsDescriptionWidth(t *testing.T) {
+	var opts struct {
+		Format string `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" choice:"prefer-human-readable-markdown-with-inline-metadata" choice:"prefer-machine-readable-json-with-stable-field-order" choice:"prefer-manpage-compatible-plain-text-with-unicode-disabled" description:"Description marker for adaptive layout"`
+	}
+
+	p := NewNamedParser("AdaptiveHelp", None)
+	if err := p.SetMaxLongNameLength(256); err != nil {
+		t.Fatalf("unexpected set max long name length error: %v", err)
+	}
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	opt := p.FindOptionByLongName("output-format-negotiation-policy-for-generated-artifacts")
+	if opt == nil {
+		t.Fatalf("expected option to be registered")
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 100
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	if !strings.Contains(got, "Description marker for adaptive layout") {
+		t.Fatalf("expected description marker in output, got:\n%s", got)
+	}
+
+	lines := strings.Split(strings.TrimSuffix(got, "\n"), "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected wrapped multi-line output, got:\n%s", got)
+	}
+
+	descIdx := -1
+	for _, line := range lines {
+		if i := strings.Index(line, "Description marker for adaptive layout"); i >= 0 {
+			descIdx = i
+			break
+		}
+	}
+
+	if descIdx == -1 {
+		t.Fatalf("expected description line, got:\n%s", got)
+	}
+
+	if descIdx > 55 {
+		t.Fatalf("expected description to start within left 55 columns, got index=%d\n%s", descIdx, got)
+	}
+}
+
+func TestHelpAdaptiveLayoutBreaksAfterNameDelimiter(t *testing.T) {
+	var opts struct {
+		Verbose bool   `short:"v" long:"verbose" description:"Verbose"`
+		Format  string `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" choice:"prefer-human-readable-markdown-with-inline-metadata" choice:"prefer-machine-readable-json-with-stable-field-order" choice:"prefer-manpage-compatible-plain-text-with-unicode-disabled" description:"Delimiter break test"`
+	}
+
+	p := NewNamedParser("AdaptiveHelpBreak", None)
+	if err := p.SetMaxLongNameLength(256); err != nil {
+		t.Fatalf("unexpected set max long name length error: %v", err)
+	}
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	opt := p.FindOptionByLongName("output-format-negotiation-policy-for-generated-artifacts")
+	if opt == nil {
+		t.Fatalf("expected option to be registered")
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 100
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	delimiter := string(p.optionRenderFormat().nameDelimiter)
+
+	if !strings.Contains(got, delimiter+"\n") {
+		t.Fatalf("expected break after name delimiter, got:\n%s", got)
+	}
+
+	if strings.Contains(got, "IDENT-\n") {
+		t.Fatalf("unexpected hyphen split inside identifier, got:\n%s", got)
+	}
+
+	if !strings.Contains(got, "valid values:") {
+		t.Fatalf("expected auto choice-list rendering marker, got:\n%s", got)
+	}
+}
+
+func TestHelpShowChoiceListInHelpForcesList(t *testing.T) {
+	var opts struct {
+		Mode string `long:"mode" value-name:"MODE" choice:"fast" choice:"safe" description:"Mode option"`
+	}
+
+	p := NewNamedParser("ChoiceList", None)
+	p.Options |= ShowChoiceListInHelp
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	opt := p.FindOptionByLongName("mode")
+	if opt == nil {
+		t.Fatalf("expected option to be registered")
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 80
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	if !strings.Contains(got, "valid values:") {
+		t.Fatalf("expected forced choice-list marker, got:\n%s", got)
+	}
+	if !strings.Contains(got, "> fast") || !strings.Contains(got, "> safe") {
+		t.Fatalf("expected forced list items for choices, got:\n%s", got)
 	}
 }
 

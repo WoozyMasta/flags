@@ -46,6 +46,22 @@ func (a *alignmentInfo) descriptionStart() int {
 	return ret
 }
 
+func (a *alignmentInfo) optionDescriptionStart() int {
+	descstart := a.descriptionStart() + paddingBeforeOption
+
+	if a.maxLongLen <= a.terminalColumns/2 {
+		return descstart
+	}
+
+	maxDescStart := min(max(a.terminalColumns/2, paddingBeforeOption+12), a.terminalColumns-10)
+
+	if descstart > maxDescStart {
+		descstart = maxDescStart
+	}
+
+	return descstart
+}
+
 func (a *alignmentInfo) updateLen(name string, indent bool) {
 	l := utf8.RuneCountInString(name)
 
@@ -96,10 +112,9 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 			}
 
 			l := info.LongNameWithNamespace() + info.ValueName
-
-			if len(info.Choices) != 0 {
-				l += "[" + strings.Join(info.Choices, "|") + "]"
-			}
+			// Choices are rendered as a tail block and can move to their own
+			// lines in adaptive mode; keep base alignment focused on flag/value
+			// tokens to avoid over-expanding description gap.
 
 			ret.updateLen(l, c != p.Command)
 		}
@@ -179,9 +194,461 @@ func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
 	return ret
 }
 
+func wrapTextNoHyphen(s string, l int) string {
+	var ret string
+
+	if l < 10 {
+		l = 10
+	}
+
+	lines := strings.SplitSeq(s, "\n")
+
+	for line := range lines {
+		var retline string
+
+		for len(line) > l {
+			pos := strings.LastIndex(line[:l], " ")
+			splitOnSpace := pos >= 0
+			if !splitOnSpace {
+				pos = l
+			}
+
+			if len(retline) != 0 {
+				retline += "\n"
+			}
+
+			part := line[:pos]
+			switch {
+			case splitOnSpace:
+				line = line[pos+1:]
+			default:
+				line = line[pos:]
+			}
+
+			retline += part
+		}
+
+		if len(line) > 0 {
+			if len(retline) != 0 {
+				retline += "\n"
+			}
+
+			retline += line
+		}
+
+		if len(ret) > 0 {
+			ret += "\n"
+
+			// no-op: no additional prefix for wrapped continuation lines
+		}
+
+		ret += retline
+	}
+
+	return ret
+}
+
 func optionIsRepeatable(option *Option) bool {
 	kind := option.value.Type().Kind()
 	return kind == reflect.Slice || kind == reflect.Map
+}
+
+func renderChoiceToken(option *Option, leftWidth int, prefixLen int) string {
+	if len(option.Choices) == 0 {
+		return ""
+	}
+
+	compact := "[" + strings.Join(option.Choices, "|") + "]"
+	if prefixLen+utf8.RuneCountInString(compact) <= leftWidth {
+		return compact
+	}
+
+	return "[" + strings.Join(option.Choices, " | ") + "]"
+}
+
+type optionTailLine struct {
+	Text     string
+	IsChoice bool
+}
+
+func renderChoicePipeLines(choices []string, width int) []string {
+	lines := make([]string, 0, len(choices)+1)
+
+	appendChoice := func(prefix string, continuationPrefix string, choice string) {
+		avail := width - utf8.RuneCountInString(prefix)
+		if avail < 1 {
+			lines = append(lines, prefix)
+			prefix = continuationPrefix
+			avail = width - utf8.RuneCountInString(prefix)
+			if avail < 1 {
+				avail = width
+				prefix = ""
+			}
+		}
+
+		wrapped := strings.Split(wrapTextNoHyphen(choice, avail), "\n")
+		if len(wrapped) == 0 {
+			return
+		}
+
+		lines = append(lines, prefix+wrapped[0])
+
+		for _, line := range wrapped[1:] {
+			lines = append(lines, continuationPrefix+line)
+		}
+	}
+
+	appendChoice("[", "  ", choices[0])
+
+	for _, choice := range choices[1:] {
+		appendChoice("| ", "  ", choice)
+	}
+
+	if len(lines) > 0 {
+		last := lines[len(lines)-1]
+		if utf8.RuneCountInString(last)+1 <= width {
+			lines[len(lines)-1] = last + "]"
+		} else {
+			lines = append(lines, "]")
+		}
+	}
+
+	return lines
+}
+
+func renderChoiceListLines(choices []string, width int) []string {
+	lines := []string{"valid values:"}
+
+	appendChoice := func(choice string) {
+		prefix := "> "
+		avail := width - utf8.RuneCountInString(prefix)
+		if avail < 1 {
+			lines = append(lines, prefix+choice)
+			return
+		}
+
+		wrapped := strings.Split(wrapTextNoHyphen(choice, avail), "\n")
+		if len(wrapped) == 0 {
+			return
+		}
+
+		lines = append(lines, prefix+wrapped[0])
+		for _, line := range wrapped[1:] {
+			lines = append(lines, "  "+line)
+		}
+	}
+
+	for _, choice := range choices {
+		appendChoice(choice)
+	}
+
+	return lines
+}
+
+func splitOptionTailLines(valueName string, choices []string, width int, forceChoiceList bool) []optionTailLine {
+	if width < 10 {
+		width = 10
+	}
+
+	if len(choices) == 0 {
+		if valueName == "" {
+			return nil
+		}
+		raw := strings.Split(wrapTextNoHyphen(valueName, width), "\n")
+		lines := make([]optionTailLine, 0, len(raw))
+		for _, line := range raw {
+			lines = append(lines, optionTailLine{Text: line})
+		}
+		return lines
+	}
+
+	lines := make([]optionTailLine, 0, len(choices)+2)
+	if valueName != "" {
+		for line := range strings.SplitSeq(wrapTextNoHyphen(valueName, width), "\n") {
+			lines = append(lines, optionTailLine{Text: line})
+		}
+	}
+
+	pipeLines := renderChoicePipeLines(choices, width)
+	choiceLineCount := 0
+	for _, line := range pipeLines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || trimmed == "]" {
+			continue
+		}
+		choiceLineCount++
+	}
+	threshold := (len(choices) + 1) / 2 // ceil(len/2)
+	useChoiceList := forceChoiceList || (len(choices) >= 3 && choiceLineCount > threshold)
+	if useChoiceList {
+		for _, line := range renderChoiceListLines(choices, width) {
+			lines = append(lines, optionTailLine{Text: line, IsChoice: true})
+		}
+		return lines
+	}
+
+	for _, line := range pipeLines {
+		lines = append(lines, optionTailLine{Text: line, IsChoice: true})
+	}
+	return lines
+}
+
+func (p *Parser) buildHelpOptionLeft(option *Option, format optionRenderFormat, leftWidth int, prefix int) (string, string, string, string) {
+	left := &bytes.Buffer{}
+	shortToken := ""
+	longToken := ""
+	choicesToken := ""
+
+	left.WriteString(strings.Repeat(" ", prefix))
+
+	if option.ShortName != 0 {
+		left.WriteRune(format.shortDelimiter)
+		left.WriteRune(option.ShortName)
+		shortToken = string(format.shortDelimiter) + string(option.ShortName)
+	}
+
+	if len(option.LongName) > 0 {
+		if option.ShortName != 0 {
+			left.WriteString(", ")
+		}
+
+		left.WriteString(format.longDelimiter)
+		longToken = option.LongNameWithNamespace()
+		left.WriteString(longToken)
+	}
+
+	if option.canArgument() {
+		left.WriteRune(format.nameDelimiter)
+
+		if len(option.ValueName) > 0 {
+			left.WriteString(option.ValueName)
+		}
+
+		choicesToken = renderChoiceToken(option, leftWidth, prefix+left.Len())
+		if choicesToken != "" {
+			left.WriteString(choicesToken)
+		}
+	}
+
+	return left.String(), shortToken, longToken, choicesToken
+}
+
+func (p *Parser) buildHelpOptionDescription(
+	option *Option,
+	format optionRenderFormat,
+	descWidth int,
+) ([]string, string, string, string) {
+	if option.Description == "" {
+		return nil, "", "", ""
+	}
+
+	def := ""
+	if len(option.DefaultMask) != 0 {
+		if option.DefaultMask != "-" {
+			def = option.DefaultMask
+		}
+	} else {
+		if !option.defaultLiteralInitialized {
+			option.updateDefaultLiteral()
+			option.defaultLiteralInitialized = true
+		}
+		def = option.defaultLiteral
+	}
+
+	defaultFrag := ""
+	if def != "" {
+		defaultFrag = fmt.Sprintf("default: %v", def)
+	}
+
+	envFrag := ""
+	if (p.Options&HideEnvInHelp) == None && option.EnvKeyWithNamespace() != "" {
+		envFrag = format.envPrefix + option.EnvKeyWithNamespace() + format.envSuffix
+	}
+
+	repeatableFrag := ""
+	if (p.Options&ShowRepeatableInHelp) != None && optionIsRepeatable(option) {
+		repeatableFrag = "repeatable"
+	}
+
+	extras := make([]string, 0, 3)
+	if defaultFrag != "" {
+		extras = append(extras, "("+defaultFrag+")")
+	}
+	if envFrag != "" {
+		extras = append(extras, "["+envFrag+"]")
+	}
+	if repeatableFrag != "" {
+		extras = append(extras, "("+repeatableFrag+")")
+	}
+
+	desc := option.Description
+	if len(extras) == 0 {
+		return strings.Split(desc, "\n"), defaultFrag, envFrag, repeatableFrag
+	}
+
+	lines := strings.Split(desc, "\n")
+	if len(lines) == 0 {
+		lines = []string{""}
+	}
+
+	if descWidth <= 0 {
+		lines = append(lines, extras...)
+		return lines, defaultFrag, envFrag, repeatableFrag
+	}
+
+	for _, extra := range extras {
+		last := lines[len(lines)-1]
+		candidate := extra
+		if last != "" {
+			candidate = last + " " + extra
+		}
+
+		// Keep each extra as an atomic block: if it does not fit, move it
+		// entirely to the next line instead of splitting it.
+		if utf8.RuneCountInString(candidate) <= descWidth {
+			lines[len(lines)-1] = candidate
+			continue
+		}
+
+		lines = append(lines, extra)
+	}
+
+	return lines, defaultFrag, envFrag, repeatableFrag
+}
+
+func (p *Parser) adaptiveWriteHelpOption(
+	writer *bufio.Writer,
+	option *Option,
+	info alignmentInfo,
+	trimDescriptions bool,
+	format optionRenderFormat,
+	forceSplit bool,
+) bool {
+	prefix := paddingBeforeOption
+	if info.indent {
+		prefix += 4
+	}
+
+	leftPrefix := prefix
+	if option.ShortName == 0 && info.hasShort {
+		leftPrefix += 4
+	}
+
+	descstart := info.optionDescriptionStart()
+
+	leftWidth := descstart - leftPrefix
+	if leftWidth < 10 {
+		return false
+	}
+
+	leftRaw, shortToken, longToken, choicesToken := p.buildHelpOptionLeft(option, format, leftWidth, leftPrefix)
+	indentPrefix := strings.Repeat(" ", leftPrefix)
+	leftBody := strings.TrimPrefix(leftRaw, indentPrefix)
+
+	leftLen := utf8.RuneCountInString(leftBody)
+	if !forceSplit && leftLen <= leftWidth+8 {
+		return false
+	}
+
+	leftLinesPlain := make([]string, 0, 4)
+	leftLinesChoice := make([]bool, 0, 4)
+	if option.canArgument() {
+		if idx := strings.IndexRune(leftBody, format.nameDelimiter); idx >= 0 && idx+1 < len(leftBody) {
+			head := leftBody[:idx+1]
+			headWrapped := wrapTextNoHyphen(head, leftWidth)
+			for line := range strings.SplitSeq(headWrapped, "\n") {
+				leftLinesPlain = append(leftLinesPlain, indentPrefix+line)
+				leftLinesChoice = append(leftLinesChoice, false)
+			}
+
+			continuationPrefix := strings.Repeat(" ", leftPrefix+2)
+			tailWidth := max(leftWidth-2, 10)
+
+			forceChoiceList := (p.Options & ShowChoiceListInHelp) != None
+			for _, line := range splitOptionTailLines(option.ValueName, option.Choices, tailWidth, forceChoiceList) {
+				leftLinesPlain = append(leftLinesPlain, continuationPrefix+line.Text)
+				leftLinesChoice = append(leftLinesChoice, line.IsChoice)
+			}
+		}
+	}
+
+	if len(leftLinesPlain) == 0 {
+		leftWrapped := wrapTextNoHyphen(leftBody, leftWidth)
+		for line := range strings.SplitSeq(leftWrapped, "\n") {
+			leftLinesPlain = append(leftLinesPlain, indentPrefix+line)
+			leftLinesChoice = append(leftLinesChoice, false)
+		}
+	}
+
+	leftLines := make([]string, len(leftLinesPlain))
+
+	for i, line := range leftLinesPlain {
+		colored := line
+		if shortToken != "" {
+			colored = strings.Replace(colored, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
+		}
+		if longToken != "" {
+			coloredLong := format.longDelimiter + longToken
+			colored = strings.Replace(colored, coloredLong, p.colorizeHelp(coloredLong, p.helpColorScheme.OptionLong), 1)
+		}
+		if choicesToken != "" {
+			colored = strings.Replace(colored, choicesToken, p.colorizeHelp(choicesToken, p.helpColorScheme.OptionChoices), 1)
+		}
+		if i < len(leftLinesChoice) && leftLinesChoice[i] {
+			colored = p.colorizeHelp(colored, p.helpColorScheme.OptionChoices)
+		}
+		leftLines[i] = colored
+	}
+
+	descWidth := info.terminalColumns - descstart
+	descLines, defaultFrag, envFrag, repeatableFrag := p.buildHelpOptionDescription(option, format, descWidth)
+
+	if len(descLines) == 0 {
+		for _, line := range leftLines {
+			_, _ = writer.WriteString(line)
+			_, _ = writer.WriteString("\n")
+		}
+		return true
+	}
+
+	desc := strings.Join(descLines, "\n")
+	descWrapped := wrapText(desc, info.terminalColumns-descstart, "", trimDescriptions)
+
+	if defaultFrag != "" {
+		descWrapped = strings.Replace(descWrapped, defaultFrag, p.colorizeHelp(defaultFrag, p.helpColorScheme.OptionDefault), 1)
+	}
+	if envFrag != "" {
+		descWrapped = strings.Replace(descWrapped, envFrag, p.colorizeHelp(envFrag, p.helpColorScheme.OptionEnv), 1)
+	}
+	if repeatableFrag != "" {
+		descWrapped = strings.Replace(descWrapped, repeatableFrag, p.colorizeHelp(repeatableFrag, p.helpColorScheme.OptionChoices), 1)
+	}
+
+	descWrapped = p.colorizeHelp(descWrapped, p.helpColorScheme.OptionDesc)
+	wrappedDescLines := strings.Split(descWrapped, "\n")
+
+	total := max(len(wrappedDescLines), len(leftLines))
+
+	for i := range total {
+		leftPlain := ""
+		leftLine := ""
+		if i < len(leftLinesPlain) {
+			leftPlain = leftLinesPlain[i]
+			leftLine = leftLines[i]
+		}
+
+		_, _ = writer.WriteString(leftLine)
+
+		if i < len(wrappedDescLines) {
+			pad := max(descstart-utf8.RuneCountInString(leftPlain), 1)
+			_, _ = writer.WriteString(strings.Repeat(" ", pad))
+			_, _ = writer.WriteString(wrappedDescLines[i])
+		}
+
+		_, _ = writer.WriteString("\n")
+	}
+
+	return true
 }
 
 func (p *Parser) writeHelpOption(
@@ -206,6 +673,13 @@ func (p *Parser) writeHelpOption(
 		return
 	}
 
+	forceChoiceListSplit := (p.Options&ShowChoiceListInHelp) != None &&
+		len(option.Choices) > 0 &&
+		option.canArgument()
+	if p.adaptiveWriteHelpOption(writer, option, info, trimDescriptions, format, forceChoiceListSplit) {
+		return
+	}
+
 	line.WriteString(strings.Repeat(" ", prefix))
 
 	if option.ShortName != 0 {
@@ -216,7 +690,7 @@ func (p *Parser) writeHelpOption(
 		line.WriteString("  ")
 	}
 
-	descstart := info.descriptionStart() + paddingBeforeOption
+	descstart := info.optionDescriptionStart()
 
 	if len(option.LongName) > 0 {
 		if option.ShortName != 0 {
@@ -258,56 +732,22 @@ func (p *Parser) writeHelpOption(
 	_, _ = writer.WriteString(lineText)
 
 	if option.Description != "" {
-		dw := descstart - written
+		dw := max(descstart-written, 1)
 		_, _ = writer.WriteString(strings.Repeat(" ", dw))
-
-		var def string
-
-		if len(option.DefaultMask) != 0 {
-			if option.DefaultMask != "-" {
-				def = option.DefaultMask
-			}
-		} else {
-			if !option.defaultLiteralInitialized {
-				option.updateDefaultLiteral()
-				option.defaultLiteralInitialized = true
-			}
-			def = option.defaultLiteral
-		}
-
-		var envDef string
-		if option.EnvKeyWithNamespace() != "" {
-			envPrintable := format.envPrefix + option.EnvKeyWithNamespace() + format.envSuffix
-			envDef = fmt.Sprintf(" [%s]", envPrintable)
-		}
-
-		var desc string
-
-		if def != "" {
-			desc = fmt.Sprintf("%s (default: %v)%s", option.Description, def, envDef)
-		} else {
-			desc = option.Description + envDef
-		}
-
-		if (p.Options&ShowRepeatableInHelp) != None && optionIsRepeatable(option) {
-			desc += " (repeatable)"
-		}
-
-		desc = wrapText(desc,
-			info.terminalColumns-descstart,
+		descWidth := info.terminalColumns - descstart
+		descLines, defaultFrag, envFrag, repeatableFrag := p.buildHelpOptionDescription(option, format, descWidth)
+		desc := wrapText(strings.Join(descLines, "\n"),
+			descWidth,
 			strings.Repeat(" ", descstart),
 			trimDescriptions)
 
-		if def != "" {
-			defaultFrag := fmt.Sprintf("default: %v", def)
+		if defaultFrag != "" {
 			desc = strings.Replace(desc, defaultFrag, p.colorizeHelp(defaultFrag, p.helpColorScheme.OptionDefault), 1)
 		}
-		if envDef != "" {
-			envFrag := strings.TrimSpace(envDef)
+		if envFrag != "" {
 			desc = strings.Replace(desc, envFrag, p.colorizeHelp(envFrag, p.helpColorScheme.OptionEnv), 1)
 		}
-		if (p.Options&ShowRepeatableInHelp) != None && optionIsRepeatable(option) {
-			repeatableFrag := "repeatable"
+		if repeatableFrag != "" {
 			desc = strings.Replace(desc, repeatableFrag, p.colorizeHelp(repeatableFrag, p.helpColorScheme.OptionChoices), 1)
 		}
 
@@ -542,7 +982,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				_, _ = fmt.Fprintf(wr, "\n[%s]\n", p.colorizeHelp(c.Name+" command arguments", p.helpColorScheme.ArgumentsHeader))
 			}
 
-			descStart := aligninfo.descriptionStart() + paddingBeforeOption
+			descStart := aligninfo.optionDescriptionStart()
 
 			for _, arg := range args {
 				argPrefix := strings.Repeat(" ", paddingBeforeOption)
