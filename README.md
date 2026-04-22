@@ -430,19 +430,9 @@ func (o *Options) ConfigureFlags(p *flags.Parser) error {
 Use `parser.Validate()` to run configurators and duplicate-name checks manually.
 Use `parser.Rebuild()` after changing tag mapping settings programmatically.
 
-Core option setters are available for runtime tuning:
-`SetLongName`, `SetShortName`, `SetLongAliases`, `AddLongAlias`,
-`SetShortAliases`, `AddShortAlias`, `SetRequired`, `SetHidden`,
-`SetDescription`, `SetDefault`, `SetDefaultMask`, `SetEnv`, `SetChoices`,
-`SetOptional`, `SetValueName`, `SetOrder`, `SetTerminator`.
-
-Command/group/arg setters are also available:
-`Command.SetName`, `Command.SetAliases`, `Command.AddAlias`,
-`Command.SetHidden`, `Command.SetSubcommandsOptional`,
-`Command.SetPassAfterNonOption`, `Command.SetArgsRequired`,
-`Group.SetNamespace`, `Group.SetEnvNamespace`, `Group.SetHidden`,
-`Arg.SetName`, `Arg.SetDescription`, `Arg.SetDefault`,
-`Arg.SetRequired`, `Arg.SetRequiredRange`.
+Runtime tuning APIs are intentionally exposed as `Set*` methods:
+see [`Option`](option.go), [`Command`](command.go), [`Group`](group.go),
+and [`Arg`](arg.go) for the current full list.
 
 ## INI
 

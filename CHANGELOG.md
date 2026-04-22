@@ -79,8 +79,8 @@ and this project adheres to [Semantic Versioning][].
   including rendering positional defaults in built-in help output.
 * Programmatic post-scan parser configuration via `Configurer`,
   with explicit `Parser.Validate()` and `Parser.Rebuild()` APIs.
-* Baseline runtime option setter API for common metadata updates
-  (options, commands, groups, and positional args metadata).
+* Baseline runtime option setter API for metadata and low-level behavior
+  updates (including base/unquote/map delimiter/INI/env derivation controls).
 
 ### Changed
 

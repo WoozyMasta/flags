@@ -11,6 +11,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -248,6 +249,63 @@ func (option *Option) SetDefaultMask(mask string) {
 func (option *Option) SetEnv(key string, delim string) {
 	option.EnvDefaultKey = key
 	option.EnvDefaultDelim = delim
+}
+
+// SetBase configures numeric radix for integer parse/format.
+// Use 0 for automatic base detection from prefixes (Go-style).
+func (option *Option) SetBase(base int) error {
+	if base != 0 && (base < 2 || base > 36) {
+		return newErrorf(ErrInvalidTag, "invalid base %d; expected 0 or range 2..36", base)
+	}
+
+	option.tag.Set(FlagTagBase, strconv.Itoa(base))
+	return nil
+}
+
+// SetKeyValueDelimiter configures map key/value separator (default is ":").
+func (option *Option) SetKeyValueDelimiter(delimiter string) {
+	option.tag.Set(FlagTagKeyValueDelimiter, delimiter)
+}
+
+// SetUnquote controls automatic unquoting for quoted string arguments.
+func (option *Option) SetUnquote(enabled bool) {
+	option.tag.Set(FlagTagUnquote, strconv.FormatBool(enabled))
+}
+
+// SetIniName overrides key name used for INI read/write.
+func (option *Option) SetIniName(name string) {
+	option.tag.Set(FlagTagIniName, name)
+}
+
+// SetNoIni enables or disables INI read/write participation for the option.
+func (option *Option) SetNoIni(disabled bool) {
+	if disabled {
+		option.tag.Set(FlagTagNoIni, "true")
+		return
+	}
+
+	option.tag.Set(FlagTagNoIni, "")
+}
+
+// SetAutoEnv enables or disables env-key derivation from long option name.
+// When enabled and env key is currently empty, a key is derived automatically.
+func (option *Option) SetAutoEnv(enabled bool) error {
+	option.tag.Set(FlagTagAutoEnv, strconv.FormatBool(enabled))
+
+	if !enabled || option.EnvDefaultKey != "" {
+		return nil
+	}
+
+	if option.LongName == "" {
+		return newErrorf(
+			ErrInvalidTag,
+			"auto env for flag `%s' requires a long flag name",
+			option.shortAndLongName(),
+		)
+	}
+
+	option.EnvDefaultKey = autoEnvKeyFromLongName(option.LongName)
+	return nil
 }
 
 // SetChoices replaces allowed option values.
