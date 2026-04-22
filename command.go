@@ -355,18 +355,14 @@ func (c *Command) eachOption(f func(*Command, *Group, *Option)) {
 				f(c, g, option)
 			}
 		})
-	}, true)
+	})
 }
 
-func (c *Command) eachCommand(f func(*Command), recurse bool) {
+func (c *Command) eachCommand(f func(*Command)) {
 	f(c)
 
 	for _, cc := range c.commands {
-		if recurse {
-			cc.eachCommand(f, true)
-		} else {
-			f(cc)
-		}
+		cc.eachCommand(f)
 	}
 }
 

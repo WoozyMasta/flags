@@ -2025,3 +2025,91 @@ func TestSetTagPrefixOptionAliases(t *testing.T) {
 		t.Fatalf("expected parsed short alias value, got %q", opts.Path)
 	}
 }
+
+type configureDefaultsOptions struct {
+	Port int `long:"port"`
+}
+
+func (o *configureDefaultsOptions) ConfigureFlags(parser *Parser) error {
+	opt := parser.FindOptionByLongName("port")
+	if opt == nil {
+		return errors.New("port option not found")
+	}
+
+	opt.Default = []string{"8080"}
+	return nil
+}
+
+func TestConfigurerAppliedBeforeParse(t *testing.T) {
+	var opts configureDefaultsOptions
+	p := NewParser(&opts, None)
+
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Port != 8080 {
+		t.Fatalf("expected configured default 8080, got %d", opts.Port)
+	}
+}
+
+type configureErrorOptions struct {
+	Value string `long:"value"`
+}
+
+func (o *configureErrorOptions) ConfigureFlags(_ *Parser) error {
+	return errors.New("configure failed")
+}
+
+func TestConfigurerErrorFailsParse(t *testing.T) {
+	var opts configureErrorOptions
+	p := NewParser(&opts, None)
+
+	_, err := p.ParseArgs(nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if !strings.Contains(err.Error(), "configure failed") {
+		t.Fatalf("expected configure error message, got %v", err)
+	}
+}
+
+type configureDuplicateOptions struct {
+	One string `long:"one"`
+	Two string `long:"two"`
+}
+
+func (o *configureDuplicateOptions) ConfigureFlags(parser *Parser) error {
+	opt := parser.FindOptionByLongName("two")
+	if opt == nil {
+		return errors.New("two option not found")
+	}
+
+	opt.LongName = "one"
+	return nil
+}
+
+func TestConfigurerDuplicateFlagsValidation(t *testing.T) {
+	var opts configureDuplicateOptions
+	p := NewParser(&opts, None)
+
+	_, err := p.ParseArgs(nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestParserValidate(t *testing.T) {
+	var opts configureDefaultsOptions
+	p := NewParser(&opts, None)
+
+	if err := p.Validate(); err != nil {
+		t.Fatalf("unexpected validate error: %v", err)
+	}
+}

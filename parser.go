@@ -97,6 +97,12 @@ type Parser struct {
 
 	// Preferred rendering style for env placeholders in help/doc output.
 	helpEnvStyle RenderStyle
+
+	// Indicates that post-scan configurators should be applied before parse.
+	configDirty bool
+
+	// Prevents recursive configurator execution.
+	configuring bool
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -105,6 +111,15 @@ type SplitArgument interface {
 	// String returns the option's value as a string, and a boolean indicating
 	// if the option was present.
 	Value() (string, bool)
+}
+
+// Configurer can be implemented by option/group/command data structs
+// to programmatically adjust parser metadata after tag scanning.
+//
+// ConfigureFlags is called before parsing when parser topology changes
+// (for example after AddGroup/AddCommand, SetTagPrefix, SetFlagTags).
+type Configurer interface {
+	ConfigureFlags(parser *Parser) error
 }
 
 type strArgument struct {
@@ -325,6 +340,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		TagListDelimiter:      ';',
 		helpFlagStyle:         RenderStyleAuto,
 		helpEnvStyle:          RenderStyleAuto,
+		configDirty:           true,
 	}
 
 	p.parent = p
@@ -334,6 +350,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 
 func (p *Parser) invalidateLookupCache() {
 	p.lookupGeneration++
+	p.configDirty = true
 }
 
 // SetTagPrefix configures a common prefix for all struct tags used by the parser.
@@ -588,6 +605,14 @@ func (p *Parser) Parse() ([]string, error) {
 func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	if p.internalError != nil {
 		return nil, p.printError(p.internalError)
+	}
+
+	if err := p.applyConfigurators(); err != nil {
+		return nil, p.printError(err)
+	}
+
+	if err := p.validateDuplicateFlags(); err != nil {
+		return nil, p.printError(err)
 	}
 
 	p.eachOption(func(_ *Command, _ *Group, option *Option) {
@@ -1168,6 +1193,109 @@ func (p *Parser) parseNonOption(s *parseState) error {
 	}
 
 	return s.addArgs(s.arg)
+}
+
+func (p *Parser) applyConfigurators() error {
+	if !p.configDirty || p.configuring {
+		return nil
+	}
+
+	p.configuring = true
+	defer func() {
+		p.configuring = false
+	}()
+
+	seen := make(map[uintptr]struct{})
+
+	run := func(data any) error {
+		if data == nil {
+			return nil
+		}
+
+		v := reflect.ValueOf(data)
+		if v.IsValid() && v.Kind() == reflect.Ptr && !v.IsNil() {
+			ptr := v.Pointer()
+			if _, ok := seen[ptr]; ok {
+				return nil
+			}
+			seen[ptr] = struct{}{}
+		}
+
+		cfg, ok := data.(Configurer)
+		if !ok {
+			return nil
+		}
+
+		if err := cfg.ConfigureFlags(p); err != nil {
+			return fmt.Errorf("configure flags for %T: %w", data, err)
+		}
+
+		return nil
+	}
+
+	var cfgErr error
+	p.eachCommand(func(c *Command) {
+		if cfgErr != nil {
+			return
+		}
+
+		if err := run(c.data); err != nil {
+			cfgErr = err
+			return
+		}
+
+		c.eachGroup(func(g *Group) {
+			if cfgErr != nil {
+				return
+			}
+
+			if err := run(g.data); err != nil {
+				cfgErr = err
+			}
+		})
+	})
+
+	if cfgErr != nil {
+		return cfgErr
+	}
+
+	p.configDirty = false
+	return nil
+}
+
+func (p *Parser) validateDuplicateFlags() error {
+	var dupErr error
+
+	p.eachCommand(func(c *Command) {
+		if dupErr != nil {
+			return
+		}
+
+		if err := c.checkForDuplicateFlags(); err != nil {
+			dupErr = err
+		}
+	})
+
+	return dupErr
+}
+
+// Validate re-runs parser-level metadata checks after programmatic mutations.
+// It applies Configurer hooks and then validates duplicate flag names.
+func (p *Parser) Validate() error {
+	if p.internalError != nil {
+		return p.internalError
+	}
+
+	if err := p.applyConfigurators(); err != nil {
+		return err
+	}
+
+	return p.validateDuplicateFlags()
+}
+
+// Rebuild rescans groups and commands using current tag mapping options.
+func (p *Parser) Rebuild() error {
+	return p.rebuildTree()
 }
 
 func (p *Parser) showBuiltinHelp() error {

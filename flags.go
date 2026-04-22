@@ -151,6 +151,9 @@ You can define groups in three ways:
  2. Add groups programmatically with [Parser.AddGroup].
  3. Add nested struct fields tagged with `group:"name"`.
 
+For post-scan programmatic adjustments, implement [Configurer] on your
+options/group/command data type and mutate option metadata via parser APIs.
+
 # Commands
 
 Commands split CLI behavior into explicit actions (similar to `git add`,

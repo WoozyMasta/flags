@@ -391,6 +391,28 @@ tags.Short = "my-short"
 _ = parser.SetFlagTags(tags)
 ```
 
+## Programmatic Configuration
+
+If tags are not enough, implement `flags.Configurer` on your options/group/
+command struct:
+
+```go
+type Options struct {
+  Port int `long:"port"`
+}
+
+func (o *Options) ConfigureFlags(p *flags.Parser) error {
+  if opt := p.FindOptionByLongName("port"); opt != nil {
+    opt.Default = []string{"8080"}
+  }
+  return nil
+}
+```
+
+`ConfigureFlags` runs before parse when parser topology changes.
+Use `parser.Validate()` to run configurators and duplicate-name checks manually.
+Use `parser.Rebuild()` after changing tag mapping settings programmatically.
+
 ## INI
 
 INI support is available via `NewIniParser(...)`:

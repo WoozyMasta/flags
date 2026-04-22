@@ -77,6 +77,8 @@ and this project adheres to [Semantic Versioning][].
   `Parser.SetMaxLongNameLength(...)`.
 * Positional arguments now support `default` / `defaults` tags,
   including rendering positional defaults in built-in help output.
+* Programmatic post-scan parser configuration via `Configurer`,
+  with explicit `Parser.Validate()` and `Parser.Rebuild()` APIs.
 
 ### Changed
 
