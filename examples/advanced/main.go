@@ -39,11 +39,26 @@ func (l ServiceLabel) MarshalText() ([]byte, error) {
 	return []byte(strings.ToUpper(string(l))), nil
 }
 
+type AdvancedPositionalArgs struct {
+	Target   string `positional-arg-name:"target" description:"Target service name or host"`
+	Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
+}
+
+type AdvancedNetworkOptions struct {
+	Endpoint string        `long:"endpoint" description:"Service endpoint" auto-env:"true"`
+	Mode     string        `long:"mode" description:"Network mode"`
+	Timeout  time.Duration `long:"timeout" description:"Request timeout" default:"10s"`
+	Retries  int           `long:"retries" description:"Retry attempts" default:"3"`
+	TLS      bool          `long:"tls" description:"Enable TLS" order:"50"`
+}
+
+type AdvancedDeployCommand struct {
+	Force bool `long:"force" description:"Force deployment"`
+	Plan  bool `long:"plan" description:"Show execution plan only"`
+}
+
 type AdvancedOptions struct {
-	Positional struct {
-		Target   string `positional-arg-name:"target" description:"Target service name or host"`
-		Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
-	} `positional-args:"yes" required:"yes"`
+	Positional AdvancedPositionalArgs `positional-args:"yes" required:"yes"`
 
 	Alpha            string       `long:"alpha" description:"Example string flag for sort demo" default:"a"`
 	Profile          string       `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
@@ -64,21 +79,12 @@ type AdvancedOptions struct {
 	Labels []ServiceLabel `long:"label" description:"Service labels"`
 	Exec   []string       `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
 
-	Network struct {
-		Endpoint string        `long:"endpoint" description:"Service endpoint" auto-env:"true"`
-		Mode     string        `long:"mode" description:"Network mode"`
-		Timeout  time.Duration `long:"timeout" description:"Request timeout" default:"10s"`
-		Retries  int           `long:"retries" description:"Retry attempts" default:"3"`
-		TLS      bool          `long:"tls" description:"Enable TLS" order:"50"`
-	} `group:"Network Options" namespace:"net" env-namespace:"NET"`
+	Network AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
 
 	Count int           `long:"count" description:"Example number flag for sort demo" default:"7"`
 	Delay time.Duration `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
 
-	Deploy struct {
-		Force bool `long:"force" description:"Force deployment"`
-		Plan  bool `long:"plan" description:"Show execution plan only"`
-	} `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
+	Deploy AdvancedDeployCommand `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
 	Zeta bool `long:"zeta" description:"Example bool flag for sort demo"`
 }
 

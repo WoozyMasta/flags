@@ -22,6 +22,23 @@ type CustomTagsOptions struct {
 	Level int    `long:"level" default:"1" description:"Verbosity level"`
 }
 
+type PrefixCommand struct{}
+
+func (c *PrefixCommand) Execute(args []string) error {
+	return runPrefixTagsDemo(args)
+}
+
+type CustomCommand struct{}
+
+func (c *CustomCommand) Execute(args []string) error {
+	return runCustomTagsDemo(args)
+}
+
+type RootOptions struct {
+	Prefix PrefixCommand `command:"prefix" description:"Run parser with SetTagPrefix(\"flag-\") mapping"`
+	Custom CustomCommand `command:"custom" description:"Run parser with SetFlagTags(...) custom mapping"`
+}
+
 func runPrefixTagsDemo(args []string) error {
 	opts := PrefixTagsOptions{}
 	p := flags.NewNamedParser("prefix-tags-demo", flags.Default)
@@ -54,27 +71,23 @@ func runCustomTagsDemo(args []string) error {
 }
 
 func main() {
-	if len(os.Args) < 2 {
+	root := RootOptions{}
+	p := flags.NewNamedParser("custom-flag-tags", flags.Default)
+	p.Usage = "[OPTIONS] <prefix|custom> [ARGS]"
+	p.LongDescription = "Subcommands:\n  prefix  Demonstrates SetTagPrefix(\"flag-\")\n  custom  Demonstrates SetFlagTags(...)"
+
+	if _, err := p.AddGroup("Application Options", "Mode selector", &root); err != nil {
 		os.Exit(1)
 	}
 
-	mode := os.Args[1]
-	args := os.Args[2:]
-
-	var err error
-	switch mode {
-	case "prefix":
-		err = runPrefixTagsDemo(args)
-	case "custom":
-		err = runCustomTagsDemo(args)
-	default:
-		os.Exit(1)
-	}
-
+	_, err := p.Parse()
 	if err != nil {
 		var flagsErr *flags.Error
-		if errors.As(err, &flagsErr) && flagsErr.Type == flags.ErrHelp {
-			os.Exit(0)
+		if errors.As(err, &flagsErr) {
+			if flagsErr.Type == flags.ErrHelp {
+				os.Exit(0)
+			}
+			os.Exit(1)
 		}
 		os.Exit(1)
 	}
