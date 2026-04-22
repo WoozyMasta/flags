@@ -608,9 +608,12 @@ Example bash variables and build command (ldflags -> your buildvars):
 
 ```bash
 MODULE="$(GOWORK=off go list -m -f '{{.Path}}')"
-VERSION="$(git describe --match 'v[0-9]*' --dirty='.m' --always --tags 2>/dev/null || echo v0.0.0)"
-COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 URL="https://$MODULE"
+COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
+VERSION="$(
+  git describe --match 'v[0-9]*' --dirty='.m' --always --tags 2>/dev/null || \
+  echo v0.0.0
+)"
 
 go build -buildvcs=auto \
   -ldflags "-X ${MODULE}/internal/buildvars.Version=${VERSION} \
