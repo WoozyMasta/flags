@@ -69,15 +69,15 @@ type Parser struct {
 	// EnvPrefix prepends all resolved environment variable keys.
 	EnvPrefix string
 
-	// TagListDelimiter splits values for list-based struct tags such as
-	// defaults/choices/aliases.
-	TagListDelimiter rune
-
 	// Monotonic generation used to invalidate cached lookup maps.
 	lookupGeneration uint64
 
 	// Option flags changing the behavior of the parser.
 	Options Options
+
+	// TagListDelimiter splits values for list-based struct tags such as
+	// defaults/choices/aliases.
+	TagListDelimiter rune
 
 	// Active option sorting mode for grouped option presentation.
 	optionSort OptionSortMode
