@@ -2,8 +2,18 @@
 
 Reflection-based command-line parser for Go.
 
-It supports flags, positional arguments, groups, subcommands, INI files,
-shell completion, and man/help generation.
+## Core Features
+
+* Short and long flags (`-v`, `--verbose`)
+* Optional and required arguments
+* Slices and maps as option values
+* Positional arguments
+* Nested option groups
+* Commands and subcommands
+* Defaults from tags and environment variables
+* INI parse/write support
+* Bash/Zsh completion script generation
+* Help output and template-based documentation rendering (man/markdown/html)
 
 ## Installation
 
@@ -48,18 +58,79 @@ func main() {
 }
 ```
 
-## Core Features
+## Struct Tags Reference
 
-* Short and long flags (`-v`, `--verbose`)
-* Optional and required arguments
-* Slices and maps as option values
-* Positional arguments
-* Nested option groups
-* Commands and subcommands
-* Defaults from tags and environment variables
-* INI parse/write support
-* Bash/Zsh completion script generation
-* Help output and template-based documentation rendering (man/markdown/html)
+All struct tags are configurable:
+
+* Use `parser.SetTagPrefix("flag-")` to apply a common prefix for all tags.
+* Use `parser.SetFlagTags(...)` for full custom tag-name mapping.
+* List tags (`defaults`, `choices`, `aliases`) use `;` by default.
+* Use `parser.SetTagListDelimiter(',')` to change list-tag delimiter.
+* Boolean tags like `required`, `optional`, `hidden`, `no-flag`, `no-ini`,
+  `subcommands-optional`, `pass-after-non-option`, `unquote`, `auto-env`:
+  * positive: `true`, `yes`, `y`, `1`, `on`
+  * negative: `false`, `no`, `n`, `0`, `off`
+
+### Option tags
+
+* `short`: one-letter short option name used as `-v`.
+* `long`: canonical long option name used as `--verbose`.
+* `description`: primary text shown in help/docs for the option.
+* `long-description`: extended text for man/doc templates.
+* `required`: fails parse if option is missing after defaults/env are applied.
+* `optional`: allows option with or without explicit value.
+* `optional-value`: value used when optional argument is omitted.
+* `value-name`: placeholder name in help (for example `--port=PORT`).
+* `default`: legacy repeatable default tag, mainly for backward compatibility.
+* `defaults`: preferred multi-value default tag using list delimiter.
+* `choice`: legacy repeatable whitelist tag for accepted values.
+* `choices`: preferred whitelist tag with delimiter-separated values.
+* `default-mask`: hides real default in help/docs (for secrets/tokens).
+* `env`: explicit environment key used as fallback source.
+* `auto-env`: derive env key from `long` for this option only.
+* `env-delim`: split env value for slices/maps (for example `a,b,c`).
+* `base`: integer radix for parse and defaults (for example `16`).
+* `key-value-delimiter`: key/value separator for map values (default `:`).
+* `no-flag`: disables CLI parsing for this field, keeps it in struct only.
+* `hidden`: keeps option parseable, but removes it from help/completion/docs.
+* `no-ini`: excludes option from INI read/write flow.
+* `ini-name`: custom key name for INI read/write instead of flag name.
+* `unquote`: controls string unquoting for quoted CLI values.
+* `order`: explicit render priority in help/man/completion sorting.
+* `terminator`: consume args until token, `find -exec` style (`[]T`, `[][]T`).
+
+### Group tags
+
+* `group`: marks nested struct as a named option group.
+* `description`: group heading shown in help/docs.
+* `long-description`: extended prose for group-focused docs/man output.
+* `namespace`: prefixes child long flags (for example `db.host`).
+* `env-namespace`: prefixes child env keys before global env prefix.
+* `hidden`: hides the group from help/completion/docs, keeps parsing active.
+
+### Command tags
+
+* `command`: marks field as subcommand and command scope root.
+* `description`: one-line command summary in help/docs.
+* `long-description`: full command description for docs/man output.
+* `alias`: legacy repeatable alias tag for backward compatibility.
+* `aliases`: preferred delimiter-separated alias list.
+* `subcommands-optional`: command can run without child subcommand selection.
+* `pass-after-non-option`: enables command-local POSIX pass-through mode.
+* `hidden`: hides command from help/completion/docs, keeps it executable.
+
+### Positional-argument tags
+
+* `positional-args`: marks nested struct as positional argument container.
+* `required`: requires positional values to be provided by user.
+* `positional-arg-name`: custom display name for usage/help placeholders.
+
+### Tag conflicts
+
+* `default` conflicts with `defaults`.
+* `choice` conflicts with `choices`.
+* `alias` conflicts with `aliases`.
+* Use only one tag style from each pair on the same field.
 
 ## Option Values
 
@@ -148,7 +219,7 @@ Use `default:"..."` to define fallback values:
 ```go
 type Options struct {
   Port    int      `long:"port" default:"8080"`
-  Servers []string `long:"server" default:"a.example" default:"b.example"`
+  Servers []string `long:"server" defaults:"a.example;b.example"`
 }
 ```
 
