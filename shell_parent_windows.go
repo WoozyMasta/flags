@@ -8,7 +8,6 @@
 package flags
 
 import (
-	"os"
 	"strings"
 	"unsafe"
 
@@ -16,8 +15,8 @@ import (
 )
 
 type processInfo struct {
-	parentID uint32
 	name     string
+	parentID uint32
 }
 
 func detectParentShellStyle() RenderStyle {
@@ -26,7 +25,7 @@ func detectParentShellStyle() RenderStyle {
 		return RenderStyleAuto
 	}
 
-	pid := uint32(os.Getpid())
+	pid := windows.GetCurrentProcessId()
 
 	// Walk a few levels up to find a known shell process.
 	for range 12 {
@@ -55,7 +54,9 @@ func snapshotProcesses() (map[uint32]processInfo, bool) {
 	if err != nil {
 		return nil, false
 	}
-	defer windows.CloseHandle(snapshot)
+	defer func() {
+		_ = windows.CloseHandle(snapshot)
+	}()
 
 	var entry windows.ProcessEntry32
 	entry.Size = uint32(unsafe.Sizeof(entry))
