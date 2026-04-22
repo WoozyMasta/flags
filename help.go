@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"runtime"
 	"strings"
 	"unicode/utf8"
 )
@@ -185,7 +184,13 @@ func optionIsRepeatable(option *Option) bool {
 	return kind == reflect.Slice || kind == reflect.Map
 }
 
-func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alignmentInfo, trimDescriptions bool) {
+func (p *Parser) writeHelpOption(
+	writer *bufio.Writer,
+	option *Option,
+	info alignmentInfo,
+	trimDescriptions bool,
+	format optionRenderFormat,
+) {
 	line := &bytes.Buffer{}
 	shortToken := ""
 	longToken := ""
@@ -204,9 +209,9 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 	line.WriteString(strings.Repeat(" ", prefix))
 
 	if option.ShortName != 0 {
-		line.WriteRune(defaultShortOptDelimiter)
+		line.WriteRune(format.shortDelimiter)
 		line.WriteRune(option.ShortName)
-		shortToken = string(defaultShortOptDelimiter) + string(option.ShortName)
+		shortToken = string(format.shortDelimiter) + string(option.ShortName)
 	} else if info.hasShort {
 		line.WriteString("  ")
 	}
@@ -220,13 +225,13 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 			line.WriteString("  ")
 		}
 
-		line.WriteString(defaultLongOptDelimiter)
+		line.WriteString(format.longDelimiter)
 		longToken = option.LongNameWithNamespace()
 		line.WriteString(longToken)
 	}
 
 	if option.canArgument() {
-		line.WriteRune(defaultNameArgDelimiter)
+		line.WriteRune(format.nameDelimiter)
 
 		if len(option.ValueName) > 0 {
 			line.WriteString(option.ValueName)
@@ -244,7 +249,7 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 		lineText = strings.Replace(lineText, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
 	}
 	if longToken != "" {
-		coloredLong := defaultLongOptDelimiter + longToken
+		coloredLong := format.longDelimiter + longToken
 		lineText = strings.Replace(lineText, coloredLong, p.colorizeHelp(coloredLong, p.helpColorScheme.OptionLong), 1)
 	}
 	if choicesToken != "" {
@@ -272,12 +277,7 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 
 		var envDef string
 		if option.EnvKeyWithNamespace() != "" {
-			var envPrintable string
-			if runtime.GOOS == "windows" {
-				envPrintable = "%" + option.EnvKeyWithNamespace() + "%"
-			} else {
-				envPrintable = "$" + option.EnvKeyWithNamespace()
-			}
+			envPrintable := format.envPrefix + option.EnvKeyWithNamespace() + format.envSuffix
 			envDef = fmt.Sprintf(" [%s]", envPrintable)
 		}
 
@@ -355,6 +355,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		}
 	}
 	aligninfo := p.getAlignmentInfo()
+	format := p.optionRenderFormat()
 	trimDescriptions := (p.Options & KeepDescriptionWhitespace) == None
 
 	cmd := p.Command
@@ -523,7 +524,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					first = false
 				}
 
-				p.writeHelpOption(wr, info, aligninfo, trimDescriptions)
+				p.writeHelpOption(wr, info, aligninfo, trimDescriptions, format)
 			}
 		})
 

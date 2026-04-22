@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning][].
   `HighContrastHelpColorScheme`).
 * Parser option `SetTerminalTitle` to set terminal window title from parser
   `Name` (or `TerminalTitle` override) during parsing.
+* Runtime render-style controls for help/doc output:
+  `SetHelpFlagRenderStyle(...)`, `SetHelpEnvRenderStyle(...)`,
+  and shell-detect options `DetectShellFlagStyle` / `DetectShellEnvStyle`.
 
 ### Changed
 

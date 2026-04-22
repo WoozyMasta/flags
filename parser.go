@@ -88,6 +88,12 @@ type Parser struct {
 
 	// Active option sorting mode for grouped option presentation.
 	optionSort OptionSortMode
+
+	// Preferred rendering style for flags in help/doc output.
+	helpFlagStyle RenderStyle
+
+	// Preferred rendering style for env placeholders in help/doc output.
+	helpEnvStyle RenderStyle
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -220,6 +226,14 @@ const (
 	// TerminalTitle or parser Name.
 	SetTerminalTitle
 
+	// DetectShellFlagStyle enables shell-based flag style rendering in help
+	// and doc output when no explicit render style is set.
+	DetectShellFlagStyle
+
+	// DetectShellEnvStyle enables shell-based env placeholder rendering in
+	// help and doc output when no explicit render style is set.
+	DetectShellEnvStyle
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
@@ -291,6 +305,8 @@ func NewNamedParser(appname string, options Options) *Parser {
 		optionSort:            OptionSortByDeclaration,
 		optionTypeRank:        defaultOptionTypeRank(),
 		TagListDelimiter:      ';',
+		helpFlagStyle:         RenderStyleAuto,
+		helpEnvStyle:          RenderStyleAuto,
 	}
 
 	p.parent = p
@@ -325,6 +341,18 @@ func (p *Parser) SetEnvPrefix(prefix string) {
 // SetHelpColorScheme configures color roles used by built-in help rendering.
 func (p *Parser) SetHelpColorScheme(scheme HelpColorScheme) {
 	p.helpColorScheme = scheme
+}
+
+// SetHelpFlagRenderStyle configures how flag tokens are rendered in built-in
+// help and doc templates.
+func (p *Parser) SetHelpFlagRenderStyle(style RenderStyle) {
+	p.helpFlagStyle = style
+}
+
+// SetHelpEnvRenderStyle configures how env placeholders are rendered in
+// built-in help and doc templates.
+func (p *Parser) SetHelpEnvRenderStyle(style RenderStyle) {
+	p.helpEnvStyle = style
 }
 
 // SetTagListDelimiter sets delimiter for list-based struct tags such as

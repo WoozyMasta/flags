@@ -81,7 +81,7 @@ func (p *Parser) writeDocHTML(w io.Writer, cfg docRenderOptions) error {
 }
 
 func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[string]any, cfg docRenderOptions) error {
-	tpl, err := template.New("doc").Funcs(docTemplateFuncs(cfg.markHidden)).Parse(templateText)
+	tpl, err := template.New("doc").Funcs(docTemplateFuncs(cfg.markHidden, p.optionRenderFormat())).Parse(templateText)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 	return tpl.Execute(w, ctx)
 }
 
-func docTemplateFuncs(markHidden bool) template.FuncMap {
+func docTemplateFuncs(markHidden bool, format optionRenderFormat) template.FuncMap {
 	return template.FuncMap{
 		"hiddenMark": func(hidden bool) bool {
 			return markHidden && hidden
@@ -117,10 +117,10 @@ func docTemplateFuncs(markHidden bool) template.FuncMap {
 				return base
 			}
 			if opt.Short != "" {
-				forms = append(forms, addValue(string(defaultShortOptDelimiter)+opt.Short))
+				forms = append(forms, addValue(string(format.shortDelimiter)+opt.Short))
 			}
 			if opt.Long != "" {
-				forms = append(forms, addValue(string(defaultLongOptDelimiter)+opt.Long))
+				forms = append(forms, addValue(format.longDelimiter+opt.Long))
 			}
 			return forms
 		},

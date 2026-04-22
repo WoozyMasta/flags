@@ -8,7 +8,6 @@ package flags
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -85,6 +84,7 @@ type docOption struct {
 }
 
 func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
+	format := p.optionRenderFormat()
 	usage := p.Usage
 	if usage == "" {
 		usage = "[OPTIONS]"
@@ -97,17 +97,23 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		GeneratedAt:      docNow(),
 		Usage:            usage,
 		Args:             buildDocArgs(p.Command, cfg.includeHidden),
-		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden),
+		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format),
 	}
 
 	for _, cmd := range p.docCommands(cfg.includeHidden) {
-		model.Commands = append(model.Commands, buildDocCommand("", p.Name+" "+usage, cmd, cfg.includeHidden))
+		model.Commands = append(model.Commands, buildDocCommand("", p.Name+" "+usage, cmd, cfg.includeHidden, format))
 	}
 
 	return model
 }
 
-func buildDocCommand(parentName string, usagePrefix string, cmd *Command, includeHidden bool) docCommand {
+func buildDocCommand(
+	parentName string,
+	usagePrefix string,
+	cmd *Command,
+	includeHidden bool,
+	format optionRenderFormat,
+) docCommand {
 	fullName := cmd.Name
 	if parentName != "" {
 		fullName = parentName + " " + cmd.Name
@@ -137,17 +143,22 @@ func buildDocCommand(parentName string, usagePrefix string, cmd *Command, includ
 		PassAfterNonOption:  cmd.PassAfterNonOption,
 		Hidden:              cmd.Hidden,
 		Args:                buildDocArgs(cmd, includeHidden),
-		Groups:              buildDocGroups(cmd.Group, true, includeHidden),
+		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format),
 	}
 
 	for _, sub := range docCommands(cmd, includeHidden) {
-		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden))
+		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden, format))
 	}
 
 	return doc
 }
 
-func buildDocGroups(root *Group, includeRoot bool, includeHidden bool) []docGroup {
+func buildDocGroups(
+	root *Group,
+	includeRoot bool,
+	includeHidden bool,
+	format optionRenderFormat,
+) []docGroup {
 	var groups []docGroup
 
 	root.eachGroup(func(group *Group) {
@@ -173,7 +184,7 @@ func buildDocGroups(root *Group, includeRoot bool, includeHidden bool) []docGrou
 			if !includeHidden && !opt.showInHelp() {
 				continue
 			}
-			docGroup.Options = append(docGroup.Options, buildDocOption(opt))
+			docGroup.Options = append(docGroup.Options, buildDocOption(opt, format))
 		}
 
 		if len(docGroup.Options) > 0 {
@@ -184,7 +195,7 @@ func buildDocGroups(root *Group, includeRoot bool, includeHidden bool) []docGrou
 	return groups
 }
 
-func buildDocOption(opt *Option) docOption {
+func buildDocOption(opt *Option, format optionRenderFormat) docOption {
 	doc := docOption{
 		Long:          opt.LongNameWithNamespace(),
 		ValueName:     opt.ValueName,
@@ -224,14 +235,10 @@ func buildDocOption(opt *Option) docOption {
 	if len(opt.Default) > 0 {
 		doc.Default = strings.Join(opt.Default, ", ")
 	} else if doc.Env != "" {
-		if runtime.GOOS == "windows" {
-			doc.Default = "%" + doc.Env + "%"
-		} else {
-			doc.Default = "$" + doc.Env
-		}
+		doc.Default = format.envPrefix + doc.Env + format.envSuffix
 	}
 
-	doc.Signature = optionSignature(opt)
+	doc.Signature = optionSignature(opt, format)
 	return doc
 }
 
@@ -285,11 +292,11 @@ func (p *Parser) docCommands(includeHidden bool) []*Command {
 	return docCommands(p.Command, includeHidden)
 }
 
-func optionSignature(opt *Option) string {
+func optionSignature(opt *Option, format optionRenderFormat) string {
 	var b strings.Builder
 
 	if opt.ShortName != 0 {
-		b.WriteRune(defaultShortOptDelimiter)
+		b.WriteRune(format.shortDelimiter)
 		b.WriteRune(opt.ShortName)
 	}
 
@@ -297,7 +304,7 @@ func optionSignature(opt *Option) string {
 		if opt.ShortName != 0 {
 			b.WriteString(", ")
 		}
-		b.WriteString(defaultLongOptDelimiter)
+		b.WriteString(format.longDelimiter)
 		b.WriteString(opt.LongNameWithNamespace())
 	}
 

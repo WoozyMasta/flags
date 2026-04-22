@@ -59,31 +59,6 @@ func main() {
 }
 ```
 
-## Help Output
-
-Built-in help output can be tuned with parser flags:
-
-* `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
-* `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
-* `ShowCommandAliases`: show aliases in the `Available commands` section
-  even when command description is empty.
-* `ShowRepeatableInHelp`: append `repeatable` marker for slice/map options.
-* `ColorHelp`: enable ANSI-colored built-in help output.
-  Use `SetHelpColorScheme(...)` to provide custom colors/styles.
-  Built-ins: `DefaultHelpColorScheme()` and `HighContrastHelpColorScheme()`.
-* `SetTerminalTitle`: set terminal window title during parsing.
-  Uses parser `Name` by default, or `parser.TerminalTitle` when provided.
-
-Example:
-
-```go
-parser := flags.NewParser(&opts, flags.Default|
-  flags.PrintHelpOnStderr|
-  flags.ShowCommandAliases|
-  flags.ShowRepeatableInHelp|
-  flags.ColorHelp)
-```
-
 ## Struct Tags Reference
 
 All struct tags are configurable:
@@ -388,19 +363,75 @@ Useful INI tags:
 
 ## Help
 
-Help:
+Use built-in help rendering when you want a fast and predictable CLI help page.
+`WriteHelp` is optimized for runtime use, while the template API (`WriteDoc`)
+is intended for generating documentation files.
 
 ```go
 parser := flags.NewParser(&opts, flags.Default)
 parser.WriteHelp(os.Stdout)
 ```
 
-If you need to preserve leading whitespace in multi-line descriptions
-(for lists or code snippets), enable:
+Common help behavior flags:
+
+* `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
+* `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
+* `ShowCommandAliases`: show command aliases in the `Available commands`
+  section.
+* `ShowRepeatableInHelp`: append a `repeatable` marker for slice/map options.
+* `SetTerminalTitle`: set terminal title during parsing (uses parser `Name`
+  or `parser.TerminalTitle`).
+
+Preserve indentation in multi-line descriptions (for lists/code blocks):
 
 ```go
 parser := flags.NewParser(&opts, flags.Default|flags.KeepDescriptionWhitespace)
 ```
+
+Colorized help:
+
+* Enable with `ColorHelp`.
+* Built-ins: `DefaultHelpColorScheme()` and `HighContrastHelpColorScheme()`.
+* Custom roles via `SetHelpColorScheme(...)`.
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.ColorHelp)
+parser.SetHelpColorScheme(flags.DefaultHelpColorScheme())
+```
+
+Shell-aware render style for flags/env placeholders in help and docs:
+
+* `DetectShellFlagStyle`: detect rendered flag style from shell context.
+* `DetectShellEnvStyle`: detect rendered env placeholder style from shell
+  context.
+* Explicit overrides:
+  * `SetHelpFlagRenderStyle(...)`
+  * `SetHelpEnvRenderStyle(...)`
+
+Available styles:
+
+* `RenderStyleAuto`: platform fallback.
+* `RenderStylePOSIX`: `-v`, `--verbose`, `$ENV`.
+* `RenderStyleWindows`: `/v`, `/verbose`, `%ENV%`.
+* `RenderStyleShell`: shell/process-based detection.
+
+`GO_FLAGS_SHELL` can be used as explicit runtime override for detection
+(`bash`, `zsh`, `fish`, `pwsh`, `powershell`, `cmd`).
+
+```go
+parser := flags.NewParser(&opts, flags.Default|
+  flags.DetectShellFlagStyle|
+  flags.DetectShellEnvStyle)
+
+// Optional explicit overrides:
+parser.SetHelpFlagRenderStyle(flags.RenderStylePOSIX)
+parser.SetHelpEnvRenderStyle(flags.RenderStyleWindows)
+```
+
+`forceposix` build tag is still available and affects parser defaults
+(delimiters/parsing behavior on Windows).
+It is useful for deterministic tests/builds.
+Runtime render-style APIs only change presentation in help/docs.
 
 ## Shell Completion
 

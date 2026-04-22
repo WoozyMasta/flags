@@ -81,7 +81,14 @@ type AdvancedOptions struct {
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {
-	p := flags.NewNamedParser("advanced-cli", flags.Default|flags.EnvProvisioning|flags.KeepDescriptionWhitespace)
+	p := flags.NewNamedParser(
+		"advanced-cli",
+		flags.Default|
+			flags.EnvProvisioning|
+			flags.KeepDescriptionWhitespace|
+			flags.DetectShellFlagStyle|
+			flags.DetectShellEnvStyle,
+	)
 	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block"
 	p.SetEnvPrefix("DEMO_APP")
 
