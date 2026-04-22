@@ -209,6 +209,63 @@ Available commands:
 	}
 }
 
+func TestHelpShowsRepeatableHints(t *testing.T) {
+	var opts struct {
+		Verbose []bool `short:"v" long:"verbose" description:"Verbose mode"`
+		Name    string `short:"n" long:"name" description:"User name"`
+	}
+
+	p := NewNamedParser("TestHelpHints", HelpFlag)
+	p.Options |= ShowRepeatableInHelp
+
+	_, err := p.AddGroup("Application Options", "", &opts)
+	if err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err = p.ParseArgs([]string{"--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	if !strings.Contains(flagsErr.Message, "repeatable") {
+		t.Fatalf("expected help to contain repeatable marker, got:\n%s", flagsErr.Message)
+	}
+}
+
+func TestHelpShowsCommandAliasesWithoutDescription(t *testing.T) {
+	var opts struct {
+		Cmd struct{} `command:"run" alias:"r"`
+	}
+
+	p := NewNamedParser("TestCommandAlias", HelpFlag)
+	p.Options |= ShowCommandAliases
+
+	_, err := p.AddGroup("Application Options", "", &opts)
+	if err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err = p.ParseArgs([]string{"--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	if !strings.Contains(flagsErr.Message, "run (aliases: r)") {
+		t.Fatalf("expected command alias in help, got:\n%s", flagsErr.Message)
+	}
+}
+
 func TestMan(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()

@@ -59,6 +59,25 @@ func main() {
 }
 ```
 
+## Help Output
+
+Built-in help output can be tuned with parser flags:
+
+* `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
+* `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
+* `ShowCommandAliases`: show aliases in the `Available commands` section
+  even when command description is empty.
+* `ShowRepeatableInHelp`: append `repeatable` marker for slice/map options.
+
+Example:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|
+  flags.PrintHelpOnStderr|
+  flags.ShowCommandAliases|
+  flags.ShowRepeatableInHelp)
+```
+
 ## Struct Tags Reference
 
 All struct tags are configurable:

@@ -198,6 +198,14 @@ const (
 	// uppercased and punctuation is replaced with underscores.
 	EnvProvisioning
 
+	// ShowCommandAliases appends command aliases in the built-in help command
+	// list for commands without short descriptions.
+	ShowCommandAliases
+
+	// ShowRepeatableInHelp appends a repeatable marker to option descriptions
+	// in built-in help output for collection options (slice/map).
+	ShowRepeatableInHelp
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash

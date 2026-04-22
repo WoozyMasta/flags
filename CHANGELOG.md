@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning][].
 * Parser options `PrintHelpOnStderr` and `PrintErrorsOnStdout` to control
   where built-in help and parse errors are written when `PrintErrors`
   is enabled.
+* Parser options `ShowCommandAliases` and `ShowRepeatableInHelp` to
+  enrich built-in help with command alias list and repeatable markers.
 
 ### Changed
 

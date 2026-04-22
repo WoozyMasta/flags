@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"reflect"
 	"runtime"
 	"strings"
 	"unicode/utf8"
@@ -179,6 +180,11 @@ func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
 	return ret
 }
 
+func optionIsRepeatable(option *Option) bool {
+	kind := option.value.Type().Kind()
+	return kind == reflect.Slice || kind == reflect.Map
+}
+
 func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alignmentInfo, trimDescriptions bool) {
 	line := &bytes.Buffer{}
 
@@ -264,6 +270,10 @@ func (p *Parser) writeHelpOption(writer *bufio.Writer, option *Option, info alig
 			desc = fmt.Sprintf("%s (default: %v)%s", option.Description, def, envDef)
 		} else {
 			desc = option.Description + envDef
+		}
+
+		if (p.Options&ShowRepeatableInHelp) != None && optionIsRepeatable(option) {
+			desc += " (repeatable)"
 		}
 
 		_, _ = writer.WriteString(wrapText(desc,
@@ -506,10 +516,11 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			if len(c.ShortDescription) > 0 {
 				pad := strings.Repeat(" ", maxnamelen-len(c.Name))
 				_, _ = fmt.Fprintf(wr, "%s  %s", pad, c.ShortDescription)
+			}
 
-				if len(c.Aliases) > 0 {
-					_, _ = fmt.Fprintf(wr, " (aliases: %s)", strings.Join(c.Aliases, ", "))
-				}
+			if len(c.Aliases) > 0 &&
+				(len(c.ShortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
+				_, _ = fmt.Fprintf(wr, " (aliases: %s)", strings.Join(c.Aliases, ", "))
 			}
 
 			_, _ = fmt.Fprintln(wr)
