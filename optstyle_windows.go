@@ -93,6 +93,26 @@ func splitOption(prefix string, option string, islong bool) (name string, split 
 
 // addHelpGroup adds a new group that contains default help parameters.
 func (c *Command) addHelpGroup(showHelp func() error) *Group {
+	style := RenderStyleWindows
+	if parser := c.parser(); parser != nil {
+		style = parser.resolveFlagRenderStyle()
+	}
+
+	if style == RenderStylePOSIX {
+		var help struct {
+			ShowHelp func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
+		}
+
+		help.ShowHelp = showHelp
+		ret, err := c.AddGroup("Help Options", "", &help)
+		if err != nil {
+			return nil
+		}
+		ret.isBuiltinHelp = true
+
+		return ret
+	}
+
 	// Windows CLI applications typically use /? for help, so make both
 	// that available as well as the POSIX style h and help.
 	var help struct {

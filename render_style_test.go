@@ -122,6 +122,37 @@ func TestHelpRenderStyleDetectWindowsPrefersWindowsOverShellVar(t *testing.T) {
 	}
 }
 
+func TestHelpFlagAliasesFollowDetectedPOSIXStyleOnWindows(t *testing.T) {
+	if !isWindowsRuntime() {
+		t.Skip("windows-only behavior")
+	}
+
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	oldEnv.Restore()
+
+	_ = os.Setenv("GO_FLAGS_SHELL", "bash")
+
+	p := NewNamedParser("render-style", HelpFlag|DetectShellFlagStyle)
+	_, err := p.ParseArgs([]string{"--help"})
+	if err == nil {
+		t.Fatal("expected ErrHelp")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	helpText := flagsErr.Message
+	if strings.Contains(helpText, "-?") {
+		t.Fatalf("expected POSIX help aliases only, got:\n%s", helpText)
+	}
+	if !strings.Contains(helpText, "-h, --help") {
+		t.Fatalf("expected POSIX help alias, got:\n%s", helpText)
+	}
+}
+
 func TestDocRenderStyleSetters(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" env:"APP_VALUE" description:"Value option"`
