@@ -133,6 +133,149 @@ type Option struct {
 	valueValidatorState int8
 }
 
+func (option *Option) touchLookupCache() {
+	if option.group == nil {
+		return
+	}
+
+	if p := option.group.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+}
+
+func (option *Option) validateLongNameLength(name string) error {
+	if option.group == nil || name == "" {
+		return nil
+	}
+
+	p := option.group.parser()
+	if p == nil || p.MaxLongNameLength == 0 {
+		return nil
+	}
+
+	if utf8.RuneCountInString(name) > p.MaxLongNameLength {
+		return newErrorf(
+			ErrInvalidTag,
+			"long flag name `%s' exceeds max length %d (use SetMaxLongNameLength to override)",
+			name,
+			p.MaxLongNameLength,
+		)
+	}
+
+	return nil
+}
+
+// SetDescription updates option description used in help/docs output.
+func (option *Option) SetDescription(description string) {
+	option.Description = description
+}
+
+// SetRequired enables or disables required option validation.
+func (option *Option) SetRequired(required bool) {
+	option.Required = required
+}
+
+// SetHidden controls whether option is shown in help/completion/docs.
+func (option *Option) SetHidden(hidden bool) {
+	option.Hidden = hidden
+}
+
+// SetLongName updates canonical long option name.
+func (option *Option) SetLongName(name string) error {
+	if err := option.validateLongNameLength(name); err != nil {
+		return err
+	}
+
+	option.LongName = name
+	option.touchLookupCache()
+	return nil
+}
+
+// SetShortName updates canonical short option name.
+func (option *Option) SetShortName(name rune) {
+	option.ShortName = name
+	option.touchLookupCache()
+}
+
+// SetLongAliases replaces all long option aliases.
+func (option *Option) SetLongAliases(aliases ...string) error {
+	for _, alias := range aliases {
+		if err := option.validateLongNameLength(alias); err != nil {
+			return err
+		}
+	}
+
+	option.LongAliases = append(option.LongAliases[:0], aliases...)
+	option.touchLookupCache()
+	return nil
+}
+
+// AddLongAlias appends one long option alias.
+func (option *Option) AddLongAlias(alias string) error {
+	if err := option.validateLongNameLength(alias); err != nil {
+		return err
+	}
+
+	option.LongAliases = append(option.LongAliases, alias)
+	option.touchLookupCache()
+	return nil
+}
+
+// SetShortAliases replaces all short option aliases.
+func (option *Option) SetShortAliases(aliases ...rune) {
+	option.ShortAliases = append(option.ShortAliases[:0], aliases...)
+	option.touchLookupCache()
+}
+
+// AddShortAlias appends one short option alias.
+func (option *Option) AddShortAlias(alias rune) {
+	option.ShortAliases = append(option.ShortAliases, alias)
+	option.touchLookupCache()
+}
+
+// SetDefault replaces option default values.
+func (option *Option) SetDefault(values ...string) {
+	option.Default = append(option.Default[:0], values...)
+	option.defaultLiteralInitialized = false
+}
+
+// SetDefaultMask sets displayed default mask used in help/docs.
+func (option *Option) SetDefaultMask(mask string) {
+	option.DefaultMask = mask
+}
+
+// SetEnv sets environment key and optional split delimiter for env value.
+func (option *Option) SetEnv(key string, delim string) {
+	option.EnvDefaultKey = key
+	option.EnvDefaultDelim = delim
+}
+
+// SetChoices replaces allowed option values.
+func (option *Option) SetChoices(values ...string) {
+	option.Choices = append(option.Choices[:0], values...)
+}
+
+// SetOptional configures optional argument behavior and fallback value(s).
+func (option *Option) SetOptional(optional bool, values ...string) {
+	option.OptionalArgument = optional
+	option.OptionalValue = append(option.OptionalValue[:0], values...)
+}
+
+// SetValueName updates help placeholder for option argument.
+func (option *Option) SetValueName(name string) {
+	option.ValueName = name
+}
+
+// SetOrder updates help/completion sorting priority for this option.
+func (option *Option) SetOrder(order int) {
+	option.Order = order
+}
+
+// SetTerminator configures terminated-argument mode for slice options.
+func (option *Option) SetTerminator(terminator string) {
+	option.Terminator = terminator
+}
+
 // LongNameWithNamespace returns the option's long name with the group namespaces
 // prepended by walking up the option's group tree. Namespaces and the long name
 // itself are separated by the parser's namespace delimiter. If the long name is

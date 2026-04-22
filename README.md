@@ -413,6 +413,12 @@ func (o *Options) ConfigureFlags(p *flags.Parser) error {
 Use `parser.Validate()` to run configurators and duplicate-name checks manually.
 Use `parser.Rebuild()` after changing tag mapping settings programmatically.
 
+Core option setters are available for runtime tuning:
+`SetLongName`, `SetShortName`, `SetLongAliases`, `AddLongAlias`,
+`SetShortAliases`, `AddShortAlias`, `SetRequired`, `SetHidden`,
+`SetDescription`, `SetDefault`, `SetDefaultMask`, `SetEnv`, `SetChoices`,
+`SetOptional`, `SetValueName`, `SetOrder`, `SetTerminator`.
+
 ## INI
 
 INI support is available via `NewIniParser(...)`:
