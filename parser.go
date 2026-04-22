@@ -7,6 +7,7 @@ package flags
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -66,6 +67,10 @@ type Parser struct {
 
 	// EnvPrefix prepends all resolved environment variable keys.
 	EnvPrefix string
+
+	// TagListDelimiter splits values for list-based struct tags such as
+	// defaults/choices/aliases.
+	TagListDelimiter rune
 
 	// Monotonic generation used to invalidate cached lookup maps.
 	lookupGeneration uint64
@@ -252,6 +257,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		flagTags:              NewFlagTags(),
 		optionSort:            OptionSortByDeclaration,
 		optionTypeRank:        defaultOptionTypeRank(),
+		TagListDelimiter:      ';',
 	}
 
 	p.parent = p
@@ -283,6 +289,18 @@ func (p *Parser) SetEnvPrefix(prefix string) {
 	p.EnvPrefix = prefix
 }
 
+// SetTagListDelimiter sets delimiter for list-based struct tags such as
+// defaults/choices/aliases and rescans attached groups/commands.
+func (p *Parser) SetTagListDelimiter(delimiter rune) error {
+	if delimiter == 0 {
+		return errors.New("tag list delimiter cannot be NUL")
+	}
+
+	p.TagListDelimiter = delimiter
+
+	return p.rebuildTree()
+}
+
 func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	c := mtag.cached()
 
@@ -297,12 +315,14 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.OptionalValue:       FlagTagOptionalValue,
 		p.flagTags.Order:               FlagTagOrder,
 		p.flagTags.Default:             FlagTagDefault,
+		p.flagTags.Defaults:            FlagTagDefaults,
 		p.flagTags.DefaultMask:         FlagTagDefaultMask,
 		p.flagTags.Env:                 FlagTagEnv,
 		p.flagTags.AutoEnv:             FlagTagAutoEnv,
 		p.flagTags.EnvDelim:            FlagTagEnvDelim,
 		p.flagTags.ValueName:           FlagTagValueName,
 		p.flagTags.Choice:              FlagTagChoice,
+		p.flagTags.Choices:             FlagTagChoices,
 		p.flagTags.Hidden:              FlagTagHidden,
 		p.flagTags.Base:                FlagTagBase,
 		p.flagTags.IniName:             FlagTagIniName,
@@ -313,6 +333,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.Command:             FlagTagCommand,
 		p.flagTags.SubCommandsOptional: FlagTagSubCommandsOptional,
 		p.flagTags.Alias:               FlagTagAlias,
+		p.flagTags.Aliases:             FlagTagAliases,
 		p.flagTags.PositionalArgs:      FlagTagPositionalArgs,
 		p.flagTags.PositionalArgName:   FlagTagPositionalArgName,
 		p.flagTags.KeyValueDelimiter:   FlagTagKeyValueDelimiter,

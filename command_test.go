@@ -529,6 +529,58 @@ func TestCommandAlias(t *testing.T) {
 	}
 }
 
+func TestCommandAliasesListTag(t *testing.T) {
+	var opts = struct {
+		Command struct {
+			G string `short:"g" default:"value"`
+		} `command:"cmd" aliases:"cm;c"`
+	}{}
+
+	assertParseSuccess(t, &opts, "c")
+
+	if opts.Command.G != "value" {
+		t.Errorf("Expected G to be \"value\"")
+	}
+}
+
+func TestCommandAliasAndAliasesTagsConflict(t *testing.T) {
+	var opts = struct {
+		Command struct{} `command:"cmd" alias:"cm" aliases:"c"`
+	}{}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestCommandAliasesListTagCustomDelimiter(t *testing.T) {
+	var opts = struct {
+		Command struct {
+			G string `short:"g" default:"value"`
+		} `command:"cmd" aliases:"cm,c"`
+	}{}
+
+	p := NewParser(&opts, None)
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected set delimiter error: %v", err)
+	}
+
+	_, err := p.ParseArgs([]string{"cm"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Command.G != "value" {
+		t.Errorf("Expected G to be \"value\"")
+	}
+}
+
 func TestSubCommandFindOptionByLongFlag(t *testing.T) {
 	var opts struct {
 		Testing bool `long:"testing" description:"Testing"`

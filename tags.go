@@ -28,6 +28,8 @@ const (
 	FlagTagOrder = "order"
 	// FlagTagDefault sets default option value (repeatable for slices/maps).
 	FlagTagDefault = "default"
+	// FlagTagDefaults sets multiple default option values as a delimiter-separated list.
+	FlagTagDefaults = "defaults"
 	// FlagTagDefaultMask customizes how default is shown in generated help.
 	FlagTagDefaultMask = "default-mask"
 	// FlagTagEnv maps option default to an environment variable key.
@@ -40,6 +42,8 @@ const (
 	FlagTagValueName = "value-name"
 	// FlagTagChoice restricts allowed option values (repeatable).
 	FlagTagChoice = "choice"
+	// FlagTagChoices restricts allowed option values as a delimiter-separated list.
+	FlagTagChoices = "choices"
 	// FlagTagHidden hides option/group/command from help and completion output.
 	FlagTagHidden = "hidden"
 	// FlagTagBase sets radix for integer parsing.
@@ -60,6 +64,8 @@ const (
 	FlagTagSubCommandsOptional = "subcommands-optional"
 	// FlagTagAlias adds extra command names (repeatable).
 	FlagTagAlias = "alias"
+	// FlagTagAliases adds extra command names as a delimiter-separated list.
+	FlagTagAliases = "aliases"
 	// FlagTagPositionalArgs marks a struct as positional arguments container.
 	FlagTagPositionalArgs = "positional-args"
 	// FlagTagPositionalArgName sets display name for a positional argument.
@@ -101,6 +107,8 @@ type FlagTags struct {
 	Order string
 	// Default maps to default value tag (default: "default").
 	Default string
+	// Defaults maps to multi-default value tag (default: "defaults").
+	Defaults string
 	// DefaultMask maps to help default-mask tag (default: "default-mask").
 	DefaultMask string
 	// Env maps to environment variable key tag (default: "env").
@@ -113,6 +121,8 @@ type FlagTags struct {
 	ValueName string
 	// Choice maps to allowed-values tag (default: "choice").
 	Choice string
+	// Choices maps to multi allowed-values tag (default: "choices").
+	Choices string
 	// Hidden maps to hide-from-help tag (default: "hidden").
 	Hidden string
 	// Base maps to integer radix tag (default: "base").
@@ -133,6 +143,8 @@ type FlagTags struct {
 	SubCommandsOptional string
 	// Alias maps to command alias tag (default: "alias").
 	Alias string
+	// Aliases maps to multi command aliases tag (default: "aliases").
+	Aliases string
 	// PositionalArgs maps to positional args struct tag (default: "positional-args").
 	PositionalArgs string
 	// PositionalArgName maps to positional display-name tag (default: "positional-arg-name").
@@ -165,12 +177,14 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		OptionalValue:       prefix + FlagTagOptionalValue,
 		Order:               prefix + FlagTagOrder,
 		Default:             prefix + FlagTagDefault,
+		Defaults:            prefix + FlagTagDefaults,
 		DefaultMask:         prefix + FlagTagDefaultMask,
 		Env:                 prefix + FlagTagEnv,
 		AutoEnv:             prefix + FlagTagAutoEnv,
 		EnvDelim:            prefix + FlagTagEnvDelim,
 		ValueName:           prefix + FlagTagValueName,
 		Choice:              prefix + FlagTagChoice,
+		Choices:             prefix + FlagTagChoices,
 		Hidden:              prefix + FlagTagHidden,
 		Base:                prefix + FlagTagBase,
 		IniName:             prefix + FlagTagIniName,
@@ -181,6 +195,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Command:             prefix + FlagTagCommand,
 		SubCommandsOptional: prefix + FlagTagSubCommandsOptional,
 		Alias:               prefix + FlagTagAlias,
+		Aliases:             prefix + FlagTagAliases,
 		PositionalArgs:      prefix + FlagTagPositionalArgs,
 		PositionalArgName:   prefix + FlagTagPositionalArgName,
 		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
@@ -223,6 +238,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	if t.Default != "" {
 		d.Default = t.Default
 	}
+	if t.Defaults != "" {
+		d.Defaults = t.Defaults
+	}
 	if t.DefaultMask != "" {
 		d.DefaultMask = t.DefaultMask
 	}
@@ -240,6 +258,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Choice != "" {
 		d.Choice = t.Choice
+	}
+	if t.Choices != "" {
+		d.Choices = t.Choices
 	}
 	if t.Hidden != "" {
 		d.Hidden = t.Hidden
@@ -270,6 +291,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Alias != "" {
 		d.Alias = t.Alias
+	}
+	if t.Aliases != "" {
+		d.Aliases = t.Aliases
 	}
 	if t.PositionalArgs != "" {
 		d.PositionalArgs = t.PositionalArgs

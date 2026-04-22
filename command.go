@@ -284,7 +284,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 			shortDescription := mtag.Get(FlagTagDescription)
 			longDescription := mtag.Get(FlagTagLongDescription)
-			aliases := mtag.GetMany(FlagTagAlias)
+			delimiter := parserTagListDelimiter(c.parser())
+			aliases, err := collectTagValues(mtag, FlagTagAlias, FlagTagAliases, sfield.Name, delimiter)
+			if err != nil {
+				return true, err
+			}
 
 			subcommandsOptional, _, err := parseStructBoolTag(mtag, FlagTagSubCommandsOptional, sfield.Name)
 			if err != nil {

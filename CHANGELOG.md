@@ -53,6 +53,9 @@ and this project adheres to [Semantic Versioning][].
   via `WithTemplateString` / `WithTemplateBytes`.
 * HTML documentation rendering with built-in template `html/default`,
   `html/styled` and custom templates for `DocFormatHTML`.
+* Plural struct tags `defaults`, `choices`, `aliases` to avoid duplicate-tag
+  patterns, with parser-level delimiter control via
+  `Parser.SetTagListDelimiter(...)`.
 
 ### Changed
 

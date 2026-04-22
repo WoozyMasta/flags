@@ -1515,3 +1515,107 @@ func TestSetFlagTags(t *testing.T) {
 		t.Fatalf("expected var-path, got %q", opts.Path)
 	}
 }
+
+func TestDefaultsListTag(t *testing.T) {
+	var opts struct {
+		Slice []string `long:"slice" defaults:"one;two;three"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if diff := cmp.Diff([]string{"one", "two", "three"}, opts.Slice, cmpopts.EquateEmpty()); diff != "" {
+		t.Fatalf("unexpected defaults from list tag (-expected +actual):\n%s", diff)
+	}
+}
+
+func TestChoicesListTag(t *testing.T) {
+	var opts struct {
+		Mode string `long:"mode" choices:"fast;safe"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if _, err := p.ParseArgs([]string{"--mode=safe"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Mode != "safe" {
+		t.Fatalf("expected mode to be safe, got %q", opts.Mode)
+	}
+
+	_, err := p.ParseArgs([]string{"--mode=broken"})
+	if err == nil {
+		t.Fatalf("expected parse error for invalid choice")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidChoice {
+		t.Fatalf("expected ErrInvalidChoice, got %v", err)
+	}
+}
+
+func TestSetTagListDelimiter(t *testing.T) {
+	var opts struct {
+		Slice []int  `long:"slice" defaults:"1,2,3"`
+		Mode  string `long:"mode" choices:"fast,safe"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected set delimiter error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"--mode=safe"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if diff := cmp.Diff([]int{1, 2, 3}, opts.Slice, cmpopts.EquateEmpty()); diff != "" {
+		t.Fatalf("unexpected defaults from custom delimiter (-expected +actual):\n%s", diff)
+	}
+
+	if opts.Mode != "safe" {
+		t.Fatalf("expected mode to be safe, got %q", opts.Mode)
+	}
+}
+
+func TestSetTagListDelimiterRejectsNUL(t *testing.T) {
+	p := NewParser(nil, None)
+
+	err := p.SetTagListDelimiter(0)
+	if err == nil {
+		t.Fatalf("expected error for NUL delimiter")
+	}
+}
+
+func TestDefaultAndDefaultsTagsConflict(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" default:"one" defaults:"two;three"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestChoiceAndChoicesTagsConflict(t *testing.T) {
+	var opts struct {
+		Mode string `long:"mode" choice:"fast" choices:"safe;strict"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}

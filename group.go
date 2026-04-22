@@ -356,7 +356,11 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		}
 
 		description := mtag.Get(FlagTagDescription)
-		def := mtag.GetMany(FlagTagDefault)
+		delimiter := parserTagListDelimiter(g.parser())
+		def, err := collectTagValues(mtag, FlagTagDefault, FlagTagDefaults, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
 
 		optionalValue := mtag.GetMany(FlagTagOptionalValue)
 		valueName := mtag.Get(FlagTagValueName)
@@ -382,7 +386,10 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			return err
 		}
 
-		choices := mtag.GetMany(FlagTagChoice)
+		choices, err := collectTagValues(mtag, FlagTagChoice, FlagTagChoices, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
 		hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, field.Name)
 		if err != nil {
 			return err
