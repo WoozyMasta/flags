@@ -1425,6 +1425,44 @@ func TestPrintErrorsDestination(t *testing.T) {
 	}
 }
 
+func TestPrintErrorsHelpToStderr(t *testing.T) {
+	var opts struct {
+		Value bool `long:"value"`
+	}
+
+	parser := NewParser(&opts, Default|PrintHelpOnStderr)
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--help"})
+	})
+
+	if stdout != "" {
+		t.Fatalf("expected empty stdout for help when PrintHelpOnStderr is set, got %q", stdout)
+	}
+
+	if !strings.Contains(stderr, "Usage:") {
+		t.Fatalf("expected help on stderr, got %q", stderr)
+	}
+}
+
+func TestPrintErrorsToStdout(t *testing.T) {
+	var opts struct {
+		Value bool `long:"value"`
+	}
+
+	parser := NewParser(&opts, Default|PrintErrorsOnStdout)
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--unknown"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr when PrintErrorsOnStdout is set, got %q", stderr)
+	}
+
+	if !strings.Contains(stdout, "unknown flag") {
+		t.Fatalf("expected parse error on stdout, got %q", stdout)
+	}
+}
+
 func TestExpectedTypeForFuncAndNonFunc(t *testing.T) {
 	var opts struct {
 		Do func() `long:"do"`

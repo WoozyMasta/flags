@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning][].
 * Plural struct tags `defaults`, `choices`, `aliases` to avoid duplicate-tag
   patterns, with parser-level delimiter control via
   `Parser.SetTagListDelimiter(...)`.
+* Parser options `PrintHelpOnStderr` and `PrintErrorsOnStdout` to control
+  where built-in help and parse errors are written when `PrintErrors`
+  is enabled.
 
 ### Changed
 

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"reflect"
@@ -147,7 +148,8 @@ const (
 	// -h and --help options. When either -h or --help is specified on the
 	// command line, the parser will return the special error of type
 	// ErrHelp. When PrintErrors is also specified, then the help message
-	// will also be automatically printed to os.Stdout.
+	// will also be automatically printed to os.Stdout unless PrintHelpOnStderr
+	// is set.
 	HelpFlag = 1 << iota
 
 	// PassDoubleDash passes all arguments after a double dash, --, as
@@ -161,8 +163,16 @@ const (
 
 	// PrintErrors prints any errors which occurred during parsing to
 	// os.Stderr. In the special case of ErrHelp, the message will be printed
-	// to os.Stdout.
+	// to os.Stdout unless PrintHelpOnStderr is set.
 	PrintErrors
+
+	// PrintHelpOnStderr routes built-in help output (ErrHelp) to os.Stderr
+	// when PrintErrors is enabled.
+	PrintHelpOnStderr
+
+	// PrintErrorsOnStdout routes non-help parse errors to os.Stdout
+	// when PrintErrors is enabled.
+	PrintErrorsOnStdout
 
 	// PassAfterNonOption passes all arguments after the first non option
 	// as remaining command line arguments. This is equivalent to strict
@@ -1032,14 +1042,26 @@ func (p *Parser) showBuiltinHelp() error {
 
 func (p *Parser) printError(err error) error {
 	if err != nil && (p.Options&PrintErrors) != None {
-		flagsErr, ok := err.(*Error)
-
-		if ok && flagsErr.Type == ErrHelp {
-			_, _ = fmt.Fprintln(os.Stdout, err)
-		} else {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-		}
+		_, _ = fmt.Fprintln(p.errorWriter(err), err)
 	}
 
 	return err
+}
+
+func (p *Parser) errorWriter(err error) io.Writer {
+	flagsErr, ok := err.(*Error)
+
+	if ok && flagsErr.Type == ErrHelp {
+		if (p.Options & PrintHelpOnStderr) != None {
+			return os.Stderr
+		}
+
+		return os.Stdout
+	}
+
+	if (p.Options & PrintErrorsOnStdout) != None {
+		return os.Stdout
+	}
+
+	return os.Stderr
 }

@@ -14,6 +14,7 @@ Reflection-based command-line parser for Go.
 * INI parse/write support
 * Bash/Zsh completion script generation
 * Help output and template-based documentation rendering (man/markdown/html)
+* Configurable parse output routing for help/errors (`stdout` or `stderr`)
 
 ## Installation
 
