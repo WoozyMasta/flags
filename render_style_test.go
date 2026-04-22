@@ -105,6 +105,7 @@ func TestHelpRenderStyleDetectWindowsPrefersWindowsOverShellVar(t *testing.T) {
 	}
 
 	_ = os.Setenv("SHELL", "/usr/bin/bash")
+	_ = os.Unsetenv("GO_FLAGS_SHELL")
 	_ = os.Unsetenv("MSYSTEM")
 	_ = os.Unsetenv("OSTYPE")
 
