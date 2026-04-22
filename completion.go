@@ -6,7 +6,6 @@
 package flags
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -378,7 +377,7 @@ func (p *Parser) WriteCompletion(w io.Writer, shell CompletionShell) error {
 // WriteNamedCompletion writes a shell completion script for commandName.
 func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, commandName string) error {
 	if commandName == "" {
-		return errors.New("command name must not be empty")
+		return ErrEmptyCommandName
 	}
 
 	functionName := completionFunctionName(commandName)

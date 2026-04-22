@@ -6,7 +6,6 @@
 package flags
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -14,11 +13,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 )
-
-// ErrNotPointerToStruct indicates that a provided data container is not
-// a pointer to a struct. Only pointers to structs are valid data containers
-// for options.
-var ErrNotPointerToStruct = errors.New("provided data is not a pointer to struct")
 
 // Group represents an option group. Option groups can be used to logically
 // group options together under a description. Groups are only used to provide

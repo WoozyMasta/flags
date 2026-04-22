@@ -6,7 +6,6 @@
 package flags
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -109,7 +108,7 @@ func WriteBuiltinTemplate(w io.Writer, name string) error {
 // WriteDoc renders parser documentation in the selected format.
 func (p *Parser) WriteDoc(w io.Writer, format DocFormat, opts ...DocOption) error {
 	if w == nil {
-		return errors.New("nil writer")
+		return ErrNilWriter
 	}
 
 	cfg := docRenderOptions{}

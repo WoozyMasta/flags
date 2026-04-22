@@ -7,7 +7,6 @@ package flags
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -380,7 +379,7 @@ func (p *Parser) SetHelpEnvRenderStyle(style RenderStyle) {
 // immediately.
 func (p *Parser) SetMaxLongNameLength(length int) error {
 	if length < 0 {
-		return errors.New("max long name length cannot be negative")
+		return ErrNegativeMaxLongNameLength
 	}
 
 	prev := p.MaxLongNameLength
@@ -399,7 +398,7 @@ func (p *Parser) SetMaxLongNameLength(length int) error {
 // defaults/choices/aliases and rescans attached groups/commands.
 func (p *Parser) SetTagListDelimiter(delimiter rune) error {
 	if delimiter == 0 {
-		return errors.New("tag list delimiter cannot be NUL")
+		return ErrNULTagListDelimiter
 	}
 
 	p.TagListDelimiter = delimiter

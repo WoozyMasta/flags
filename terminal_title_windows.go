@@ -8,7 +8,6 @@
 package flags
 
 import (
-	"errors"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -28,7 +27,7 @@ func setTerminalTitle(title string) error {
 		if callErr != nil && callErr != windows.ERROR_SUCCESS {
 			return callErr
 		}
-		return errors.New("SetConsoleTitleW failed")
+		return ErrSetConsoleTitleFailed
 	}
 
 	return nil

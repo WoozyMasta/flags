@@ -6,7 +6,31 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
+)
+
+var (
+	// ErrNotPointerToStruct indicates that a provided data container is not
+	// a pointer to a struct. Only pointers to structs are valid data containers
+	// for options.
+	ErrNotPointerToStruct = errors.New("provided data is not a pointer to struct")
+
+	// ErrEmptyCommandName indicates that completion generation was requested
+	// without a command name.
+	ErrEmptyCommandName = errors.New("command name must not be empty")
+
+	// ErrNilWriter indicates that a nil output writer was passed.
+	ErrNilWriter = errors.New("nil writer")
+
+	// ErrNegativeMaxLongNameLength indicates an invalid negative limit.
+	ErrNegativeMaxLongNameLength = errors.New("max long name length cannot be negative")
+
+	// ErrNULTagListDelimiter indicates that zero rune was used as delimiter.
+	ErrNULTagListDelimiter = errors.New("tag list delimiter cannot be NUL")
+
+	// ErrSetConsoleTitleFailed indicates an unknown SetConsoleTitleW failure.
+	ErrSetConsoleTitleFailed = errors.New("SetConsoleTitleW failed")
 )
 
 // ErrorType represents the type of error.
