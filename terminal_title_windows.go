@@ -1,0 +1,35 @@
+// SPDX-FileType: SOURCE
+// SPDX-FileCopyrightText: 2012 Jesse van den Kieboom
+// SPDX-FileCopyrightText: 2026 Maxim Levchenko (WoozyMasta)
+// SPDX-License-Identifier: BSD-3-Clause
+
+//go:build windows
+
+package flags
+
+import (
+	"errors"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
+)
+
+func setTerminalTitle(title string) error {
+	ptr, err := windows.UTF16PtrFromString(title)
+	if err != nil {
+		return err
+	}
+
+	kernel32 := windows.NewLazySystemDLL("kernel32.dll")
+	proc := kernel32.NewProc("SetConsoleTitleW")
+
+	ret, _, callErr := proc.Call(uintptr(unsafe.Pointer(ptr)))
+	if ret == 0 {
+		if callErr != nil && callErr != windows.ERROR_SUCCESS {
+			return callErr
+		}
+		return errors.New("SetConsoleTitleW failed")
+	}
+
+	return nil
+}

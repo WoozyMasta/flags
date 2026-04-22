@@ -61,6 +61,8 @@ and this project adheres to [Semantic Versioning][].
   is enabled.
 * Parser options `ShowCommandAliases` and `ShowRepeatableInHelp` to
   enrich built-in help with command alias list and repeatable markers.
+* Parser option `SetTerminalTitle` to set terminal window title from parser
+  `Name` (or `TerminalTitle` override) during parsing.
 
 ### Changed
 

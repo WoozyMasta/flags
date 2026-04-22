@@ -69,6 +69,10 @@ type Parser struct {
 	// EnvPrefix prepends all resolved environment variable keys.
 	EnvPrefix string
 
+	// TerminalTitle overrides terminal title text when SetTerminalTitle is enabled.
+	// If empty, parser Name is used.
+	TerminalTitle string
+
 	// Monotonic generation used to invalidate cached lookup maps.
 	lookupGeneration uint64
 
@@ -205,6 +209,10 @@ const (
 	// ShowRepeatableInHelp appends a repeatable marker to option descriptions
 	// in built-in help output for collection options (slice/map).
 	ShowRepeatableInHelp
+
+	// SetTerminalTitle updates terminal window title during ParseArgs using
+	// TerminalTitle or parser Name.
+	SetTerminalTitle
 
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
@@ -527,6 +535,8 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 		return nil, nil
 	}
+
+	p.applyTerminalTitle()
 
 	s := &parseState{
 		args:    args,

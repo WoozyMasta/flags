@@ -68,6 +68,8 @@ Built-in help output can be tuned with parser flags:
 * `ShowCommandAliases`: show aliases in the `Available commands` section
   even when command description is empty.
 * `ShowRepeatableInHelp`: append `repeatable` marker for slice/map options.
+* `SetTerminalTitle`: set terminal window title during parsing.
+  Uses parser `Name` by default, or `parser.TerminalTitle` when provided.
 
 Example:
 

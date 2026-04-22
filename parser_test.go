@@ -1463,6 +1463,95 @@ func TestPrintErrorsToStdout(t *testing.T) {
 	}
 }
 
+func TestSetTerminalTitleUsesParserName(t *testing.T) {
+	p := NewNamedParser("title-from-name", SetTerminalTitle)
+
+	called := false
+	got := ""
+	originalSetter := terminalTitleSetter
+	terminalTitleSetter = func(title string) error {
+		called = true
+		got = title
+		return nil
+	}
+	defer func() {
+		terminalTitleSetter = originalSetter
+	}()
+
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !called {
+		t.Fatalf("expected terminal title setter to be called")
+	}
+
+	if got != "title-from-name" {
+		t.Fatalf("expected title-from-name, got %q", got)
+	}
+}
+
+func TestSetTerminalTitleOverride(t *testing.T) {
+	p := NewNamedParser("title-from-name", SetTerminalTitle)
+	p.TerminalTitle = "custom title"
+
+	called := false
+	got := ""
+	originalSetter := terminalTitleSetter
+	terminalTitleSetter = func(title string) error {
+		called = true
+		got = title
+		return nil
+	}
+	defer func() {
+		terminalTitleSetter = originalSetter
+	}()
+
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !called {
+		t.Fatalf("expected terminal title setter to be called")
+	}
+
+	if got != "custom title" {
+		t.Fatalf("expected custom title, got %q", got)
+	}
+}
+
+func TestSetTerminalTitleSkippedInCompletionMode(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	os.Setenv("GO_FLAGS_COMPLETION", "1")
+
+	p := NewNamedParser("title-from-name", SetTerminalTitle)
+	p.CompletionHandler = func(_ []Completion) {}
+
+	called := false
+	originalSetter := terminalTitleSetter
+	terminalTitleSetter = func(_ string) error {
+		called = true
+		return nil
+	}
+	defer func() {
+		terminalTitleSetter = originalSetter
+	}()
+
+	ret, err := p.ParseArgs(nil)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if ret != nil {
+		t.Fatalf("expected nil result in completion mode, got %#v", ret)
+	}
+
+	if called {
+		t.Fatalf("did not expect terminal title setter in completion mode")
+	}
+}
+
 func TestExpectedTypeForFuncAndNonFunc(t *testing.T) {
 	var opts struct {
 		Do func() `long:"do"`
