@@ -53,6 +53,14 @@ func collectTagValues(
 	}
 
 	if len(list) > 0 {
+		if len(list) > 1 {
+			return nil, newErrorf(
+				ErrInvalidTag,
+				"field `%s' uses non-repeatable `%s' tag more than once",
+				fieldName,
+				listTag,
+			)
+		}
 		return splitTagListValues(list, delimiter), nil
 	}
 

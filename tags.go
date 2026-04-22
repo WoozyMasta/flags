@@ -66,6 +66,14 @@ const (
 	FlagTagAlias = "alias"
 	// FlagTagAliases adds extra command names as a delimiter-separated list.
 	FlagTagAliases = "aliases"
+	// FlagTagLongAlias adds extra long option names (repeatable).
+	FlagTagLongAlias = "long-alias"
+	// FlagTagLongAliases adds extra long option names as a delimiter-separated list.
+	FlagTagLongAliases = "long-aliases"
+	// FlagTagShortAlias adds extra short option names (repeatable).
+	FlagTagShortAlias = "short-alias"
+	// FlagTagShortAliases adds extra short option names as a delimiter-separated list.
+	FlagTagShortAliases = "short-aliases"
 	// FlagTagPositionalArgs marks a struct as positional arguments container.
 	FlagTagPositionalArgs = "positional-args"
 	// FlagTagPositionalArgName sets display name for a positional argument.
@@ -145,6 +153,14 @@ type FlagTags struct {
 	Alias string
 	// Aliases maps to multi command aliases tag (default: "aliases").
 	Aliases string
+	// LongAlias maps to option long alias tag (default: "long-alias").
+	LongAlias string
+	// LongAliases maps to multi option long aliases tag (default: "long-aliases").
+	LongAliases string
+	// ShortAlias maps to option short alias tag (default: "short-alias").
+	ShortAlias string
+	// ShortAliases maps to multi option short aliases tag (default: "short-aliases").
+	ShortAliases string
 	// PositionalArgs maps to positional args struct tag (default: "positional-args").
 	PositionalArgs string
 	// PositionalArgName maps to positional display-name tag (default: "positional-arg-name").
@@ -196,6 +212,10 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		SubCommandsOptional: prefix + FlagTagSubCommandsOptional,
 		Alias:               prefix + FlagTagAlias,
 		Aliases:             prefix + FlagTagAliases,
+		LongAlias:           prefix + FlagTagLongAlias,
+		LongAliases:         prefix + FlagTagLongAliases,
+		ShortAlias:          prefix + FlagTagShortAlias,
+		ShortAliases:        prefix + FlagTagShortAliases,
 		PositionalArgs:      prefix + FlagTagPositionalArgs,
 		PositionalArgName:   prefix + FlagTagPositionalArgName,
 		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
@@ -294,6 +314,18 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Aliases != "" {
 		d.Aliases = t.Aliases
+	}
+	if t.LongAlias != "" {
+		d.LongAlias = t.LongAlias
+	}
+	if t.LongAliases != "" {
+		d.LongAliases = t.LongAliases
+	}
+	if t.ShortAlias != "" {
+		d.ShortAlias = t.ShortAlias
+	}
+	if t.ShortAliases != "" {
+		d.ShortAliases = t.ShortAliases
 	}
 	if t.PositionalArgs != "" {
 		d.PositionalArgs = t.PositionalArgs

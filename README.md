@@ -83,6 +83,10 @@ All struct tags are configurable:
 * `defaults`: preferred multi-value default tag using list delimiter.
 * `choice`: legacy repeatable whitelist tag for accepted values.
 * `choices`: preferred whitelist tag with delimiter-separated values.
+* `short-alias`: legacy repeatable extra short option names.
+* `short-aliases`: preferred delimiter-separated short aliases.
+* `long-alias`: legacy repeatable extra long option names.
+* `long-aliases`: preferred delimiter-separated long aliases.
 * `default-mask`: hides real default in help/docs (for secrets/tokens).
 * `env`: explicit environment key used as fallback source.
 * `auto-env`: derive env key from `long` for this option only.
@@ -133,6 +137,8 @@ All struct tags are configurable:
 * `default` conflicts with `defaults`.
 * `choice` conflicts with `choices`.
 * `alias` conflicts with `aliases`.
+* `short-alias` conflicts with `short-aliases`.
+* `long-alias` conflicts with `long-aliases`.
 * Use only one tag style from each pair on the same field.
 
 ## Option Values

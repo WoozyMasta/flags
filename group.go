@@ -8,6 +8,7 @@ package flags
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -143,7 +144,10 @@ func (g *Group) findOption(matcher func(*Option) bool) (option *Option) {
 // subgroups, by matching its long name (including the option namespace).
 func (g *Group) FindOptionByLongName(longName string) *Option {
 	return g.findOption(func(option *Option) bool {
-		return option.LongNameWithNamespace() == longName
+		if option.LongNameWithNamespace() == longName {
+			return true
+		}
+		return slices.Contains(option.LongAliasesWithNamespace(), longName)
 	})
 }
 
@@ -151,7 +155,10 @@ func (g *Group) FindOptionByLongName(longName string) *Option {
 // its subgroups, by matching its short name.
 func (g *Group) FindOptionByShortName(shortName rune) *Option {
 	return g.findOption(func(option *Option) bool {
-		return option.ShortName == shortName
+		if option.ShortName == shortName {
+			return true
+		}
+		return slices.Contains(option.ShortAliases, shortName)
 	})
 }
 
@@ -204,7 +211,17 @@ func (g *Group) optionByName(name string, namematch func(*Option, string) bool) 
 				prio = 2
 			}
 
+			if slices.Contains(opt.LongAliasesWithNamespace(), name) && prio < 2 {
+				retopt = opt
+				prio = 2
+			}
+
 			if opt.ShortName != 0 && name == string(opt.ShortName) && prio < 1 {
+				retopt = opt
+				prio = 1
+			}
+
+			if containsShortAliasByString(opt.ShortAliases, name) && prio < 1 {
 				retopt = opt
 				prio = 1
 			}
@@ -212,6 +229,15 @@ func (g *Group) optionByName(name string, namematch func(*Option, string) bool) 
 	})
 
 	return retopt
+}
+
+func containsShortAliasByString(aliases []rune, value string) bool {
+	for _, alias := range aliases {
+		if string(alias) == value {
+			return true
+		}
+	}
+	return false
 }
 
 func (g *Group) showInHelp() bool {
@@ -271,6 +297,31 @@ func autoEnvKeyFromLongName(longName string) string {
 
 		return '_'
 	}, upper)
+}
+
+func parseOptionShortAliases(fieldName string, aliases []string) ([]rune, error) {
+	if len(aliases) == 0 {
+		return nil, nil
+	}
+
+	shortAliases := make([]rune, 0, len(aliases))
+
+	for _, alias := range aliases {
+		rc := utf8.RuneCountInString(alias)
+		if rc != 1 {
+			return nil, newErrorf(
+				ErrShortNameTooLong,
+				"short names can only be 1 character long, not `%s' (field `%s')",
+				alias,
+				fieldName,
+			)
+		}
+
+		r, _ := utf8.DecodeRuneInString(alias)
+		shortAliases = append(shortAliases, r)
+	}
+
+	return shortAliases, nil
 }
 
 func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, handler scanHandler) error {
@@ -397,6 +448,34 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err != nil {
 			return err
 		}
+		longAliases, err := collectTagValues(mtag, FlagTagLongAlias, FlagTagLongAliases, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+		if len(longAliases) > 0 {
+			maxLong := 0
+			if p := g.parser(); p != nil {
+				maxLong = p.MaxLongNameLength
+			}
+			for _, alias := range longAliases {
+				if maxLong > 0 && utf8.RuneCountInString(alias) > maxLong {
+					return newErrorf(
+						ErrInvalidTag,
+						"long flag alias `%s' exceeds max length %d (use SetMaxLongNameLength to override)",
+						alias,
+						maxLong,
+					)
+				}
+			}
+		}
+		shortAliasValues, err := collectTagValues(mtag, FlagTagShortAlias, FlagTagShortAliases, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+		shortAliases, err := parseOptionShortAliases(field.Name, shortAliasValues)
+		if err != nil {
+			return err
+		}
 		hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, field.Name)
 		if err != nil {
 			return err
@@ -424,7 +503,9 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		option := &Option{
 			Description:      description,
 			ShortName:        short,
+			ShortAliases:     shortAliases,
 			LongName:         longname,
+			LongAliases:      longAliases,
 			Default:          def,
 			EnvDefaultKey:    envKey,
 			EnvDefaultDelim:  mtag.Get(FlagTagEnvDelim),
@@ -492,12 +573,26 @@ func (g *Group) checkForDuplicateFlags() *Error {
 				}
 				longNames[longName] = option
 			}
+			for _, alias := range option.LongAliasesWithNamespace() {
+				if otherOption, ok := longNames[alias]; ok {
+					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same long alias `%s' as option `%s'", option, alias, otherOption)
+					return
+				}
+				longNames[alias] = option
+			}
 			if option.ShortName != 0 {
 				if otherOption, ok := shortNames[option.ShortName]; ok {
 					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same short name as option `%s'", option, otherOption)
 					return
 				}
 				shortNames[option.ShortName] = option
+			}
+			for _, alias := range option.ShortAliases {
+				if otherOption, ok := shortNames[alias]; ok {
+					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same short alias `%c' as option `%s'", option, alias, otherOption)
+					return
+				}
+				shortNames[alias] = option
 			}
 		}
 	})

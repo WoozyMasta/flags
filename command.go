@@ -455,9 +455,15 @@ func (c *Command) fillLookup(ret *lookup, onlyOptions bool) {
 			if option.ShortName != 0 {
 				ret.shortNames[string(option.ShortName)] = option
 			}
+			for _, shortAlias := range option.ShortAliases {
+				ret.shortNames[string(shortAlias)] = option
+			}
 
 			if len(option.LongName) > 0 {
 				ret.longNames[option.LongNameWithNamespace()] = option
+			}
+			for _, longAlias := range option.LongAliasesWithNamespace() {
+				ret.longNames[longAlias] = option
 			}
 		}
 	})

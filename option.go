@@ -66,6 +66,9 @@ type Option struct {
 	// blocks. Only slice and slice-of-slices options are valid with terminator.
 	Terminator string
 
+	// Additional long names for the option (without namespace prefix in tags).
+	LongAliases []string
+
 	// The default value of the option.
 	Default []string
 
@@ -78,6 +81,9 @@ type Option struct {
 
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
+
+	// Additional short names for the option.
+	ShortAliases []rune
 
 	// The struct field which the option represents.
 	field reflect.StructField
@@ -136,6 +142,31 @@ func (option *Option) LongNameWithNamespace() string {
 		return ""
 	}
 
+	return option.longNameWithNamespace(option.LongName)
+}
+
+// LongAliasesWithNamespace returns option long aliases with group namespaces applied.
+func (option *Option) LongAliasesWithNamespace() []string {
+	if len(option.LongAliases) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(option.LongAliases))
+	for _, alias := range option.LongAliases {
+		if alias == "" {
+			continue
+		}
+		out = append(out, option.longNameWithNamespace(alias))
+	}
+
+	return out
+}
+
+func (option *Option) longNameWithNamespace(name string) string {
+	if name == "" {
+		return ""
+	}
+
 	// fetch the namespace delimiter from the parser which is always at the
 	// end of the group hierarchy
 	namespaceDelimiter := ""
@@ -157,7 +188,7 @@ func (option *Option) LongNameWithNamespace() string {
 	}
 
 	// concatenate long name with namespace
-	longName := option.LongName
+	longName := name
 	g = option.group
 
 	for g != nil {

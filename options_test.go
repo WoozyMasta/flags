@@ -201,3 +201,19 @@ func TestOptionPublicAccessorsAndNames(t *testing.T) {
 		t.Fatalf("unexpected short-only name: %q", got)
 	}
 }
+
+func TestFindOptionByAliases(t *testing.T) {
+	var opts struct {
+		Value string `short:"v" long:"value" short-alias:"V" long-alias:"val"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if p.FindOptionByLongName("val") == nil {
+		t.Fatalf("expected to find option by long alias")
+	}
+
+	if p.FindOptionByShortName('V') == nil {
+		t.Fatalf("expected to find option by short alias")
+	}
+}

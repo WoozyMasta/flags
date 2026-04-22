@@ -1734,6 +1734,21 @@ func TestSetTagListDelimiterRejectsNUL(t *testing.T) {
 	}
 }
 
+func TestListTagNotRepeatable(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" long-aliases:"one;two" long-aliases:"three;four"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
 func TestDefaultMaxLongNameLengthRejectsLongTag(t *testing.T) {
 	var opts struct {
 		Value string `long:"this-long-option-name-is-definitely-over-thirty-two-chars"`
@@ -1827,5 +1842,123 @@ func TestChoiceAndChoicesTagsConflict(t *testing.T) {
 
 	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
 		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestOptionLongAlias(t *testing.T) {
+	var opts struct {
+		NoCache bool `long:"nocache" long-alias:"no-cache"`
+	}
+
+	_, err := ParseArgs(&opts, []string{"--no-cache"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !opts.NoCache {
+		t.Fatalf("expected NoCache to be true")
+	}
+}
+
+func TestOptionLongAliasesList(t *testing.T) {
+	var opts struct {
+		NoCache bool `long:"nocache" long-aliases:"no-cache;no_cache"`
+	}
+
+	_, err := ParseArgs(&opts, []string{"--no_cache"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !opts.NoCache {
+		t.Fatalf("expected NoCache to be true")
+	}
+}
+
+func TestOptionShortAlias(t *testing.T) {
+	var opts struct {
+		Count int `short:"c" short-alias:"C"`
+	}
+
+	_, err := ParseArgs(&opts, []string{"-C", "7"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Count != 7 {
+		t.Fatalf("expected Count=7, got %d", opts.Count)
+	}
+}
+
+func TestOptionShortAliasesList(t *testing.T) {
+	var opts struct {
+		Count int `short:"c" short-aliases:"x;X"`
+	}
+
+	_, err := ParseArgs(&opts, []string{"-X", "9"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Count != 9 {
+		t.Fatalf("expected Count=9, got %d", opts.Count)
+	}
+}
+
+func TestOptionAliasCollisions(t *testing.T) {
+	var opts struct {
+		One bool `long:"one" long-alias:"two"`
+		Two bool `long:"two"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestOptionShortAliasTooLong(t *testing.T) {
+	var opts struct {
+		Value bool `short:"v" short-alias:"vv"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrShortNameTooLong {
+		t.Fatalf("expected ErrShortNameTooLong, got %v", err)
+	}
+}
+
+func TestSetTagPrefixOptionAliases(t *testing.T) {
+	var opts struct {
+		Path string `flag-long:"path" flag-long-alias:"p-ath" flag-short:"p" flag-short-alias:"P"`
+	}
+
+	p := NewParser(&opts, None)
+	if err := p.SetTagPrefix("flag-"); err != nil {
+		t.Fatalf("unexpected set prefix error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"--p-ath", "ok"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Path != "ok" {
+		t.Fatalf("expected parsed alias value, got %q", opts.Path)
+	}
+
+	if _, err := p.ParseArgs([]string{"-P", "ok2"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Path != "ok2" {
+		t.Fatalf("expected parsed short alias value, got %q", opts.Path)
 	}
 }
