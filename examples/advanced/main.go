@@ -55,6 +55,8 @@ type AdvancedOptions struct {
 	ReleaseID     string `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
 	SecretKey     string `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
 
+	HelpColor string `long:"help-color" choices:"none;default;contrast;light" default:"none" description:"Color scheme for built-in help output"`
+
 	Verbose []bool `short:"v" long:"verbose" description:"Increase verbosity level" order:"100"`
 
 	Labels []ServiceLabel `long:"label" description:"Service labels"`
@@ -76,8 +78,6 @@ type AdvancedOptions struct {
 		Plan  bool `long:"plan" description:"Show execution plan only"`
 	} `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
 	Zeta bool `long:"zeta" description:"Example bool flag for sort demo"`
-
-	HelpColor string `long:"help-color" choices:"none;default;contrast;light" default:"none" description:"Color scheme for built-in help output"`
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {

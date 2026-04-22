@@ -57,9 +57,6 @@ type Parser struct {
 	// Active struct-tag mapping used while scanning option metadata.
 	flagTags FlagTags
 
-	// Active color scheme for built-in help rendering.
-	helpColorScheme HelpColorScheme
-
 	// A usage string to be displayed in the help message.
 	Usage string
 
@@ -85,6 +82,9 @@ type Parser struct {
 	// TagListDelimiter splits values for list-based struct tags such as
 	// defaults/choices/aliases.
 	TagListDelimiter rune
+
+	// Active color scheme for built-in help rendering.
+	helpColorScheme HelpColorScheme
 
 	// Active option sorting mode for grouped option presentation.
 	optionSort OptionSortMode
