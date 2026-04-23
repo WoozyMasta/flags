@@ -249,8 +249,6 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 			continue
 		}
 
-		val := option.value
-
 		if (options&IniIncludeDefaults) == IniNone && option.valueIsDefault() {
 			continue
 		}
@@ -267,49 +265,7 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 		oname := optionIniName(option)
 
 		commentOption := (options&(IniIncludeDefaults|IniCommentDefaults)) == IniIncludeDefaults|IniCommentDefaults && option.valueIsDefault()
-
-		kind := val.Type().Kind()
-		switch kind {
-		case reflect.Slice:
-			kind = val.Type().Elem().Kind()
-
-			if val.Len() == 0 {
-				writeOption(writer, oname, kind, "", "", true, option.iniQuote)
-			} else {
-				for idx := 0; idx < val.Len(); idx++ {
-					v, _ := convertToString(val.Index(idx), option.tag)
-
-					writeOption(writer, oname, kind, "", v, commentOption, option.iniQuote)
-				}
-			}
-		case reflect.Map:
-			kind = val.Type().Elem().Kind()
-
-			if val.Len() == 0 {
-				writeOption(writer, oname, kind, "", "", true, option.iniQuote)
-			} else {
-				mkeys := val.MapKeys()
-				keys := make([]string, len(val.MapKeys()))
-				kkmap := make(map[string]reflect.Value)
-
-				for i, k := range mkeys {
-					keys[i], _ = convertToString(k, option.tag)
-					kkmap[keys[i]] = k
-				}
-
-				sort.Strings(keys)
-
-				for _, k := range keys {
-					v, _ := convertToString(val.MapIndex(kkmap[k]), option.tag)
-
-					writeOption(writer, oname, kind, k, v, commentOption, option.iniQuote)
-				}
-			}
-		default:
-			v, _ := convertToString(val, option.tag)
-
-			writeOption(writer, oname, kind, "", v, commentOption, option.iniQuote)
-		}
+		writeOptionValue(writer, option, oname, commentOption, true)
 
 		if comments {
 			_, _ = fmt.Fprintln(writer)
@@ -348,6 +304,68 @@ func writeOption(
 	}
 
 	_, _ = fmt.Fprintln(writer)
+}
+
+func writeOptionValue(
+	writer io.Writer,
+	option *Option,
+	optionName string,
+	commentOption bool,
+	forceCommentOnEmptyCollection bool,
+) {
+	val := option.value
+	kind := val.Type().Kind()
+
+	switch kind {
+	case reflect.Slice:
+		elemKind := val.Type().Elem().Kind()
+
+		if val.Len() == 0 {
+			commentEmpty := commentOption
+			if forceCommentOnEmptyCollection {
+				commentEmpty = true
+			}
+			writeOption(writer, optionName, elemKind, "", "", commentEmpty, option.iniQuote)
+			return
+		}
+
+		for idx := 0; idx < val.Len(); idx++ {
+			v, _ := convertToString(val.Index(idx), option.tag)
+			writeOption(writer, optionName, elemKind, "", v, commentOption, option.iniQuote)
+		}
+
+	case reflect.Map:
+		elemKind := val.Type().Elem().Kind()
+
+		if val.Len() == 0 {
+			commentEmpty := commentOption
+			if forceCommentOnEmptyCollection {
+				commentEmpty = true
+			}
+			writeOption(writer, optionName, elemKind, "", "", commentEmpty, option.iniQuote)
+			return
+		}
+
+		mkeys := val.MapKeys()
+		keys := make([]string, len(val.MapKeys()))
+		kkmap := make(map[string]reflect.Value)
+
+		for i, k := range mkeys {
+			keys[i], _ = convertToString(k, option.tag)
+			kkmap[keys[i]] = k
+		}
+
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			v, _ := convertToString(val.MapIndex(kkmap[k]), option.tag)
+			writeOption(writer, optionName, elemKind, k, v, commentOption, option.iniQuote)
+		}
+
+	default:
+		v, _ := convertToString(val, option.tag)
+		writeOption(writer, optionName, kind, "", v, commentOption, option.iniQuote)
+	}
 }
 
 func optionLooksUserConfigured(option *Option) bool {
@@ -476,47 +494,7 @@ func writeGroupIniExample(
 
 		oname := optionIniName(option)
 		commentOption := shouldCommentExampleOption(option)
-		val := option.value
-
-		kind := val.Type().Kind()
-		switch kind {
-		case reflect.Slice:
-			elemKind := val.Type().Elem().Kind()
-
-			if val.Len() == 0 {
-				writeOption(writer, oname, elemKind, "", "", commentOption, option.iniQuote)
-			} else {
-				for idx := 0; idx < val.Len(); idx++ {
-					v, _ := convertToString(val.Index(idx), option.tag)
-					writeOption(writer, oname, elemKind, "", v, commentOption, option.iniQuote)
-				}
-			}
-		case reflect.Map:
-			elemKind := val.Type().Elem().Kind()
-
-			if val.Len() == 0 {
-				writeOption(writer, oname, elemKind, "", "", commentOption, option.iniQuote)
-			} else {
-				mkeys := val.MapKeys()
-				keys := make([]string, len(val.MapKeys()))
-				kkmap := make(map[string]reflect.Value)
-
-				for i, k := range mkeys {
-					keys[i], _ = convertToString(k, option.tag)
-					kkmap[keys[i]] = k
-				}
-
-				sort.Strings(keys)
-
-				for _, k := range keys {
-					v, _ := convertToString(val.MapIndex(kkmap[k]), option.tag)
-					writeOption(writer, oname, elemKind, k, v, commentOption, option.iniQuote)
-				}
-			}
-		default:
-			v, _ := convertToString(val, option.tag)
-			writeOption(writer, oname, kind, "", v, commentOption, option.iniQuote)
-		}
+		writeOptionValue(writer, option, oname, commentOption, false)
 
 		_, _ = fmt.Fprintln(writer)
 	}
