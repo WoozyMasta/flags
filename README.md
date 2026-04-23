@@ -13,6 +13,30 @@ Reflection-based command-line parser for Go.
 * Rich help, completion, and documentation output (man/markdown/html)
 * Custom value parsing with standard Go interfaces
 
+## Content
+
+* [Installation](#installation)
+* [Quick Start](#quick-start)
+* [Error Handling](#error-handling)
+* [Option Values](#option-values)
+* [Struct Tags Reference](#struct-tags-reference)
+* [Tag Customization](#tag-customization)
+* [Positional Arguments](#positional-arguments)
+* [Groups](#groups)
+* [Commands](#commands)
+* [Defaults](#defaults)
+* [Environment Variables](#environment-variables)
+* [INI Config](#ini-config)
+* [Programmatic Configuration](#programmatic-configuration)
+* [Option Sorting](#option-sorting)
+* [Help](#help)
+* [Version](#version)
+* [Shell Completion](#shell-completion)
+* [Color Schemes](#color-schemes)
+* [Hidden and Secret Options](#hidden-and-secret-options)
+* [Documentation Rendering](#documentation-rendering)
+* [Templating](#templating)
+
 ## Installation
 
 ```bash
@@ -93,91 +117,6 @@ if err != nil {
 }
 ```
 
-## Struct Tags Reference
-
-All struct tags are configurable:
-
-* Use `parser.SetTagPrefix("flag-")` to apply a common prefix for all tags.
-* Use `parser.SetFlagTags(...)` for full custom tag-name mapping.
-* List tags (`defaults`, `choices`, `aliases`) use `;` by default.
-* Use `parser.SetTagListDelimiter(',')` to change list-tag delimiter.
-* Boolean tags like `required`, `optional`, `hidden`, `no-flag`, `no-ini`,
-  `subcommands-optional`, `pass-after-non-option`, `unquote`, `auto-env`:
-  * positive: `true`, `yes`, `y`, `1`, `on`
-  * negative: `false`, `no`, `n`, `0`, `off`
-
-### Option tags
-
-* `short`: one-letter short option name used as `-v`.
-* `long`: canonical long option name used as `--verbose`.
-* `description`: primary text shown in help/docs for the option.
-* `long-description`: extended text for man/doc templates.
-* `required`: fails parse if option is missing after defaults/env are applied.
-* `optional`: allows option with or without explicit value.
-* `optional-value`: value used when optional argument is omitted.
-* `value-name`: placeholder name in help (for example `--port=PORT`).
-* `default`: legacy repeatable default tag, mainly for backward compatibility.
-* `defaults`: preferred multi-value default tag using list delimiter.
-* `choice`: legacy repeatable whitelist tag for accepted values.
-* `choices`: preferred whitelist tag with delimiter-separated values.
-* `short-alias`: legacy repeatable extra short option names.
-* `short-aliases`: preferred delimiter-separated short aliases.
-* `long-alias`: legacy repeatable extra long option names.
-* `long-aliases`: preferred delimiter-separated long aliases.
-* `default-mask`: hides real default in help/docs (for secrets/tokens).
-* `env`: explicit environment key used as fallback source.
-* `auto-env`: derive env key from `long` for this option only.
-* `env-delim`: split env value for slices/maps (for example `a,b,c`).
-* `base`: integer radix for parse and defaults (for example `16`).
-* `key-value-delimiter`: key/value separator for map values (default `:`).
-* `no-flag`: disables CLI parsing for this field, keeps it in struct only.
-* `hidden`: keeps option parseable, but removes it from help/completion/docs.
-* `no-ini`: excludes option from INI read/write flow.
-* `ini-name`: custom key name for INI read/write instead of flag name.
-* `unquote`: controls string unquoting for quoted CLI values.
-* `order`: explicit render priority in help/man/completion sorting.
-* `terminator`: consume args until token, `find -exec` style (`[]T`, `[][]T`).
-
-### Group tags
-
-* `group`: marks nested struct as a named option group.
-* `description`: group heading shown in help/docs.
-* `long-description`: extended prose for group-focused docs/man output.
-* `namespace`: prefixes child long flags (for example `db.host`).
-* `env-namespace`: prefixes child env keys before global env prefix.
-* `hidden`: hides the group from help/completion/docs, keeps parsing active.
-
-### Command tags
-
-* `command`: marks field as subcommand and command scope root.
-* `description`: one-line command summary in help/docs.
-* `long-description`: full command description for docs/man output.
-* `alias`: legacy repeatable alias tag for backward compatibility.
-* `aliases`: preferred delimiter-separated alias list.
-* `subcommands-optional`: command can run without child subcommand selection.
-* `pass-after-non-option`: enables command-local POSIX pass-through mode.
-* `hidden`: hides command from help/completion/docs, keeps it executable.
-
-### Positional-argument tags
-
-* `positional-args`: marks nested struct as positional argument container.
-* `required`: for positional args you can use `yes/no`, `1` (required), `N`
-  (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
-* `positional-arg-name`: custom display name for usage/help placeholders.
-* `description`: help/docs description for the positional argument.
-* `default`: legacy repeatable fallback value tag for positional argument.
-* `defaults`: preferred delimiter-separated fallback values for positional
-  argument.
-
-### Tag conflicts
-
-* `default` conflicts with `defaults`.
-* `choice` conflicts with `choices`.
-* `alias` conflicts with `aliases`.
-* `short-alias` conflicts with `short-aliases`.
-* `long-alias` conflicts with `long-aliases`.
-* Use only one tag style from each pair on the same field.
-
 ## Option Values
 
 Common value types:
@@ -208,6 +147,113 @@ type Options struct {
 ```
 
 Then `--exec echo hello ; --other-flag` stores `["echo", "hello"]` in `Exec`.
+
+## Struct Tags Reference
+
+All struct tags are configurable:
+
+* Use `parser.SetTagPrefix("flag-")` to apply a common prefix for all tags.
+* Use `parser.SetFlagTags(...)` for full custom tag-name mapping.
+* List tags (`defaults`, `choices`, `aliases`) use `;` by default.
+* Use `parser.SetTagListDelimiter(',')` to change list-tag delimiter.
+* Prefer plural tags (`defaults`, `choices`, `aliases`,
+  `short-aliases`, `long-aliases`) for new code.
+* Singular legacy tags are still supported for compatibility, but do not mix
+  singular and plural variants on the same field.
+* Boolean tags (`required`, `optional`, `hidden`, `no-flag`, `no-ini`,
+  `subcommands-optional`, `pass-after-non-option`, `unquote`, `auto-env`)
+  accept: `true/false`, `yes/no`, `y/n`, `1/0`, `on/off`.
+
+### Option tags
+
+* `short`: one-letter short option name used as `-v`.
+* `long`: canonical long option name used as `--verbose`.
+* `description`: primary text shown in help/docs for the option.
+* `long-description`: extended text for man/doc templates.
+* `required`: fails parse if option is missing after defaults/env are applied.
+* `optional`: allows option with or without explicit value.
+* `optional-value`: value used when optional argument is omitted.
+* `value-name`: placeholder name in help (for example `--port=PORT`).
+* `default` / `defaults`: default value(s) for missing option input.
+* `choice` / `choices`: allowed value whitelist.
+* `short-alias` / `short-aliases`: additional short names.
+* `long-alias` / `long-aliases`: additional long names.
+* `default-mask`: hides real default in help/docs (for secrets/tokens).
+* `env`: explicit environment key used as fallback source.
+* `auto-env`: derive env key from `long` for this option only.
+* `env-delim`: split env value for slices/maps (for example `a,b,c`).
+* `base`: integer radix for parse and defaults (for example `16`).
+* `key-value-delimiter`: key/value separator for map values (default `:`).
+* `no-flag`: disables CLI parsing for this field, keeps it in struct only.
+* `hidden`: keeps option parseable, but removes it from help/completion/docs.
+* `no-ini`: excludes option from INI read/write flow.
+* `ini-name`: custom key name for INI read/write instead of flag name.
+* `unquote`: controls string unquoting for quoted CLI values.
+* `order`: explicit render priority in help/man/completion sorting.
+* `terminator`: consume args until token, `find -exec` style (`[]T`, `[][]T`).
+
+### Group tags
+
+* `group`: marks nested struct as a named option group.
+* `description`: group heading shown in help/docs.
+* `long-description`: extended prose for group-focused docs/man output.
+* `namespace`: prefixes child long flags (for example `db.host`).
+* `env-namespace`: prefixes child env keys before global env prefix.
+* `hidden`: hides the group from help/completion/docs, keeps parsing active.
+
+### Command tags
+
+* `command`: marks field as subcommand and command scope root.
+* `description`: one-line command summary in help/docs.
+* `long-description`: full command description for docs/man output.
+* `alias` / `aliases`: command aliases.
+* `subcommands-optional`: command can run without child subcommand selection.
+* `pass-after-non-option`: enables command-local POSIX pass-through mode.
+* `hidden`: hides command from help/completion/docs, keeps it executable.
+
+### Positional-argument tags
+
+* `positional-args`: marks nested struct as positional argument container.
+* `required`: for positional args you can use `yes/no`, `1` (required), `N`
+  (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
+* `positional-arg-name`: custom display name for usage/help placeholders.
+* `description`: help/docs description for the positional argument.
+* `default` / `defaults`: fallback values for positional argument.
+
+### Tag conflicts
+
+Do not combine singular and plural forms on one field:
+`default` vs `defaults`, `choice` vs `choices`, `alias` vs `aliases`,
+`short-alias` vs `short-aliases`, `long-alias` vs `long-aliases`.
+
+## Tag Customization
+
+If your structs already use tags for other libraries, you can remap flags
+tag names without changing parser constructors.
+
+Use a common prefix for all tags:
+
+```go
+type Cfg struct {
+  Path string `flag-short:"p" flag-long:"path" flag-description:"path to config"`
+}
+
+parser := flags.NewParser(&cfg, flags.Default)
+_ = parser.SetTagPrefix("flag-")
+```
+
+Or override specific tag names:
+
+```go
+type Cfg struct {
+  Path string `my-short:"p" long:"path"`
+}
+
+parser := flags.NewParser(&cfg, flags.Default)
+tags := flags.NewFlagTags()
+tags.Short = "my-short"
+_ = parser.SetFlagTags(tags)
+```
 
 ## Positional Arguments
 
@@ -259,6 +305,9 @@ type Options struct {
 If command type implements `Execute(args []string) error`, it will be called.
 
 ## Defaults
+
+Prefer `defaults:"..."` for new code.
+Keep `default:"..."` only for legacy compatibility.
 
 Use `default:"..."` to define fallback values:
 
@@ -350,66 +399,22 @@ When global `EnvProvisioning` is enabled, use `auto-env:"false"` to opt out
 for a specific option.
 Boolean tag values accept `true/false`, `yes/no`, `y/n`, `1/0`, and `on/off`.
 
-## Option Sorting
+## INI Config
 
-By default option order is unchanged (declaration order). You can configure
-sorting policy per parser:
+INI support is available via `NewIniParser(...)`:
 
 ```go
 parser := flags.NewParser(&opts, flags.Default)
-parser.SetOptionSort(flags.OptionSortByNameAsc)
+ini := flags.NewIniParser(parser)
+_ = ini.ParseFile("app.ini")
 ```
 
-Supported modes:
+Useful INI tags:
 
-* `flags.OptionSortByDeclaration`
-* `flags.OptionSortByNameAsc`
-* `flags.OptionSortByNameDesc`
-* `flags.OptionSortByType`
+* `ini-name:"..."` to override key name in INI
+* `no-ini:"true"` to exclude a field from INI processing
 
-Use `order:"N"` on option fields for priority within a group block:
 
-* `order > 0` moves option toward top
-* `order < 0` moves option toward bottom
-* `order == 0` uses configured sort mode
-
-For `OptionSortByType`, type rank can be customized:
-
-```go
-_ = parser.SetOptionTypeOrder([]flags.OptionTypeClass{
-  flags.OptionTypeString,
-  flags.OptionTypeBool,
-})
-```
-
-## Tag Customization
-
-If your structs already use tags for other libraries, you can remap flags
-tag names without changing parser constructors.
-
-Use a common prefix for all tags:
-
-```go
-type Cfg struct {
-  Path string `flag-short:"p" flag-long:"path" flag-description:"path to config"`
-}
-
-parser := flags.NewParser(&cfg, flags.Default)
-_ = parser.SetTagPrefix("flag-")
-```
-
-Or override specific tag names:
-
-```go
-type Cfg struct {
-  Path string `my-short:"p" long:"path"`
-}
-
-parser := flags.NewParser(&cfg, flags.Default)
-tags := flags.NewFlagTags()
-tags.Short = "my-short"
-_ = parser.SetFlagTags(tags)
-```
 
 ## Programmatic Configuration
 
@@ -454,20 +459,37 @@ Runtime tuning APIs are intentionally exposed as `Set*` methods:
 see [`Option`](option.go), [`Command`](command.go), [`Group`](group.go),
 and [`Arg`](arg.go) for the current full list.
 
-## INI
+## Option Sorting
 
-INI support is available via `NewIniParser(...)`:
+By default option order is unchanged (declaration order). You can configure
+sorting policy per parser:
 
 ```go
 parser := flags.NewParser(&opts, flags.Default)
-ini := flags.NewIniParser(parser)
-_ = ini.ParseFile("app.ini")
+parser.SetOptionSort(flags.OptionSortByNameAsc)
 ```
 
-Useful INI tags:
+Supported modes:
 
-* `ini-name:"..."` to override key name in INI
-* `no-ini:"true"` to exclude a field from INI processing
+* `flags.OptionSortByDeclaration`
+* `flags.OptionSortByNameAsc`
+* `flags.OptionSortByNameDesc`
+* `flags.OptionSortByType`
+
+Use `order:"N"` on option fields for priority within a group block:
+
+* `order > 0` moves option toward top
+* `order < 0` moves option toward bottom
+* `order == 0` uses configured sort mode
+
+For `OptionSortByType`, type rank can be customized:
+
+```go
+_ = parser.SetOptionTypeOrder([]flags.OptionTypeClass{
+  flags.OptionTypeString,
+  flags.OptionTypeBool,
+})
+```
 
 ## Help
 
@@ -489,25 +511,15 @@ Common help behavior flags:
   section even when a command has no short description (without this flag,
   aliases are shown only for commands with short descriptions).
 * `ShowRepeatableInHelp`: append a `repeatable` marker for slice/map options.
-* `HideEnvInHelp`: hide env placeholders (`$ENV`/`%ENV%`) in built-in help.
 * `SetTerminalTitle`: set terminal title during parsing (uses parser `Name`
   or `parser.TerminalTitle`).
+* `HideEnvInHelp`: hide env placeholders (`$ENV`/`%ENV%`) in built-in help
+  (see also [Hidden and Secret Options](#hidden-and-secret-options)).
 
 Preserve indentation in multi-line descriptions (for lists/code blocks):
 
 ```go
 parser := flags.NewParser(&opts, flags.Default|flags.KeepDescriptionWhitespace)
-```
-
-Colorized help:
-
-* Enable with `ColorHelp`.
-* Built-ins: `DefaultHelpColorScheme()` and `HighContrastHelpColorScheme()`.
-* Custom roles via `SetHelpColorScheme(...)`.
-
-```go
-parser := flags.NewParser(&opts, flags.Default|flags.ColorHelp)
-parser.SetHelpColorScheme(flags.DefaultHelpColorScheme())
 ```
 
 Shell-aware render style for flags/env placeholders in help and docs:
@@ -567,10 +579,6 @@ parser.SetVersionFields(flags.VersionFieldVersion | flags.VersionFieldCommit)
 
 Default metadata source is `runtime/debug.ReadBuildInfo()`.
 For best auto-discovery results, build with `-buildvcs=auto`.
-
-```go
-parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
-```
 
 If both help and version are provided, help has priority:
 `-h/--help` wins over `-V/--version`.
@@ -655,9 +663,55 @@ Templates:
 [`examples/bash-completion`](examples/bash-completion),
 [`examples/zsh-completion`](examples/zsh-completion).
 
-## Templates
+## Color Schemes
 
-Use `WriteDoc` to render parser documentation:
+Colorized output applies to built-in `WriteHelp` rendering.
+
+* Enable with parser flag `ColorHelp`.
+* Built-in schemes: `DefaultHelpColorScheme()` and
+  `HighContrastHelpColorScheme()`.
+* Use `SetHelpColorScheme(...)` for custom role colors.
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.ColorHelp)
+parser.SetHelpColorScheme(flags.DefaultHelpColorScheme())
+// For stronger contrast:
+// parser.SetHelpColorScheme(flags.HighContrastHelpColorScheme())
+```
+
+For non-colored logs/CI output, do not enable `ColorHelp`.
+
+## Hidden and Secret Options
+
+Use hidden and masking controls when CLI internals or sensitive defaults
+must stay out of public help/docs.
+
+* `hidden:"true"`: option/group/command stays parseable, but is removed from
+  built-in help, completion, and generated docs.
+* `default-mask:"***"`: replaces displayed default value in help/docs.
+* `HideEnvInHelp`: suppresses rendered env placeholders (`$ENV` / `%ENV%`)
+  in built-in help.
+* `WithIncludeHidden(true)`: include hidden entities in `WriteDoc`.
+* `WithMarkHidden(true)`: explicitly mark hidden entities in rendered docs.
+
+```go
+type Options struct {
+  Token string `long:"token" env:"APP_TOKEN" default-mask:"***" hidden:"true"`
+}
+
+parser := flags.NewParser(&opts, flags.Default|flags.HideEnvInHelp)
+_ = parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatMarkdown,
+  flags.WithBuiltinTemplate(flags.DocTemplateMarkdownList),
+  flags.WithIncludeHidden(true),
+  flags.WithMarkHidden(true),
+)
+```
+
+## Documentation Rendering
+
+Use `WriteDoc` to generate parser documentation in markdown/man/html formats:
 
 ```go
 if err := parser.WriteDoc(os.Stdout, flags.DocFormatMarkdown); err != nil {
@@ -689,24 +743,6 @@ _ = parser.WriteDoc(
 )
 ```
 
-Use custom templates:
-
-```go
-tpl := "{{ .Doc.Name }} - {{ .Doc.ShortDescription }}\n"
-_ = parser.WriteDoc(
-  os.Stdout,
-  flags.DocFormatMarkdown,
-  flags.WithTemplateString(tpl),
-)
-```
-
-The same `WithTemplateString`/`WithTemplateBytes` flow also works with
-`flags.DocFormatMan` and `flags.DocFormatHTML`.
-
-```go
-_ = parser.WriteDoc(os.Stdout, flags.DocFormatMan)
-```
-
 `WriteManPage` is kept for backward compatibility and internally uses the
 same doc templating pipeline (`man/default`).
 
@@ -731,7 +767,25 @@ Rendered template snapshots used by tests (also useful as docs/examples):
 [man-default.posix.1](examples/doc-rendered/man-default.posix.1).
 See `examples/doc-rendered` for additional variants.
 
-## Template Helpers
+## Templating
+
+Use custom templates when built-ins are not enough:
+
+```go
+tpl := "{{ .Doc.Name }} - {{ .Doc.ShortDescription }}\n"
+_ = parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatMarkdown,
+  flags.WithTemplateString(tpl),
+)
+```
+
+`WithTemplateString`/`WithTemplateBytes` also work with
+`flags.DocFormatMan` and `flags.DocFormatHTML`.
+
+```go
+_ = parser.WriteDoc(os.Stdout, flags.DocFormatMan)
+```
 
 Built-in helper functions available in templates:
 
