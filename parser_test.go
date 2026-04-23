@@ -1762,7 +1762,7 @@ func TestPrintHelpOnInputErrorsSkipsInternalErrors(t *testing.T) {
 	}
 }
 
-func TestPrintErrorsColorWarning(t *testing.T) {
+func TestPrintErrorsColorWarningDisabledOnNonTTY(t *testing.T) {
 	var opts struct {
 		Required bool `long:"required" required:"yes"`
 	}
@@ -1772,15 +1772,15 @@ func TestPrintErrorsColorWarning(t *testing.T) {
 		_, _ = parser.ParseArgs([]string{})
 	})
 
-	if !strings.Contains(stderr, "\x1b[1;93m") {
-		t.Fatalf("expected warning color prefix in stderr, got %q", stderr)
+	if strings.Contains(stderr, "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences on non-tty stderr, got %q", stderr)
 	}
 	if !strings.Contains(stderr, "required flag") {
 		t.Fatalf("expected required error text in stderr, got %q", stderr)
 	}
 }
 
-func TestPrintErrorsColorCritical(t *testing.T) {
+func TestPrintErrorsColorCriticalDisabledOnNonTTY(t *testing.T) {
 	var opts struct {
 		Value bool `long:"value"`
 	}
@@ -1790,8 +1790,8 @@ func TestPrintErrorsColorCritical(t *testing.T) {
 		_, _ = parser.ParseArgs([]string{"--unknown"})
 	})
 
-	if !strings.Contains(stderr, "\x1b[1;91m") {
-		t.Fatalf("expected critical color prefix in stderr, got %q", stderr)
+	if strings.Contains(stderr, "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences on non-tty stderr, got %q", stderr)
 	}
 	if !strings.Contains(stderr, "unknown flag") {
 		t.Fatalf("expected unknown flag text in stderr, got %q", stderr)
@@ -1813,7 +1813,7 @@ func TestPrintErrorsColorSkipsHelpAndVersion(t *testing.T) {
 	}
 }
 
-func TestPrintErrorsHighContrastScheme(t *testing.T) {
+func TestPrintErrorsHighContrastSchemeDisabledOnNonTTY(t *testing.T) {
 	var opts struct {
 		Required bool `long:"required" required:"yes"`
 	}
@@ -1825,8 +1825,27 @@ func TestPrintErrorsHighContrastScheme(t *testing.T) {
 		_, _ = parser.ParseArgs([]string{})
 	})
 
-	if !strings.Contains(stderr, "\x1b[1;30;103m") {
-		t.Fatalf("expected high-contrast warning color prefix in stderr, got %q", stderr)
+	if strings.Contains(stderr, "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences on non-tty stderr, got %q", stderr)
+	}
+}
+
+func TestPrintErrorsColorDisabledByNO_COLOR(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	_ = os.Setenv("NO_COLOR", "1")
+
+	var opts struct {
+		Value bool `long:"value"`
+	}
+
+	parser := NewParser(&opts, Default|ColorErrors)
+	_, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--unknown"})
+	})
+
+	if strings.Contains(stderr, "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences when NO_COLOR is set, got %q", stderr)
 	}
 }
 

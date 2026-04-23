@@ -93,8 +93,12 @@ type Parser struct {
 
 	// Active color scheme for built-in help rendering.
 	helpColorScheme HelpColorScheme
+
 	// Active color scheme for parser errors.
 	errorColorScheme ErrorColorScheme
+
+	// Runtime gate for help color output, set per writer in WriteHelp.
+	helpColorEnabled bool
 
 	// Active option sorting mode for grouped option presentation.
 	optionSort OptionSortMode
@@ -373,6 +377,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		flagTags:              NewFlagTags(),
 		helpColorScheme:       DefaultHelpColorScheme(),
 		errorColorScheme:      DefaultErrorColorScheme(),
+		helpColorEnabled:      true,
 		optionSort:            OptionSortByDeclaration,
 		optionTypeRank:        defaultOptionTypeRank(),
 		TagListDelimiter:      ';',
@@ -1457,12 +1462,18 @@ func (p *Parser) markVersionRequested() error {
 func (p *Parser) printError(err error) error {
 	if err != nil && (p.Options&PrintErrors) != None {
 		writer := p.errorWriter(err)
+		flagsErr, ok := err.(*Error)
+
+		if ok && flagsErr.Type == ErrHelp {
+			p.WriteHelp(writer)
+			return err
+		}
 
 		if p.shouldPrintHelpOnError(err) {
 			p.WriteHelp(writer)
 		}
 
-		_, _ = fmt.Fprintln(writer, p.colorizeError(err, err.Error()))
+		_, _ = fmt.Fprintln(writer, p.colorizeError(err, err.Error(), writer))
 	}
 
 	return err

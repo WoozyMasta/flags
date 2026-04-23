@@ -780,6 +780,8 @@ Colorized output can be enabled for built-in help and parser errors.
 * Use `SetErrorColorScheme(...)` for custom parser error colors.
   Warnings (`ErrRequired`, `ErrCommandRequired`) and critical errors use
   separate roles.
+* Colors are auto-disabled when output target is not a TTY
+  (for example pipes/log files) or when `NO_COLOR` is set.
 
 ```go
 parser := flags.NewParser(&opts, flags.Default|flags.ColorHelp|flags.ColorErrors)

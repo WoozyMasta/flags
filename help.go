@@ -785,6 +785,12 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		return
 	}
 
+	prevHelpColorEnabled := p.helpColorEnabled
+	p.helpColorEnabled = p.shouldUseColors(writer)
+	defer func() {
+		p.helpColorEnabled = prevHelpColorEnabled
+	}()
+
 	// Keep WriteHelp behavior consistent with ParseArgs:
 	// when builtin help/version flags are enabled, ensure
 	// corresponding options are present in help output.
@@ -794,7 +800,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 	wr := bufio.NewWriter(writer)
 	basePrefix := ""
-	if (p.Options & ColorHelp) != None {
+	if (p.Options&ColorHelp) != None && p.helpColorEnabled {
 		basePrefix = helpStylePrefix(p.helpColorScheme.BaseText)
 		if basePrefix != "" {
 			_, _ = wr.WriteString(basePrefix)

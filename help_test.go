@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 	"strconv"
@@ -333,6 +334,61 @@ func TestHelpColorDisabled(t *testing.T) {
 
 	if strings.Contains(out.String(), "\x1b[") {
 		t.Fatalf("did not expect ANSI color sequences when ColorHelp is disabled:\n%s", out.String())
+	}
+}
+
+func TestHelpColorDisabledOnNonTTYWriter(t *testing.T) {
+	var opts struct {
+		Name string `long:"name" description:"Name value"`
+	}
+
+	p := NewNamedParser("ColorHelp", ColorHelp)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe error: %v", err)
+	}
+	defer r.Close()
+	defer w.Close()
+
+	done := make(chan string, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		done <- buf.String()
+	}()
+
+	p.WriteHelp(w)
+	_ = w.Close()
+	got := <-done
+
+	if strings.Contains(got, "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences on non-tty writer:\n%s", got)
+	}
+}
+
+func TestHelpColorDisabledByNO_COLOR(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	_ = os.Setenv("NO_COLOR", "1")
+
+	var opts struct {
+		Name string `long:"name" description:"Name value"`
+	}
+
+	p := NewNamedParser("ColorHelp", ColorHelp)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	if strings.Contains(out.String(), "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences when NO_COLOR is set:\n%s", out.String())
 	}
 }
 
