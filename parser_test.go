@@ -1698,6 +1698,74 @@ func TestPrintErrorsToStdout(t *testing.T) {
 	}
 }
 
+func TestPrintErrorsColorWarning(t *testing.T) {
+	var opts struct {
+		Required bool `long:"required" required:"yes"`
+	}
+
+	parser := NewParser(&opts, Default|ColorErrors)
+	_, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{})
+	})
+
+	if !strings.Contains(stderr, "\x1b[1;93m") {
+		t.Fatalf("expected warning color prefix in stderr, got %q", stderr)
+	}
+	if !strings.Contains(stderr, "required flag") {
+		t.Fatalf("expected required error text in stderr, got %q", stderr)
+	}
+}
+
+func TestPrintErrorsColorCritical(t *testing.T) {
+	var opts struct {
+		Value bool `long:"value"`
+	}
+
+	parser := NewParser(&opts, Default|ColorErrors)
+	_, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--unknown"})
+	})
+
+	if !strings.Contains(stderr, "\x1b[1;91m") {
+		t.Fatalf("expected critical color prefix in stderr, got %q", stderr)
+	}
+	if !strings.Contains(stderr, "unknown flag") {
+		t.Fatalf("expected unknown flag text in stderr, got %q", stderr)
+	}
+}
+
+func TestPrintErrorsColorSkipsHelpAndVersion(t *testing.T) {
+	parser := NewNamedParser("color-help-version", HelpFlag|VersionFlag|PrintErrors|ColorErrors)
+
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--help"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for help output, got %q", stderr)
+	}
+	if strings.Contains(stdout, "\x1b[") {
+		t.Fatalf("did not expect ANSI color sequences in help output from ColorErrors, got %q", stdout)
+	}
+}
+
+func TestPrintErrorsHighContrastScheme(t *testing.T) {
+	var opts struct {
+		Required bool `long:"required" required:"yes"`
+	}
+
+	parser := NewParser(&opts, Default|ColorErrors)
+	parser.SetErrorColorScheme(HighContrastErrorColorScheme())
+
+	_, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{})
+	})
+
+	if !strings.Contains(stderr, "\x1b[1;30;103m") {
+		t.Fatalf("expected high-contrast warning color prefix in stderr, got %q", stderr)
+	}
+}
+
 func TestPrintErrorsInternalParserErrorDestination(t *testing.T) {
 	type invalidOptions struct {
 		One bool `long:"dup"`

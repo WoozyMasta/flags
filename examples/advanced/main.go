@@ -95,6 +95,7 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 		"advanced-cli",
 		flags.Default|
 			flags.VersionFlag|
+			flags.ColorErrors|
 			flags.EnvProvisioning|
 			flags.KeepDescriptionWhitespace|
 			flags.DetectShellFlagStyle|

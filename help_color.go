@@ -82,6 +82,12 @@ type HelpColorScheme struct {
 	GroupHeader             HelpTextStyle
 }
 
+// ErrorColorScheme configures parser error color roles.
+type ErrorColorScheme struct {
+	Warning  HelpTextStyle
+	Critical HelpTextStyle
+}
+
 // DefaultHelpColorScheme returns the default built-in color scheme.
 func DefaultHelpColorScheme() HelpColorScheme {
 	return HelpColorScheme{
@@ -129,6 +135,22 @@ func HighContrastHelpColorScheme() HelpColorScheme {
 		ArgumentName:            HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
 		ArgumentDesc:            HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		GroupHeader:             HelpTextStyle{UseFG: true, FG: ColorBrightWhite, Bold: true, Underline: true},
+	}
+}
+
+// DefaultErrorColorScheme returns default parser error color roles.
+func DefaultErrorColorScheme() ErrorColorScheme {
+	return ErrorColorScheme{
+		Warning:  HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
+		Critical: HelpTextStyle{UseFG: true, FG: ColorBrightRed, Bold: true},
+	}
+}
+
+// HighContrastErrorColorScheme returns a high-contrast parser error scheme.
+func HighContrastErrorColorScheme() ErrorColorScheme {
+	return ErrorColorScheme{
+		Warning:  HelpTextStyle{UseFG: true, FG: ColorBlack, UseBG: true, BG: ColorBrightYellow, Bold: true},
+		Critical: HelpTextStyle{UseFG: true, FG: ColorWhite, UseBG: true, BG: ColorRed, Bold: true},
 	}
 }
 
@@ -213,4 +235,25 @@ func (p *Parser) colorizeHelp(text string, role HelpTextStyle) string {
 	}
 
 	return styled
+}
+
+func (p *Parser) colorizeError(err error, text string) string {
+	if text == "" || (p.Options&ColorErrors) == None {
+		return text
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok {
+		return applyHelpTextStyle(text, p.errorColorScheme.Critical)
+	}
+
+	if flagsErr.Type == ErrHelp || flagsErr.Type == ErrVersion {
+		return text
+	}
+
+	if flagsErr.Type.IsWarning() {
+		return applyHelpTextStyle(text, p.errorColorScheme.Warning)
+	}
+
+	return applyHelpTextStyle(text, p.errorColorScheme.Critical)
 }

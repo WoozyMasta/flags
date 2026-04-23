@@ -732,21 +732,29 @@ Templates:
 
 ## Color Schemes
 
-Colorized output applies to built-in `WriteHelp` rendering.
+Colorized output can be enabled for built-in help and parser errors.
 
 * Enable with parser flag `ColorHelp`.
+* Enable parser error coloring with `ColorErrors`.
 * Built-in schemes: `DefaultHelpColorScheme()` and
   `HighContrastHelpColorScheme()`.
+* Built-in error schemes: `DefaultErrorColorScheme()` and
+  `HighContrastErrorColorScheme()`.
 * Use `SetHelpColorScheme(...)` for custom role colors.
+* Use `SetErrorColorScheme(...)` for custom parser error colors.
+  Warnings (`ErrRequired`, `ErrCommandRequired`) and critical errors use
+  separate roles.
 
 ```go
-parser := flags.NewParser(&opts, flags.Default|flags.ColorHelp)
+parser := flags.NewParser(&opts, flags.Default|flags.ColorHelp|flags.ColorErrors)
 parser.SetHelpColorScheme(flags.DefaultHelpColorScheme())
+parser.SetErrorColorScheme(flags.DefaultErrorColorScheme())
 // For stronger contrast:
 // parser.SetHelpColorScheme(flags.HighContrastHelpColorScheme())
+// parser.SetErrorColorScheme(flags.HighContrastErrorColorScheme())
 ```
 
-For non-colored logs/CI output, do not enable `ColorHelp`.
+For non-colored logs/CI output, do not enable `ColorHelp` / `ColorErrors`.
 
 ## Hidden and Secret Options
 

@@ -94,6 +94,8 @@ type Parser struct {
 
 	// Active color scheme for built-in help rendering.
 	helpColorScheme HelpColorScheme
+	// Active color scheme for parser errors.
+	errorColorScheme ErrorColorScheme
 
 	// Active option sorting mode for grouped option presentation.
 	optionSort OptionSortMode
@@ -195,7 +197,7 @@ const (
 	// is set.
 	HelpFlag = 1 << iota
 
-	// VersionFlag adds built-in -V/--version option to the Help Options group.
+	// VersionFlag adds built-in -v/--version option to the Help Options group.
 	// When specified, parser returns ErrVersion and the version message.
 	VersionFlag
 
@@ -269,6 +271,9 @@ const (
 
 	// ColorHelp enables ANSI-colored built-in help output.
 	ColorHelp
+
+	// ColorErrors enables ANSI-colored parser errors according to error severity.
+	ColorErrors
 
 	// SetTerminalTitle updates terminal window title during ParseArgs using
 	// TerminalTitle or parser Name.
@@ -364,6 +369,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		lookupGeneration:      1,
 		flagTags:              NewFlagTags(),
 		helpColorScheme:       DefaultHelpColorScheme(),
+		errorColorScheme:      DefaultErrorColorScheme(),
 		optionSort:            OptionSortByDeclaration,
 		optionTypeRank:        defaultOptionTypeRank(),
 		TagListDelimiter:      ';',
@@ -406,6 +412,11 @@ func (p *Parser) SetEnvPrefix(prefix string) {
 // SetHelpColorScheme configures color roles used by built-in help rendering.
 func (p *Parser) SetHelpColorScheme(scheme HelpColorScheme) {
 	p.helpColorScheme = scheme
+}
+
+// SetErrorColorScheme configures color roles used by parser error rendering.
+func (p *Parser) SetErrorColorScheme(scheme ErrorColorScheme) {
+	p.errorColorScheme = scheme
 }
 
 // SetHelpFlagRenderStyle configures how flag tokens are rendered in built-in
@@ -1442,7 +1453,7 @@ func (p *Parser) markVersionRequested() error {
 
 func (p *Parser) printError(err error) error {
 	if err != nil && (p.Options&PrintErrors) != None {
-		_, _ = fmt.Fprintln(p.errorWriter(err), err)
+		_, _ = fmt.Fprintln(p.errorWriter(err), p.colorizeError(err, err.Error()))
 	}
 
 	return err

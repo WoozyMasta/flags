@@ -135,6 +135,16 @@ func (e ErrorType) Error() string {
 	return e.String()
 }
 
+// IsWarning reports whether the error type should be treated as warning-level.
+func (e ErrorType) IsWarning() bool {
+	switch e {
+	case ErrRequired, ErrCommandRequired:
+		return true
+	default:
+		return false
+	}
+}
+
 // Error represents a parser error. The error returned from Parse is of this
 // type. The error contains both a Type and Message.
 type Error struct {

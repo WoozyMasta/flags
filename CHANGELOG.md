@@ -74,6 +74,10 @@ and this project adheres to [Semantic Versioning][].
 * Parser option `ColorHelp` and configurable help color schemes via
   `SetHelpColorScheme(...)` (`DefaultHelpColorScheme`,
   `HighContrastHelpColorScheme`).
+* Parser option `ColorErrors` and configurable error color roles via
+  `SetErrorColorScheme(...)`
+  (`DefaultErrorColorScheme`, `HighContrastErrorColorScheme`)
+  with separate warning/critical styling for parser errors.
 * Parser option `SetTerminalTitle` to set terminal window title from parser
   `Name` (or `TerminalTitle` override) during parsing.
 * Runtime render-style controls for help/doc output:
