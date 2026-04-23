@@ -261,6 +261,8 @@ Do not combine singular and plural forms on one field:
 If your structs already use tags for other libraries, you can remap flags
 tag names without changing parser constructors.
 
+### Prefix Remapping
+
 Use a common prefix for all tags:
 
 ```go
@@ -271,6 +273,8 @@ type Cfg struct {
 parser := flags.NewParser(&cfg, flags.Default)
 _ = parser.SetTagPrefix("flag-")
 ```
+
+### Explicit Tag Mapping
 
 Or override specific tag names:
 
@@ -339,7 +343,9 @@ If command type implements `Execute(args []string) error`, it will be called.
 Prefer `defaults:"..."` for new code.
 Keep `default:"..."` only for legacy compatibility.
 
-Use `default:"..."` to define fallback values:
+### Basic Defaults
+
+Use `defaults:"..."` to define fallback values:
 
 ```go
 type Options struct {
@@ -354,6 +360,8 @@ For map values, key/value delimiter is `:` by default (can be changed with
 If you need to keep pre-populated values and apply defaults only to empty
 fields, enable parser option `flags.DefaultsIfEmpty`.
 This is useful for non-empty/non-nil prefilled structs in integration code.
+
+### Config-First Flows
 
 For config-first flows (for example JSON/YAML -> flags), use:
 
@@ -399,6 +407,8 @@ type Options struct {
 
 With defaults, that resolves to `DB_HOST` and `DB_PORT`.
 
+### Global Prefix
+
 Use `SetEnvPrefix(...)` for a global application prefix:
 
 ```go
@@ -408,6 +418,8 @@ parser.SetEnvPrefix("MY_APP")
 
 Then `PORT` resolves to `MY_APP_PORT`, and grouped values resolve like
 `MY_APP_DB_HOST`.
+
+### Auto-Derived Env Keys
 
 You can also auto-derive env names from `long` tags when `env` is not set:
 
@@ -446,13 +458,15 @@ ini := flags.NewIniParser(parser)
 ini.Write(os.Stdout, flags.IniIncludeComments|flags.IniIncludeDefaults|flags.IniCommentDefaults)
 ```
 
+### Write Example INI
+
 Render a starter/example INI with structured comments:
 
 ```go
 ini := flags.NewIniParser(parser)
 ini.WriteExample(os.Stdout)
 // Optional comment wrapping width:
-// ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{CommentWidth: 88})
+ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{CommentWidth: 88})
 ```
 
 `WriteExample` behavior:
@@ -465,6 +479,8 @@ ini.WriteExample(os.Stdout)
 Quick demo:
 [`examples/advanced/main.go`](examples/advanced/main.go) supports
 `--demo-ini` to render example INI from current CLI values.
+
+### INI Tags
 
 Useful INI tags:
 
@@ -510,6 +526,8 @@ func (o *Options) ConfigureFlags(p *flags.Parser) error {
 Use `parser.Validate()` to run configurators and duplicate-name checks manually.
 Use `parser.Rebuild()` after changing tag mapping settings programmatically.
 
+### Runtime Setters
+
 Runtime tuning APIs are intentionally exposed as `Set*` methods:
 see [`Option`](option.go), [`Command`](command.go), [`Group`](group.go),
 and [`Arg`](arg.go) for the current full list.
@@ -537,6 +555,8 @@ Use `order:"N"` on option fields for priority within a group block:
 * `order < 0` moves option toward bottom
 * `order == 0` uses configured sort mode
 
+### Type Rank Customization
+
 For `OptionSortByType`, type rank can be customized:
 
 ```go
@@ -557,6 +577,8 @@ parser := flags.NewParser(&opts, flags.Default)
 parser.WriteHelp(os.Stdout)
 ```
 
+### Help Behavior Flags
+
 Common help behavior flags:
 
 * `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
@@ -573,11 +595,15 @@ Common help behavior flags:
 * `HideEnvInHelp`: hide env placeholders (`$ENV`/`%ENV%`) in built-in help
   (see also [Hidden and Secret Options](#hidden-and-secret-options)).
 
+### Description Formatting
+
 Preserve indentation in multi-line descriptions (for lists/code blocks):
 
 ```go
 parser := flags.NewParser(&opts, flags.Default|flags.KeepDescriptionWhitespace)
 ```
+
+### Render Style Detection
 
 Shell-aware render style for flags/env placeholders in help and docs:
 
@@ -624,6 +650,9 @@ parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
 
 By default, built-in `-v/--version` uses a compact field set:
 `flags.VersionFieldsCore`.
+
+### Version Fields
+
 You can switch to all fields or a custom mask:
 
 ```go
@@ -632,16 +661,19 @@ parser.SetVersionFields(flags.VersionFieldsAll)
 parser.SetVersionFields(flags.VersionFieldVersion | flags.VersionFieldCommit)
 ```
 
-`VersionFieldTarget` prints build target as `GOOS/GOARCH`.
-
 Default metadata source is `runtime/debug.ReadBuildInfo()`.
 For best auto-discovery results, build with `-buildvcs=auto`.
 
 If both help and version are provided, help has priority:
 `-h/--help` wins over `-v/--version`.
 
+### Build-Time Overrides
+
 For reproducible release metadata, set explicit values via setters.
 Typical pattern:
+
+Use this pattern when you want deterministic version output
+in release builds instead of relying only on auto-detected metadata.
 
 ```go
 package buildvars
@@ -687,6 +719,8 @@ go build -buildvcs=auto \
   -X ${MODULE}/internal/buildvars.URL=${URL}" \
   ./...
 ```
+
+### Change Option
 
 You can retune built-in version option names and description:
 
@@ -758,6 +792,11 @@ parser.SetErrorColorScheme(flags.DefaultErrorColorScheme())
 
 For non-colored logs/CI output, do not enable `ColorHelp` / `ColorErrors`.
 
+### Custom Schemes
+
+Use `SetHelpColorScheme(...)` / `SetErrorColorScheme(...)` to apply your own
+styles for role-based help and parser error rendering.
+
 ## Hidden and Secret Options
 
 Use hidden and masking controls when CLI internals or sensitive defaults
@@ -800,6 +839,8 @@ if err := parser.WriteDoc(os.Stdout, flags.DocFormatMarkdown); err != nil {
 }
 ```
 
+### Built-In Templates
+
 Current built-in templates:
 
 * `markdown/list`: readable default markdown with option metadata.
@@ -812,6 +853,8 @@ Current built-in templates:
 
 Use exported constants (`flags.DocTemplate*`) instead of hardcoded strings
 when selecting built-ins programmatically.
+
+### Hidden Entities in Output
 
 Include hidden options/groups/commands when needed:
 
@@ -829,7 +872,7 @@ same doc templating pipeline (`man/default`).
 
 `WriteHelp` stays unchanged for the core fast path.
 
-Inspect/export built-ins:
+### Inspect Templates
 
 ```go
 for _, name := range flags.ListBuiltinTemplates() {
@@ -842,7 +885,10 @@ _ = flags.WriteBuiltinTemplate(os.Stdout, flags.DocTemplateMarkdownList)
 Complete example with groups, commands, env and doc rendering modes:
 [`examples/advanced/main.go`](examples/advanced/main.go).
 
+### Rendered Examples
+
 Rendered template snapshots used by tests (also useful as docs/examples):
+
 [markdown-list.unix.md](examples/doc-rendered/markdown-list.unix.md),
 [html-default.unix.html](examples/doc-rendered/html-default.unix.html),
 [man-default.posix.1](examples/doc-rendered/man-default.posix.1).
@@ -867,6 +913,8 @@ _ = parser.WriteDoc(
 ```go
 _ = parser.WriteDoc(os.Stdout, flags.DocFormatMan)
 ```
+
+### Template Helpers
 
 Built-in helper functions available in templates:
 
