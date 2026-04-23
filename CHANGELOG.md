@@ -87,6 +87,13 @@ and this project adheres to [Semantic Versioning][].
   with explicit `Parser.Validate()` and `Parser.Rebuild()` APIs.
 * Baseline runtime option setter API for metadata and low-level behavior
   updates (including base/unquote/map delimiter/INI/env derivation controls).
+* Immediate parse mode via `immediate:"true"` tag
+  and `Option.SetImmediate(...)` / `Group.SetImmediate(...)`:
+  matching options bypass required validation and command execution while still
+  allowing built-in immediate flows (help/version) and custom demo/render flags.
+* INI example rendering API via `IniParser.WriteExample(...)` and
+  `IniParser.WriteExampleWithOptions(...)` with wrapped metadata comments,
+  `required`-aware active keys, and optional comment-width control.
 
 ### Changed
 

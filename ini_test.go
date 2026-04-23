@@ -1201,3 +1201,71 @@ func TestIniOverwriteOptions(t *testing.T) {
 
 	}
 }
+
+func TestIniWriteExampleIncludesMetadataAndCommentPolicy(t *testing.T) {
+	var opts struct {
+		Required string         `long:"required" required:"true" description:"Primary required value"`
+		Mode     string         `long:"mode" description:"Execution mode" choices:"fast;safe"`
+		Labels   map[string]int `long:"label" description:"Label map" key-value-delimiter:"="`
+		Names    []string       `long:"name" description:"Additional names"`
+		Optional string         `long:"optional" description:"Optional value" default:"opt-default"`
+	}
+
+	p := NewParser(&opts, Default)
+	if _, err := p.ParseArgs([]string{"--required=req", "--mode=safe", "--label", "a=2"}); err != nil {
+		t.Fatalf("Unexpected parse error: %v", err)
+	}
+
+	inip := NewIniParser(p)
+	var b bytes.Buffer
+	inip.WriteExample(&b)
+	got := b.String()
+
+	if !strings.Contains(got, "; Primary required value (required)") {
+		t.Fatalf("expected required marker in comment, got:\n%s", got)
+	}
+
+	if strings.Contains(got, "; Required =") {
+		t.Fatalf("required option must never be commented, got:\n%s", got)
+	}
+
+	if !strings.Contains(got, "Required = req") {
+		t.Fatalf("expected required active value, got:\n%s", got)
+	}
+
+	if !strings.Contains(got, "; Choices: fast, safe.") {
+		t.Fatalf("expected choices comment line, got:\n%s", got)
+	}
+
+	if !strings.Contains(got, "; Details: repeatable; key-value-delimiter: \"=\".") {
+		t.Fatalf("expected map details comment line, got:\n%s", got)
+	}
+
+	if !strings.Contains(got, "Labels = a:2") {
+		t.Fatalf("expected rendered map value, got:\n%s", got)
+	}
+
+	if !strings.Contains(got, "; Optional = opt-default") {
+		t.Fatalf("expected default optional value to be commented, got:\n%s", got)
+	}
+}
+
+func TestIniWriteExampleWrapsLongComments(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"This description is intentionally very long to verify wrapped comment rendering for ini examples."`
+	}
+
+	p := NewParser(&opts, Default)
+	if _, err := p.ParseArgs([]string{}); err != nil {
+		t.Fatalf("Unexpected parse error: %v", err)
+	}
+
+	inip := NewIniParser(p)
+	var b bytes.Buffer
+	inip.WriteExampleWithOptions(&b, IniExampleOptions{CommentWidth: 32})
+	got := b.String()
+
+	if !strings.Contains(got, "; This description is") || !strings.Contains(got, "; intentionally very long to") {
+		t.Fatalf("expected wrapped multi-line comment, got:\n%s", got)
+	}
+}

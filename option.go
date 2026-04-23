@@ -115,6 +115,9 @@ type Option struct {
 	// If true, the option is not displayed in the help or man page
 	Hidden bool
 
+	// If true, this option participates in immediate parse mode.
+	Immediate bool
+
 	// Determines if the option will be always quoted in the INI output
 	iniQuote bool
 
@@ -179,6 +182,36 @@ func (option *Option) SetRequired(required bool) {
 // SetHidden controls whether option is shown in help/completion/docs.
 func (option *Option) SetHidden(hidden bool) {
 	option.Hidden = hidden
+}
+
+// SetImmediate enables or disables immediate parse mode for the option.
+func (option *Option) SetImmediate(immediate bool) {
+	option.Immediate = immediate
+}
+
+// IsImmediate reports whether this option is immediate directly or via parent groups.
+func (option *Option) IsImmediate() bool {
+	if option.Immediate {
+		return true
+	}
+
+	g := option.group
+	for g != nil {
+		if g.Immediate {
+			return true
+		}
+
+		switch parent := g.parent.(type) {
+		case *Command:
+			g = parent.Group
+		case *Group:
+			g = parent
+		default:
+			g = nil
+		}
+	}
+
+	return false
 }
 
 // SetLongName updates canonical long option name.

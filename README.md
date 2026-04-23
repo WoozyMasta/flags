@@ -185,9 +185,10 @@ All struct tags are configurable:
   `short-aliases`, `long-aliases`) for new code.
 * Singular legacy tags are still supported for compatibility, but do not mix
   singular and plural variants on the same field.
-* Boolean tags (`required`, `optional`, `hidden`, `no-flag`, `no-ini`,
-  `subcommands-optional`, `pass-after-non-option`, `unquote`, `auto-env`)
-  accept: `true/false`, `yes/no`, `y/n`, `1/0`, `on/off`.
+* Boolean tags (`required`, `optional`, `hidden`, `immediate`,
+  `no-flag`, `no-ini`, `subcommands-optional`, `pass-after-non-option`,
+  `unquote`, `auto-env`) accept:
+  `true/false`, `yes/no`, `y/n`, `1/0`, `on/off`.
 
 ### Option tags
 
@@ -211,6 +212,8 @@ All struct tags are configurable:
 * `key-value-delimiter`: key/value separator for map values (default `:`).
 * `no-flag`: disables CLI parsing for this field, keeps it in struct only.
 * `hidden`: keeps option parseable, but removes it from help/completion/docs.
+* `immediate`: marks option as preemptive flow trigger (skips required checks
+  and command execution when present).
 * `no-ini`: excludes option from INI read/write flow.
 * `ini-name`: custom key name for INI read/write instead of flag name.
 * `unquote`: controls string unquoting for quoted CLI values.
@@ -225,6 +228,7 @@ All struct tags are configurable:
 * `namespace`: prefixes child long flags (for example `db.host`).
 * `env-namespace`: prefixes child env keys before global env prefix.
 * `hidden`: hides the group from help/completion/docs, keeps parsing active.
+* `immediate`: marks all options in the group subtree as immediate.
 
 ### Command tags
 
@@ -235,6 +239,7 @@ All struct tags are configurable:
 * `subcommands-optional`: command can run without child subcommand selection.
 * `pass-after-non-option`: enables command-local POSIX pass-through mode.
 * `hidden`: hides command from help/completion/docs, keeps it executable.
+* `immediate`: marks command scope as immediate for required/execution bypass.
 
 ### Positional-argument tags
 
@@ -434,12 +439,37 @@ ini := flags.NewIniParser(parser)
 _ = ini.ParseFile("app.ini")
 ```
 
+Render current parser values back to INI:
+
+```go
+ini := flags.NewIniParser(parser)
+ini.Write(os.Stdout, flags.IniIncludeComments|flags.IniIncludeDefaults|flags.IniCommentDefaults)
+```
+
+Render a starter/example INI with structured comments:
+
+```go
+ini := flags.NewIniParser(parser)
+ini.WriteExample(os.Stdout)
+// Optional comment wrapping width:
+// ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{CommentWidth: 88})
+```
+
+`WriteExample` behavior:
+
+* `required` options are always rendered as active keys.
+* Non-required options are commented when they look unset/default.
+* Comment block includes description, `choices` (if set), and details
+  like `repeatable` / `key-value-delimiter` where applicable.
+
+Quick demo:
+[`examples/advanced/main.go`](examples/advanced/main.go) supports
+`--demo-ini` to render example INI from current CLI values.
+
 Useful INI tags:
 
 * `ini-name:"..."` to override key name in INI
 * `no-ini:"true"` to exclude a field from INI processing
-
-
 
 ## Programmatic Configuration
 

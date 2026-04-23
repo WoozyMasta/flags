@@ -106,8 +106,8 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 	if style == RenderStylePOSIX {
 		if includeVersion {
 			var help struct {
-				ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
-				ShowVersion func() error `short:"V" long:"version" description:"Show version information" auto-env:"false"`
+				ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
+				ShowVersion func() error `short:"V" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
 			}
 
 			help.ShowHelp = showHelp
@@ -122,7 +122,7 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 		}
 
 		var help struct {
-			ShowHelp func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
+			ShowHelp func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
 		}
 
 		help.ShowHelp = showHelp
@@ -139,9 +139,9 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 	// that available as well as the POSIX style h and help.
 	if includeVersion {
 		var help struct {
-			ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false"`
-			ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
-			ShowVersion     func() error `short:"V" long:"version" description:"Show version information" auto-env:"false"`
+			ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false" immediate:"true"`
+			ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
+			ShowVersion     func() error `short:"V" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
 		}
 
 		help.ShowHelpWindows = showHelp
@@ -158,8 +158,8 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 	}
 
 	var help struct {
-		ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false"`
-		ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false"`
+		ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false" immediate:"true"`
+		ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
 	}
 
 	help.ShowHelpWindows = showHelp

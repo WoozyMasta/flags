@@ -364,6 +364,10 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			if err != nil {
 				return true, err
 			}
+			immediate, _, err := parseStructBoolTag(mtag, FlagTagImmediate, sfield.Name)
+			if err != nil {
+				return true, err
+			}
 
 			subc, err := c.AddCommand(subcommand, shortDescription, longDescription, ptrval.Interface())
 
@@ -372,6 +376,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			}
 
 			subc.Hidden = hidden
+			subc.Immediate = immediate
 
 			if subcommandsOptional {
 				subc.SubcommandsOptional = true

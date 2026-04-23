@@ -16,6 +16,8 @@ import (
 	"strings"
 )
 
+const defaultIniExampleCommentWidth = 76
+
 // IniError contains location information on where an error occurred.
 type IniError struct {
 	// The error message.
@@ -66,6 +68,13 @@ type IniParser struct {
 	parser          *Parser
 	ParseAsDefaults bool // override default flags
 
+}
+
+// IniExampleOptions configures example INI rendering.
+type IniExampleOptions struct {
+	// CommentWidth is max width for wrapped comment lines (without "; " prefix).
+	// When <= 0, default width is used.
+	CommentWidth int
 }
 
 type iniValue struct {
@@ -160,6 +169,17 @@ func (i *IniParser) WriteFile(filename string, options IniOptions) error {
 // IniIncludeDefaults is _not_ set in options).
 func (i *IniParser) Write(writer io.Writer, options IniOptions) {
 	writeIni(i, writer, options)
+}
+
+// WriteExample writes an example INI with descriptive comments and defaults.
+// Required options are always rendered as active keys.
+func (i *IniParser) WriteExample(writer io.Writer) {
+	i.WriteExampleWithOptions(writer, IniExampleOptions{})
+}
+
+// WriteExampleWithOptions writes an example INI with configurable formatting.
+func (i *IniParser) WriteExampleWithOptions(writer io.Writer, opts IniExampleOptions) {
+	writeIniExample(i, writer, opts)
 }
 
 func readFullLine(reader *bufio.Reader) (string, error) {
@@ -328,6 +348,206 @@ func writeOption(
 	}
 
 	_, _ = fmt.Fprintln(writer)
+}
+
+func optionLooksUserConfigured(option *Option) bool {
+	if option.IsSet() && !option.IsSetDefault() {
+		return true
+	}
+
+	return !option.valueIsDefault()
+}
+
+func shouldCommentExampleOption(option *Option) bool {
+	if option.Required {
+		return false
+	}
+
+	return !optionLooksUserConfigured(option)
+}
+
+func iniExampleCommentWidth(opts IniExampleOptions) int {
+	if opts.CommentWidth > 0 {
+		return opts.CommentWidth
+	}
+
+	return defaultIniExampleCommentWidth
+}
+
+func buildIniExampleComment(option *Option) string {
+	lines := make([]string, 0, 3)
+	description := strings.TrimSpace(option.Description)
+
+	if option.Required {
+		if description != "" {
+			description += " (required)"
+		} else {
+			description = "(required)"
+		}
+	}
+
+	if description != "" {
+		lines = append(lines, description)
+	}
+
+	if len(option.Choices) > 0 {
+		lines = append(lines, fmt.Sprintf("Choices: %s.", strings.Join(option.Choices, ", ")))
+	}
+
+	details := make([]string, 0, 2)
+	kind := option.value.Type().Kind()
+	if kind == reflect.Slice || kind == reflect.Map {
+		details = append(details, "repeatable")
+	}
+
+	if kind == reflect.Map {
+		delimiter := option.tag.Get(FlagTagKeyValueDelimiter)
+		if delimiter == "" {
+			delimiter = ":"
+		}
+
+		details = append(details, fmt.Sprintf("key-value-delimiter: %q", delimiter))
+	}
+
+	if len(details) > 0 {
+		lines = append(lines, fmt.Sprintf("Details: %s.", strings.Join(details, "; ")))
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func writeIniCommentBlock(writer io.Writer, comment string, width int) {
+	comment = strings.TrimSpace(comment)
+	if comment == "" {
+		return
+	}
+
+	usableWidth := max(10, width-2)
+	wrapped := wrapTextNoHyphen(comment, usableWidth)
+
+	for line := range strings.SplitSeq(wrapped, "\n") {
+		_, _ = fmt.Fprintf(writer, "; %s\n", line)
+	}
+}
+
+func writeGroupIniExample(
+	cmd *Command,
+	group *Group,
+	namespace string,
+	writer io.Writer,
+	opts IniExampleOptions,
+) {
+	var sname string
+
+	if len(namespace) != 0 {
+		sname = namespace
+	}
+
+	if cmd.Group != group && len(group.ShortDescription) != 0 {
+		if len(sname) != 0 {
+			sname += "."
+		}
+
+		sname += group.ShortDescription
+	}
+
+	sectionwritten := false
+	commentWidth := iniExampleCommentWidth(opts)
+
+	for _, option := range group.options {
+		if option.isFunc() || option.Hidden {
+			continue
+		}
+
+		if len(option.tag.Get(FlagTagNoIni)) != 0 {
+			continue
+		}
+
+		if !sectionwritten {
+			_, _ = fmt.Fprintf(writer, "[%s]\n", sname)
+			sectionwritten = true
+		}
+
+		comment := buildIniExampleComment(option)
+		writeIniCommentBlock(writer, comment, commentWidth)
+		if strings.TrimSpace(comment) != "" {
+			_, _ = fmt.Fprintln(writer, ";")
+		}
+
+		oname := optionIniName(option)
+		commentOption := shouldCommentExampleOption(option)
+		val := option.value
+
+		kind := val.Type().Kind()
+		switch kind {
+		case reflect.Slice:
+			elemKind := val.Type().Elem().Kind()
+
+			if val.Len() == 0 {
+				writeOption(writer, oname, elemKind, "", "", commentOption, option.iniQuote)
+			} else {
+				for idx := 0; idx < val.Len(); idx++ {
+					v, _ := convertToString(val.Index(idx), option.tag)
+					writeOption(writer, oname, elemKind, "", v, commentOption, option.iniQuote)
+				}
+			}
+		case reflect.Map:
+			elemKind := val.Type().Elem().Kind()
+
+			if val.Len() == 0 {
+				writeOption(writer, oname, elemKind, "", "", commentOption, option.iniQuote)
+			} else {
+				mkeys := val.MapKeys()
+				keys := make([]string, len(val.MapKeys()))
+				kkmap := make(map[string]reflect.Value)
+
+				for i, k := range mkeys {
+					keys[i], _ = convertToString(k, option.tag)
+					kkmap[keys[i]] = k
+				}
+
+				sort.Strings(keys)
+
+				for _, k := range keys {
+					v, _ := convertToString(val.MapIndex(kkmap[k]), option.tag)
+					writeOption(writer, oname, elemKind, k, v, commentOption, option.iniQuote)
+				}
+			}
+		default:
+			v, _ := convertToString(val, option.tag)
+			writeOption(writer, oname, kind, "", v, commentOption, option.iniQuote)
+		}
+
+		_, _ = fmt.Fprintln(writer)
+	}
+}
+
+func writeCommandIniExample(command *Command, namespace string, writer io.Writer, opts IniExampleOptions) {
+	command.eachGroup(func(group *Group) {
+		if !group.Hidden {
+			writeGroupIniExample(command, group, namespace, writer, opts)
+		}
+	})
+
+	for _, c := range command.commands {
+		var fqn string
+
+		if c.Hidden {
+			continue
+		}
+
+		if len(namespace) != 0 {
+			fqn = namespace + "." + c.Name
+		} else {
+			fqn = c.Name
+		}
+
+		writeCommandIniExample(c, fqn, writer, opts)
+	}
+}
+
+func writeIniExample(parser *IniParser, writer io.Writer, opts IniExampleOptions) {
+	writeCommandIniExample(parser.parser.Command, "", writer, opts)
 }
 
 func writeCommandIni(command *Command, namespace string, writer io.Writer, options IniOptions) {

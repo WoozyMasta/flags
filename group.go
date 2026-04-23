@@ -51,6 +51,9 @@ type Group struct {
 	// If true, the group is not displayed in the help or man page
 	Hidden bool
 
+	// If true, options in this group bypass required checks and command execution.
+	Immediate bool
+
 	// Whether the group represents the built-in help group
 	isBuiltinHelp bool
 }
@@ -109,6 +112,11 @@ func (g *Group) SetEnvNamespace(namespace string) {
 // SetHidden controls group visibility in help/completion/docs.
 func (g *Group) SetHidden(hidden bool) {
 	g.Hidden = hidden
+}
+
+// SetImmediate controls immediate parse behavior for this group subtree.
+func (g *Group) SetImmediate(immediate bool) {
+	g.Immediate = immediate
 }
 
 // AddOption adds a new option to this group.
@@ -513,6 +521,10 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err != nil {
 			return err
 		}
+		immediate, _, err := parseStructBoolTag(mtag, FlagTagImmediate, field.Name)
+		if err != nil {
+			return err
+		}
 
 		envKey := mtag.Get(FlagTagEnv)
 		autoEnv, hasAutoEnvTag, err := parseStructBoolTag(mtag, FlagTagAutoEnv, field.Name)
@@ -549,6 +561,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			DefaultMask:      defaultMask,
 			Choices:          choices,
 			Hidden:           hidden,
+			Immediate:        immediate,
 			Terminator:       mtag.Get(FlagTagTerminator),
 			Order:            order,
 
@@ -673,6 +686,11 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 			return true, err
 		}
 		group.Hidden = hidden
+		immediate, _, err := parseStructBoolTag(mtag, FlagTagImmediate, sfield.Name)
+		if err != nil {
+			return true, err
+		}
+		group.Immediate = immediate
 
 		return true, nil
 	}

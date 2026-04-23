@@ -2243,3 +2243,65 @@ func TestParserValidate(t *testing.T) {
 		t.Fatalf("unexpected validate error: %v", err)
 	}
 }
+
+func TestImmediateOptionSkipsRequiredValidation(t *testing.T) {
+	var opts struct {
+		Required string `long:"required" required:"true"`
+		Demo     bool   `long:"demo" immediate:"true"`
+	}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{"--demo"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !opts.Demo {
+		t.Fatalf("expected demo option to be set")
+	}
+}
+
+func TestImmediateGroupSkipsRequiredValidation(t *testing.T) {
+	var opts struct {
+		Required string `long:"required" required:"true"`
+		Demo     struct {
+			INI bool `long:"ini"`
+		} `group:"Demo Options" immediate:"true"`
+	}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{"--ini"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !opts.Demo.INI {
+		t.Fatalf("expected demo group option to be set")
+	}
+}
+
+type immediateCommand struct {
+	Executed bool
+}
+
+func (c *immediateCommand) Execute(_ []string) error {
+	c.Executed = true
+	return nil
+}
+
+func TestImmediateSkipsCommandExecution(t *testing.T) {
+	var opts struct {
+		Demo bool             `long:"demo" immediate:"true"`
+		Cmd  immediateCommand `command:"run"`
+	}
+
+	p := NewParser(&opts, None)
+	_, err := p.ParseArgs([]string{"--demo", "run"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if opts.Cmd.Executed {
+		t.Fatalf("expected command Execute not to run when immediate option is set")
+	}
+}

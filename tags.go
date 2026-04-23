@@ -46,6 +46,8 @@ const (
 	FlagTagChoices = "choices"
 	// FlagTagHidden hides option/group/command from help and completion output.
 	FlagTagHidden = "hidden"
+	// FlagTagImmediate marks options/groups/commands that should bypass required checks.
+	FlagTagImmediate = "immediate"
 	// FlagTagBase sets radix for integer parsing.
 	FlagTagBase = "base"
 	// FlagTagIniName overrides key name used for INI parse/write.
@@ -133,6 +135,8 @@ type FlagTags struct {
 	Choices string
 	// Hidden maps to hide-from-help tag (default: "hidden").
 	Hidden string
+	// Immediate maps to immediate-processing tag (default: "immediate").
+	Immediate string
 	// Base maps to integer radix tag (default: "base").
 	Base string
 	// IniName maps to INI key override tag (default: "ini-name").
@@ -202,6 +206,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Choice:              prefix + FlagTagChoice,
 		Choices:             prefix + FlagTagChoices,
 		Hidden:              prefix + FlagTagHidden,
+		Immediate:           prefix + FlagTagImmediate,
 		Base:                prefix + FlagTagBase,
 		IniName:             prefix + FlagTagIniName,
 		NoIni:               prefix + FlagTagNoIni,
@@ -284,6 +289,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Hidden != "" {
 		d.Hidden = t.Hidden
+	}
+	if t.Immediate != "" {
+		d.Immediate = t.Immediate
 	}
 	if t.Base != "" {
 		d.Base = t.Base

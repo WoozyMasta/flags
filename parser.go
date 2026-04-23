@@ -112,6 +112,9 @@ type Parser struct {
 
 	// Set by built-in version option handler during parse.
 	versionRequested bool
+
+	// Set when any immediate option/group is requested during parse.
+	immediateRequested bool
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -473,6 +476,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.Choice:              FlagTagChoice,
 		p.flagTags.Choices:             FlagTagChoices,
 		p.flagTags.Hidden:              FlagTagHidden,
+		p.flagTags.Immediate:           FlagTagImmediate,
 		p.flagTags.Base:                FlagTagBase,
 		p.flagTags.IniName:             FlagTagIniName,
 		p.flagTags.NoIni:               FlagTagNoIni,
@@ -651,6 +655,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	})
 
 	p.versionRequested = false
+	p.immediateRequested = false
 
 	// Add built-in help/version group to all commands if necessary.
 	if (p.Options & (HelpFlag | VersionFlag)) != None {
@@ -798,7 +803,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			}
 		}
 
-		if s.err == nil {
+		if s.err == nil && !p.shouldSkipRequiredValidation() {
 			if reqErr := s.checkRequired(p); reqErr != nil {
 				s.err = reqErr
 			}
@@ -809,6 +814,8 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 	if s.err != nil {
 		reterr = s.err
+	} else if p.shouldSkipCommandExecution() {
+		return s.retargs, nil
 	} else if len(s.command.commands) != 0 && !s.command.SubcommandsOptional {
 		reterr = s.estimateCommand()
 	} else if cmd, ok := s.command.data.(Commander); ok {
@@ -834,6 +841,14 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	}
 
 	return s.retargs, nil
+}
+
+func (p *Parser) shouldSkipRequiredValidation() bool {
+	return p.immediateRequested
+}
+
+func (p *Parser) shouldSkipCommandExecution() bool {
+	return p.immediateRequested
 }
 
 func (p *parseState) eof() bool {
@@ -1064,6 +1079,8 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 		if _, ok := err.(*Error); !ok {
 			err = p.marshalError(option, err)
 		}
+	} else if option.IsImmediate() {
+		p.immediateRequested = true
 	}
 
 	return err

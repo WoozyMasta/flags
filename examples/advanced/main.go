@@ -57,6 +57,7 @@ type AdvancedOptions struct {
 	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
 	Exec             []string               `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
 	Network          AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
+	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
 	Count            int                    `long:"count" description:"Example number flag for sort demo" default:"7"`
 	Delay            time.Duration          `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
 	Deploy           AdvancedDeployCommand  `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
@@ -74,6 +75,14 @@ type AdvancedNetworkOptions struct {
 	Timeout  time.Duration `long:"timeout" description:"Request timeout" default:"10s"`
 	Retries  int           `long:"retries" description:"Retry attempts" default:"3"`
 	TLS      bool          `long:"tls" description:"Enable TLS" order:"50"`
+}
+
+type AdvancedDemoOptions struct {
+	Help       string `long:"demo-help" value-name:"MODE" choices:"decl;name-asc;name-desc;type" description:"Render built-in help with selected sort mode and exit"`
+	Completion string `long:"demo-completion" value-name:"SHELL" choices:"bash;zsh" description:"Render shell completion script and exit"`
+	DocFormat  string `long:"demo-doc-format" value-name:"FORMAT" choices:"markdown;html;man" description:"Render documentation in selected format and exit"`
+	DocStyle   string `long:"demo-doc-style" value-name:"STYLE" choices:"list;table;code" description:"Render markdown style variant for --demo-doc-format=markdown"`
+	INI        bool   `long:"demo-ini" description:"Render example INI and exit"`
 }
 
 type AdvancedDeployCommand struct {
@@ -183,51 +192,35 @@ func detectHelpColorArg(args []string) (string, bool) {
 	return "", false
 }
 
-func demoOutput(args []string, p *flags.Parser) (bool, error) {
-	docFormat := ""
-	docStyle := ""
-
-	if mode, ok := detectHelpColorArg(args); ok {
-		if err := applyHelpColorMode(p, mode); err != nil {
+func demoOutput(opts *AdvancedOptions, p *flags.Parser) (bool, error) {
+	if opts.Demo.Help != "" {
+		if err := applySortMode(p, opts.Demo.Help); err != nil {
 			return true, err
 		}
+		p.WriteHelp(os.Stdout)
+		return true, nil
 	}
 
-	for _, arg := range args {
-		if mode, ok := strings.CutPrefix(arg, "--demo-help="); ok {
-			if err := applySortMode(p, mode); err != nil {
-				return true, err
-			}
-			p.WriteHelp(os.Stdout)
-			return true, nil
+	if opts.Demo.Completion != "" {
+		if err := p.WriteNamedCompletion(os.Stdout, flags.CompletionShell(opts.Demo.Completion), "advanced-cli"); err != nil {
+			return true, err
 		}
-
-		if shell, ok := strings.CutPrefix(arg, "--demo-completion="); ok {
-			if err := p.WriteNamedCompletion(os.Stdout, flags.CompletionShell(shell), "advanced-cli"); err != nil {
-				return true, err
-			}
-			return true, nil
-		}
-
-		if v, ok := strings.CutPrefix(arg, "--demo-doc-format="); ok {
-			docFormat = v
-			continue
-		}
-
-		if v, ok := strings.CutPrefix(arg, "--demo-doc-style="); ok {
-			docStyle = v
-			continue
-		}
+		return true, nil
 	}
 
-	if docFormat != "" {
-		format, tmpl, err := resolveDocMode(docFormat, docStyle)
+	if opts.Demo.DocFormat != "" {
+		format, tmpl, err := resolveDocMode(opts.Demo.DocFormat, opts.Demo.DocStyle)
 		if err != nil {
 			return true, err
 		}
 		if err := p.WriteDoc(os.Stdout, format, flags.WithBuiltinTemplate(tmpl)); err != nil {
 			return true, err
 		}
+		return true, nil
+	}
+
+	if opts.Demo.INI {
+		flags.NewIniParser(p).WriteExample(os.Stdout)
 		return true, nil
 	}
 
@@ -266,20 +259,20 @@ func main() {
 		}
 	}
 
-	handled, err := demoOutput(os.Args[1:], p)
-	if handled {
-		if err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
-	}
-
 	if _, err := p.Parse(); err != nil {
 		var flagsErr *flags.Error
 		if errors.As(err, &flagsErr) && (flagsErr.Type == flags.ErrHelp || flagsErr.Type == flags.ErrVersion) {
 			os.Exit(0)
 		}
 		os.Exit(1)
+	}
+
+	handled, err := demoOutput(opts, p)
+	if handled {
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
 	}
 }
