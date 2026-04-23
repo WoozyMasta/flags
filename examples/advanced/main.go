@@ -53,11 +53,11 @@ type AdvancedOptions struct {
 	ReleaseID        string                 `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
 	SecretKey        string                 `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
 	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;light" default:"none" description:"Color scheme for built-in help output"`
+	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
 	Verbose          []bool                 `short:"v" long:"verbose" description:"Increase verbosity level" order:"100"`
 	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
 	Exec             []string               `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
 	Network          AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
-	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
 	Count            int                    `long:"count" description:"Example number flag for sort demo" default:"7"`
 	Delay            time.Duration          `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
 	Deploy           AdvancedDeployCommand  `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
