@@ -561,6 +561,8 @@ Common help behavior flags:
 
 * `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
 * `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
+* `PrintHelpOnInputErrors`: print built-in help before common user-input parse
+  errors (`ErrRequired`, `ErrCommandRequired`, unknown flags/commands, etc.).
 * `VersionFlag`: add built-in `-v/--version` output (`ErrVersion`).
 * `ShowCommandAliases`: force showing command aliases in the `Available commands`
   section even when a command has no short description (without this flag,

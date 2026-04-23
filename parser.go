@@ -223,6 +223,10 @@ const (
 	// when PrintErrors is enabled.
 	PrintErrorsOnStdout
 
+	// PrintHelpOnInputErrors prints built-in help before common user-input
+	// parser errors (for example required/unknown flags or command issues).
+	PrintHelpOnInputErrors
+
 	// PassAfterNonOption passes all arguments after the first non option
 	// as remaining command line arguments. This is equivalent to strict
 	// POSIX processing.
@@ -1453,10 +1457,48 @@ func (p *Parser) markVersionRequested() error {
 
 func (p *Parser) printError(err error) error {
 	if err != nil && (p.Options&PrintErrors) != None {
-		_, _ = fmt.Fprintln(p.errorWriter(err), p.colorizeError(err, err.Error()))
+		writer := p.errorWriter(err)
+
+		if p.shouldPrintHelpOnError(err) {
+			p.WriteHelp(writer)
+		}
+
+		_, _ = fmt.Fprintln(writer, p.colorizeError(err, err.Error()))
 	}
 
 	return err
+}
+
+func (p *Parser) shouldPrintHelpOnError(err error) bool {
+	if (p.Options & PrintHelpOnInputErrors) == None {
+		return false
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok {
+		return false
+	}
+
+	if flagsErr.Type == ErrHelp || flagsErr.Type == ErrVersion {
+		return false
+	}
+
+	return shouldPrintHelpForErrorType(flagsErr.Type)
+}
+
+func shouldPrintHelpForErrorType(errorType ErrorType) bool {
+	switch errorType {
+	case ErrRequired,
+		ErrCommandRequired,
+		ErrUnknownFlag,
+		ErrUnknownCommand,
+		ErrExpectedArgument,
+		ErrInvalidChoice,
+		ErrNoArgumentForBool:
+		return true
+	default:
+		return false
+	}
 }
 
 func (p *Parser) errorWriter(err error) io.Writer {

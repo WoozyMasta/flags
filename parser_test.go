@@ -1698,6 +1698,70 @@ func TestPrintErrorsToStdout(t *testing.T) {
 	}
 }
 
+func TestPrintHelpOnInputErrorsForRequiredError(t *testing.T) {
+	var opts struct {
+		Required bool `long:"required" required:"yes"`
+	}
+
+	parser := NewParser(&opts, Default|PrintHelpOnInputErrors)
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{})
+	})
+
+	if stdout != "" {
+		t.Fatalf("expected empty stdout for default error output, got %q", stdout)
+	}
+	if !strings.Contains(stderr, "Usage:") {
+		t.Fatalf("expected help output before warning error, got %q", stderr)
+	}
+	if !strings.Contains(stderr, "required flag") {
+		t.Fatalf("expected required warning error text, got %q", stderr)
+	}
+}
+
+func TestPrintHelpOnInputErrorsForUnknownFlag(t *testing.T) {
+	var opts struct {
+		Value bool `long:"value"`
+	}
+
+	parser := NewParser(&opts, Default|PrintHelpOnInputErrors)
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--unknown"})
+	})
+
+	if stdout != "" {
+		t.Fatalf("expected empty stdout for default error output, got %q", stdout)
+	}
+	if !strings.Contains(stderr, "Usage:") {
+		t.Fatalf("expected help output for unknown flag, got %q", stderr)
+	}
+	if !strings.Contains(stderr, "unknown flag") {
+		t.Fatalf("expected unknown flag error text, got %q", stderr)
+	}
+}
+
+func TestPrintHelpOnInputErrorsSkipsInternalErrors(t *testing.T) {
+	type invalidOptions struct {
+		One bool `long:"dup"`
+		Two bool `long:"dup"`
+	}
+
+	stdout, stderr := captureStdIO(t, func() {
+		p := NewParser(&invalidOptions{}, Default|PrintHelpOnInputErrors)
+		_, _ = p.ParseArgs(nil)
+	})
+
+	if stdout != "" {
+		t.Fatalf("expected empty stdout for internal parser error, got %q", stdout)
+	}
+	if strings.Contains(stderr, "Usage:") {
+		t.Fatalf("did not expect help output for internal parser error, got %q", stderr)
+	}
+	if !strings.Contains(stderr, "same long name") {
+		t.Fatalf("expected duplicated flag error text, got %q", stderr)
+	}
+}
+
 func TestPrintErrorsColorWarning(t *testing.T) {
 	var opts struct {
 		Required bool `long:"required" required:"yes"`

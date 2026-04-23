@@ -67,6 +67,9 @@ and this project adheres to [Semantic Versioning][].
 * Parser options `PrintHelpOnStderr` and `PrintErrorsOnStdout` to control
   where built-in help and parse errors are written when `PrintErrors`
   is enabled.
+* Parser option `PrintHelpOnInputErrors` to print built-in help before common
+  user-input parser errors
+  (required flag/command, unknown flag/command, invalid choice, etc.).
 * Parser options `ShowCommandAliases` and `ShowRepeatableInHelp` to
   enrich built-in help with command alias list and repeatable markers.
 * Parser option `HideEnvInHelp` to suppress env placeholders
