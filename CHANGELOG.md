@@ -91,6 +91,10 @@ and this project adheres to [Semantic Versioning][].
   and `Option.SetImmediate(...)` / `Group.SetImmediate(...)`:
   matching options bypass required validation and command execution while still
   allowing built-in immediate flows (help/version) and custom demo/render flags.
+* Built-in help/version tuning API:
+  `Parser.EnsureBuiltinOptions()`, `Parser.BuiltinHelpOption()`,
+  and `Parser.BuiltinVersionOption()` for pre-parse access to built-in
+  option metadata (short/long names, descriptions, aliases, etc.).
 * INI example rendering API via `IniParser.WriteExample(...)` and
   `IniParser.WriteExampleWithOptions(...)` with wrapped metadata comments,
   `required`-aware active keys, and optional comment-width control.

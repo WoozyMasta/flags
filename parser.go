@@ -622,6 +622,28 @@ func (p *Parser) Parse() ([]string, error) {
 	return p.ParseArgs(os.Args[1:])
 }
 
+// EnsureBuiltinOptions materializes built-in help/version options (when enabled)
+// so they can be discovered and tuned before parsing.
+func (p *Parser) EnsureBuiltinOptions() {
+	if (p.Options & (HelpFlag | VersionFlag)) != None {
+		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
+	}
+}
+
+// BuiltinHelpOption returns built-in help option when HelpFlag is enabled.
+// It materializes built-in options lazily and returns nil when unavailable.
+func (p *Parser) BuiltinHelpOption() *Option {
+	p.EnsureBuiltinOptions()
+	return p.Command.FindOptionByLongName("help")
+}
+
+// BuiltinVersionOption returns built-in version option when VersionFlag is enabled.
+// It materializes built-in options lazily and returns nil when unavailable.
+func (p *Parser) BuiltinVersionOption() *Option {
+	p.EnsureBuiltinOptions()
+	return p.Command.FindOptionByLongName("version")
+}
+
 // ParseArgs parses the command line arguments according to the option groups that
 // were added to the parser. On successful parsing of the arguments, the
 // remaining, non-option, arguments (if any) are returned. The returned error
@@ -658,9 +680,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	p.immediateRequested = false
 
 	// Add built-in help/version group to all commands if necessary.
-	if (p.Options & (HelpFlag | VersionFlag)) != None {
-		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
-	}
+	p.EnsureBuiltinOptions()
 
 	compval := os.Getenv("GO_FLAGS_COMPLETION")
 

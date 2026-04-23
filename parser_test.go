@@ -1597,6 +1597,49 @@ func TestVersionShortFlagUsesVByDefault(t *testing.T) {
 	}
 }
 
+func TestCanRetuneBuiltinVersionOptionBeforeParse(t *testing.T) {
+	parser := NewNamedParser("builtin-tune", VersionFlag)
+	parser.SetVersion("v3.1.4")
+
+	versionOpt := parser.BuiltinVersionOption()
+	if versionOpt == nil {
+		t.Fatalf("expected built-in version option")
+	}
+
+	versionOpt.SetShortName('x')
+	versionOpt.SetDescription("Print build metadata")
+
+	_, err := parser.ParseArgs([]string{"-x"})
+	if err == nil {
+		t.Fatalf("expected ErrVersion")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrVersion {
+		t.Fatalf("expected ErrVersion, got %v", err)
+	}
+
+	var out strings.Builder
+	parser.WriteHelp(&out)
+	if !strings.Contains(out.String(), "Print build metadata") {
+		t.Fatalf("expected updated version description in help, got %q", out.String())
+	}
+}
+
+func TestBuiltinOptionAccessors(t *testing.T) {
+	parser := NewNamedParser("builtin-accessors", HelpFlag|VersionFlag)
+
+	helpOpt := parser.BuiltinHelpOption()
+	if helpOpt == nil {
+		t.Fatalf("expected built-in help option")
+	}
+
+	versionOpt := parser.BuiltinVersionOption()
+	if versionOpt == nil {
+		t.Fatalf("expected built-in version option")
+	}
+}
+
 func TestHelpTakesPriorityOverVersion(t *testing.T) {
 	parser := NewNamedParser("priority-test", HelpFlag|VersionFlag|PrintErrors)
 

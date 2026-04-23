@@ -686,6 +686,18 @@ go build -buildvcs=auto \
   ./...
 ```
 
+You can retune built-in version option names and description:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
+
+if versionOpt := parser.BuiltinVersionOption(); versionOpt != nil {
+  versionOpt.SetShortName('B')
+  _ = versionOpt.SetLongName("build-info")
+  versionOpt.SetDescription("Show build information")
+}
+```
+
 ## Shell Completion
 
 Generate shell script output from your app:
