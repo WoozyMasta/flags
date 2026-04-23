@@ -488,7 +488,7 @@ type Options struct {
 func (o *Options) ConfigureFlags(p *flags.Parser) error {
   if opt := p.FindOptionByLongName("verbose"); opt != nil {
     opt.AddLongAlias("debug")
-    opt.SetEnv("APP_VERBOSE", "")
+    _ = opt.SetEnv("APP_VERBOSE", "")
   }
 
   if cmd := p.Find("run"); cmd != nil {
@@ -692,7 +692,7 @@ You can retune built-in version option names and description:
 parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
 
 if versionOpt := parser.BuiltinVersionOption(); versionOpt != nil {
-  versionOpt.SetShortName('B')
+  _ = versionOpt.SetShortName('B')
   _ = versionOpt.SetLongName("build-info")
   versionOpt.SetDescription("Show build information")
 }

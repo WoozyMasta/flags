@@ -169,6 +169,27 @@ func (option *Option) validateLongNameLength(name string) error {
 	return nil
 }
 
+func (option *Option) validateProgrammaticUpdate() error {
+	if option.group == nil {
+		return nil
+	}
+
+	p := option.group.parser()
+	if p == nil {
+		return nil
+	}
+
+	if err := p.validateDuplicateFlags(); err != nil {
+		return err
+	}
+
+	if err := p.validateDuplicateEnvKeys(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SetDescription updates option description used in help/docs output.
 func (option *Option) SetDescription(description string) {
 	option.Description = description
@@ -220,15 +241,30 @@ func (option *Option) SetLongName(name string) error {
 		return err
 	}
 
+	prev := option.LongName
 	option.LongName = name
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.LongName = prev
+		return err
+	}
+
 	option.touchLookupCache()
 	return nil
 }
 
 // SetShortName updates canonical short option name.
-func (option *Option) SetShortName(name rune) {
+func (option *Option) SetShortName(name rune) error {
+	prev := option.ShortName
 	option.ShortName = name
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.ShortName = prev
+		return err
+	}
+
 	option.touchLookupCache()
+	return nil
 }
 
 // SetLongAliases replaces all long option aliases.
@@ -239,7 +275,14 @@ func (option *Option) SetLongAliases(aliases ...string) error {
 		}
 	}
 
+	prev := append([]string(nil), option.LongAliases...)
 	option.LongAliases = append(option.LongAliases[:0], aliases...)
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.LongAliases = prev
+		return err
+	}
+
 	option.touchLookupCache()
 	return nil
 }
@@ -250,21 +293,44 @@ func (option *Option) AddLongAlias(alias string) error {
 		return err
 	}
 
+	prev := append([]string(nil), option.LongAliases...)
 	option.LongAliases = append(option.LongAliases, alias)
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.LongAliases = prev
+		return err
+	}
+
 	option.touchLookupCache()
 	return nil
 }
 
 // SetShortAliases replaces all short option aliases.
-func (option *Option) SetShortAliases(aliases ...rune) {
+func (option *Option) SetShortAliases(aliases ...rune) error {
+	prev := append([]rune(nil), option.ShortAliases...)
 	option.ShortAliases = append(option.ShortAliases[:0], aliases...)
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.ShortAliases = prev
+		return err
+	}
+
 	option.touchLookupCache()
+	return nil
 }
 
 // AddShortAlias appends one short option alias.
-func (option *Option) AddShortAlias(alias rune) {
+func (option *Option) AddShortAlias(alias rune) error {
+	prev := append([]rune(nil), option.ShortAliases...)
 	option.ShortAliases = append(option.ShortAliases, alias)
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.ShortAliases = prev
+		return err
+	}
+
 	option.touchLookupCache()
+	return nil
 }
 
 // SetDefault replaces option default values.
@@ -279,9 +345,19 @@ func (option *Option) SetDefaultMask(mask string) {
 }
 
 // SetEnv sets environment key and optional split delimiter for env value.
-func (option *Option) SetEnv(key string, delim string) {
+func (option *Option) SetEnv(key string, delim string) error {
+	prevKey := option.EnvDefaultKey
+	prevDelim := option.EnvDefaultDelim
 	option.EnvDefaultKey = key
 	option.EnvDefaultDelim = delim
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.EnvDefaultKey = prevKey
+		option.EnvDefaultDelim = prevDelim
+		return err
+	}
+
+	return nil
 }
 
 // SetBase configures numeric radix for integer parse/format.
@@ -323,6 +399,8 @@ func (option *Option) SetNoIni(disabled bool) {
 // SetAutoEnv enables or disables env-key derivation from long option name.
 // When enabled and env key is currently empty, a key is derived automatically.
 func (option *Option) SetAutoEnv(enabled bool) error {
+	prevTag := option.tag.Get(FlagTagAutoEnv)
+	prevKey := option.EnvDefaultKey
 	option.tag.Set(FlagTagAutoEnv, strconv.FormatBool(enabled))
 
 	if !enabled || option.EnvDefaultKey != "" {
@@ -330,6 +408,7 @@ func (option *Option) SetAutoEnv(enabled bool) error {
 	}
 
 	if option.LongName == "" {
+		option.tag.Set(FlagTagAutoEnv, prevTag)
 		return newErrorf(
 			ErrInvalidTag,
 			"auto env for flag `%s' requires a long flag name",
@@ -338,6 +417,13 @@ func (option *Option) SetAutoEnv(enabled bool) error {
 	}
 
 	option.EnvDefaultKey = autoEnvKeyFromLongName(option.LongName)
+
+	if err := option.validateProgrammaticUpdate(); err != nil {
+		option.tag.Set(FlagTagAutoEnv, prevTag)
+		option.EnvDefaultKey = prevKey
+		return err
+	}
+
 	return nil
 }
 

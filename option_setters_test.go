@@ -24,8 +24,12 @@ func TestOptionSettersLookupAndParse(t *testing.T) {
 	if err := opt.SetLongAliases("legacy", "compat"); err != nil {
 		t.Fatalf("unexpected SetLongAliases error: %v", err)
 	}
-	opt.SetShortName('p')
-	opt.SetShortAliases('P')
+	if err := opt.SetShortName('p'); err != nil {
+		t.Fatalf("unexpected SetShortName error: %v", err)
+	}
+	if err := opt.SetShortAliases('P'); err != nil {
+		t.Fatalf("unexpected SetShortAliases error: %v", err)
+	}
 
 	if _, err := p.ParseArgs([]string{"--legacy", "one"}); err != nil {
 		t.Fatalf("unexpected parse error for long alias: %v", err)
@@ -79,7 +83,9 @@ func TestOptionSettersDefaultsChoicesEnv(t *testing.T) {
 
 	opt.SetChoices("fast", "safe")
 	opt.SetDefault("fast")
-	opt.SetEnv("APP_MODE", "")
+	if err := opt.SetEnv("APP_MODE", ""); err != nil {
+		t.Fatalf("unexpected SetEnv error: %v", err)
+	}
 	opt.SetRequired(true)
 
 	if _, err := p.ParseArgs(nil); err != nil {
@@ -230,6 +236,75 @@ func TestOptionSetterAutoEnv(t *testing.T) {
 	}
 	if opts.SomeFunction != "from-env" {
 		t.Fatalf("expected env-derived value, got %q", opts.SomeFunction)
+	}
+}
+
+func TestOptionSetterRejectsDuplicateShortName(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose"`
+		Value   bool `short:"x" long:"value"`
+	}
+
+	p := NewParser(&opts, None)
+	opt := p.FindOptionByLongName("value")
+	if opt == nil {
+		t.Fatalf("expected option")
+	}
+
+	err := opt.SetShortName('v')
+	if err == nil {
+		t.Fatalf("expected duplicate short-name error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestOptionSetterRejectsDuplicateLongName(t *testing.T) {
+	var opts struct {
+		One string `long:"one"`
+		Two string `long:"two"`
+	}
+
+	p := NewParser(&opts, None)
+	opt := p.FindOptionByLongName("two")
+	if opt == nil {
+		t.Fatalf("expected option")
+	}
+
+	err := opt.SetLongName("one")
+	if err == nil {
+		t.Fatalf("expected duplicate long-name error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestOptionSetterRejectsDuplicateEnvKey(t *testing.T) {
+	var opts struct {
+		First  string `long:"first" env:"APP_SHARED"`
+		Second string `long:"second"`
+	}
+
+	p := NewParser(&opts, None)
+	opt := p.FindOptionByLongName("second")
+	if opt == nil {
+		t.Fatalf("expected option")
+	}
+
+	err := opt.SetEnv("APP_SHARED", "")
+	if err == nil {
+		t.Fatalf("expected duplicate env-key error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
 	}
 }
 

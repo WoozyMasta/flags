@@ -1606,7 +1606,9 @@ func TestCanRetuneBuiltinVersionOptionBeforeParse(t *testing.T) {
 		t.Fatalf("expected built-in version option")
 	}
 
-	versionOpt.SetShortName('x')
+	if err := versionOpt.SetShortName('x'); err != nil {
+		t.Fatalf("unexpected SetShortName error: %v", err)
+	}
 	versionOpt.SetDescription("Print build metadata")
 
 	_, err := parser.ParseArgs([]string{"-x"})
