@@ -1,6 +1,7 @@
 # flags
 
-Reflection-based command-line parser for Go.
+Build Go CLIs faster with reflection-powered parsing,
+rich help, completion, and docs out of the box.
 
 ## Core Features
 
@@ -17,6 +18,7 @@ Reflection-based command-line parser for Go.
 
 * [Installation](#installation)
 * [Quick Start](#quick-start)
+* [Upgrade from go-flags](#upgrade-from-jessevdkgo-flags)
 * [Error Handling](#error-handling)
 * [Option Values](#option-values)
 * [Struct Tags Reference](#struct-tags-reference)
@@ -116,6 +118,29 @@ if err != nil {
   os.Exit(1)
 }
 ```
+
+## Upgrade from jessevdk/go-flags
+
+This repository is a fork of
+[`github.com/jessevdk/go-flags`](https://github.com/jessevdk/go-flags)
+and is intended to be a drop-in replacement for most projects.
+
+> [!IMPORTANT]
+> One explicit behavior change: default maximum `long` flag length is now `32`.
+> Longer names require `Parser.SetMaxLongNameLength(...)`.
+
+Upgrade checklist:
+
+* Update import path to `github.com/woozymasta/flags`.
+* Ensure build/runtime Go version is `1.25+`.
+* If your CLI uses `long` names longer than `32`,
+ configure parser limit explicitly.
+
+Other changes should not affect normal parsing behavior in existing apps.
+The main visible runtime difference can be help/man rendering output:
+long options with large choice lists now wrap more predictably,
+and generated man output is not guaranteed to match previous
+byte-for-byte snapshots.
 
 ## Option Values
 
@@ -685,6 +710,10 @@ For non-colored logs/CI output, do not enable `ColorHelp`.
 
 Use hidden and masking controls when CLI internals or sensitive defaults
 must stay out of public help/docs.
+
+> [!CAUTION]
+> `hidden:"true"` only hides entities from help/completion/docs output.
+> It does not disable parsing and is not a security boundary.
 
 * `hidden:"true"`: option/group/command stays parseable, but is removed from
   built-in help, completion, and generated docs.
