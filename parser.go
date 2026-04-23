@@ -634,14 +634,14 @@ func (p *Parser) EnsureBuiltinOptions() {
 // It materializes built-in options lazily and returns nil when unavailable.
 func (p *Parser) BuiltinHelpOption() *Option {
 	p.EnsureBuiltinOptions()
-	return p.Command.FindOptionByLongName("help")
+	return p.FindOptionByLongName("help")
 }
 
 // BuiltinVersionOption returns built-in version option when VersionFlag is enabled.
 // It materializes built-in options lazily and returns nil when unavailable.
 func (p *Parser) BuiltinVersionOption() *Option {
 	p.EnsureBuiltinOptions()
-	return p.Command.FindOptionByLongName("version")
+	return p.FindOptionByLongName("version")
 }
 
 // ParseArgs parses the command line arguments according to the option groups that
@@ -1366,6 +1366,37 @@ func (p *Parser) validateDuplicateFlags() error {
 		if err := c.checkForDuplicateFlags(); err != nil {
 			dupErr = err
 		}
+	})
+
+	return dupErr
+}
+
+func (p *Parser) validateDuplicateEnvKeys() error {
+	envKeys := make(map[string]*Option)
+	var dupErr error
+
+	p.eachOption(func(_ *Command, _ *Group, option *Option) {
+		if dupErr != nil {
+			return
+		}
+
+		key := option.EnvKeyWithNamespace()
+		if key == "" {
+			return
+		}
+
+		if other, ok := envKeys[key]; ok {
+			dupErr = newErrorf(
+				ErrDuplicatedFlag,
+				"option `%s' uses the same env key `%s' as option `%s'",
+				option,
+				key,
+				other,
+			)
+			return
+		}
+
+		envKeys[key] = option
 	})
 
 	return dupErr
