@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning][].
 * Parser option `RequiredFromValues` to treat non-empty prefilled values as
   satisfying `required`, plus convenience alias `ConfiguredValues`
   (`DefaultsIfEmpty | RequiredFromValues`) for config-first flows.
-* Built-in version support via `VersionFlag` (`-V/--version`), plus parser
+* Built-in version support via `VersionFlag` (`-v/--version`), plus parser
   version metadata APIs `VersionInfo`, `WriteVersion`, override setters,
   and field-mask control via `VersionFields*` / `SetVersionFields`.
 * `Group.Data()` accessor.

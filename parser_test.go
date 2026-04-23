@@ -1581,6 +1581,22 @@ func TestVersionFlagSkipsRequiredChecks(t *testing.T) {
 	}
 }
 
+func TestVersionShortFlagUsesVByDefault(t *testing.T) {
+	parser := NewNamedParser("version-short", VersionFlag|PrintErrors)
+	parser.SetVersion("v9.9.9")
+
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"-v"})
+	})
+
+	if stderr != "" {
+		t.Fatalf("expected empty stderr for version output, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "version:  v9.9.9") {
+		t.Fatalf("expected version output for -v, got %q", stdout)
+	}
+}
+
 func TestHelpTakesPriorityOverVersion(t *testing.T) {
 	parser := NewNamedParser("priority-test", HelpFlag|VersionFlag|PrintErrors)
 

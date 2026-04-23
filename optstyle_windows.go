@@ -107,7 +107,7 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 		if includeVersion {
 			var help struct {
 				ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
-				ShowVersion func() error `short:"V" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
+				ShowVersion func() error `short:"v" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
 			}
 
 			help.ShowHelp = showHelp
@@ -141,7 +141,7 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 		var help struct {
 			ShowHelpWindows func() error `short:"?" description:"Show this help message" auto-env:"false" immediate:"true"`
 			ShowHelpPosix   func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
-			ShowVersion     func() error `short:"V" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
+			ShowVersion     func() error `short:"v" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
 		}
 
 		help.ShowHelpWindows = showHelp

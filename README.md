@@ -561,7 +561,7 @@ Common help behavior flags:
 
 * `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
 * `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
-* `VersionFlag`: add built-in `-V/--version` output (`ErrVersion`).
+* `VersionFlag`: add built-in `-v/--version` output (`ErrVersion`).
 * `ShowCommandAliases`: force showing command aliases in the `Available commands`
   section even when a command has no short description (without this flag,
   aliases are shown only for commands with short descriptions).
@@ -614,13 +614,13 @@ Runtime render-style APIs only change presentation in help/docs.
 ## Version
 
 Built-in version output is enabled with `flags.VersionFlag`.
-It adds `-V/--version` to `Help Options` and returns `ErrVersion`.
+It adds `-v/--version` to `Help Options` and returns `ErrVersion`.
 
 ```go
 parser := flags.NewParser(&opts, flags.Default|flags.VersionFlag)
 ```
 
-By default, built-in `-V/--version` uses a compact field set:
+By default, built-in `-v/--version` uses a compact field set:
 `flags.VersionFieldsCore`.
 You can switch to all fields or a custom mask:
 
@@ -636,7 +636,7 @@ Default metadata source is `runtime/debug.ReadBuildInfo()`.
 For best auto-discovery results, build with `-buildvcs=auto`.
 
 If both help and version are provided, help has priority:
-`-h/--help` wins over `-V/--version`.
+`-h/--help` wins over `-v/--version`.
 
 For reproducible release metadata, set explicit values via setters.
 Typical pattern:
