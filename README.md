@@ -730,8 +730,6 @@ Rendered template snapshots used by tests (also useful as docs/examples):
 [man-default.posix.1](examples/doc-rendered/man-default.posix.1).
 See `examples/doc-rendered` for additional variants.
 
-Detailed roadmap: [`docs-plan.md`](docs-plan.md)
-
 ## Template Helpers
 
 Built-in helper functions available in templates:

@@ -993,6 +993,31 @@ func TestWriteHelpWithOnlyPositionalArgsUnicodeNameNoPanic(t *testing.T) {
 	}
 }
 
+func TestWriteHelpAddsBuiltinHelpGroupWithoutParse(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"Value option"`
+	}
+
+	p := NewNamedParser("write-help", VersionFlag)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	if !strings.Contains(got, "Help Options:") {
+		t.Fatalf("expected built-in help group in WriteHelp output, got:\n%s", got)
+	}
+	if !strings.Contains(got, "Show this help message") {
+		t.Fatalf("expected built-in help option in WriteHelp output, got:\n%s", got)
+	}
+	if !strings.Contains(got, "Show version information") {
+		t.Fatalf("expected built-in version option in WriteHelp output, got:\n%s", got)
+	}
+}
+
 func TestWroteHelp(t *testing.T) {
 	type testInfo struct {
 		value  error

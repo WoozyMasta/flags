@@ -786,6 +786,13 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		return
 	}
 
+	// Keep WriteHelp behavior consistent with ParseArgs:
+	// when builtin help/version flags are enabled, ensure
+	// corresponding options are present in help output.
+	if (p.Options & (HelpFlag | VersionFlag)) != None {
+		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
+	}
+
 	wr := bufio.NewWriter(writer)
 	basePrefix := ""
 	if (p.Options & ColorHelp) != None {
