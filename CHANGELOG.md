@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning][].
 * Completion script generation API:
   `Parser.WriteCompletion(...)` and `Parser.WriteNamedCompletion(...)`
   with `bash` and `zsh` support.
+* Completion suggestions now include option/command aliases, option
+  `choices`, and bool inline value candidates (`true/false`) when
+  `AllowBoolValues` is enabled; generated bash/zsh scripts also enable
+  no-space behavior for `--flag=value` completion flows.
 * Parser tag customization API:
   `Parser.SetTagPrefix(...)` and `Parser.SetFlagTags(...)`.
 * Global environment variable prefix support via `Parser.SetEnvPrefix(...)`.

@@ -17,6 +17,9 @@ func TestWriteNamedCompletionBash(t *testing.T) {
 	if !strings.Contains(got, "complete -F _my_app my-app") {
 		t.Fatalf("unexpected bash script:\n%s", got)
 	}
+	if !strings.Contains(got, "compopt -o nospace") {
+		t.Fatalf("expected nospace handling in bash script:\n%s", got)
+	}
 }
 
 func TestWriteNamedCompletionZsh(t *testing.T) {
@@ -34,6 +37,9 @@ func TestWriteNamedCompletionZsh(t *testing.T) {
 
 	if !strings.Contains(got, "compdef _my_app my-app") {
 		t.Fatalf("missing zsh compdef command:\n%s", got)
+	}
+	if !strings.Contains(got, "compadd -S '' --") {
+		t.Fatalf("missing zsh nospace completion branch:\n%s", got)
 	}
 }
 

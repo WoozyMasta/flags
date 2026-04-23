@@ -38,12 +38,13 @@ func (t *TestComplete) Complete(match string) []Completion {
 }
 
 var completionTestOptions struct {
-	Verbose  bool `short:"v" long:"verbose" description:"Verbose messages"`
-	Debug    bool `short:"d" long:"debug" description:"Enable debug"`
-	Info     bool `short:"i" description:"Display info"`
-	Version  bool `long:"version" description:"Show version"`
-	Required bool `long:"required" required:"true" description:"This is required"`
-	Hidden   bool `long:"hidden" hidden:"true" description:"This is hidden"`
+	Verbose  bool   `short:"v" long:"verbose" long-alias:"chatty" short-alias:"V" description:"Verbose messages"`
+	Debug    bool   `short:"d" long:"debug" description:"Enable debug"`
+	Info     bool   `short:"i" description:"Display info"`
+	Version  bool   `long:"version" description:"Show version"`
+	Mode     string `long:"mode" choices:"fast;safe;full" description:"Run mode"`
+	Required bool   `long:"required" required:"true" description:"This is required"`
+	Hidden   bool   `long:"hidden" hidden:"true" description:"This is hidden"`
 
 	AddCommand struct {
 		Positional struct {
@@ -65,7 +66,7 @@ var completionTestOptions struct {
 	RemoveCommand struct {
 		Other bool     `short:"o"`
 		File  Filename `short:"f" long:"filename"`
-	} `command:"rm" description:"remove an item"`
+	} `command:"rm" aliases:"remove;delete" description:"remove an item"`
 
 	RenameCommand struct {
 		Completed TestComplete `short:"c" long:"completed"`
@@ -121,7 +122,7 @@ func init() {
 		{
 			// Short names
 			[]string{makeShortName("")},
-			[]string{makeLongName("debug"), makeLongName("required"), makeLongName("verbose"), makeLongName("version"), makeShortName("i")},
+			[]string{makeLongName("chatty"), makeLongName("debug"), makeLongName("mode"), makeLongName("required"), makeLongName("verbose"), makeLongName("version"), makeShortName("i")},
 			false,
 		},
 
@@ -142,7 +143,7 @@ func init() {
 		{
 			// Long names
 			[]string{"--"},
-			[]string{"--debug", "--required", "--verbose", "--version"},
+			[]string{"--chatty", "--debug", "--mode", "--required", "--verbose", "--version"},
 			false,
 		},
 
@@ -150,7 +151,9 @@ func init() {
 			// Long names with descriptions
 			[]string{"--"},
 			[]string{
+				"--chatty    # Verbose messages",
 				"--debug     # Enable debug",
+				"--mode      # Run mode",
 				"--required  # This is required",
 				"--verbose   # Verbose messages",
 				"--version   # Show version",
@@ -168,7 +171,7 @@ func init() {
 		{
 			// Commands
 			[]string{""},
-			[]string{"add", "add-multi", "add-multi-flag", "rename", "rm"},
+			[]string{"add", "add-multi", "add-multi-flag", "delete", "remove", "rename", "rm"},
 			false,
 		},
 
@@ -179,6 +182,8 @@ func init() {
 				"add             # add an item",
 				"add-multi       # add multiple items",
 				"add-multi-flag  # add multiple items via flags",
+				"delete          # remove an item",
+				"remove          # remove an item",
 				"rename          # rename an item",
 				"rm              # remove an item",
 			},
@@ -188,7 +193,7 @@ func init() {
 		{
 			// Commands partial
 			[]string{"r"},
-			[]string{"rename", "rm"},
+			[]string{"remove", "rename", "rm"},
 			false,
 		},
 
@@ -286,6 +291,30 @@ func init() {
 			false,
 		},
 		{
+			// Choice completion
+			[]string{"--mode", "f"},
+			[]string{"fast", "full"},
+			false,
+		},
+		{
+			// Choice completion with equals form
+			[]string{"--mode=f"},
+			[]string{"--mode=fast", "--mode=full"},
+			false,
+		},
+		{
+			// Bool completion for inline assignment when AllowBoolValues is enabled.
+			[]string{"--debug=t"},
+			[]string{"--debug=true"},
+			false,
+		},
+		{
+			// Bool completion should suggest both values on empty inline argument.
+			[]string{"--debug="},
+			[]string{"--debug=false", "--debug=true"},
+			false,
+		},
+		{
 			// Multiple flag filename
 			[]string{"add-multi-flag", makeShortName("f"), filepath.Join(completionTestSourcedir, "completion")},
 			completionTestFilename,
@@ -295,7 +324,7 @@ func init() {
 }
 
 func TestCompletion(t *testing.T) {
-	p := NewParser(&completionTestOptions, Default)
+	p := NewParser(&completionTestOptions, Default|AllowBoolValues)
 	c := &completion{parser: p}
 
 	for _, test := range completionTests {
@@ -342,7 +371,7 @@ func TestParserCompletion(t *testing.T) {
 			out <- buf.String()
 		}()
 
-		p := NewParser(&completionTestOptions, None)
+		p := NewParser(&completionTestOptions, None|AllowBoolValues)
 
 		p.CompletionHandler = func(items []Completion) {
 			comp := &completion{parser: p}

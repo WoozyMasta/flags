@@ -106,6 +106,7 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 
 	var results []Completion
 	repeats := map[string]bool{}
+	seen := map[string]bool{}
 
 	var longprefix string
 	var shortprefix string
@@ -120,34 +121,68 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 
 	options := c.collectOptionsForCompletion(s)
 
+	appendResult := func(item string, description string) {
+		if item == "" || seen[item] {
+			return
+		}
+		seen[item] = true
+		results = append(results, Completion{
+			Item:        item,
+			Description: description,
+		})
+	}
+
 	for _, opt := range options {
-		name := opt.LongNameWithNamespace()
-		if name == "" {
+		if opt.Hidden {
 			continue
 		}
-		if strings.HasPrefix(name, match) && !opt.Hidden {
-			results = append(results, Completion{
-				Item:        longprefix + name,
-				Description: opt.Description,
-			})
 
-			if short {
-				repeats[string(opt.ShortName)] = true
+		names := make([]string, 0, 1+len(opt.LongAliases))
+		if name := opt.LongNameWithNamespace(); name != "" {
+			names = append(names, name)
+		}
+		names = append(names, opt.LongAliasesWithNamespace()...)
+
+		for _, name := range names {
+			if strings.HasPrefix(name, match) {
+				appendResult(longprefix+name, opt.Description)
+
+				if short {
+					if opt.ShortName != 0 {
+						repeats[string(opt.ShortName)] = true
+					}
+
+					for _, shortAlias := range opt.ShortAliases {
+						if shortAlias != 0 {
+							repeats[string(shortAlias)] = true
+						}
+					}
+				}
 			}
 		}
 	}
 
 	if short {
 		for _, opt := range options {
-			if opt.ShortName == 0 {
+			if opt.Hidden {
 				continue
 			}
-			name := string(opt.ShortName)
-			if _, exist := repeats[name]; !exist && strings.HasPrefix(name, match) && !opt.Hidden {
-				results = append(results, Completion{
-					Item:        shortprefix + name,
-					Description: opt.Description,
-				})
+
+			shortNames := make([]rune, 0, 1+len(opt.ShortAliases))
+			if opt.ShortName != 0 {
+				shortNames = append(shortNames, opt.ShortName)
+			}
+			shortNames = append(shortNames, opt.ShortAliases...)
+
+			for _, shortName := range shortNames {
+				if shortName == 0 {
+					continue
+				}
+
+				name := string(shortName)
+				if _, exist := repeats[name]; !exist && strings.HasPrefix(name, match) {
+					appendResult(shortprefix+name, opt.Description)
+				}
 			}
 		}
 	}
@@ -174,20 +209,52 @@ func (c *completion) completeNamesForShortPrefix(s *parseState, prefix string, m
 
 func (c *completion) completeCommands(s *parseState, match string) []Completion {
 	n := make([]Completion, 0, len(s.command.commands))
+	seen := make(map[string]bool)
+
+	add := func(item string, description string) {
+		if item == "" || seen[item] {
+			return
+		}
+
+		seen[item] = true
+		n = append(n, Completion{
+			Item:        item,
+			Description: description,
+		})
+	}
 
 	for _, cmd := range s.command.commands {
-		if cmd.data != c && !cmd.Hidden && strings.HasPrefix(cmd.Name, match) {
-			n = append(n, Completion{
-				Item:        cmd.Name,
-				Description: cmd.ShortDescription,
-			})
+		if cmd.data == c || cmd.Hidden {
+			continue
+		}
+
+		if strings.HasPrefix(cmd.Name, match) {
+			add(cmd.Name, cmd.ShortDescription)
+		}
+
+		for _, alias := range cmd.Aliases {
+			if strings.HasPrefix(alias, match) {
+				add(alias, cmd.ShortDescription)
+			}
 		}
 	}
 
 	return n
 }
 
-func (c *completion) completeValue(value reflect.Value, prefix string, match string) []Completion {
+func completeChoices(choices []string, prefix string, match string) []Completion {
+	ret := make([]Completion, 0, len(choices))
+
+	for _, choice := range choices {
+		if strings.HasPrefix(choice, match) {
+			ret = append(ret, Completion{Item: prefix + choice})
+		}
+	}
+
+	return ret
+}
+
+func (c *completion) completeValue(opt *Option, value reflect.Value, prefix string, match string) []Completion {
 	if value.Kind() == reflect.Slice {
 		value = reflect.New(value.Type().Elem())
 	}
@@ -201,6 +268,14 @@ func (c *completion) completeValue(value reflect.Value, prefix string, match str
 		if cmp, ok = value.Addr().Interface().(Completer); ok {
 			ret = cmp.Complete(match)
 		}
+	}
+
+	if ret == nil && opt != nil && opt.isBool() && (c.parser.Options&AllowBoolValues) != None {
+		return completeChoices([]string{"true", "false"}, prefix, match)
+	}
+
+	if ret == nil && opt != nil && len(opt.Choices) > 0 {
+		return completeChoices(opt.Choices, prefix, match)
 	}
 
 	for i, v := range ret {
@@ -294,7 +369,7 @@ func (c *completion) complete(args []string) []Completion {
 	switch {
 	case opt != nil:
 		// Completion for the argument of 'opt'
-		ret = c.completeValue(opt.value, "", lastarg)
+		ret = c.completeValue(opt, opt.value, "", lastarg)
 	case argumentStartsOption(lastarg):
 		// Complete the option
 		prefix, optname, islong := stripOptionPrefix(lastarg)
@@ -306,7 +381,7 @@ func (c *completion) complete(args []string) []Completion {
 			sname := string(rname)
 
 			if opt := s.lookup.shortNames[sname]; opt != nil && opt.canArgument() {
-				ret = c.completeValue(opt.value, prefix+sname, optname[n:])
+				ret = c.completeValue(opt, opt.value, prefix+sname, optname[n:])
 			} else {
 				ret = c.completeNamesForShortPrefix(s, prefix, optname)
 				optionNameCompletion = true
@@ -319,7 +394,7 @@ func (c *completion) complete(args []string) []Completion {
 			}
 
 			if opt != nil {
-				ret = c.completeValue(opt.value, prefix+optname+split, argument)
+				ret = c.completeValue(opt, opt.value, prefix+optname+split, argument)
 			}
 		case islong:
 			ret = c.completeNamesForLongPrefix(s, prefix, optname)
@@ -330,7 +405,7 @@ func (c *completion) complete(args []string) []Completion {
 		}
 	case len(s.positional) > 0:
 		// Complete for positional argument
-		ret = c.completeValue(s.positional[0].value, "", lastarg)
+		ret = c.completeValue(nil, s.positional[0].value, "", lastarg)
 	case len(s.command.commands) > 0:
 		// Complete for command
 		ret = c.completeCommands(s, lastarg)
@@ -385,9 +460,15 @@ func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, comman
 	case CompletionShellBash:
 		_, err := fmt.Fprintf(w, `_%[1]s() {
 	args=("${COMP_WORDS[@]:1:$COMP_CWORD}")
+	cur="${COMP_WORDS[COMP_CWORD]}"
 
 	local IFS=$'\n'
 	COMPREPLY=($(GO_FLAGS_COMPLETION=1 ${COMP_WORDS[0]} "${args[@]}"))
+
+	if [[ "$cur" == --*=* || "$cur" == -*=* ]]; then
+		compopt -o nospace 2>/dev/null
+	fi
+
 	return 0
 }
 
@@ -400,11 +481,17 @@ complete -F _%[1]s %[2]s
 _%[1]s() {
 	local -a completions
 	local IFS=$'\n'
+	local cur="${words[CURRENT]}"
 
 	completions=($(GO_FLAGS_COMPLETION=1 "${words[@]}"))
 	(( ${#completions} )) || return 1
 
-	compadd -- "${completions[@]}"
+	if [[ "$cur" == --*=* || "$cur" == -*=* ]]; then
+		compadd -S '' -- "${completions[@]}"
+	else
+		compadd -- "${completions[@]}"
+	fi
+
 	return 0
 }
 
