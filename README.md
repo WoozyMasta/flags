@@ -485,8 +485,9 @@ Common help behavior flags:
 * `PrintHelpOnStderr`: print auto-help (`ErrHelp`) to `stderr`.
 * `PrintErrorsOnStdout`: print non-help parse errors to `stdout`.
 * `VersionFlag`: add built-in `-V/--version` output (`ErrVersion`).
-* `ShowCommandAliases`: show command aliases in the `Available commands`
-  section.
+* `ShowCommandAliases`: force showing command aliases in the `Available commands`
+  section even when a command has no short description (without this flag,
+  aliases are shown only for commands with short descriptions).
 * `ShowRepeatableInHelp`: append a `repeatable` marker for slice/map options.
 * `HideEnvInHelp`: hide env placeholders (`$ENV`/`%ENV%`) in built-in help.
 * `SetTerminalTitle`: set terminal title during parsing (uses parser `Name`

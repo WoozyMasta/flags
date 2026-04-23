@@ -247,8 +247,9 @@ const (
 	// uppercased and punctuation is replaced with underscores.
 	EnvProvisioning
 
-	// ShowCommandAliases appends command aliases in the built-in help command
-	// list for commands without short descriptions.
+	// ShowCommandAliases forces alias display in the built-in "Available commands"
+	// list even when a command has no short description. Without this flag,
+	// aliases are shown only for commands that already render a short description.
 	ShowCommandAliases
 
 	// ShowRepeatableInHelp appends a repeatable marker to option descriptions
