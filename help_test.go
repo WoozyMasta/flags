@@ -745,6 +745,34 @@ func TestWrapTextKeepWhitespace(t *testing.T) {
 	}
 }
 
+func TestWrapTextUsesDisplayWidth(t *testing.T) {
+	s := "Переопределить язык для справки, ошибок и текста приложения"
+
+	got := wrapText(s, 76, "", true)
+	if strings.Contains(got, "\n") {
+		t.Fatalf("did not expect early wrap for Cyrillic text, got:\n%s", got)
+	}
+
+	got = wrapText(s, 36, "", true)
+	expected := "Переопределить язык для справки,\nошибок и текста приложения"
+	assertDiff(t, got, expected, "wrapped cyrillic text")
+}
+
+func TestTextWidthHandlesWideAndANSIText(t *testing.T) {
+	if got := textWidth("abc"); got != 3 {
+		t.Fatalf("unexpected ascii width: %d", got)
+	}
+	if got := textWidth("ошибка"); got != 6 {
+		t.Fatalf("unexpected cyrillic width: %d", got)
+	}
+	if got := textWidth("日本"); got != 4 {
+		t.Fatalf("unexpected wide text width: %d", got)
+	}
+	if got := textWidth("\x1b[31mошибка\x1b[0m"); got != 6 {
+		t.Fatalf("unexpected ansi text width: %d", got)
+	}
+}
+
 func TestHelpAdaptiveLayoutKeepsDescriptionWidth(t *testing.T) {
 	var opts struct {
 		Format string `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" choice:"prefer-human-readable-markdown-with-inline-metadata" choice:"prefer-machine-readable-json-with-stable-field-order" choice:"prefer-manpage-compatible-plain-text-with-unicode-disabled" description:"Description marker for adaptive layout"`

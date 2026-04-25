@@ -133,9 +133,24 @@ func (c *Command) SetShortDescription(description string) {
 	c.ShortDescription = description
 }
 
+// SetShortDescriptionI18nKey sets i18n key for command short description.
+func (c *Command) SetShortDescriptionI18nKey(key string) {
+	c.Group.SetShortDescriptionI18nKey(key)
+}
+
 // SetLongDescription updates command long description.
 func (c *Command) SetLongDescription(description string) {
 	c.LongDescription = description
+}
+
+// SetLongDescriptionI18nKey sets i18n key for command long description.
+func (c *Command) SetLongDescriptionI18nKey(key string) {
+	c.Group.SetLongDescriptionI18nKey(key)
+}
+
+// SetIniName updates stable INI section token used for this command block.
+func (c *Command) SetIniName(name string) {
+	c.Group.SetIniName(name)
 }
 
 // SetHidden controls command visibility in help/completion/docs.
@@ -270,6 +285,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				if len(name) == 0 {
 					name = field.Name
 				}
+				nameI18n := m.Get(FlagTagArgNameI18n)
+				descriptionI18n := m.Get(FlagTagArgDescriptionI18n)
+				if descriptionI18n == "" {
+					descriptionI18n = m.Get(FlagTagDescriptionI18n)
+				}
 
 				required := -1
 				requiredMaximum := -1
@@ -302,14 +322,17 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				}
 
 				arg := &Arg{
-					Name:            name,
-					Description:     m.Get(FlagTagDescription),
-					Default:         def,
-					Required:        required,
-					RequiredMaximum: requiredMaximum,
+					Name:               name,
+					NameI18nKey:        nameI18n,
+					Description:        m.Get(FlagTagDescription),
+					DescriptionI18nKey: descriptionI18n,
+					Default:            def,
+					Required:           required,
+					RequiredMaximum:    requiredMaximum,
 
 					value: realval.Field(i),
 					tag:   m,
+					cmd:   c,
 				}
 
 				c.args = append(c.args, arg)
@@ -343,6 +366,25 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 			shortDescription := mtag.Get(FlagTagDescription)
 			longDescription := mtag.Get(FlagTagLongDescription)
+			shortDescriptionI18n := mtag.Get(FlagTagDescriptionI18n)
+			if shortDescriptionI18n == "" {
+				shortDescriptionI18n = mtag.Get(FlagTagCommandI18n)
+			}
+			longDescriptionI18n := mtag.Get(FlagTagLongDescriptionI18n)
+			iniGroup := mtag.Get(FlagTagIniGroup)
+			if iniGroup == "" {
+				iniGroup = mtag.Get(FlagTagIniName)
+			}
+
+			if (shortDescriptionI18n != "" || longDescriptionI18n != "") && iniGroup == "" {
+				return true, newErrorf(
+					ErrInvalidTag,
+					"command `%s' uses localized description tags and must define `%s' for a stable INI section name",
+					subcommand,
+					FlagTagIniGroup,
+				)
+			}
+
 			delimiter := parserTagListDelimiter(c.parser())
 			aliases, err := collectTagValues(mtag, FlagTagAlias, FlagTagAliases, sfield.Name, delimiter)
 			if err != nil {
@@ -376,6 +418,9 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 			subc.Hidden = hidden
 			subc.Immediate = immediate
+			subc.IniName = iniGroup
+			subc.ShortDescriptionI18nKey = shortDescriptionI18n
+			subc.LongDescriptionI18nKey = longDescriptionI18n
 
 			if subcommandsOptional {
 				subc.SubcommandsOptional = true
@@ -541,18 +586,38 @@ func (c *Command) groupByName(name string) *Group {
 	}
 
 	for _, subc := range c.commands {
-		prefix := subc.Name + "."
+		for _, commandName := range subc.iniLookupNames() {
+			prefix := commandName + "."
 
-		if strings.HasPrefix(name, prefix) {
-			if grp := subc.groupByName(name[len(prefix):]); grp != nil {
-				return grp
+			if strings.HasPrefix(name, prefix) {
+				if grp := subc.groupByName(name[len(prefix):]); grp != nil {
+					return grp
+				}
+			} else if name == commandName {
+				return subc.Group
 			}
-		} else if name == subc.Name {
-			return subc.Group
 		}
 	}
 
 	return nil
+}
+
+func (c *Command) iniSectionName() string {
+	if c.Group != nil && c.IniName != "" {
+		return c.IniName
+	}
+
+	return c.Name
+}
+
+func (c *Command) iniLookupNames() []string {
+	ret := []string{c.Name}
+
+	if name := c.iniSectionName(); name != "" && name != c.Name {
+		ret = append(ret, name)
+	}
+
+	return ret
 }
 
 type commandList []*Command

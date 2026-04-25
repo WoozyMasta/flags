@@ -183,86 +183,98 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 
 	version := info.Version
 	if version == "" {
-		version = "unknown"
+		version = p.i18nText("version.value.unknown", "unknown")
 	}
 
 	commit := info.Revision
 	if commit == "" {
-		commit = "unknown"
+		commit = p.i18nText("version.value.unknown", "unknown")
 	}
 
-	built := "unknown"
+	built := p.i18nText("version.value.unknown", "unknown")
 	if !info.RevisionTime.IsZero() {
 		built = info.RevisionTime.Format(time.RFC3339)
 	}
 
 	file := info.File
 	if file == "" {
-		file = "unknown"
+		file = p.i18nText("version.value.unknown", "unknown")
 	}
 
 	url := info.URL
 	if url == "" {
-		url = "unknown"
+		url = p.i18nText("version.value.unknown", "unknown")
 	}
 
 	path := info.Path
 	if path == "" {
-		path = "unknown"
+		path = p.i18nText("version.value.unknown", "unknown")
 	}
 
 	module := info.ModulePath
 	if module == "" {
-		module = "unknown"
+		module = p.i18nText("version.value.unknown", "unknown")
 	}
 
 	goVersion := info.GoVersion
 	if goVersion == "" {
-		goVersion = "unknown"
+		goVersion = p.i18nText("version.value.unknown", "unknown")
 	}
 
-	target := "unknown/unknown"
+	targetUnknown := p.i18nText("version.value.unknown", "unknown")
+	target := targetUnknown + "/" + targetUnknown
 	if info.GOOS != "" || info.GOARCH != "" {
 		goos := info.GOOS
 		goarch := info.GOARCH
 		if goos == "" {
-			goos = "unknown"
+			goos = targetUnknown
 		}
 		if goarch == "" {
-			goarch = "unknown"
+			goarch = targetUnknown
 		}
 		target = goos + "/" + goarch
 	}
 
+	fileLabel := p.i18nText("version.label.file", "file")
+	versionLabel := p.i18nText("version.label.version", "version")
+	commitLabel := p.i18nText("version.label.commit", "commit")
+	builtLabel := p.i18nText("version.label.built", "built")
+	urlLabel := p.i18nText("version.label.url", "url")
+	pathLabel := p.i18nText("version.label.path", "path")
+	moduleLabel := p.i18nText("version.label.module", "module")
+	modifiedLabel := p.i18nText("version.label.modified", "modified")
+	goLabel := p.i18nText("version.label.go", "go")
+	targetLabel := p.i18nText("version.label.target", "target")
+
 	if (fields & VersionFieldFile) != 0 {
-		_, _ = fmt.Fprintf(w, "file:     %s\n", file)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", fileLabel+":", file)
 	}
 	if (fields & VersionFieldVersion) != 0 {
-		_, _ = fmt.Fprintf(w, "version:  %s\n", version)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", versionLabel+":", version)
 	}
 	if (fields & VersionFieldCommit) != 0 {
-		_, _ = fmt.Fprintf(w, "commit:   %s\n", commit)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", commitLabel+":", commit)
 	}
 	if (fields & VersionFieldBuilt) != 0 {
-		_, _ = fmt.Fprintf(w, "built:    %s\n", built)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", builtLabel+":", built)
 	}
 	if (fields & VersionFieldURL) != 0 {
-		_, _ = fmt.Fprintf(w, "url:      %s\n", url)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", urlLabel+":", url)
 	}
 	if (fields & VersionFieldPath) != 0 {
-		_, _ = fmt.Fprintf(w, "path:     %s\n", path)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", pathLabel+":", path)
 	}
 	if (fields & VersionFieldModule) != 0 {
-		_, _ = fmt.Fprintf(w, "module:   %s\n", module)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", moduleLabel+":", module)
 	}
 	if (fields & VersionFieldModified) != 0 {
-		_, _ = fmt.Fprintf(w, "modified: %t\n", info.Modified)
+		_, _ = fmt.Fprintf(w, "%-9s %t\n", modifiedLabel+":", info.Modified)
 	}
 	if (fields & VersionFieldGoVersion) != 0 {
-		_, _ = fmt.Fprintf(w, "go:       %s\n", goVersion)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", goLabel+":", goVersion)
 	}
 	if (fields & VersionFieldTarget) != 0 {
-		_, _ = fmt.Fprintf(w, "target:   %s\n", target)
+		_, _ = fmt.Fprintf(w, "%-9s %s\n", targetLabel+":", target)
 	}
 }
 

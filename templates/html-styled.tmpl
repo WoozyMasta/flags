@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ quoteHTML .Doc.Name }} CLI Documentation</title>
+  <title>{{ quoteHTML .Doc.Name }} {{ i18n "doc.tmpl.html.title.suffix" }}</title>
   <style>
     :root {
       --bg: #f6f7fb;
@@ -153,13 +153,16 @@
       <pre>{{ quoteHTML .Doc.Name }} {{ quoteHTML .Doc.Usage }}</pre>
     </header>
 
+{{- if .Doc.LongDescription }}
     <section>
-      <h2>Description</h2>
+      <h2>{{ i18n "doc.tmpl.html.section.description" }}</h2>
       <p>{{ quoteHTML .Doc.LongDescription }}</p>
     </section>
+{{- end }}
 
+{{- if .Doc.Groups }}
     <section>
-      <h2>Options</h2>
+      <h2>{{ i18n "doc.tmpl.html.section.options" }}</h2>
 {{- range .Doc.Groups }}
 {{- if .ShortDescription }}
       <h3>{{ quoteHTML .ShortDescription }}</h3>
@@ -174,34 +177,35 @@
 {{ defaultValue .Default }}
 {{- if .Description }} - {{ quoteHTML .Description }}{{ end }}
           <div class="meta">
-{{- if .Required }}<span class="chip required">required</span>{{ end }}
-{{- if hiddenMark .Hidden }}<span class="chip hidden">hidden</span>{{ end }}
-{{- if .Env }}<span class="chip">env {{ quoteHTML .Env }}</span>{{ end }}
-{{- if .Choices }}<span class="chip">choices {{ quoteHTML (join .Choices ", ") }}</span>{{ end }}
-{{- if .Optional }}<span class="chip">optional {{ quoteHTML .OptionalVal }}</span>{{ end }}
-{{- if .IniName }}<span class="chip">ini {{ quoteHTML .IniName }}</span>{{ end }}
-{{- if .Terminator }}<span class="chip">term {{ quoteHTML .Terminator }}</span>{{ end }}
-{{- if .KeyValueDelim }}<span class="chip">kv {{ quoteHTML .KeyValueDelim }}</span>{{ end }}
-{{- if .DefaultMask }}<span class="chip">mask {{ quoteHTML .DefaultMask }}</span>{{ end }}
+{{- if .Required }}<span class="chip required">{{ i18n "doc.tmpl.html.required" }}</span>{{ end }}
+{{- if hiddenMark .Hidden }}<span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>{{ end }}
+{{- if .Env }}<span class="chip">{{ i18n "doc.tmpl.html.meta.env" }} {{ quoteHTML .Env }}</span>{{ end }}
+{{- if .Choices }}<span class="chip">{{ i18n "doc.tmpl.html.meta.choices" }} {{ quoteHTML (join .Choices ", ") }}</span>{{ end }}
+{{- if .Optional }}<span class="chip">{{ i18n "doc.tmpl.html.meta.optional" }} {{ quoteHTML .OptionalVal }}</span>{{ end }}
+{{- if .IniName }}<span class="chip">{{ i18n "doc.tmpl.html.meta.ini" }} {{ quoteHTML .IniName }}</span>{{ end }}
+{{- if .Terminator }}<span class="chip">{{ i18n "doc.tmpl.html.meta.term" }} {{ quoteHTML .Terminator }}</span>{{ end }}
+{{- if .KeyValueDelim }}<span class="chip">{{ i18n "doc.tmpl.html.meta.kv" }} {{ quoteHTML .KeyValueDelim }}</span>{{ end }}
+{{- if .DefaultMask }}<span class="chip">{{ i18n "doc.tmpl.html.meta.mask" }} {{ quoteHTML .DefaultMask }}</span>{{ end }}
           </div>
         </li>
 {{- end }}
       </ul>
 {{- end }}
     </section>
+{{- end }}
 
 {{- if .Doc.Commands }}
     <section>
-      <h2>Commands</h2>
+      <h2>{{ i18n "doc.tmpl.html.section.commands" }}</h2>
 {{- range .Doc.Commands }}
       <article>
         <h3>{{ quoteHTML .Name }}</h3>
         <p>{{ quoteHTML .ShortDescription }}</p>
 {{- if .UsageLine }}
-        <p><strong>Usage:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
+        <p><strong>{{ i18n "doc.tmpl.html.label.usage" }}:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
 {{- end }}
 {{- if .Aliases }}
-        <p><strong>Aliases:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
+        <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
 {{- end }}
       </article>
 {{- end }}

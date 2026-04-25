@@ -1,34 +1,39 @@
 # {{ .Doc.Name }}
 
-## NAME
+## {{ i18n "doc.tmpl.markdown.section.name" }}
 
-**{{ .Doc.Name }}** - {{ .Doc.ShortDescription }}
+**{{ .Doc.Name }}**{{ if .Doc.ShortDescription }} - {{ .Doc.ShortDescription }}{{ end }}
 
-## SYNOPSIS
+## {{ i18n "doc.tmpl.markdown.section.synopsis" }}
 
 {{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
 
-## DESCRIPTION
+{{ if .Doc.LongDescription }}
+## {{ i18n "doc.tmpl.markdown.section.description" }}
 
 {{ .Doc.LongDescription }}
+{{ end }}
 
-## OPTIONS
+{{ if .Doc.Groups }}
+## {{ i18n "doc.tmpl.markdown.section.options" }}
 
 {{ range .Doc.Groups }}
 {{ if .ShortDescription }}
 ### {{ .ShortDescription }}
 {{ end }}
 
-|Option|Description|Default|Env|Required|
-|---|---|---|---|---|
+{{ $showDefault := hasOptionDefaults . }}{{ $showEnv := hasOptionEnv . }}
+|{{ i18n "doc.tmpl.markdown.table.option" }}|{{ i18n "doc.tmpl.markdown.table.description" }}{{ if $showDefault }}|{{ i18n "doc.tmpl.markdown.table.default" }}{{ end }}{{ if $showEnv }}|{{ i18n "doc.tmpl.markdown.table.env" }}{{ end }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
+|---|---{{ if $showDefault }}|---{{ end }}{{ if $showEnv }}|---{{ end }}|---|
 {{ range .Options }}
-|{{ codeJoin (optionForms .) }}|{{ .Description }}{{ if hiddenMark .Hidden }} **(hidden)**{{ end }}{{ if .Choices }}; choices: {{ code (join .Choices ", ") }}{{ end }}{{ if .Optional }}; optional: {{ code .OptionalVal }}{{ end }}{{ if .Terminator }}; terminator: {{ code .Terminator }}{{ end }}{{ if ne .Order 0 }}; order: {{ .Order }}{{ end }}|{{ .Default }}|{{ .Env }}{{ if .EnvDelim }} ({{ .EnvDelim }}){{ end }}{{ if .IniName }}; ini: {{ code .IniName }}{{ end }}{{ if .KeyValueDelim }}; kv delim: {{ code .KeyValueDelim }}{{ end }}{{ if .Base }}; base: {{ code .Base }}{{ end }}{{ if .UnquoteTag }}; unquote: {{ code .UnquoteTag }}{{ end }}{{ if .DefaultMask }}; default mask: {{ code .DefaultMask }}{{ end }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+|{{ codeJoin (optionForms .) }}|{{ .Description }}{{ if hiddenMark .Hidden }} **({{ i18n "doc.tmpl.markdown.hidden" }})**{{ end }}{{ if .Choices }}; {{ i18n "doc.tmpl.markdown.label.choices_lower" }}: {{ code (join .Choices ", ") }}{{ end }}{{ if .Optional }}; {{ i18n "doc.tmpl.markdown.label.optional_lower" }}: {{ code .OptionalVal }}{{ end }}{{ if .Terminator }}; {{ i18n "doc.tmpl.markdown.label.terminator_lower" }}: {{ code .Terminator }}{{ end }}{{ if ne .Order 0 }}; {{ i18n "doc.tmpl.markdown.label.order_lower" }}: {{ .Order }}{{ end }}{{ if $showDefault }}|{{ .Default }}{{ end }}{{ if $showEnv }}|{{ .Env }}{{ if .EnvDelim }} ({{ .EnvDelim }}){{ end }}{{ if .IniName }}; {{ i18n "doc.tmpl.markdown.label.ini_lower" }}: {{ code .IniName }}{{ end }}{{ if .KeyValueDelim }}; {{ i18n "doc.tmpl.markdown.label.kv_delim_lower" }}: {{ code .KeyValueDelim }}{{ end }}{{ if .Base }}; {{ i18n "doc.tmpl.markdown.label.base_lower" }}: {{ code .Base }}{{ end }}{{ if .UnquoteTag }}; {{ i18n "doc.tmpl.markdown.label.unquote_lower" }}: {{ code .UnquoteTag }}{{ end }}{{ if .DefaultMask }}; {{ i18n "doc.tmpl.markdown.label.default_mask_lower" }}: {{ code .DefaultMask }}{{ end }}{{ end }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
 {{ end }}
 
+{{ end }}
 {{ end }}
 
 {{ if .Doc.Commands }}
-## COMMANDS
+## {{ i18n "doc.tmpl.markdown.section.commands" }}
 
 {{ range .Doc.Commands }}
 {{ template "command" . }}
@@ -36,12 +41,12 @@
 {{ end }}
 
 {{ if .Doc.Args }}
-## ARGUMENTS
+## {{ i18n "doc.tmpl.markdown.section.arguments" }}
 
-|Name|Description|Required|
+|{{ i18n "doc.tmpl.markdown.table.name" }}|{{ i18n "doc.tmpl.markdown.table.description" }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
 |---|---|---|
 {{ range .Doc.Args }}
-|{{ code .Name }}|{{ .Description }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+|{{ code .Name }}|{{ .Description }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
 {{ end }}
 {{ end }}
 
@@ -55,11 +60,11 @@
 
 {{ end }}
 {{ if .UsageLine }}
-**Usage:** {{ code .UsageLine }}
+**{{ i18n "doc.tmpl.markdown.label.usage" }}:** {{ code .UsageLine }}
 
 {{ end }}
 {{ if .Aliases }}
-**Aliases:** {{ join .Aliases ", " }}
+**{{ i18n "doc.tmpl.markdown.label.aliases" }}:** {{ join .Aliases ", " }}
 
 {{ end }}
 {{ range .Groups }}
@@ -68,20 +73,21 @@
 
 {{ end }}
 
-|Option|Description|Default|Env|Required|
-|---|---|---|---|---|
+{{ $showDefault := hasOptionDefaults . }}{{ $showEnv := hasOptionEnv . }}
+|{{ i18n "doc.tmpl.markdown.table.option" }}|{{ i18n "doc.tmpl.markdown.table.description" }}{{ if $showDefault }}|{{ i18n "doc.tmpl.markdown.table.default" }}{{ end }}{{ if $showEnv }}|{{ i18n "doc.tmpl.markdown.table.env" }}{{ end }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
+|---|---{{ if $showDefault }}|---{{ end }}{{ if $showEnv }}|---{{ end }}|---|
 {{ range .Options }}
-|{{ codeJoin (optionForms .) }}|{{ .Description }}{{ if hiddenMark .Hidden }} **(hidden)**{{ end }}{{ if .Choices }}; choices: {{ code (join .Choices ", ") }}{{ end }}{{ if .Optional }}; optional: {{ code .OptionalVal }}{{ end }}{{ if .Terminator }}; terminator: {{ code .Terminator }}{{ end }}{{ if ne .Order 0 }}; order: {{ .Order }}{{ end }}|{{ .Default }}|{{ .Env }}{{ if .EnvDelim }} ({{ .EnvDelim }}){{ end }}{{ if .IniName }}; ini: {{ code .IniName }}{{ end }}{{ if .KeyValueDelim }}; kv delim: {{ code .KeyValueDelim }}{{ end }}{{ if .Base }}; base: {{ code .Base }}{{ end }}{{ if .UnquoteTag }}; unquote: {{ code .UnquoteTag }}{{ end }}{{ if .DefaultMask }}; default mask: {{ code .DefaultMask }}{{ end }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+|{{ codeJoin (optionForms .) }}|{{ .Description }}{{ if hiddenMark .Hidden }} **({{ i18n "doc.tmpl.markdown.hidden" }})**{{ end }}{{ if .Choices }}; {{ i18n "doc.tmpl.markdown.label.choices_lower" }}: {{ code (join .Choices ", ") }}{{ end }}{{ if .Optional }}; {{ i18n "doc.tmpl.markdown.label.optional_lower" }}: {{ code .OptionalVal }}{{ end }}{{ if .Terminator }}; {{ i18n "doc.tmpl.markdown.label.terminator_lower" }}: {{ code .Terminator }}{{ end }}{{ if ne .Order 0 }}; {{ i18n "doc.tmpl.markdown.label.order_lower" }}: {{ .Order }}{{ end }}{{ if $showDefault }}|{{ .Default }}{{ end }}{{ if $showEnv }}|{{ .Env }}{{ if .EnvDelim }} ({{ .EnvDelim }}){{ end }}{{ if .IniName }}; {{ i18n "doc.tmpl.markdown.label.ini_lower" }}: {{ code .IniName }}{{ end }}{{ if .KeyValueDelim }}; {{ i18n "doc.tmpl.markdown.label.kv_delim_lower" }}: {{ code .KeyValueDelim }}{{ end }}{{ if .Base }}; {{ i18n "doc.tmpl.markdown.label.base_lower" }}: {{ code .Base }}{{ end }}{{ if .UnquoteTag }}; {{ i18n "doc.tmpl.markdown.label.unquote_lower" }}: {{ code .UnquoteTag }}{{ end }}{{ if .DefaultMask }}; {{ i18n "doc.tmpl.markdown.label.default_mask_lower" }}: {{ code .DefaultMask }}{{ end }}{{ end }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
 {{ end }}
 
 {{ end }}
 {{ if .Args }}
-#### Arguments
+#### {{ i18n "doc.tmpl.markdown.section.arguments_title" }}
 
-|Name|Description|Required|
+|{{ i18n "doc.tmpl.markdown.table.name" }}|{{ i18n "doc.tmpl.markdown.table.description" }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
 |---|---|---|
 {{ range .Args }}
-|{{ code .Name }}|{{ .Description }}|{{ if .Required }}yes{{ else }}no{{ end }}|
+|{{ code .Name }}|{{ .Description }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
 {{ end }}
 
 {{ end }}

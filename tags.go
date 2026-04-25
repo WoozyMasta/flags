@@ -15,8 +15,12 @@ const (
 	FlagTagRequired = "required"
 	// FlagTagDescription provides short help text.
 	FlagTagDescription = "description"
+	// FlagTagDescriptionI18n provides i18n key for description text.
+	FlagTagDescriptionI18n = "description-i18n"
 	// FlagTagLongDescription provides extended text (used in man/help contexts).
 	FlagTagLongDescription = "long-description"
+	// FlagTagLongDescriptionI18n provides i18n key for long description text.
+	FlagTagLongDescriptionI18n = "long-description-i18n"
 	// FlagTagNoFlag excludes the field from command-line flag parsing.
 	FlagTagNoFlag = "no-flag"
 	// FlagTagOptional marks option argument as optional.
@@ -39,6 +43,8 @@ const (
 	FlagTagEnvDelim = "env-delim"
 	// FlagTagValueName customizes value placeholder shown in help.
 	FlagTagValueName = "value-name"
+	// FlagTagValueNameI18n provides i18n key for value placeholder.
+	FlagTagValueNameI18n = "value-name-i18n"
 	// FlagTagChoice restricts allowed option values (repeatable).
 	FlagTagChoice = "choice"
 	// FlagTagChoices restricts allowed option values as a delimiter-separated list.
@@ -51,16 +57,22 @@ const (
 	FlagTagBase = "base"
 	// FlagTagIniName overrides key name used for INI parse/write.
 	FlagTagIniName = "ini-name"
+	// FlagTagIniGroup overrides section token used for INI group/command blocks.
+	FlagTagIniGroup = "ini-group"
 	// FlagTagNoIni excludes the field from INI parse/write.
 	FlagTagNoIni = "no-ini"
 	// FlagTagGroup turns a nested struct field into an option group.
 	FlagTagGroup = "group"
+	// FlagTagGroupI18n provides i18n key for group display name.
+	FlagTagGroupI18n = "group-i18n"
 	// FlagTagNamespace prefixes long option names for grouped options.
 	FlagTagNamespace = "namespace"
 	// FlagTagEnvNamespace prefixes environment variable names for grouped options.
 	FlagTagEnvNamespace = "env-namespace"
 	// FlagTagCommand turns a field into a subcommand.
 	FlagTagCommand = "command"
+	// FlagTagCommandI18n provides i18n key for command short description.
+	FlagTagCommandI18n = "command-i18n"
 	// FlagTagSubCommandsOptional makes child subcommands optional.
 	FlagTagSubCommandsOptional = "subcommands-optional"
 	// FlagTagAlias adds extra command names (repeatable).
@@ -79,6 +91,10 @@ const (
 	FlagTagPositionalArgs = "positional-args"
 	// FlagTagPositionalArgName sets display name for a positional argument.
 	FlagTagPositionalArgName = "positional-arg-name"
+	// FlagTagArgNameI18n provides i18n key for positional arg display name.
+	FlagTagArgNameI18n = "arg-name-i18n"
+	// FlagTagArgDescriptionI18n provides i18n key for positional arg description.
+	FlagTagArgDescriptionI18n = "arg-description-i18n"
 	// FlagTagKeyValueDelimiter customizes map key/value delimiter.
 	FlagTagKeyValueDelimiter = "key-value-delimiter"
 	// FlagTagPassAfterNonOption enables command-local strict POSIX behavior.
@@ -104,8 +120,12 @@ type FlagTags struct {
 	Required string
 	// Description maps to short help text tag (default: "description").
 	Description string
+	// DescriptionI18n maps to i18n key for short help text (default: "description-i18n").
+	DescriptionI18n string
 	// LongDescription maps to extended help/man text tag (default: "long-description").
 	LongDescription string
+	// LongDescriptionI18n maps to i18n key for extended help/man text.
+	LongDescriptionI18n string
 	// NoFlag maps to option exclusion tag (default: "no-flag").
 	NoFlag string
 	// Optional maps to optional argument marker tag (default: "optional").
@@ -128,6 +148,8 @@ type FlagTags struct {
 	EnvDelim string
 	// ValueName maps to help placeholder tag (default: "value-name").
 	ValueName string
+	// ValueNameI18n maps to i18n key for value placeholder tag.
+	ValueNameI18n string
 	// Choice maps to allowed-values tag (default: "choice").
 	Choice string
 	// Choices maps to multi allowed-values tag (default: "choices").
@@ -140,16 +162,22 @@ type FlagTags struct {
 	Base string
 	// IniName maps to INI key override tag (default: "ini-name").
 	IniName string
+	// IniGroup maps to INI section token override tag (default: "ini-group").
+	IniGroup string
 	// NoIni maps to INI exclusion tag (default: "no-ini").
 	NoIni string
 	// Group maps to group declaration tag (default: "group").
 	Group string
+	// GroupI18n maps to i18n key for group display name tag.
+	GroupI18n string
 	// Namespace maps to long-name namespace tag (default: "namespace").
 	Namespace string
 	// EnvNamespace maps to env-name namespace tag (default: "env-namespace").
 	EnvNamespace string
 	// Command maps to subcommand declaration tag (default: "command").
 	Command string
+	// CommandI18n maps to i18n key for command short description tag.
+	CommandI18n string
 	// SubCommandsOptional maps to optional-subcommands tag (default: "subcommands-optional").
 	SubCommandsOptional string
 	// Alias maps to command alias tag (default: "alias").
@@ -168,6 +196,10 @@ type FlagTags struct {
 	PositionalArgs string
 	// PositionalArgName maps to positional display-name tag (default: "positional-arg-name").
 	PositionalArgName string
+	// ArgNameI18n maps to positional i18n display-name tag.
+	ArgNameI18n string
+	// ArgDescriptionI18n maps to positional i18n description tag.
+	ArgDescriptionI18n string
 	// KeyValueDelimiter maps to map key/value delimiter tag (default: "key-value-delimiter").
 	KeyValueDelimiter string
 	// PassAfterNonOption maps to command-local POSIX behavior tag (default: "pass-after-non-option").
@@ -190,7 +222,9 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Long:                prefix + FlagTagLong,
 		Required:            prefix + FlagTagRequired,
 		Description:         prefix + FlagTagDescription,
+		DescriptionI18n:     prefix + FlagTagDescriptionI18n,
 		LongDescription:     prefix + FlagTagLongDescription,
+		LongDescriptionI18n: prefix + FlagTagLongDescriptionI18n,
 		NoFlag:              prefix + FlagTagNoFlag,
 		Optional:            prefix + FlagTagOptional,
 		OptionalValue:       prefix + FlagTagOptionalValue,
@@ -202,17 +236,21 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		AutoEnv:             prefix + FlagTagAutoEnv,
 		EnvDelim:            prefix + FlagTagEnvDelim,
 		ValueName:           prefix + FlagTagValueName,
+		ValueNameI18n:       prefix + FlagTagValueNameI18n,
 		Choice:              prefix + FlagTagChoice,
 		Choices:             prefix + FlagTagChoices,
 		Hidden:              prefix + FlagTagHidden,
 		Immediate:           prefix + FlagTagImmediate,
 		Base:                prefix + FlagTagBase,
 		IniName:             prefix + FlagTagIniName,
+		IniGroup:            prefix + FlagTagIniGroup,
 		NoIni:               prefix + FlagTagNoIni,
 		Group:               prefix + FlagTagGroup,
+		GroupI18n:           prefix + FlagTagGroupI18n,
 		Namespace:           prefix + FlagTagNamespace,
 		EnvNamespace:        prefix + FlagTagEnvNamespace,
 		Command:             prefix + FlagTagCommand,
+		CommandI18n:         prefix + FlagTagCommandI18n,
 		SubCommandsOptional: prefix + FlagTagSubCommandsOptional,
 		Alias:               prefix + FlagTagAlias,
 		Aliases:             prefix + FlagTagAliases,
@@ -222,6 +260,8 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		ShortAliases:        prefix + FlagTagShortAliases,
 		PositionalArgs:      prefix + FlagTagPositionalArgs,
 		PositionalArgName:   prefix + FlagTagPositionalArgName,
+		ArgNameI18n:         prefix + FlagTagArgNameI18n,
+		ArgDescriptionI18n:  prefix + FlagTagArgDescriptionI18n,
 		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
 		PassAfterNonOption:  prefix + FlagTagPassAfterNonOption,
 		Unquote:             prefix + FlagTagUnquote,
@@ -244,8 +284,14 @@ func (t FlagTags) withDefaults() FlagTags {
 	if t.Description != "" {
 		d.Description = t.Description
 	}
+	if t.DescriptionI18n != "" {
+		d.DescriptionI18n = t.DescriptionI18n
+	}
 	if t.LongDescription != "" {
 		d.LongDescription = t.LongDescription
+	}
+	if t.LongDescriptionI18n != "" {
+		d.LongDescriptionI18n = t.LongDescriptionI18n
 	}
 	if t.NoFlag != "" {
 		d.NoFlag = t.NoFlag
@@ -280,6 +326,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	if t.ValueName != "" {
 		d.ValueName = t.ValueName
 	}
+	if t.ValueNameI18n != "" {
+		d.ValueNameI18n = t.ValueNameI18n
+	}
 	if t.Choice != "" {
 		d.Choice = t.Choice
 	}
@@ -298,11 +347,17 @@ func (t FlagTags) withDefaults() FlagTags {
 	if t.IniName != "" {
 		d.IniName = t.IniName
 	}
+	if t.IniGroup != "" {
+		d.IniGroup = t.IniGroup
+	}
 	if t.NoIni != "" {
 		d.NoIni = t.NoIni
 	}
 	if t.Group != "" {
 		d.Group = t.Group
+	}
+	if t.GroupI18n != "" {
+		d.GroupI18n = t.GroupI18n
 	}
 	if t.Namespace != "" {
 		d.Namespace = t.Namespace
@@ -312,6 +367,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Command != "" {
 		d.Command = t.Command
+	}
+	if t.CommandI18n != "" {
+		d.CommandI18n = t.CommandI18n
 	}
 	if t.SubCommandsOptional != "" {
 		d.SubCommandsOptional = t.SubCommandsOptional
@@ -339,6 +397,12 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.PositionalArgName != "" {
 		d.PositionalArgName = t.PositionalArgName
+	}
+	if t.ArgNameI18n != "" {
+		d.ArgNameI18n = t.ArgNameI18n
+	}
+	if t.ArgDescriptionI18n != "" {
+		d.ArgDescriptionI18n = t.ArgDescriptionI18n
 	}
 	if t.KeyValueDelimiter != "" {
 		d.KeyValueDelimiter = t.KeyValueDelimiter

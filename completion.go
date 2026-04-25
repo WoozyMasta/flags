@@ -145,7 +145,7 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 
 		for _, name := range names {
 			if strings.HasPrefix(name, match) {
-				appendResult(longprefix+name, opt.Description)
+				appendResult(longprefix+name, opt.localizedDescription())
 
 				if short {
 					if opt.ShortName != 0 {
@@ -181,7 +181,7 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 
 				name := string(shortName)
 				if _, exist := repeats[name]; !exist && strings.HasPrefix(name, match) {
-					appendResult(shortprefix+name, opt.Description)
+					appendResult(shortprefix+name, opt.localizedDescription())
 				}
 			}
 		}
@@ -229,12 +229,12 @@ func (c *completion) completeCommands(s *parseState, match string) []Completion 
 		}
 
 		if strings.HasPrefix(cmd.Name, match) {
-			add(cmd.Name, cmd.ShortDescription)
+			add(cmd.Name, cmd.localizedShortDescription())
 		}
 
 		for _, alias := range cmd.Aliases {
 			if strings.HasPrefix(alias, match) {
-				add(alias, cmd.ShortDescription)
+				add(alias, cmd.localizedShortDescription())
 			}
 		}
 	}

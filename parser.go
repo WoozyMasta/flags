@@ -52,6 +52,9 @@ type Parser struct {
 	// Type rank order used by OptionSortByType.
 	optionTypeRank map[OptionTypeClass]int
 
+	// Optional i18n runtime config and resolvers.
+	i18n *i18nState
+
 	// Active struct-tag mapping used while scanning option metadata.
 	flagTags FlagTags
 
@@ -355,6 +358,7 @@ func NewParser(data any, options Options) *Parser {
 
 		if err == nil {
 			g.parent = p
+			g.SetShortDescriptionI18nKey("help.group.application_options")
 		}
 
 		p.internalError = err
@@ -480,7 +484,9 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.Long:                FlagTagLong,
 		p.flagTags.Required:            FlagTagRequired,
 		p.flagTags.Description:         FlagTagDescription,
+		p.flagTags.DescriptionI18n:     FlagTagDescriptionI18n,
 		p.flagTags.LongDescription:     FlagTagLongDescription,
+		p.flagTags.LongDescriptionI18n: FlagTagLongDescriptionI18n,
 		p.flagTags.NoFlag:              FlagTagNoFlag,
 		p.flagTags.Optional:            FlagTagOptional,
 		p.flagTags.OptionalValue:       FlagTagOptionalValue,
@@ -492,17 +498,21 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.AutoEnv:             FlagTagAutoEnv,
 		p.flagTags.EnvDelim:            FlagTagEnvDelim,
 		p.flagTags.ValueName:           FlagTagValueName,
+		p.flagTags.ValueNameI18n:       FlagTagValueNameI18n,
 		p.flagTags.Choice:              FlagTagChoice,
 		p.flagTags.Choices:             FlagTagChoices,
 		p.flagTags.Hidden:              FlagTagHidden,
 		p.flagTags.Immediate:           FlagTagImmediate,
 		p.flagTags.Base:                FlagTagBase,
 		p.flagTags.IniName:             FlagTagIniName,
+		p.flagTags.IniGroup:            FlagTagIniGroup,
 		p.flagTags.NoIni:               FlagTagNoIni,
 		p.flagTags.Group:               FlagTagGroup,
+		p.flagTags.GroupI18n:           FlagTagGroupI18n,
 		p.flagTags.Namespace:           FlagTagNamespace,
 		p.flagTags.EnvNamespace:        FlagTagEnvNamespace,
 		p.flagTags.Command:             FlagTagCommand,
+		p.flagTags.CommandI18n:         FlagTagCommandI18n,
 		p.flagTags.SubCommandsOptional: FlagTagSubCommandsOptional,
 		p.flagTags.Alias:               FlagTagAlias,
 		p.flagTags.Aliases:             FlagTagAliases,
@@ -512,6 +522,8 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 		p.flagTags.ShortAliases:        FlagTagShortAliases,
 		p.flagTags.PositionalArgs:      FlagTagPositionalArgs,
 		p.flagTags.PositionalArgName:   FlagTagPositionalArgName,
+		p.flagTags.ArgNameI18n:         FlagTagArgNameI18n,
+		p.flagTags.ArgDescriptionI18n:  FlagTagArgDescriptionI18n,
 		p.flagTags.KeyValueDelimiter:   FlagTagKeyValueDelimiter,
 		p.flagTags.PassAfterNonOption:  FlagTagPassAfterNonOption,
 		p.flagTags.Unquote:             FlagTagUnquote,
@@ -555,6 +567,7 @@ type groupSpec struct {
 	longDescription  string
 	namespace        string
 	envNamespace     string
+	iniName          string
 	hidden           bool
 }
 
@@ -563,6 +576,7 @@ type commandSpec struct {
 	name                string
 	shortDescription    string
 	longDescription     string
+	iniName             string
 	aliases             []string
 	subcommandsOptional bool
 	passAfterNonOption  bool
@@ -584,6 +598,7 @@ func (p *Parser) rebuildTree() error {
 			longDescription:  g.LongDescription,
 			namespace:        g.Namespace,
 			envNamespace:     g.EnvNamespace,
+			iniName:          g.IniName,
 			hidden:           g.Hidden,
 			data:             g.data,
 		})
@@ -594,6 +609,7 @@ func (p *Parser) rebuildTree() error {
 			name:                c.Name,
 			shortDescription:    c.ShortDescription,
 			longDescription:     c.LongDescription,
+			iniName:             c.IniName,
 			aliases:             append([]string(nil), c.Aliases...),
 			subcommandsOptional: c.SubcommandsOptional,
 			passAfterNonOption:  c.PassAfterNonOption,
@@ -617,6 +633,7 @@ func (p *Parser) rebuildTree() error {
 		}
 		ng.Namespace = g.namespace
 		ng.EnvNamespace = g.envNamespace
+		ng.IniName = g.iniName
 		ng.Hidden = g.hidden
 	}
 
@@ -626,6 +643,7 @@ func (p *Parser) rebuildTree() error {
 			return fmt.Errorf("failed to rescan command %q: %w", c.name, err)
 		}
 		nc.Aliases = c.aliases
+		nc.IniName = c.iniName
 		nc.SubcommandsOptional = c.subcommandsOptional
 		nc.PassAfterNonOption = c.passAfterNonOption
 		nc.Hidden = c.hidden
@@ -837,7 +855,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		})
 
 		if s.err == nil {
-			if err := s.applyPositionalDefaults((p.Options & DefaultsIfEmpty) != None); err != nil {
+			if err := s.applyPositionalDefaults(p, (p.Options&DefaultsIfEmpty) != None); err != nil {
 				s.err = err
 			}
 		}
@@ -950,10 +968,10 @@ func (p *parseState) checkRequired(parser *Parser) error {
 							arguments = "argument"
 						}
 
-						reqnames = append(reqnames, "`"+arg.Name+" (at least "+strconv.Itoa(arg.Required)+" "+arguments+")`")
+						reqnames = append(reqnames, "`"+arg.localizedName()+" (at least "+strconv.Itoa(arg.Required)+" "+arguments+")`")
 					} else if arg.RequiredMaximum != -1 && arg.value.Len() > arg.RequiredMaximum {
 						if arg.RequiredMaximum == 0 {
-							reqnames = append(reqnames, "`"+arg.Name+" (zero arguments)`")
+							reqnames = append(reqnames, "`"+arg.localizedName()+" (zero arguments)`")
 						} else {
 							var arguments string
 
@@ -963,11 +981,11 @@ func (p *parseState) checkRequired(parser *Parser) error {
 								arguments = "argument"
 							}
 
-							reqnames = append(reqnames, "`"+arg.Name+" (at most "+strconv.Itoa(arg.RequiredMaximum)+" "+arguments+")`")
+							reqnames = append(reqnames, "`"+arg.localizedName()+" (at most "+strconv.Itoa(arg.RequiredMaximum)+" "+arguments+")`")
 						}
 					}
 				} else {
-					reqnames = append(reqnames, "`"+arg.Name+"`")
+					reqnames = append(reqnames, "`"+arg.localizedName()+"`")
 				}
 			}
 
@@ -978,10 +996,20 @@ func (p *parseState) checkRequired(parser *Parser) error {
 			var msg string
 
 			if len(reqnames) == 1 {
-				msg = fmt.Sprintf("the required argument %s was not provided", reqnames[0])
+				msg = parser.i18nTextf(
+					"err.required.argument.single",
+					"the required argument {arg} was not provided",
+					map[string]string{"arg": reqnames[0]},
+				)
 			} else {
-				msg = fmt.Sprintf("the required arguments %s and %s were not provided",
-					strings.Join(reqnames[:len(reqnames)-1], ", "), reqnames[len(reqnames)-1])
+				msg = parser.i18nTextf(
+					"err.required.argument.multi",
+					"the required arguments {args} and {last} were not provided",
+					map[string]string{
+						"args": strings.Join(reqnames[:len(reqnames)-1], ", "),
+						"last": reqnames[len(reqnames)-1],
+					},
+				)
 			}
 
 			p.err = newError(ErrRequired, msg)
@@ -1002,10 +1030,20 @@ func (p *parseState) checkRequired(parser *Parser) error {
 	var msg string
 
 	if len(names) == 1 {
-		msg = fmt.Sprintf("the required flag %s was not specified", names[0])
+		msg = parser.i18nTextf(
+			"err.required.flag.single",
+			"the required flag {flag} was not specified",
+			map[string]string{"flag": names[0]},
+		)
 	} else {
-		msg = fmt.Sprintf("the required flags %s and %s were not specified",
-			strings.Join(names[:len(names)-1], ", "), names[len(names)-1])
+		msg = parser.i18nTextf(
+			"err.required.flag.multi",
+			"the required flags {flags} and {last} were not specified",
+			map[string]string{
+				"flags": strings.Join(names[:len(names)-1], ", "),
+				"last":  names[len(names)-1],
+			},
+		)
 	}
 
 	p.err = newError(ErrRequired, msg)
@@ -1015,6 +1053,17 @@ func (p *parseState) checkRequired(parser *Parser) error {
 func (p *parseState) estimateCommand() error {
 	commands := p.command.sortedVisibleCommands()
 	cmdnames := make([]string, len(commands))
+	parser := p.command.parser()
+	i18nTextf := func(key, fallback string, data map[string]string) string {
+		if parser == nil {
+			for k, v := range data {
+				fallback = strings.ReplaceAll(fallback, "{"+k+"}", v)
+			}
+			return fallback
+		}
+
+		return parser.i18nTextf(key, fallback, data)
+	}
 
 	for i, v := range commands {
 		cmdnames[i] = v.Name
@@ -1025,32 +1074,62 @@ func (p *parseState) estimateCommand() error {
 
 	if len(p.retargs) != 0 {
 		c, l := closestChoice(p.retargs[0], cmdnames)
-		msg = fmt.Sprintf("Unknown command `%s'", p.retargs[0])
+		msg = i18nTextf(
+			"err.command.unknown",
+			"Unknown command `{command}'",
+			map[string]string{"command": p.retargs[0]},
+		)
 		errtype = ErrUnknownCommand
 
 		switch {
 		case float32(l)/float32(len(c)) < 0.5:
-			msg = fmt.Sprintf("%s, did you mean `%s'?", msg, c)
+			msg = i18nTextf(
+				"err.command.did_you_mean",
+				"{base}, did you mean `{choice}'?",
+				map[string]string{
+					"base":   msg,
+					"choice": c,
+				},
+			)
 		case len(cmdnames) == 1:
-			msg = fmt.Sprintf("%s. You should use the %s command",
-				msg,
-				cmdnames[0])
+			msg = i18nTextf(
+				"err.command.should_use",
+				"{base}. You should use the {command} command",
+				map[string]string{
+					"base":    msg,
+					"command": cmdnames[0],
+				},
+			)
 		case len(cmdnames) > 1:
-			msg = fmt.Sprintf("%s. Please specify one command of: %s or %s",
-				msg,
-				strings.Join(cmdnames[:len(cmdnames)-1], ", "),
-				cmdnames[len(cmdnames)-1])
+			msg = i18nTextf(
+				"err.command.specify_one",
+				"{base}. Please specify one command of: {commands} or {last}",
+				map[string]string{
+					"base":     msg,
+					"commands": strings.Join(cmdnames[:len(cmdnames)-1], ", "),
+					"last":     cmdnames[len(cmdnames)-1],
+				},
+			)
 		}
 	} else {
 		errtype = ErrCommandRequired
 
 		switch {
 		case len(cmdnames) == 1:
-			msg = fmt.Sprintf("Please specify the %s command", cmdnames[0])
+			msg = i18nTextf(
+				"err.command.required.single",
+				"Please specify the {command} command",
+				map[string]string{"command": cmdnames[0]},
+			)
 		case len(cmdnames) > 1:
-			msg = fmt.Sprintf("Please specify one command of: %s or %s",
-				strings.Join(cmdnames[:len(cmdnames)-1], ", "),
-				cmdnames[len(cmdnames)-1])
+			msg = i18nTextf(
+				"err.command.required.multi",
+				"Please specify one command of: {commands} or {last}",
+				map[string]string{
+					"commands": strings.Join(cmdnames[:len(cmdnames)-1], ", "),
+					"last":     cmdnames[len(cmdnames)-1],
+				},
+			)
 		}
 	}
 
@@ -1061,7 +1140,14 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 	switch {
 	case !option.canArgument():
 		if hasArgument && (p.Options&AllowBoolValues) == None {
-			return newErrorf(ErrNoArgumentForBool, "bool flag `%s' cannot have an argument", option)
+			return newError(
+				ErrNoArgumentForBool,
+				p.i18nTextf(
+					"err.bool.no_argument",
+					"bool flag `{flag}' cannot have an argument",
+					map[string]string{"flag": option.String()},
+				),
+			)
 		}
 		var value *string
 		if hasArgument {
@@ -1070,7 +1156,14 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 		err = option.Set(value)
 	case option.isTerminated():
 		if hasArgument {
-			return newErrorf(ErrExpectedArgument, "terminated option flag `%s' cannot use inline argument syntax", option)
+			return newError(
+				ErrExpectedArgument,
+				p.i18nTextf(
+					"err.terminated.inline_argument",
+					"terminated option flag `{flag}' cannot use inline argument syntax",
+					map[string]string{"flag": option.String()},
+				),
+			)
 		}
 
 		args, collectErr := p.collectTerminatedArgs(s, option)
@@ -1089,7 +1182,14 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 			if validationErr := option.isValidValue(arg); validationErr != nil {
 				return newErrorf(ErrExpectedArgument, "%s", validationErr)
 			} else if p.Options&PassDoubleDash != 0 && arg == "--" {
-				return newErrorf(ErrExpectedArgument, "expected argument for flag `%s', but got double dash `--'", option)
+				return newError(
+					ErrExpectedArgument,
+					p.i18nTextf(
+						"err.expected_argument.double_dash",
+						"expected argument for flag `{flag}', but got double dash `--'",
+						map[string]string{"flag": option.String()},
+					),
+				)
 			}
 		}
 
@@ -1111,7 +1211,14 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 			}
 		}
 	default:
-		err = newErrorf(ErrExpectedArgument, "expected argument for flag `%s'", option)
+		err = newError(
+			ErrExpectedArgument,
+			p.i18nTextf(
+				"err.expected_argument.flag",
+				"expected argument for flag `{flag}'",
+				map[string]string{"flag": option.String()},
+			),
+		)
 	}
 
 	if err != nil {
@@ -1150,17 +1257,28 @@ func (p *Parser) collectTerminatedArgs(s *parseState, option *Option) ([]string,
 }
 
 func (p *Parser) marshalError(option *Option, err error) *Error {
-	s := "invalid argument for flag `%s'"
+	expected := ""
 
-	expected := p.expectedType(option)
-
-	if expected != "" {
-		s = s + " (expected " + expected + ")"
+	if expectedType := p.expectedType(option); expectedType != "" {
+		expected = p.i18nTextf(
+			"err.marshal.expected",
+			" (expected {type})",
+			map[string]string{"type": expectedType},
+		)
 	}
 
-	return newErrorf(ErrMarshal, s+": %s",
-		option,
-		err.Error())
+	return newError(
+		ErrMarshal,
+		p.i18nTextf(
+			"err.marshal.option",
+			"invalid argument for flag `{flag}'{expected}: {error}",
+			map[string]string{
+				"flag":     option.String(),
+				"expected": expected,
+				"error":    err.Error(),
+			},
+		),
+	)
 }
 
 func (p *Parser) expectedType(option *Option) string {
@@ -1182,7 +1300,14 @@ func (p *Parser) parseLong(s *parseState, name string, argument string, hasArgum
 		return p.parseOption(s, name, option, canarg, argument, hasArgument)
 	}
 
-	return newErrorf(ErrUnknownFlag, "unknown flag `%s'", name)
+	return newError(
+		ErrUnknownFlag,
+		p.i18nTextf(
+			"err.unknown_flag",
+			"unknown flag `{flag}'",
+			map[string]string{"flag": name},
+		),
+	)
 }
 
 func (p *Parser) splitShortConcatArg(s *parseState, optname string) (string, *string) {
@@ -1224,7 +1349,14 @@ func (p *Parser) parseShort(s *parseState, optname string, argument string, hasA
 				return err
 			}
 		} else {
-			return newErrorf(ErrUnknownFlag, "unknown flag `%s'", shortname)
+			return newError(
+				ErrUnknownFlag,
+				p.i18nTextf(
+					"err.unknown_flag",
+					"unknown flag `{flag}'",
+					map[string]string{"flag": shortname},
+				),
+			)
 		}
 
 		// Only the first option can have a concatted argument, so just
@@ -1256,7 +1388,7 @@ func (p *parseState) addArgs(args ...string) error {
 	return nil
 }
 
-func (p *parseState) applyPositionalDefaults(defaultsIfEmpty bool) error {
+func (p *parseState) applyPositionalDefaults(parser *Parser, defaultsIfEmpty bool) error {
 	for len(p.positional) > 0 {
 		arg := p.positional[0]
 
@@ -1265,11 +1397,16 @@ func (p *parseState) applyPositionalDefaults(defaultsIfEmpty bool) error {
 		}
 
 		if err := arg.applyDefault(defaultsIfEmpty); err != nil {
-			p.err = newErrorf(
+			p.err = newError(
 				ErrMarshal,
-				"invalid default for argument `%s': %v",
-				arg.Name,
-				err,
+				parser.i18nTextf(
+					"err.marshal.argument_default",
+					"invalid default for argument `{arg}': {error}",
+					map[string]string{
+						"arg":   arg.localizedName(),
+						"error": err.Error(),
+					},
+				),
 			)
 			return p.err
 		}
@@ -1299,7 +1436,14 @@ func (p *Parser) parseNonOption(s *parseState) error {
 			if err := s.addArgs(s.arg); err != nil {
 				return err
 			}
-			return newErrorf(ErrUnknownCommand, "Unknown command `%s'", s.arg)
+			return newError(
+				ErrUnknownCommand,
+				p.i18nTextf(
+					"err.command.unknown",
+					"Unknown command `{command}'",
+					map[string]string{"command": s.arg},
+				),
+			)
 		}
 	}
 

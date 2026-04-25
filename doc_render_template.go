@@ -80,7 +80,7 @@ func (p *Parser) writeDocHTML(w io.Writer, cfg docRenderOptions) error {
 }
 
 func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[string]any, cfg docRenderOptions) error {
-	tpl, err := template.New("doc").Funcs(docTemplateFuncs(cfg.markHidden, p.optionRenderFormat())).Parse(templateText)
+	tpl, err := template.New("doc").Funcs(docTemplateFuncs(p, cfg.markHidden, p.optionRenderFormat())).Parse(templateText)
 	if err != nil {
 		return err
 	}
@@ -94,8 +94,32 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 	return tpl.Execute(w, ctx)
 }
 
-func docTemplateFuncs(markHidden bool, format optionRenderFormat) template.FuncMap {
+func docTemplateFuncs(parser *Parser, markHidden bool, format optionRenderFormat) template.FuncMap {
 	return template.FuncMap{
+		"i18n": func(key string, fallback ...string) string {
+			resolvedFallback := ""
+			if len(fallback) > 0 {
+				resolvedFallback = fallback[0]
+			} else if key != "" {
+				if value, ok := lookupI18nCatalog(builtinI18nCatalog, "en", key); ok {
+					resolvedFallback = value
+				}
+			}
+
+			if parser == nil {
+				if resolvedFallback != "" {
+					return resolvedFallback
+				}
+				return key
+			}
+
+			text := parser.i18nText(key, resolvedFallback)
+			if text == "" {
+				return key
+			}
+			return text
+		},
+
 		"hiddenMark": func(hidden bool) bool {
 			return markHidden && hidden
 		},
@@ -221,6 +245,30 @@ func docTemplateFuncs(markHidden bool, format optionRenderFormat) template.FuncM
 		"isCollection": func(opt docOption) bool {
 			return opt.TypeClass == OptionTypeCollection
 		},
+
+		"hasOptionDefaults": func(group docGroup) bool {
+			for _, opt := range group.Options {
+				if opt.Default != "" {
+					return true
+				}
+			}
+			return false
+		},
+
+		"hasOptionEnv": func(group docGroup) bool {
+			for _, opt := range group.Options {
+				if opt.Env != "" ||
+					opt.EnvDelim != "" ||
+					opt.IniName != "" ||
+					opt.KeyValueDelim != "" ||
+					opt.Base != "" ||
+					opt.UnquoteTag != "" ||
+					opt.DefaultMask != "" {
+					return true
+				}
+			}
+			return false
+		},
 	}
 }
 
@@ -320,6 +368,9 @@ func normalizeMarkdownRender(in string) string {
 	isBulletLine := func(s string) bool {
 		return strings.HasPrefix(s, "- ") || strings.HasPrefix(s, "* ")
 	}
+	isListContinuation := func(s string) bool {
+		return strings.HasPrefix(s, "  ") || strings.HasPrefix(s, "\t")
+	}
 
 	nextNonEmpty := func(start int) string {
 		for i := start; i < len(lines); i++ {
@@ -346,15 +397,17 @@ func normalizeMarkdownRender(in string) string {
 			}
 
 			prev := ""
+			prevRaw := ""
 			for j := len(out) - 1; j >= 0; j-- {
 				if strings.TrimSpace(out[j]) != "" {
+					prevRaw = out[j]
 					prev = strings.TrimSpace(out[j])
 					break
 				}
 			}
 
 			next := nextNonEmpty(i + 1)
-			if isBulletLine(prev) && isBulletLine(next) {
+			if isBulletLine(next) && (isBulletLine(prev) || isListContinuation(prevRaw)) {
 				continue
 			}
 

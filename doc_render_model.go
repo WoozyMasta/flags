@@ -91,8 +91,8 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 
 	model := docParser{
 		Name:             p.Name,
-		ShortDescription: p.ShortDescription,
-		LongDescription:  p.LongDescription,
+		ShortDescription: p.localizedShortDescription(),
+		LongDescription:  p.localizedLongDescription(),
 		GeneratedAt:      docNow(),
 		Usage:            usage,
 		Args:             buildDocArgs(p.Command, cfg.includeHidden),
@@ -134,8 +134,8 @@ func buildDocCommand(
 
 	doc := docCommand{
 		Name:                fullName,
-		ShortDescription:    cmd.ShortDescription,
-		LongDescription:     cmd.LongDescription,
+		ShortDescription:    cmd.localizedShortDescription(),
+		LongDescription:     cmd.localizedLongDescription(),
 		UsageLine:           usageLine,
 		Aliases:             append([]string(nil), cmd.Aliases...),
 		SubcommandsOptional: cmd.SubcommandsOptional,
@@ -169,8 +169,8 @@ func buildDocGroups(
 		}
 
 		docGroup := docGroup{
-			ShortDescription: group.ShortDescription,
-			LongDescription:  group.LongDescription,
+			ShortDescription: group.localizedShortDescription(),
+			LongDescription:  group.localizedLongDescription(),
 			Namespace:        group.Namespace,
 			EnvNamespace:     group.EnvNamespace,
 			Hidden:           group.Hidden,
@@ -197,10 +197,10 @@ func buildDocGroups(
 func buildDocOption(opt *Option, format optionRenderFormat) docOption {
 	doc := docOption{
 		Long:          opt.LongNameWithNamespace(),
-		ValueName:     opt.ValueName,
+		ValueName:     opt.localizedValueName(),
 		Optional:      opt.OptionalArgument,
 		Required:      opt.Required,
-		Description:   opt.Description,
+		Description:   opt.localizedDescription(),
 		TypeClass:     optionTypeClass(opt),
 		Choices:       append([]string(nil), opt.Choices...),
 		DefaultRaw:    append([]string(nil), opt.Default...),
@@ -245,13 +245,14 @@ func buildDocArgs(cmd *Command, includeHidden bool) []docArg {
 	args := cmd.Args()
 	ret := make([]docArg, 0, len(args))
 	for _, arg := range args {
-		if !includeHidden && arg.Description == "" {
+		argDescription := arg.localizedDescription()
+		if !includeHidden && argDescription == "" {
 			continue
 		}
 		required := arg.Required != -1 || arg.RequiredMaximum != -1
 		ret = append(ret, docArg{
-			Name:        arg.Name,
-			Description: arg.Description,
+			Name:        arg.localizedName(),
+			Description: argDescription,
 			Required:    required,
 		})
 	}
@@ -307,11 +308,12 @@ func optionSignature(opt *Option, format optionRenderFormat) string {
 		b.WriteString(opt.LongNameWithNamespace())
 	}
 
-	if len(opt.ValueName) != 0 || opt.OptionalArgument {
+	valueName := opt.localizedValueName()
+	if len(valueName) != 0 || opt.OptionalArgument {
 		if opt.OptionalArgument {
-			fmt.Fprintf(&b, " [%s=%s]", opt.ValueName, strings.Join(quoteV(opt.OptionalValue), ", "))
+			fmt.Fprintf(&b, " [%s=%s]", valueName, strings.Join(quoteV(opt.OptionalValue), ", "))
 		} else {
-			fmt.Fprintf(&b, " %s", opt.ValueName)
+			fmt.Fprintf(&b, " %s", valueName)
 		}
 	}
 

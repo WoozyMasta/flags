@@ -2,6 +2,7 @@ package flags
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -71,6 +72,28 @@ func TestCommandInlineMulti(t *testing.T) {
 		t.Errorf("Expected to find command `c2'")
 	} else if c2 != p.Active {
 		t.Errorf("Expected to find command `c2' to be active")
+	}
+}
+
+func TestCommandI18nTagRequiresIniGroup(t *testing.T) {
+	var opts = struct {
+		Command struct {
+			Opt bool `long:"opt"`
+		} `command:"run" command-i18n:"command.run"`
+	}{}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+
+	if !strings.Contains(flagsErr.Message, FlagTagIniGroup) {
+		t.Fatalf("expected %q in error, got: %s", FlagTagIniGroup, flagsErr.Message)
 	}
 }
 

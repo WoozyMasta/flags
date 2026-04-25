@@ -35,7 +35,7 @@ func TestWriteBuiltinTemplate(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(out.String(), "## OPTIONS") {
+	if !strings.Contains(out.String(), `doc.tmpl.markdown.section.options`) {
 		t.Fatalf("expected markdown template content, got: %q", out.String())
 	}
 
@@ -80,6 +80,160 @@ func TestWriteDocMarkdownBuiltin(t *testing.T) {
 	}
 }
 
+func TestWriteDocMarkdownBuiltinLocalized(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" required:"true" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("doc-i18n", None)
+	p.ShortDescription = "Doc i18n"
+	p.LongDescription = "Long description"
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	p.SetI18n(I18nConfig{Locale: "ru"})
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+	for _, needle := range []string{
+		"## ОПЦИИ",
+		"Обязательно: `да`",
+	} {
+		if !strings.Contains(got, needle) {
+			t.Fatalf("expected %q in localized markdown output, got:\n%s", needle, got)
+		}
+	}
+}
+
+func TestWriteDocMarkdownListOptionDescriptionsUseContinuationLine(t *testing.T) {
+	var opts struct {
+		Locale string `short:"l" long:"locale" value-name:"LOCALE" description:"Override language for help, errors, and application text"`
+		Help   bool   `short:"h" long:"help" description:"Show help"`
+	}
+
+	p := NewNamedParser("doc-list", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+	shortLocale := string(defaultShortOptDelimiter) + "l LOCALE"
+	longLocale := string(defaultLongOptDelimiter) + "locale LOCALE"
+	shortHelp := string(defaultShortOptDelimiter) + "h"
+	longHelp := string(defaultLongOptDelimiter) + "help"
+	for _, needle := range []string{
+		"* `" + shortLocale + "`, `" + longLocale + "` -\n  Override language for help, errors, and application text",
+		"* `" + shortHelp + "`, `" + longHelp + "` -\n  Show help",
+	} {
+		if !strings.Contains(got, needle) {
+			t.Fatalf("expected %q in markdown list output, got:\n%s", needle, got)
+		}
+	}
+
+	if strings.Contains(got, "application text\n\n* `"+shortHelp+"`") {
+		t.Fatalf("did not expect blank line between option items, got:\n%s", got)
+	}
+}
+
+func TestWriteDocMarkdownUsesLocalizedRootDescription(t *testing.T) {
+	p := NewNamedParser("doc-i18n-root", None)
+	p.Command.SetLongDescriptionI18nKey("app.description")
+	p.SetI18n(I18nConfig{
+		Locale: "ru",
+		UserCatalog: mapCatalog{
+			"ru": {"app.description": "Локализованное описание приложения"},
+		},
+	})
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, "## ОПИСАНИЕ") {
+		t.Fatalf("expected localized description section, got:\n%s", got)
+	}
+	if !strings.Contains(got, "Локализованное описание приложения") {
+		t.Fatalf("expected localized root description, got:\n%s", got)
+	}
+}
+
+func TestWriteDocBuiltinTemplatesSkipEmptyRootSections(t *testing.T) {
+	formats := []struct {
+		name     string
+		format   DocFormat
+		template string
+		empty    []string
+	}{
+		{
+			name:     "markdown-list",
+			format:   DocFormatMarkdown,
+			template: DocTemplateMarkdownList,
+			empty:    []string{"## DESCRIPTION", "## OPTIONS"},
+		},
+		{
+			name:     "markdown-table",
+			format:   DocFormatMarkdown,
+			template: DocTemplateMarkdownTable,
+			empty:    []string{"## DESCRIPTION", "## OPTIONS"},
+		},
+		{
+			name:     "markdown-code",
+			format:   DocFormatMarkdown,
+			template: DocTemplateMarkdownCode,
+			empty:    []string{"## DESCRIPTION", "## OPTIONS"},
+		},
+		{
+			name:     "man",
+			format:   DocFormatMan,
+			template: DocTemplateManDefault,
+			empty:    []string{".SH DESCRIPTION", ".SH OPTIONS"},
+		},
+		{
+			name:     "html",
+			format:   DocFormatHTML,
+			template: DocTemplateHTMLDefault,
+			empty:    []string{"<h2>Description</h2>", "<h2>Options</h2>"},
+		},
+		{
+			name:     "html-styled",
+			format:   DocFormatHTML,
+			template: DocTemplateHTMLStyled,
+			empty:    []string{"<h2>Description</h2>", "<h2>Options</h2>"},
+		},
+	}
+
+	for _, tt := range formats {
+		t.Run(tt.name, func(t *testing.T) {
+			p := NewNamedParser("empty-doc", None)
+
+			var out bytes.Buffer
+			if err := p.WriteDoc(&out, tt.format, WithBuiltinTemplate(tt.template)); err != nil {
+				t.Fatalf("unexpected write doc error: %v", err)
+			}
+
+			got := out.String()
+			for _, needle := range tt.empty {
+				if strings.Contains(got, needle) {
+					t.Fatalf("did not expect empty section %q, got:\n%s", needle, got)
+				}
+			}
+		})
+	}
+}
+
 func TestWriteDocMarkdownBuiltinTable(t *testing.T) {
 	var opts struct {
 		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
@@ -100,13 +254,41 @@ func TestWriteDocMarkdownBuiltinTable(t *testing.T) {
 
 	got := out.String()
 	for _, needle := range []string{
-		"|Option|Description|Default|Env|Required|",
-		"|---|---|---|---|---|",
+		"|Option|Description|Required|",
+		"|---|---|---|",
 		defaultLongOptDelimiter + "verbose",
 	} {
 		if !strings.Contains(got, needle) {
 			t.Fatalf("expected %q in markdown output, got:\n%s", needle, got)
 		}
+	}
+}
+
+func TestWriteDocMarkdownBuiltinTableSkipsEmptyColumns(t *testing.T) {
+	var opts struct {
+		Plain   bool   `long:"plain" description:"Plain option"`
+		EnvOnly string `long:"env-only" env:"APP_ENV" description:"Env option"`
+		Nested  struct {
+			Help bool `long:"help" description:"Help option"`
+		} `group:"Nested"`
+	}
+
+	p := NewNamedParser("doc-table-columns", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownTable)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, "|Option|Description|Default|Environment|Required|") {
+		t.Fatalf("expected default/env columns for group with env-derived default, got:\n%s", got)
+	}
+	if !strings.Contains(got, "|Option|Description|Required|") {
+		t.Fatalf("expected compact table for group with empty default/env columns, got:\n%s", got)
 	}
 }
 

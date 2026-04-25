@@ -3,6 +3,7 @@ package flags
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -814,6 +815,54 @@ value = some other value
 	assertDiff(t, string(found), expected, "ini content")
 }
 
+func TestIniParseUnknownMessagesUseLocalizedBuiltins(t *testing.T) {
+	var opts struct {
+		Value string `long:"value"`
+	}
+
+	p := NewNamedParser("TestIniI18n", Default)
+	if _, err := p.AddGroup("Application Options", "The application options", &opts); err != nil {
+		t.Fatalf("AddGroup failed: %v", err)
+	}
+
+	p.SetI18n(I18nConfig{Locale: "ru"})
+	inip := NewIniParser(p)
+
+	err := inip.Parse(strings.NewReader("[missing]\nvalue = x\n"))
+	if err == nil {
+		t.Fatalf("expected unknown group error")
+	}
+
+	var flagsErr *Error
+	if !errors.As(err, &flagsErr) {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	if flagsErr.Type != ErrUnknownGroup {
+		t.Fatalf("expected ErrUnknownGroup, got %v", flagsErr.Type)
+	}
+
+	expectedGroupMessage := "группа опций `missing' не найдена"
+	if flagsErr.Message != expectedGroupMessage {
+		t.Fatalf("expected localized group message %q, got %q", expectedGroupMessage, flagsErr.Message)
+	}
+
+	err = inip.Parse(strings.NewReader("[Application Options]\nmissing = x\n"))
+	if err == nil {
+		t.Fatalf("expected unknown option error")
+	}
+
+	var iniErr *IniError
+	if !errors.As(err, &iniErr) {
+		t.Fatalf("expected *IniError, got %T", err)
+	}
+
+	expectedOptionMessage := "неизвестная опция: missing"
+	if iniErr.Message != expectedOptionMessage {
+		t.Fatalf("expected localized option message %q, got %q", expectedOptionMessage, iniErr.Message)
+	}
+}
+
 func TestIniParse(t *testing.T) {
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -1267,5 +1316,73 @@ func TestIniWriteExampleWrapsLongComments(t *testing.T) {
 
 	if !strings.Contains(got, "; This description is") || !strings.Contains(got, "; intentionally very long to") {
 		t.Fatalf("expected wrapped multi-line comment, got:\n%s", got)
+	}
+}
+
+func TestIniSectionNameUsesStableIniGroupKey(t *testing.T) {
+	type options struct {
+		Group struct {
+			Value bool `long:"value" description:"Toggle value"`
+		} `group:"General" ini-group:"general" group-i18n:"group.general"`
+	}
+
+	var opts options
+	parser := NewNamedParser("demo", None)
+	if _, err := parser.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("add group error: %v", err)
+	}
+
+	parser.SetI18n(I18nConfig{
+		Locale: "ru",
+		UserCatalog: mapCatalog{
+			"ru": {"group.general": "Общее"},
+		},
+	})
+
+	if _, err := parser.ParseArgs([]string{"--value"}); err != nil {
+		t.Fatalf("parse args error: %v", err)
+	}
+
+	inip := NewIniParser(parser)
+	var out bytes.Buffer
+	inip.Write(&out, IniDefault)
+	rendered := out.String()
+
+	if !strings.Contains(rendered, "[general]") {
+		t.Fatalf("expected stable ini section key, got:\n%s", rendered)
+	}
+
+	if strings.Contains(rendered, "[Общее]") {
+		t.Fatalf("ini section must not use localized group name, got:\n%s", rendered)
+	}
+
+	var fromINI options
+	readerParser := NewNamedParser("demo", None)
+	if _, err := readerParser.AddGroup("Application Options", "", &fromINI); err != nil {
+		t.Fatalf("add reader group error: %v", err)
+	}
+	readerParser.SetI18n(I18nConfig{
+		Locale: "ru",
+		UserCatalog: mapCatalog{
+			"ru": {"group.general": "Общее"},
+		},
+	})
+
+	if err := NewIniParser(readerParser).Parse(strings.NewReader("[general]\nValue = true\n")); err != nil {
+		t.Fatalf("expected [general] section to parse, got error: %v", err)
+	}
+
+	if !fromINI.Group.Value {
+		t.Fatalf("expected group value from INI to be true")
+	}
+
+	err := NewIniParser(readerParser).Parse(strings.NewReader("[Общее]\nValue = true\n"))
+	if err == nil {
+		t.Fatalf("expected localized section name to be rejected")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrUnknownGroup {
+		t.Fatalf("expected ErrUnknownGroup, got %v", err)
 	}
 }

@@ -12,13 +12,11 @@
     <h2>Synopsis</h2>
     <pre>golden-doc [OPTIONS]</pre>
   </section>
-
   <section>
     <h2>Description</h2>
     <p>Long description for golden tests.
 Includes options, groups and commands.</p>
   </section>
-
   <section>
     <h2>Options</h2>
     <h3>Application Options</h3>
@@ -26,7 +24,7 @@ Includes options, groups and commands.</p>
       <li><code>-v</code>, <code>--verbose</code> - Enable verbose output
       </li>
       <li><code>--config</code> (default: config.yaml) (required) - Path to config
-        <ul>          <li>env: <code>MY_APP_APP_CONFIG</code></li>
+        <ul>          <li>environment: <code>MY_APP_APP_CONFIG</code></li>
         </ul>
       </li>
       <li><code>--mode</code> (default: fast) - Execution mode
@@ -36,7 +34,7 @@ Includes options, groups and commands.</p>
       <li><code>--tag</code> (default: api) - Tag filter
       </li>
       <li><code>--header</code> (default: x-env:dev) - HTTP headers
-        <ul><li>key-value-delimiter: <code>:</code></li>
+        <ul><li>delimiter: <code>:</code></li>
         </ul>
       </li>
       <li><code>--level [=info]</code> - Log level
@@ -47,11 +45,11 @@ Includes options, groups and commands.</p>
     <h3>Database Options</h3>
     <ul>
       <li><code>--db.host</code> (default: 127.0.0.1) - Database host
-        <ul>          <li>env: <code>MY_APP_DB_HOST</code></li>
+        <ul>          <li>environment: <code>MY_APP_DB_HOST</code></li>
         </ul>
       </li>
       <li><code>--db.port</code> (default: 5432) - Database port
-        <ul>          <li>env: <code>MY_APP_DB_PORT</code></li>
+        <ul>          <li>environment: <code>MY_APP_DB_PORT</code></li>
         </ul>
       </li>
     </ul>

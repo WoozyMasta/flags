@@ -17,7 +17,7 @@ Includes options, groups and commands.
 
 ### Application Options
 
-|Option|Description|Default|Env|Required|
+|Option|Description|Default|Environment|Required|
 |---|---|---|---|---|
 |`-v`, `--verbose`|Enable verbose output|||no|
 |`--config`|Path to config|config.yaml|MY_APP_APP_CONFIG|yes|
@@ -28,7 +28,7 @@ Includes options, groups and commands.
 
 ### Database Options
 
-|Option|Description|Default|Env|Required|
+|Option|Description|Default|Environment|Required|
 |---|---|---|---|---|
 |`--db.host`|Database host|127.0.0.1|MY_APP_DB_HOST|no|
 |`--db.port`|Database port|5432|MY_APP_DB_PORT|no|
@@ -45,10 +45,10 @@ Execute deployment workflow.
 
 #### Run command
 
-|Option|Description|Default|Env|Required|
-|---|---|---|---|---|
-|`--force`|Force execution|||no|
-|`--plan`|Show execution plan only|||no|
+|Option|Description|Required|
+|---|---|---|
+|`--force`|Force execution|no|
+|`--plan`|Show execution plan only|no|
 
 #### Arguments
 
@@ -66,9 +66,9 @@ Read and print current status.
 
 #### Show status
 
-|Option|Description|Default|Env|Required|
-|---|---|---|---|---|
-|`--json`|JSON output|||no|
+|Option|Description|Required|
+|---|---|---|
+|`--json`|JSON output|no|
 
 ## ARGUMENTS
 

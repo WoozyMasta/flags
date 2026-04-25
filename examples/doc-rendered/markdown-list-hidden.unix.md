@@ -19,36 +19,46 @@ Includes options, groups and commands.
 
 Main options
 
-* `-v`, `--verbose` - Enable verbose output
-* `--config` - Path to config
+* `-v`, `--verbose` -
+  Enable verbose output
+* `--config` -
+  Path to config
   * Required: `yes`
   * Defaults: `config.yaml`
   * Environment: `MY_APP_APP_CONFIG`
-* `--mode` - Execution mode
+* `--mode` -
+  Execution mode
   * Defaults: `fast`
   * Choices: `fast, safe`
-* `--tag` - Tag filter
+* `--tag` -
+  Tag filter
   * Defaults: `api`
-* `--header` - HTTP headers
+* `--header` -
+  HTTP headers
   * Defaults: `x-env:dev`
-  * Key/value delimiter: `:`
-* `--secret` - Secret value **(hidden)**
+  * delimiter: `:`
+* `--secret` -
+  Secret value **(hidden)**
   * Default mask: `***`
-* `--level [=info]` - Log level
+* `--level [=info]` -
+  Log level
   * Optional value: `info`
 
 ### Database Options
 
-* `--db.host` - Database host
+* `--db.host` -
+  Database host
   * Defaults: `127.0.0.1`
   * Environment: `MY_APP_DB_HOST`
-* `--db.port` - Database port
+* `--db.port` -
+  Database port
   * Defaults: `5432`
   * Environment: `MY_APP_DB_PORT`
 
 ### Internal *(hidden group)*
 
-* `--debug` - Hidden debug selector
+* `--debug` -
+  Hidden debug selector
 
 ## COMMANDS
 
@@ -60,7 +70,8 @@ Internal command
 
 #### Internal command *(hidden group)*
 
-* `--noisy` - Noise
+* `--noisy` -
+  Noise
 
 ### run
 
@@ -74,8 +85,10 @@ Execute deployment workflow.
 
 Execute deployment workflow.
 
-* `--force` - Force execution
-* `--plan` - Show execution plan only
+* `--force` -
+  Force execution
+* `--plan` -
+  Show execution plan only
 
 #### Arguments
 
@@ -94,7 +107,8 @@ Read and print current status.
 
 Read and print current status.
 
-* `--json` - JSON output
+* `--json` -
+  JSON output
 
 ## ARGUMENTS
 

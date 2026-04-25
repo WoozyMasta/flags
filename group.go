@@ -30,16 +30,25 @@ type Group struct {
 	// message
 	ShortDescription string
 
+	// Optional i18n key for ShortDescription.
+	ShortDescriptionI18nKey string
+
 	// A long description of the group. The long
 	// description is primarily used to present information on commands
 	// (Command embeds Group) in the built-in generated help and man pages.
 	LongDescription string
+
+	// Optional i18n key for LongDescription.
+	LongDescriptionI18nKey string
 
 	// The namespace of the group
 	Namespace string
 
 	// The environment namespace of the group
 	EnvNamespace string
+
+	// Stable INI section token for this group. When empty, ShortDescription is used.
+	IniName string
 
 	// All the options in the group
 	options []*Option
@@ -91,9 +100,19 @@ func (g *Group) SetShortDescription(description string) {
 	g.ShortDescription = description
 }
 
+// SetShortDescriptionI18nKey sets i18n key for group short description.
+func (g *Group) SetShortDescriptionI18nKey(key string) {
+	g.ShortDescriptionI18nKey = key
+}
+
 // SetLongDescription updates group long description used in docs output.
 func (g *Group) SetLongDescription(description string) {
 	g.LongDescription = description
+}
+
+// SetLongDescriptionI18nKey sets i18n key for group long description.
+func (g *Group) SetLongDescriptionI18nKey(key string) {
+	g.LongDescriptionI18nKey = key
 }
 
 // SetNamespace updates long-option namespace prefix for child options.
@@ -106,6 +125,11 @@ func (g *Group) SetNamespace(namespace string) {
 func (g *Group) SetEnvNamespace(namespace string) {
 	g.EnvNamespace = namespace
 	g.touchLookupCache()
+}
+
+// SetIniName updates stable INI section token used by INI read/write.
+func (g *Group) SetIniName(name string) {
+	g.IniName = name
 }
 
 // SetHidden controls group visibility in help/completion/docs.
@@ -160,12 +184,29 @@ func (g *Group) Find(shortDescription string) *Group {
 	var ret *Group
 
 	g.eachGroup(func(gg *Group) {
-		if gg != g && strings.ToLower(gg.ShortDescription) == lshortDescription {
+		if gg == g {
+			return
+		}
+
+		if strings.ToLower(gg.ShortDescription) == lshortDescription {
+			ret = gg
+			return
+		}
+
+		if strings.ToLower(gg.IniName) == lshortDescription {
 			ret = gg
 		}
 	})
 
 	return ret
+}
+
+func (g *Group) iniSectionName() string {
+	if g.IniName != "" {
+		return g.IniName
+	}
+
+	return g.ShortDescription
 }
 
 func (g *Group) findOption(matcher func(*Option) bool) (option *Option) {
@@ -454,6 +495,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		}
 
 		description := mtag.Get(FlagTagDescription)
+		descriptionI18n := mtag.Get(FlagTagDescriptionI18n)
 		delimiter := parserTagListDelimiter(g.parser())
 		def, err := collectTagValues(mtag, FlagTagDefault, FlagTagDefaults, field.Name, delimiter)
 		if err != nil {
@@ -462,6 +504,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 
 		optionalValue := mtag.GetMany(FlagTagOptionalValue)
 		valueName := mtag.Get(FlagTagValueName)
+		valueNameI18n := mtag.Get(FlagTagValueNameI18n)
 		defaultMask := mtag.Get(FlagTagDefaultMask)
 		order := 0
 		if rawOrder := mtag.Get(FlagTagOrder); rawOrder != "" {
@@ -545,24 +588,26 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		}
 
 		option := &Option{
-			Description:      description,
-			ShortName:        short,
-			ShortAliases:     shortAliases,
-			LongName:         longname,
-			LongAliases:      longAliases,
-			Default:          def,
-			EnvDefaultKey:    envKey,
-			EnvDefaultDelim:  mtag.Get(FlagTagEnvDelim),
-			OptionalArgument: optional,
-			OptionalValue:    optionalValue,
-			Required:         required,
-			ValueName:        valueName,
-			DefaultMask:      defaultMask,
-			Choices:          choices,
-			Hidden:           hidden,
-			Immediate:        immediate,
-			Terminator:       mtag.Get(FlagTagTerminator),
-			Order:            order,
+			Description:        description,
+			DescriptionI18nKey: descriptionI18n,
+			ShortName:          short,
+			ShortAliases:       shortAliases,
+			LongName:           longname,
+			LongAliases:        longAliases,
+			Default:            def,
+			EnvDefaultKey:      envKey,
+			EnvDefaultDelim:    mtag.Get(FlagTagEnvDelim),
+			OptionalArgument:   optional,
+			OptionalValue:      optionalValue,
+			Required:           required,
+			ValueName:          valueName,
+			ValueNameI18nKey:   valueNameI18n,
+			DefaultMask:        defaultMask,
+			Choices:            choices,
+			Hidden:             hidden,
+			Immediate:          immediate,
+			Terminator:         mtag.Get(FlagTagTerminator),
+			Order:              order,
 
 			group: g,
 
@@ -671,6 +716,22 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 		}
 
 		description := mtag.Get(FlagTagDescription)
+		descriptionI18n := mtag.Get(FlagTagDescriptionI18n)
+		longDescriptionI18n := mtag.Get(FlagTagLongDescriptionI18n)
+		groupNameI18n := mtag.Get(FlagTagGroupI18n)
+		iniGroup := mtag.Get(FlagTagIniGroup)
+		if iniGroup == "" {
+			iniGroup = mtag.Get(FlagTagIniName)
+		}
+
+		if (descriptionI18n != "" || longDescriptionI18n != "" || groupNameI18n != "") && iniGroup == "" {
+			return true, newErrorf(
+				ErrInvalidTag,
+				"group `%s' uses localized description tags and must define `%s' for a stable INI section name",
+				subgroup,
+				FlagTagIniGroup,
+			)
+		}
 
 		group, err := g.AddGroup(subgroup, description, ptrval.Interface())
 
@@ -680,6 +741,13 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 
 		group.Namespace = mtag.Get(FlagTagNamespace)
 		group.EnvNamespace = mtag.Get(FlagTagEnvNamespace)
+		group.IniName = iniGroup
+		group.ShortDescriptionI18nKey = groupNameI18n
+		if longDescriptionI18n != "" {
+			group.LongDescriptionI18nKey = longDescriptionI18n
+		} else {
+			group.LongDescriptionI18nKey = descriptionI18n
+		}
 		hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, sfield.Name)
 		if err != nil {
 			return true, err

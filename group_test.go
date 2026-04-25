@@ -2,6 +2,7 @@ package flags
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -189,6 +190,28 @@ func TestGroupHiddenTagInvalidValue(t *testing.T) {
 
 	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
 		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
+func TestGroupI18nTagRequiresIniGroup(t *testing.T) {
+	var opts = struct {
+		Group struct {
+			Opt string `long:"opt"`
+		} `group:"Localized Group" group-i18n:"group.localized"`
+	}{}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+
+	if !strings.Contains(flagsErr.Message, FlagTagIniGroup) {
+		t.Fatalf("expected %q in error, got: %s", FlagTagIniGroup, flagsErr.Message)
 	}
 }
 

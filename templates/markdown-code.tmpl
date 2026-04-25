@@ -1,18 +1,21 @@
 # {{ .Doc.Name }}
 
-## NAME
+## {{ i18n "doc.tmpl.markdown.section.name" }}
 
-**{{ .Doc.Name }}** - {{ .Doc.ShortDescription }}
+**{{ .Doc.Name }}**{{ if .Doc.ShortDescription }} - {{ .Doc.ShortDescription }}{{ end }}
 
-## SYNOPSIS
+## {{ i18n "doc.tmpl.markdown.section.synopsis" }}
 
 {{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
 
-## DESCRIPTION
+{{ if .Doc.LongDescription }}
+## {{ i18n "doc.tmpl.markdown.section.description" }}
 
 {{ .Doc.LongDescription }}
+{{ end }}
 
-## OPTIONS
+{{ if .Doc.Groups }}
+## {{ i18n "doc.tmpl.markdown.section.options" }}
 
 {{ range .Doc.Groups }}
 {{ if .ShortDescription }}
@@ -21,14 +24,15 @@
 
 {{ codeFenceOpen }}
 {{ range .Options }}
-{{ join (optionForms .) ", " }}{{ if .Default }} [def: {{ .Default }}]{{ end }}{{ if .Env }} [env: {{ .Env }}{{ if .EnvDelim }}; delim={{ .EnvDelim }}{{ end }}]{{ end }}{{ if .Choices }} [choices: {{ join .Choices ", " }}]{{ end }}{{ if .Optional }} [optional: {{ .OptionalVal }}]{{ end }}{{ if .Terminator }} [term: {{ .Terminator }}]{{ end }}{{ if .Required }} [req]{{ end }}{{ if hiddenMark .Hidden }} [hidden]{{ end }}{{ if .IniName }} [ini: {{ .IniName }}]{{ end }}{{ if .KeyValueDelim }} [kv: {{ .KeyValueDelim }}]{{ end }}{{ if .Base }} [base: {{ .Base }}]{{ end }}{{ if .DefaultMask }} [mask: {{ .DefaultMask }}]{{ end }}{{ if .UnquoteTag }} [unquote: {{ .UnquoteTag }}]{{ end }}{{ if ne .Order 0 }} [order: {{ .Order }}]{{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ join (optionForms .) ", " }}{{ if .Default }} [{{ i18n "doc.tmpl.code.tag.def" }}: {{ .Default }}]{{ end }}{{ if .Env }} [{{ i18n "doc.tmpl.code.tag.env" }}: {{ .Env }}{{ if .EnvDelim }}; {{ i18n "doc.tmpl.code.tag.delim" }}={{ .EnvDelim }}{{ end }}]{{ end }}{{ if .Choices }} [{{ i18n "doc.tmpl.code.tag.choices" }}: {{ join .Choices ", " }}]{{ end }}{{ if .Optional }} [{{ i18n "doc.tmpl.code.tag.optional" }}: {{ .OptionalVal }}]{{ end }}{{ if .Terminator }} [{{ i18n "doc.tmpl.code.tag.term" }}: {{ .Terminator }}]{{ end }}{{ if .Required }} [{{ i18n "doc.tmpl.code.tag.req" }}]{{ end }}{{ if hiddenMark .Hidden }} [{{ i18n "doc.tmpl.code.tag.hidden" }}]{{ end }}{{ if .IniName }} [{{ i18n "doc.tmpl.code.tag.ini" }}: {{ .IniName }}]{{ end }}{{ if .KeyValueDelim }} [{{ i18n "doc.tmpl.code.tag.kv" }}: {{ .KeyValueDelim }}]{{ end }}{{ if .Base }} [{{ i18n "doc.tmpl.code.tag.base" }}: {{ .Base }}]{{ end }}{{ if .DefaultMask }} [{{ i18n "doc.tmpl.code.tag.mask" }}: {{ .DefaultMask }}]{{ end }}{{ if .UnquoteTag }} [{{ i18n "doc.tmpl.code.tag.unquote" }}: {{ .UnquoteTag }}]{{ end }}{{ if ne .Order 0 }} [{{ i18n "doc.tmpl.code.tag.order" }}: {{ .Order }}]{{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
 {{ end }}
 {{ codeFenceClose }}
 
 {{ end }}
+{{ end }}
 
 {{ if .Doc.Commands }}
-## COMMANDS
+## {{ i18n "doc.tmpl.markdown.section.commands" }}
 
 {{ range .Doc.Commands }}
 {{ template "command" . }}
@@ -36,11 +40,11 @@
 {{ end }}
 
 {{ if .Doc.Args }}
-## ARGUMENTS
+## {{ i18n "doc.tmpl.markdown.section.arguments" }}
 
 {{ codeFenceOpen }}
 {{ range .Doc.Args }}
-{{ .Name }}{{ if .Required }} (required){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ .Name }}{{ if .Required }} ({{ i18n "doc.tmpl.markdown.required" }}){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
 {{ end }}
 {{ codeFenceClose }}
 {{ end }}
@@ -55,11 +59,11 @@
 
 {{ end }}
 {{ if .UsageLine }}
-**Usage:** {{ code .UsageLine }}
+**{{ i18n "doc.tmpl.markdown.label.usage" }}:** {{ code .UsageLine }}
 
 {{ end }}
 {{ if .Aliases }}
-**Aliases:** {{ join .Aliases ", " }}
+**{{ i18n "doc.tmpl.markdown.label.aliases" }}:** {{ join .Aliases ", " }}
 
 {{ end }}
 {{ range .Groups }}
@@ -70,17 +74,17 @@
 
 {{ codeFenceOpen }}
 {{ range .Options }}
-{{ join (optionForms .) ", " }}{{ if .Default }} [def: {{ .Default }}]{{ end }}{{ if .Env }} [env: {{ .Env }}{{ if .EnvDelim }}; delim={{ .EnvDelim }}{{ end }}]{{ end }}{{ if .Choices }} [choices: {{ join .Choices ", " }}]{{ end }}{{ if .Optional }} [optional: {{ .OptionalVal }}]{{ end }}{{ if .Terminator }} [term: {{ .Terminator }}]{{ end }}{{ if .Required }} [req]{{ end }}{{ if hiddenMark .Hidden }} [hidden]{{ end }}{{ if .IniName }} [ini: {{ .IniName }}]{{ end }}{{ if .KeyValueDelim }} [kv: {{ .KeyValueDelim }}]{{ end }}{{ if .Base }} [base: {{ .Base }}]{{ end }}{{ if .DefaultMask }} [mask: {{ .DefaultMask }}]{{ end }}{{ if .UnquoteTag }} [unquote: {{ .UnquoteTag }}]{{ end }}{{ if ne .Order 0 }} [order: {{ .Order }}]{{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ join (optionForms .) ", " }}{{ if .Default }} [{{ i18n "doc.tmpl.code.tag.def" }}: {{ .Default }}]{{ end }}{{ if .Env }} [{{ i18n "doc.tmpl.code.tag.env" }}: {{ .Env }}{{ if .EnvDelim }}; {{ i18n "doc.tmpl.code.tag.delim" }}={{ .EnvDelim }}{{ end }}]{{ end }}{{ if .Choices }} [{{ i18n "doc.tmpl.code.tag.choices" }}: {{ join .Choices ", " }}]{{ end }}{{ if .Optional }} [{{ i18n "doc.tmpl.code.tag.optional" }}: {{ .OptionalVal }}]{{ end }}{{ if .Terminator }} [{{ i18n "doc.tmpl.code.tag.term" }}: {{ .Terminator }}]{{ end }}{{ if .Required }} [{{ i18n "doc.tmpl.code.tag.req" }}]{{ end }}{{ if hiddenMark .Hidden }} [{{ i18n "doc.tmpl.code.tag.hidden" }}]{{ end }}{{ if .IniName }} [{{ i18n "doc.tmpl.code.tag.ini" }}: {{ .IniName }}]{{ end }}{{ if .KeyValueDelim }} [{{ i18n "doc.tmpl.code.tag.kv" }}: {{ .KeyValueDelim }}]{{ end }}{{ if .Base }} [{{ i18n "doc.tmpl.code.tag.base" }}: {{ .Base }}]{{ end }}{{ if .DefaultMask }} [{{ i18n "doc.tmpl.code.tag.mask" }}: {{ .DefaultMask }}]{{ end }}{{ if .UnquoteTag }} [{{ i18n "doc.tmpl.code.tag.unquote" }}: {{ .UnquoteTag }}]{{ end }}{{ if ne .Order 0 }} [{{ i18n "doc.tmpl.code.tag.order" }}: {{ .Order }}]{{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
 {{ end }}
 {{ codeFenceClose }}
 
 {{ end }}
 {{ if .Args }}
-#### Arguments
+#### {{ i18n "doc.tmpl.markdown.section.arguments_title" }}
 
 {{ codeFenceOpen }}
 {{ range .Args }}
-{{ .Name }}{{ if .Required }} (required){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
+{{ .Name }}{{ if .Required }} ({{ i18n "doc.tmpl.markdown.required" }}){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
 {{ end }}
 {{ codeFenceClose }}
 
@@ -89,4 +93,3 @@
 {{ template "command" . }}
 {{ end }}
 {{ end }}
-

@@ -1,12 +1,15 @@
 .TH {{ quoteMan .Doc.Name }} 1 "{{ .Doc.GeneratedAt.Format "2 January 2006" }}"
-.SH NAME
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.name") }}
 {{ quoteMan .Doc.Name }} \- {{ manInline .Doc.ShortDescription }}
-.SH SYNOPSIS
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.synopsis") }}
 \fB{{ quoteMan .Doc.Name }}\fP {{ quoteMan .Doc.Usage }}
-.SH DESCRIPTION
+{{- if .Doc.LongDescription }}
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.description") }}
 {{ manInline .Doc.LongDescription }}
 
-.SH OPTIONS
+{{- end }}
+{{- if .Doc.Groups }}
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.options") }}
 {{- range .Doc.Groups }}
 {{- if .ShortDescription }}
 .SS {{ quoteMan .ShortDescription }}
@@ -17,47 +20,48 @@
 {{- end }}
 {{- range .Options }}
 .TP
-\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <default: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fIrequired\fR){{- end }}\fP
+\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <{{ i18n "doc.tmpl.man.label.default_lower" }}: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}\fP
 {{- if .Description }}
 {{ manInline .Description }}
-{{- if hiddenMark .Hidden }} \fB(hidden)\fP{{ end }}
+{{- if hiddenMark .Hidden }} \fB({{ i18n "doc.tmpl.man.hidden" }})\fP{{ end }}
 {{- else if hiddenMark .Hidden }}
-\fB(hidden)\fP
+\fB({{ i18n "doc.tmpl.man.hidden" }})\fP
 {{- end }}
 {{- if .Choices }}
-\fBChoices\fP: {{ quoteMan (join .Choices ", ") }}
+\fB{{ i18n "doc.tmpl.man.label.choices" }}\fP: {{ quoteMan (join .Choices ", ") }}
 {{- end }}
 {{- if .Env }}
-\fBEnvironment\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} (delimiter {{ quoteMan .EnvDelim }}){{ end }}
+\fB{{ i18n "doc.tmpl.man.label.environment" }}\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.man.label.delimiter" }} {{ quoteMan .EnvDelim }}){{ end }}
 {{- end }}
 {{- if .Optional }}
-\fBOptional value\fP: {{ quoteMan .OptionalVal }}
+\fB{{ i18n "doc.tmpl.man.label.optional_value" }}\fP: {{ quoteMan .OptionalVal }}
 {{- end }}
 {{- if .Terminator }}
-\fBTerminator\fP: {{ quoteMan .Terminator }}
+\fB{{ i18n "doc.tmpl.man.label.terminator" }}\fP: {{ quoteMan .Terminator }}
 {{- end }}
 {{- if .IniName }}
-\fBINI key\fP: {{ quoteMan .IniName }}
+\fB{{ i18n "doc.tmpl.man.label.ini_key" }}\fP: {{ quoteMan .IniName }}
 {{- end }}
 {{- if .KeyValueDelim }}
-\fBKey/value delimiter\fP: {{ quoteMan .KeyValueDelim }}
+\fB{{ i18n "doc.tmpl.man.label.key_value_delimiter" }}\fP: {{ quoteMan .KeyValueDelim }}
 {{- end }}
 {{- if .DefaultMask }}
-\fBDefault mask\fP: {{ quoteMan .DefaultMask }}
+\fB{{ i18n "doc.tmpl.man.label.default_mask" }}\fP: {{ quoteMan .DefaultMask }}
 {{- end }}
 {{- if .Base }}
-\fBBase\fP: {{ quoteMan .Base }}
+\fB{{ i18n "doc.tmpl.man.label.base" }}\fP: {{ quoteMan .Base }}
 {{- end }}
 {{- if .UnquoteTag }}
-\fBUnquote tag\fP: {{ quoteMan .UnquoteTag }}
+\fB{{ i18n "doc.tmpl.man.label.unquote_tag" }}\fP: {{ quoteMan .UnquoteTag }}
 {{- end }}
 {{- if ne .Order 0 }}
-\fBOrder\fP: {{ .Order }}
+\fB{{ i18n "doc.tmpl.man.label.order" }}\fP: {{ .Order }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- if .Doc.Commands }}
-.SH COMMANDS
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.commands") }}
 {{- range .Doc.Commands }}
 {{ template "command" . }}
 {{- end }}
@@ -72,11 +76,11 @@
 {{- end }}
 {{- if .UsageLine }}
 
-\fBUsage\fP: {{ quoteMan .UsageLine }}
+\fB{{ i18n "doc.tmpl.man.label.usage" }}\fP: {{ quoteMan .UsageLine }}
 {{- end }}
 {{- if .Aliases }}
 
-\fBAliases\fP: {{ quoteMan (join .Aliases ", ") }}
+\fB{{ i18n "doc.tmpl.man.label.aliases" }}\fP: {{ quoteMan (join .Aliases ", ") }}
 {{- end }}
 {{- range .Groups }}
 {{- if .ShortDescription }}
@@ -88,42 +92,42 @@
 {{- end }}
 {{- range .Options }}
 .TP
-\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <default: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fIrequired\fR){{- end }}\fP
+\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <{{ i18n "doc.tmpl.man.label.default_lower" }}: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}\fP
 {{- if .Description }}
 {{ manInline .Description }}
-{{- if hiddenMark .Hidden }} \fB(hidden)\fP{{ end }}
+{{- if hiddenMark .Hidden }} \fB({{ i18n "doc.tmpl.man.hidden" }})\fP{{ end }}
 {{- else if hiddenMark .Hidden }}
-\fB(hidden)\fP
+\fB({{ i18n "doc.tmpl.man.hidden" }})\fP
 {{- end }}
 {{- if .Choices }}
-\fBChoices\fP: {{ quoteMan (join .Choices ", ") }}
+\fB{{ i18n "doc.tmpl.man.label.choices" }}\fP: {{ quoteMan (join .Choices ", ") }}
 {{- end }}
 {{- if .Env }}
-\fBEnvironment\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} (delimiter {{ quoteMan .EnvDelim }}){{ end }}
+\fB{{ i18n "doc.tmpl.man.label.environment" }}\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.man.label.delimiter" }} {{ quoteMan .EnvDelim }}){{ end }}
 {{- end }}
 {{- if .Optional }}
-\fBOptional value\fP: {{ quoteMan .OptionalVal }}
+\fB{{ i18n "doc.tmpl.man.label.optional_value" }}\fP: {{ quoteMan .OptionalVal }}
 {{- end }}
 {{- if .Terminator }}
-\fBTerminator\fP: {{ quoteMan .Terminator }}
+\fB{{ i18n "doc.tmpl.man.label.terminator" }}\fP: {{ quoteMan .Terminator }}
 {{- end }}
 {{- if .IniName }}
-\fBINI key\fP: {{ quoteMan .IniName }}
+\fB{{ i18n "doc.tmpl.man.label.ini_key" }}\fP: {{ quoteMan .IniName }}
 {{- end }}
 {{- if .KeyValueDelim }}
-\fBKey/value delimiter\fP: {{ quoteMan .KeyValueDelim }}
+\fB{{ i18n "doc.tmpl.man.label.key_value_delimiter" }}\fP: {{ quoteMan .KeyValueDelim }}
 {{- end }}
 {{- if .DefaultMask }}
-\fBDefault mask\fP: {{ quoteMan .DefaultMask }}
+\fB{{ i18n "doc.tmpl.man.label.default_mask" }}\fP: {{ quoteMan .DefaultMask }}
 {{- end }}
 {{- if .Base }}
-\fBBase\fP: {{ quoteMan .Base }}
+\fB{{ i18n "doc.tmpl.man.label.base" }}\fP: {{ quoteMan .Base }}
 {{- end }}
 {{- if .UnquoteTag }}
-\fBUnquote tag\fP: {{ quoteMan .UnquoteTag }}
+\fB{{ i18n "doc.tmpl.man.label.unquote_tag" }}\fP: {{ quoteMan .UnquoteTag }}
 {{- end }}
 {{- if ne .Order 0 }}
-\fBOrder\fP: {{ .Order }}
+\fB{{ i18n "doc.tmpl.man.label.order" }}\fP: {{ .Order }}
 {{- end }}
 {{- end }}
 {{- end }}

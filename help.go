@@ -11,7 +11,6 @@ import (
 	"io"
 	"reflect"
 	"strings"
-	"unicode/utf8"
 )
 
 type alignmentInfo struct {
@@ -62,7 +61,7 @@ func (a *alignmentInfo) optionDescriptionStart() int {
 }
 
 func (a *alignmentInfo) updateLen(name string, indent bool) {
-	l := utf8.RuneCountInString(name)
+	l := textWidth(name)
 
 	if indent {
 		l += 4
@@ -90,7 +89,7 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 	p.eachActiveGroup(func(c *Command, grp *Group) {
 		if c != prevcmd {
 			for _, arg := range c.args {
-				ret.updateLen(arg.Name, c != p.Command)
+				ret.updateLen(arg.localizedName(), c != p.Command)
 			}
 			prevcmd = c
 		}
@@ -106,11 +105,12 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 				ret.hasShort = true
 			}
 
-			if len(info.ValueName) > 0 {
+			valueName := info.localizedValueName()
+			if len(valueName) > 0 {
 				ret.hasValueName = true
 			}
 
-			l := info.LongNameWithNamespace() + info.ValueName
+			l := info.LongNameWithNamespace() + valueName
 			// Choices are rendered as a tail block and can move to their own
 			// lines in adaptive mode; keep base alignment focused on flag/value
 			// tokens to avoid over-expanding description gap.
@@ -139,16 +139,10 @@ func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
 			line = strings.TrimSpace(line)
 		}
 
-		for len(line) > l {
-			// Try to split on space
+		for textWidth(line) > l {
 			suffix := ""
-
-			pos := strings.LastIndex(line[:l], " ")
-
-			splitOnSpace := pos >= 0
-
+			pos, splitOnSpace := splitTextWidth(line, l)
 			if !splitOnSpace {
-				pos = l - 1
 				suffix = "-\n"
 			}
 
@@ -205,13 +199,8 @@ func wrapTextNoHyphen(s string, l int) string {
 	for line := range lines {
 		var retline string
 
-		for len(line) > l {
-			pos := strings.LastIndex(line[:l], " ")
-			splitOnSpace := pos >= 0
-			if !splitOnSpace {
-				pos = l
-			}
-
+		for textWidth(line) > l {
+			pos, splitOnSpace := splitTextWidth(line, l)
 			if len(retline) != 0 {
 				retline += "\n"
 			}
@@ -258,7 +247,7 @@ func renderChoiceToken(option *Option, leftWidth int, prefixLen int) string {
 	}
 
 	compact := "[" + strings.Join(option.Choices, "|") + "]"
-	if prefixLen+utf8.RuneCountInString(compact) <= leftWidth {
+	if prefixLen+textWidth(compact) <= leftWidth {
 		return compact
 	}
 
@@ -274,11 +263,11 @@ func renderChoicePipeLines(choices []string, width int) []string {
 	lines := make([]string, 0, len(choices)+1)
 
 	appendChoice := func(prefix string, continuationPrefix string, choice string) {
-		avail := width - utf8.RuneCountInString(prefix)
+		avail := width - textWidth(prefix)
 		if avail < 1 {
 			lines = append(lines, prefix)
 			prefix = continuationPrefix
-			avail = width - utf8.RuneCountInString(prefix)
+			avail = width - textWidth(prefix)
 			if avail < 1 {
 				avail = width
 				prefix = ""
@@ -305,7 +294,7 @@ func renderChoicePipeLines(choices []string, width int) []string {
 
 	if len(lines) > 0 {
 		last := lines[len(lines)-1]
-		if utf8.RuneCountInString(last)+1 <= width {
+		if textWidth(last)+1 <= width {
 			lines[len(lines)-1] = last + "]"
 		} else {
 			lines = append(lines, "]")
@@ -315,12 +304,12 @@ func renderChoicePipeLines(choices []string, width int) []string {
 	return lines
 }
 
-func renderChoiceListLines(choices []string, width int) []string {
-	lines := []string{"valid values:"}
+func renderChoiceListLines(choices []string, width int, label string) []string {
+	lines := []string{label + ":"}
 
 	appendChoice := func(choice string) {
 		prefix := "> "
-		avail := width - utf8.RuneCountInString(prefix)
+		avail := width - textWidth(prefix)
 		if avail < 1 {
 			lines = append(lines, prefix+choice)
 			return
@@ -344,7 +333,13 @@ func renderChoiceListLines(choices []string, width int) []string {
 	return lines
 }
 
-func splitOptionTailLines(valueName string, choices []string, width int, forceChoiceList bool) []optionTailLine {
+func splitOptionTailLines(
+	valueName string,
+	choices []string,
+	width int,
+	forceChoiceList bool,
+	choiceListLabel string,
+) []optionTailLine {
 	if width < 10 {
 		width = 10
 	}
@@ -380,7 +375,7 @@ func splitOptionTailLines(valueName string, choices []string, width int, forceCh
 	threshold := (len(choices) + 1) / 2 // ceil(len/2)
 	useChoiceList := forceChoiceList || (len(choices) >= 3 && choiceLineCount > threshold)
 	if useChoiceList {
-		for _, line := range renderChoiceListLines(choices, width) {
+		for _, line := range renderChoiceListLines(choices, width, choiceListLabel) {
 			lines = append(lines, optionTailLine{Text: line, IsChoice: true})
 		}
 		return lines
@@ -419,11 +414,12 @@ func (p *Parser) buildHelpOptionLeft(option *Option, format optionRenderFormat, 
 	if option.canArgument() {
 		left.WriteRune(format.nameDelimiter)
 
-		if len(option.ValueName) > 0 {
-			left.WriteString(option.ValueName)
+		valueName := option.localizedValueName()
+		if len(valueName) > 0 {
+			left.WriteString(valueName)
 		}
 
-		choicesToken = renderChoiceToken(option, leftWidth, prefix+left.Len())
+		choicesToken = renderChoiceToken(option, leftWidth, textWidth(left.String()))
 		if choicesToken != "" {
 			left.WriteString(choicesToken)
 		}
@@ -437,7 +433,8 @@ func (p *Parser) buildHelpOptionDescription(
 	format optionRenderFormat,
 	descWidth int,
 ) ([]string, string, string, string) {
-	if option.Description == "" {
+	description := option.localizedDescription()
+	if description == "" {
 		return nil, "", "", ""
 	}
 
@@ -456,7 +453,7 @@ func (p *Parser) buildHelpOptionDescription(
 
 	defaultFrag := ""
 	if def != "" {
-		defaultFrag = fmt.Sprintf("default: %v", def)
+		defaultFrag = fmt.Sprintf("%s: %v", p.i18nText("help.meta.default", "default"), def)
 	}
 
 	envFrag := ""
@@ -466,7 +463,7 @@ func (p *Parser) buildHelpOptionDescription(
 
 	repeatableFrag := ""
 	if (p.Options&ShowRepeatableInHelp) != None && optionIsRepeatable(option) {
-		repeatableFrag = "repeatable"
+		repeatableFrag = p.i18nText("help.meta.repeatable", "repeatable")
 	}
 
 	extras := make([]string, 0, 3)
@@ -480,7 +477,7 @@ func (p *Parser) buildHelpOptionDescription(
 		extras = append(extras, "("+repeatableFrag+")")
 	}
 
-	desc := option.Description
+	desc := description
 	if len(extras) == 0 {
 		return strings.Split(desc, "\n"), defaultFrag, envFrag, repeatableFrag
 	}
@@ -504,7 +501,7 @@ func (p *Parser) buildHelpOptionDescription(
 
 		// Keep each extra as an atomic block: if it does not fit, move it
 		// entirely to the next line instead of splitting it.
-		if utf8.RuneCountInString(candidate) <= descWidth {
+		if textWidth(candidate) <= descWidth {
 			lines[len(lines)-1] = candidate
 			continue
 		}
@@ -544,7 +541,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 	indentPrefix := strings.Repeat(" ", leftPrefix)
 	leftBody := strings.TrimPrefix(leftRaw, indentPrefix)
 
-	leftLen := utf8.RuneCountInString(leftBody)
+	leftLen := textWidth(leftBody)
 	if !forceSplit && leftLen <= leftWidth+8 {
 		return false
 	}
@@ -564,7 +561,13 @@ func (p *Parser) adaptiveWriteHelpOption(
 			tailWidth := max(leftWidth-2, 10)
 
 			forceChoiceList := (p.Options & ShowChoiceListInHelp) != None
-			for _, line := range splitOptionTailLines(option.ValueName, option.Choices, tailWidth, forceChoiceList) {
+			for _, line := range splitOptionTailLines(
+				option.localizedValueName(),
+				option.Choices,
+				tailWidth,
+				forceChoiceList,
+				p.i18nText("help.meta.valid_values", "valid values"),
+			) {
 				leftLinesPlain = append(leftLinesPlain, continuationPrefix+line.Text)
 				leftLinesChoice = append(leftLinesChoice, line.IsChoice)
 			}
@@ -639,7 +642,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 		_, _ = writer.WriteString(leftLine)
 
 		if i < len(wrappedDescLines) {
-			pad := max(descstart-utf8.RuneCountInString(leftPlain), 1)
+			pad := max(descstart-textWidth(leftPlain), 1)
 			_, _ = writer.WriteString(strings.Repeat(" ", pad))
 			_, _ = writer.WriteString(wrappedDescLines[i])
 		}
@@ -706,8 +709,9 @@ func (p *Parser) writeHelpOption(
 	if option.canArgument() {
 		line.WriteRune(format.nameDelimiter)
 
-		if len(option.ValueName) > 0 {
-			line.WriteString(option.ValueName)
+		valueName := option.localizedValueName()
+		if len(valueName) > 0 {
+			line.WriteString(valueName)
 		}
 
 		if len(option.Choices) > 0 {
@@ -716,7 +720,7 @@ func (p *Parser) writeHelpOption(
 		}
 	}
 
-	written := line.Len()
+	written := textWidth(line.String())
 	lineText := line.String()
 	if shortToken != "" {
 		lineText = strings.Replace(lineText, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
@@ -730,7 +734,7 @@ func (p *Parser) writeHelpOption(
 	}
 	_, _ = writer.WriteString(lineText)
 
-	if option.Description != "" {
+	if option.localizedDescription() != "" {
 		dw := max(descstart-written, 1)
 		_, _ = writer.WriteString(strings.Repeat(" ", dw))
 		descWidth := info.terminalColumns - descstart
@@ -762,10 +766,10 @@ func maxCommandLength(s []*Command) int {
 		return 0
 	}
 
-	ret := len(s[0].Name)
+	ret := textWidth(s[0].Name)
 
 	for _, v := range s[1:] {
-		l := len(v.Name)
+		l := textWidth(v.Name)
 
 		if l > ret {
 			ret = l
@@ -817,9 +821,10 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	}
 
 	if p.Name != "" {
-		_, _ = wr.WriteString(p.colorizeHelp("Usage:", p.helpColorScheme.UsageHeader))
+		usageLabel := p.i18nText("help.usage", "Usage") + ":"
+		_, _ = wr.WriteString(p.colorizeHelp(usageLabel, p.helpColorScheme.UsageHeader))
 		if basePrefix != "" && p.helpColorScheme.BaseText.UseBG {
-			pad := aligninfo.terminalColumns - utf8.RuneCountInString("Usage:")
+			pad := aligninfo.terminalColumns - textWidth(usageLabel)
 			if pad > 0 {
 				_, _ = wr.WriteString(strings.Repeat(" ", pad))
 			}
@@ -864,7 +869,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					_, _ = fmt.Fprintf(wr, " ")
 				}
 
-				name := arg.Name
+				name := arg.localizedName()
 
 				if arg.isRemaining() {
 					name += "..."
@@ -897,7 +902,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						wr,
 						" %s%s%s",
 						co,
-						p.colorizeHelp("command", p.helpColorScheme.UsageText),
+						p.colorizeHelp(p.i18nText("help.command_placeholder", "command"), p.helpColorScheme.UsageText),
 						cc,
 					)
 				} else {
@@ -923,10 +928,11 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 		_, _ = fmt.Fprintln(wr)
 
-		if len(cmd.LongDescription) != 0 {
+		longDescription := cmd.localizedLongDescription()
+		if len(longDescription) != 0 {
 			_, _ = fmt.Fprintln(wr)
 
-			t := wrapText(cmd.LongDescription,
+			t := wrapText(longDescription,
 				aligninfo.terminalColumns,
 				"",
 				trimDescriptions)
@@ -955,7 +961,11 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				}
 
 				if printcmd {
-					header := fmt.Sprintf("[%s command options]", c.Name)
+					header := p.i18nTextf(
+						"help.command.options_header",
+						"[{command} command options]",
+						map[string]string{"command": c.Name},
+					)
 					_, _ = fmt.Fprintf(
 						wr,
 						"\n%s\n",
@@ -972,7 +982,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						_, _ = wr.WriteString("    ")
 					}
 
-					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.ShortDescription, p.helpColorScheme.GroupHeader))
+					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.localizedShortDescription(), p.helpColorScheme.GroupHeader))
 					first = false
 				}
 
@@ -982,32 +992,42 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 		var args []*Arg
 		for _, arg := range c.args {
-			if arg.Description != "" {
+			if arg.localizedDescription() != "" {
 				args = append(args, arg)
 			}
 		}
 
 		if len(args) > 0 {
 			if c == p.Command {
-				_, _ = fmt.Fprintf(wr, "\n%s:\n", p.colorizeHelp("Arguments", p.helpColorScheme.ArgumentsHeader))
+				_, _ = fmt.Fprintf(
+					wr,
+					"\n%s:\n",
+					p.colorizeHelp(p.i18nText("help.arguments", "Arguments"), p.helpColorScheme.ArgumentsHeader),
+				)
 			} else {
-				_, _ = fmt.Fprintf(wr, "\n[%s]\n", p.colorizeHelp(c.Name+" command arguments", p.helpColorScheme.ArgumentsHeader))
+				header := p.i18nTextf(
+					"help.command.arguments_header",
+					"[{command} command arguments]",
+					map[string]string{"command": c.Name},
+				)
+				_, _ = fmt.Fprintf(wr, "\n%s\n", p.colorizeHelp(header, p.helpColorScheme.ArgumentsHeader))
 			}
 
 			descStart := aligninfo.optionDescriptionStart()
 
 			for _, arg := range args {
 				argPrefix := strings.Repeat(" ", paddingBeforeOption)
-				argPrefix += arg.Name
+				argPrefix += arg.localizedName()
 
-				if len(arg.Description) > 0 {
+				argDescriptionText := arg.localizedDescription()
+				if len(argDescriptionText) > 0 {
 					argPrefix += ":"
 					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
 
 					// Space between "arg:" and the description start
 					descPadding := strings.Repeat(
 						" ",
-						max(descStart-utf8.RuneCountInString(argPrefix), 1),
+						max(descStart-textWidth(argPrefix), 1),
 					)
 					// How much space the description gets before wrapping
 					descWidth := aligninfo.terminalColumns - 1 - descStart
@@ -1015,9 +1035,10 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					descPrefix := strings.Repeat(" ", descStart)
 
 					_, _ = wr.WriteString(descPadding)
-					argDescription := arg.Description
+					argDescription := argDescriptionText
 					if def := arg.defaultLiteral(); def != "" {
-						argDescription += " (default: " + def + ")"
+						defaultLabel := p.i18nText("help.meta.default", "default")
+						argDescription += " (" + defaultLabel + ": " + def + ")"
 					}
 
 					argDesc := wrapText(argDescription, descWidth, descPrefix, trimDescriptions)
@@ -1039,19 +1060,27 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		maxnamelen := maxCommandLength(scommands)
 
 		_, _ = fmt.Fprintln(wr)
-		_, _ = fmt.Fprintln(wr, p.colorizeHelp("Available commands:", p.helpColorScheme.CommandsHeader))
+		_, _ = fmt.Fprintln(
+			wr,
+			p.colorizeHelp(p.i18nText("help.available_commands", "Available commands")+":", p.helpColorScheme.CommandsHeader),
+		)
 
 		for _, c := range scommands {
 			_, _ = fmt.Fprintf(wr, "  %s", p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
 
-			if len(c.ShortDescription) > 0 {
-				pad := strings.Repeat(" ", maxnamelen-len(c.Name))
-				_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(c.ShortDescription, p.helpColorScheme.CommandDesc))
+			shortDescription := c.localizedShortDescription()
+			if len(shortDescription) > 0 {
+				pad := strings.Repeat(" ", maxnamelen-textWidth(c.Name))
+				_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(shortDescription, p.helpColorScheme.CommandDesc))
 			}
 
 			if len(c.Aliases) > 0 &&
-				(len(c.ShortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
-				aliases := fmt.Sprintf(" (aliases: %s)", strings.Join(c.Aliases, ", "))
+				(len(shortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
+				aliases := p.i18nTextf(
+					"help.command.aliases_suffix",
+					" (aliases: {aliases})",
+					map[string]string{"aliases": strings.Join(c.Aliases, ", ")},
+				)
 				_, _ = fmt.Fprintf(
 					wr,
 					"%s",

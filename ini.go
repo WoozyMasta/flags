@@ -221,19 +221,22 @@ func optionIniName(option *Option) string {
 	return option.field.Name
 }
 
-func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Writer, options IniOptions) {
-	var sname string
-
-	if len(namespace) != 0 {
-		sname = namespace
+func appendIniSectionToken(base string, token string) string {
+	if token == "" {
+		return base
 	}
 
-	if cmd.Group != group && len(group.ShortDescription) != 0 {
-		if len(sname) != 0 {
-			sname += "."
-		}
+	if base == "" {
+		return token
+	}
 
-		sname += group.ShortDescription
+	return base + "." + token
+}
+
+func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Writer, options IniOptions) {
+	sname := namespace
+	if cmd.Group != group {
+		sname = appendIniSectionToken(sname, group.iniSectionName())
 	}
 
 	sectionwritten := false
@@ -257,8 +260,11 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 			sectionwritten = true
 		}
 
-		if comments && len(option.Description) != 0 {
-			_, _ = fmt.Fprintf(writer, "; %s\n", option.Description)
+		if comments {
+			description := option.localizedDescription()
+			if len(description) != 0 {
+				_, _ = fmt.Fprintf(writer, "; %s\n", description)
+			}
 		}
 
 		oname := optionIniName(option)
@@ -393,13 +399,19 @@ func iniExampleCommentWidth(opts IniExampleOptions) int {
 
 func buildIniExampleComment(option *Option) string {
 	lines := make([]string, 0, 3)
-	description := strings.TrimSpace(option.Description)
+	description := strings.TrimSpace(option.localizedDescription())
+	parser := option.parser()
 
 	if option.Required {
+		requiredLabel := "required"
+		if parser != nil {
+			requiredLabel = parser.i18nText("ini.example.meta.required", requiredLabel)
+		}
+
 		if description != "" {
-			description += " (required)"
+			description += " (" + requiredLabel + ")"
 		} else {
-			description = "(required)"
+			description = "(" + requiredLabel + ")"
 		}
 	}
 
@@ -408,13 +420,23 @@ func buildIniExampleComment(option *Option) string {
 	}
 
 	if len(option.Choices) > 0 {
-		lines = append(lines, fmt.Sprintf("Choices: %s.", strings.Join(option.Choices, ", ")))
+		choicesLabel := "Choices"
+		if parser != nil {
+			choicesLabel = parser.i18nText("ini.example.choices", choicesLabel)
+		}
+
+		lines = append(lines, fmt.Sprintf("%s: %s.", choicesLabel, strings.Join(option.Choices, ", ")))
 	}
 
 	details := make([]string, 0, 2)
 	kind := option.value.Type().Kind()
 	if kind == reflect.Slice || kind == reflect.Map {
-		details = append(details, "repeatable")
+		repeatableLabel := "repeatable"
+		if parser != nil {
+			repeatableLabel = parser.i18nText("ini.example.meta.repeatable", repeatableLabel)
+		}
+
+		details = append(details, repeatableLabel)
 	}
 
 	if kind == reflect.Map {
@@ -423,11 +445,21 @@ func buildIniExampleComment(option *Option) string {
 			delimiter = ":"
 		}
 
-		details = append(details, fmt.Sprintf("key-value-delimiter: %q", delimiter))
+		delimiterLabel := "key-value-delimiter"
+		if parser != nil {
+			delimiterLabel = parser.i18nText("ini.example.meta.key_value_delimiter", delimiterLabel)
+		}
+
+		details = append(details, fmt.Sprintf("%s: %q", delimiterLabel, delimiter))
 	}
 
 	if len(details) > 0 {
-		lines = append(lines, fmt.Sprintf("Details: %s.", strings.Join(details, "; ")))
+		detailsLabel := "Details"
+		if parser != nil {
+			detailsLabel = parser.i18nText("ini.example.details", detailsLabel)
+		}
+
+		lines = append(lines, fmt.Sprintf("%s: %s.", detailsLabel, strings.Join(details, "; ")))
 	}
 
 	return strings.Join(lines, "\n")
@@ -454,18 +486,9 @@ func writeGroupIniExample(
 	writer io.Writer,
 	opts IniExampleOptions,
 ) {
-	var sname string
-
-	if len(namespace) != 0 {
-		sname = namespace
-	}
-
-	if cmd.Group != group && len(group.ShortDescription) != 0 {
-		if len(sname) != 0 {
-			sname += "."
-		}
-
-		sname += group.ShortDescription
+	sname := namespace
+	if cmd.Group != group {
+		sname = appendIniSectionToken(sname, group.iniSectionName())
 	}
 
 	sectionwritten := false
@@ -514,9 +537,9 @@ func writeCommandIniExample(command *Command, namespace string, writer io.Writer
 		}
 
 		if len(namespace) != 0 {
-			fqn = namespace + "." + c.Name
+			fqn = appendIniSectionToken(namespace, c.iniSectionName())
 		} else {
-			fqn = c.Name
+			fqn = c.iniSectionName()
 		}
 
 		writeCommandIniExample(c, fqn, writer, opts)
@@ -542,9 +565,9 @@ func writeCommandIni(command *Command, namespace string, writer io.Writer, optio
 		}
 
 		if len(namespace) != 0 {
-			fqn = namespace + "." + c.Name
+			fqn = appendIniSectionToken(namespace, c.iniSectionName())
 		} else {
-			fqn = c.Name
+			fqn = c.iniSectionName()
 		}
 
 		writeCommandIni(c, fqn, writer, options)
@@ -724,7 +747,14 @@ func (i *IniParser) parse(ini *ini) error {
 
 		if len(groups) == 0 {
 			if (p.Options & IgnoreUnknown) == None {
-				return newErrorf(ErrUnknownGroup, "could not find option group `%s'", name)
+				return newError(
+					ErrUnknownGroup,
+					p.i18nTextf(
+						"ini.err.unknown_group",
+						"could not find option group `{group}'",
+						map[string]string{"group": name},
+					),
+				)
 			}
 
 			continue
@@ -750,7 +780,11 @@ func (i *IniParser) parse(ini *ini) error {
 			if opt == nil {
 				if (p.Options & IgnoreUnknown) == None {
 					return &IniError{
-						Message:    "unknown option: " + inival.Name,
+						Message: p.i18nTextf(
+							"ini.err.unknown_option",
+							"unknown option: {option}",
+							map[string]string{"option": inival.Name},
+						),
 						File:       ini.File,
 						LineNumber: inival.LineNumber,
 					}

@@ -13,12 +13,19 @@ import (
 type Arg struct {
 	tag   multiTag
 	value reflect.Value
+	cmd   *Command
 
 	// The name of the positional argument (used in the help)
 	Name string
 
+	// Optional i18n key for Name.
+	NameI18nKey string
+
 	// A description of the positional argument (used in the help)
 	Description string
+
+	// Optional i18n key for Description.
+	DescriptionI18nKey string
 
 	// The default value(s) of the positional argument.
 	Default []string
@@ -35,9 +42,19 @@ func (a *Arg) SetName(name string) {
 	a.Name = name
 }
 
+// SetNameI18nKey sets i18n key used to localize positional argument name.
+func (a *Arg) SetNameI18nKey(key string) {
+	a.NameI18nKey = key
+}
+
 // SetDescription updates positional argument description used in help/docs.
 func (a *Arg) SetDescription(description string) {
 	a.Description = description
+}
+
+// SetDescriptionI18nKey sets i18n key used to localize positional argument description.
+func (a *Arg) SetDescriptionI18nKey(key string) {
+	a.DescriptionI18nKey = key
 }
 
 // SetDefault replaces positional argument default values.

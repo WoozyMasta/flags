@@ -12,6 +12,7 @@ rich help, completion, and docs out of the box.
 * Structured CLI design: commands, subcommands, groups, and positional args
 * Flexible input sources: flags, environment variables, and INI
 * Rich help, completion, and documentation output (man/markdown/html)
+* Opt-in localization for help, parser errors, docs, and user-facing metadata
 * Custom value parsing with standard Go interfaces
 
 ## Content
@@ -27,6 +28,7 @@ rich help, completion, and docs out of the box.
 * [Groups](#groups)
 * [Commands](#commands)
 * [Defaults](#defaults)
+* [Localization](#localization)
 * [Environment Variables](#environment-variables)
 * [INI Config](#ini-config)
 * [Programmatic Configuration](#programmatic-configuration)
@@ -195,11 +197,13 @@ All struct tags are configurable:
 * `short`: one-letter short option name used as `-v`.
 * `long`: canonical long option name used as `--verbose`.
 * `description`: primary text shown in help/docs for the option.
+* `description-i18n`: i18n key for option description text.
 * `long-description`: extended text for man/doc templates.
 * `required`: fails parse if option is missing after defaults/env are applied.
 * `optional`: allows option with or without explicit value.
 * `optional-value`: value used when optional argument is omitted.
 * `value-name`: placeholder name in help (for example `--port=PORT`).
+* `value-name-i18n`: i18n key for value placeholder text.
 * `default` / `defaults`: default value(s) for missing option input.
 * `choice` / `choices`: allowed value whitelist.
 * `short-alias` / `short-aliases`: additional short names.
@@ -224,9 +228,13 @@ All struct tags are configurable:
 
 * `group`: marks nested struct as a named option group.
 * `description`: group heading shown in help/docs.
+* `description-i18n`: i18n key for group long/extended description.
 * `long-description`: extended prose for group-focused docs/man output.
+* `long-description-i18n`: i18n key for group long description text.
+* `group-i18n`: i18n key for group heading text.
 * `namespace`: prefixes child long flags (for example `db.host`).
 * `env-namespace`: prefixes child env keys before global env prefix.
+* `ini-group`: stable INI section token for this group.
 * `hidden`: hides the group from help/completion/docs, keeps parsing active.
 * `immediate`: marks all options in the group subtree as immediate.
 
@@ -234,8 +242,12 @@ All struct tags are configurable:
 
 * `command`: marks field as subcommand and command scope root.
 * `description`: one-line command summary in help/docs.
+* `description-i18n`: i18n key for command summary text.
 * `long-description`: full command description for docs/man output.
+* `long-description-i18n`: i18n key for command long description text.
+* `command-i18n`: i18n key for command summary text.
 * `alias` / `aliases`: command aliases.
+* `ini-group`: stable INI section token for this command root.
 * `subcommands-optional`: command can run without child subcommand selection.
 * `pass-after-non-option`: enables command-local POSIX pass-through mode.
 * `hidden`: hides command from help/completion/docs, keeps it executable.
@@ -247,7 +259,9 @@ All struct tags are configurable:
 * `required`: for positional args you can use `yes/no`, `1` (required), `N`
   (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
 * `positional-arg-name`: custom display name for usage/help placeholders.
+* `arg-name-i18n`: i18n key for positional display name text.
 * `description`: help/docs description for the positional argument.
+* `arg-description-i18n`: i18n key for positional description text.
 * `default` / `defaults`: fallback values for positional argument.
 
 ### Tag conflicts
@@ -383,6 +397,70 @@ _, err := parser.Parse()
 Note: for scalar zero values (`0`, `false`, `""`) Go cannot distinguish
 "not provided" from "explicitly set to zero" without pointer fields.
 
+## Localization
+
+Localization is opt-in. Configure parser i18n with `SetI18n(...)`.
+Built-in help, parser errors, generated docs, and INI example metadata use the
+configured catalog. User-defined descriptions and placeholders can opt in with
+`*-i18n` tags while keeping the original text as source fallback.
+
+```go
+//go:embed i18n/*.json
+var i18nFS embed.FS
+
+catalog, _ := flags.NewJSONCatalogDirFS(i18nFS, "i18n")
+
+parser := flags.NewParser(&opts, flags.Default)
+parser.SetI18n(flags.I18nConfig{
+  Locale:      "ru",
+  UserCatalog: catalog,
+})
+parser.SetI18nFallbackLocales("en")
+```
+
+Use `NewLocalizer(...)` when application code needs the same catalogs and
+locale chain without depending on `Parser`:
+
+```go
+localizer := flags.NewLocalizer(flags.I18nConfig{
+  Locale:      "ru",
+  UserCatalog: catalog,
+})
+
+message := localizer.Localize("app.greeting", "Hello, {name}", map[string]string{
+  "name": "Alice",
+})
+```
+
+Common user text tags:
+
+* `description-i18n`, `long-description-i18n`
+* `group-i18n`, `command-i18n`
+* `value-name-i18n`, `arg-name-i18n`, `arg-description-i18n`
+
+JSON catalogs can be loaded from `fs.FS` with `NewJSONCatalogFS(...)` or
+`NewJSONCatalogDirFS(...)`. User catalogs override built-in keys and can also
+hold application-level keys, so one catalog workflow can cover both CLI text
+and app text. Common go-i18n-style JSON message objects are accepted, but this
+package does not depend on `github.com/nicksnyder/go-i18n`.
+
+Locale resolution order:
+
+1. Explicit `I18nConfig.Locale` from `SetI18n(...)`
+1. Environment (`LC_ALL`, `LC_MESSAGES`, `LANG`, `LANGUAGE`)
+1. Windows OS locale fallback when env is empty
+1. Catalog fallback chain: exact locale -> base locale -> configured fallbacks
+   (default includes `en`) -> source text
+
+If localized group or command names are used with INI, set `ini-group:"..."`
+so INI section names stay stable across locales.
+
+Use `CheckCatalogCoverage(...)` or `CheckMergedCatalogCoverage(...)` in tests
+to catch missing catalog keys and placeholder mismatches.
+
+End-to-end example with embedded catalogs:
+[`examples/i18n/main.go`](examples/i18n/main.go).
+
 ## Environment Variables
 
 Use `env:"..."` to override defaults from environment:
@@ -475,6 +553,9 @@ ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{CommentWidth: 88}
 * Non-required options are commented when they look unset/default.
 * Comment block includes description, `choices` (if set), and details
   like `repeatable` / `key-value-delimiter` where applicable.
+* Section names and INI keys are stable identifiers and are not localized.
+* If group/command localization tags are used, set `ini-group` explicitly
+  so INI section names stay stable across locales.
 
 Quick demo:
 [`examples/advanced/main.go`](examples/advanced/main.go) supports
@@ -485,6 +566,7 @@ Quick demo:
 Useful INI tags:
 
 * `ini-name:"..."` to override key name in INI
+* `ini-group:"..."` to override section token for group/command INI blocks
 * `no-ini:"true"` to exclude a field from INI processing
 
 ## Programmatic Configuration

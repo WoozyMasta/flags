@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning][].
   `Parser.SetTagPrefix(...)` and `Parser.SetFlagTags(...)`.
 * Global environment variable prefix support via `Parser.SetEnvPrefix(...)`.
 * Dynamic defaults via `DefaultProvider`.
+* Opt-in localization support for parser help, parser errors,
+  generated documentation, INI examples, and user-facing metadata
+  via `*-i18n` tags, with JSON catalog loaders, locale fallback,
+  built-in catalogs, a standalone `Localizer`, and validation helpers.
 * Parser option `DefaultsIfEmpty` to apply defaults only to empty values.
 * Parser option `RequiredFromValues` to treat non-empty prefilled values as
   satisfying `required`, plus convenience alias `ConfiguredValues`
@@ -109,6 +113,7 @@ and this project adheres to [Semantic Versioning][].
 * INI example rendering API via `IniParser.WriteExample(...)` and
   `IniParser.WriteExampleWithOptions(...)` with wrapped metadata comments,
   `required`-aware active keys, and optional comment-width control.
+* Text wrapping and help alignment now use display width instead of byte length.
 
 ### Changed
 

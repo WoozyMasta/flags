@@ -39,6 +39,9 @@ type Option struct {
 	// automatically in the built-in help.
 	Description string
 
+	// Optional i18n key for Description.
+	DescriptionI18nKey string
+
 	// The long name of the option. If not "", the option flag can be
 	// activated using --<LongName>. Either ShortName or LongName needs
 	// to be non-empty.
@@ -52,6 +55,9 @@ type Option struct {
 
 	// A name for the value of an option shown in the Help as --flag [ValueName]
 	ValueName string
+
+	// Optional i18n key for ValueName.
+	ValueNameI18nKey string
 
 	// A mask value to show in the help instead of the default value. This
 	// is useful for hiding sensitive information in the help, such as
@@ -146,6 +152,14 @@ func (option *Option) touchLookupCache() {
 	}
 }
 
+func (option *Option) parser() *Parser {
+	if option.group == nil {
+		return nil
+	}
+
+	return option.group.parser()
+}
+
 func (option *Option) validateLongNameLength(name string) error {
 	if option.group == nil || name == "" {
 		return nil
@@ -192,6 +206,11 @@ func (option *Option) validateProgrammaticUpdate() error {
 // SetDescription updates option description used in help/docs output.
 func (option *Option) SetDescription(description string) {
 	option.Description = description
+}
+
+// SetDescriptionI18nKey sets i18n key used to localize option description.
+func (option *Option) SetDescriptionI18nKey(key string) {
+	option.DescriptionI18nKey = key
 }
 
 // SetRequired enables or disables required option validation.
@@ -341,6 +360,11 @@ func (option *Option) SetDefault(values ...string) {
 // SetDefaultMask sets displayed default mask used in help/docs.
 func (option *Option) SetDefaultMask(mask string) {
 	option.DefaultMask = mask
+}
+
+// SetValueNameI18nKey sets i18n key used to localize option value placeholder.
+func (option *Option) SetValueNameI18nKey(key string) {
+	option.ValueNameI18nKey = key
 }
 
 // SetEnv sets environment key and optional split delimiter for env value.
@@ -1012,6 +1036,20 @@ func (option *Option) isValidValue(arg string) error {
 		return validator.IsValidValue(arg)
 	}
 	if argumentIsOption(arg) && (!option.isSignedNumber() || len(arg) <= 1 || arg[0] != '-' || arg[1] < '0' || arg[1] > '9') {
+		if p := option.parser(); p != nil {
+			return fmt.Errorf(
+				"%s",
+				p.i18nTextf(
+					"err.invalid_argument.option",
+					"expected argument for flag `{flag}', but got option `{option}'",
+					map[string]string{
+						"flag":   option.String(),
+						"option": arg,
+					},
+				),
+			)
+		}
+
 		return fmt.Errorf("expected argument for flag `%s', but got option `%s'", option, arg)
 	}
 	return nil
@@ -1023,13 +1061,43 @@ func (option *Option) validateChoice(value string) error {
 	}
 
 	allowed := option.Choices[0]
+	p := option.parser()
 
 	if len(option.Choices) > 1 {
-		allowed = strings.Join(option.Choices[0:len(option.Choices)-1], ", ")
-		allowed += " or " + option.Choices[len(option.Choices)-1]
+		items := strings.Join(option.Choices[0:len(option.Choices)-1], ", ")
+		last := option.Choices[len(option.Choices)-1]
+		if p != nil {
+			allowed = p.i18nTextf(
+				"err.list.disjunction",
+				"{items} or {last}",
+				map[string]string{
+					"items": items,
+					"last":  last,
+				},
+			)
+		} else {
+			allowed = items + " or " + last
+		}
 	}
 
-	return newErrorf(ErrInvalidChoice,
+	if p != nil {
+		return newError(
+			ErrInvalidChoice,
+			p.i18nTextf(
+				"err.invalid_choice",
+				"Invalid value `{value}' for option `{option}'. Allowed values are: {allowed}",
+				map[string]string{
+					"value":   value,
+					"option":  option.String(),
+					"allowed": allowed,
+				},
+			),
+		)
+	}
+
+	return newErrorf(
+		ErrInvalidChoice,
 		"Invalid value `%s' for option `%s'. Allowed values are: %s",
-		value, option, allowed)
+		value, option, allowed,
+	)
 }

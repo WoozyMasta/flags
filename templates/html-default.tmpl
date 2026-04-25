@@ -3,23 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ quoteHTML .Doc.Name }} CLI Documentation</title>
+  <title>{{ quoteHTML .Doc.Name }} {{ i18n "doc.tmpl.html.title.suffix" }}</title>
 </head>
 <body>
   <h1>{{ quoteHTML .Doc.Name }}</h1>
 
   <section>
-    <h2>Synopsis</h2>
+    <h2>{{ i18n "doc.tmpl.html.section.synopsis" }}</h2>
     <pre>{{ quoteHTML .Doc.Name }} {{ quoteHTML .Doc.Usage }}</pre>
   </section>
 
+{{- if .Doc.LongDescription }}
   <section>
-    <h2>Description</h2>
+    <h2>{{ i18n "doc.tmpl.html.section.description" }}</h2>
     <p>{{ quoteHTML .Doc.LongDescription }}</p>
   </section>
+{{- end }}
 
+{{- if .Doc.Groups }}
   <section>
-    <h2>Options</h2>
+    <h2>{{ i18n "doc.tmpl.html.section.options" }}</h2>
 {{- range .Doc.Groups }}
 {{- if .ShortDescription }}
     <h3>{{ quoteHTML .ShortDescription }}</h3>
@@ -31,20 +34,20 @@
 {{- range $idx, $f := $forms -}}
 {{- if gt $idx 0 }}, {{ end -}}<code>{{ quoteHTML $f }}</code>
 {{- end -}}
-{{ defaultValue .Default }}{{ if .Required }} (required){{ end }}
-{{- if .Description }} - {{ quoteHTML .Description }}{{ if hiddenMark .Hidden }} <strong>(hidden)</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>(hidden)</strong>{{ end }}
+{{ defaultValue .Default }}{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}
+{{- if .Description }} - {{ quoteHTML .Description }}{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
         <ul>
-{{- if .Env }}          <li>env: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} (delimiter <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>{{ end }}
-{{- if .Choices }}      <li>choices: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>{{ end }}
-{{- if .Optional }}     <li>optional value: <code>{{ quoteHTML .OptionalVal }}</code></li>{{ end }}
-{{- if .IniName }}      <li>ini-name: <code>{{ quoteHTML .IniName }}</code></li>{{ end }}
-{{- if .KeyValueDelim }}<li>key-value-delimiter: <code>{{ quoteHTML .KeyValueDelim }}</code></li>{{ end }}
-{{- if .Terminator }}   <li>terminator: <code>{{ quoteHTML .Terminator }}</code></li>{{ end }}
-{{- if .DefaultMask }}  <li>default-mask: <code>{{ quoteHTML .DefaultMask }}</code></li>{{ end }}
-{{- if .Base }}         <li>base: <code>{{ quoteHTML .Base }}</code></li>{{ end }}
-{{- if .UnquoteTag }}   <li>unquote: <code>{{ quoteHTML .UnquoteTag }}</code></li>{{ end }}
-{{- if ne .Order 0 }}   <li>order: <code>{{ .Order }}</code></li>{{ end }}
+{{- if .Env }}          <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>{{ end }}
+{{- if .Choices }}      <li>{{ i18n "doc.tmpl.html.meta.choices" }}: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>{{ end }}
+{{- if .Optional }}     <li>{{ i18n "doc.tmpl.html.meta.optional_value" }}: <code>{{ quoteHTML .OptionalVal }}</code></li>{{ end }}
+{{- if .IniName }}      <li>{{ i18n "doc.tmpl.html.meta.ini_name" }}: <code>{{ quoteHTML .IniName }}</code></li>{{ end }}
+{{- if .KeyValueDelim }}<li>{{ i18n "doc.tmpl.html.meta.key_value_delimiter" }}: <code>{{ quoteHTML .KeyValueDelim }}</code></li>{{ end }}
+{{- if .Terminator }}   <li>{{ i18n "doc.tmpl.html.meta.terminator" }}: <code>{{ quoteHTML .Terminator }}</code></li>{{ end }}
+{{- if .DefaultMask }}  <li>{{ i18n "doc.tmpl.html.meta.default_mask" }}: <code>{{ quoteHTML .DefaultMask }}</code></li>{{ end }}
+{{- if .Base }}         <li>{{ i18n "doc.tmpl.html.meta.base" }}: <code>{{ quoteHTML .Base }}</code></li>{{ end }}
+{{- if .UnquoteTag }}   <li>{{ i18n "doc.tmpl.html.meta.unquote" }}: <code>{{ quoteHTML .UnquoteTag }}</code></li>{{ end }}
+{{- if ne .Order 0 }}   <li>{{ i18n "doc.tmpl.html.meta.order" }}: <code>{{ .Order }}</code></li>{{ end }}
         </ul>
 {{- end }}
       </li>
@@ -52,19 +55,20 @@
     </ul>
 {{- end }}
   </section>
+{{- end }}
 
 {{- if .Doc.Commands }}
   <section>
-    <h2>Commands</h2>
+    <h2>{{ i18n "doc.tmpl.html.section.commands" }}</h2>
 {{- range .Doc.Commands }}
     <article>
       <h3>{{ quoteHTML .Name }}</h3>
       <p>{{ quoteHTML .ShortDescription }}</p>
 {{- if .UsageLine }}
-      <p><strong>Usage:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
+      <p><strong>{{ i18n "doc.tmpl.html.label.usage" }}:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
 {{- end }}
 {{- if .Aliases }}
-      <p><strong>Aliases:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
+      <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
 {{- end }}
     </article>
 {{- end }}

@@ -65,8 +65,8 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 
 	if includeVersion {
 		var help struct {
-			ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
-			ShowVersion func() error `short:"v" long:"version" description:"Show version information" auto-env:"false" immediate:"true"`
+			ShowHelp    func() error `short:"h" long:"help" description:"Show this help message" description-i18n:"help.builtin.show_help" auto-env:"false" immediate:"true"`
+			ShowVersion func() error `short:"v" long:"version" description:"Show version information" description-i18n:"help.builtin.show_version" auto-env:"false" immediate:"true"`
 		}
 
 		help.ShowHelp = showHelp
@@ -75,13 +75,14 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 		if err != nil {
 			return nil
 		}
+		ret.SetShortDescriptionI18nKey("help.group.help_options")
 		ret.isBuiltinHelp = true
 
 		return ret
 	}
 
 	var help struct {
-		ShowHelp func() error `short:"h" long:"help" description:"Show this help message" auto-env:"false" immediate:"true"`
+		ShowHelp func() error `short:"h" long:"help" description:"Show this help message" description-i18n:"help.builtin.show_help" auto-env:"false" immediate:"true"`
 	}
 
 	help.ShowHelp = showHelp
@@ -89,6 +90,7 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 	if err != nil {
 		return nil
 	}
+	ret.SetShortDescriptionI18nKey("help.group.help_options")
 	ret.isBuiltinHelp = true
 
 	return ret
