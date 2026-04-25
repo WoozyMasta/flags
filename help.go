@@ -660,7 +660,7 @@ func (p *Parser) writeHelpOption(
 	trimDescriptions bool,
 	format optionRenderFormat,
 ) {
-	line := &bytes.Buffer{}
+	var line strings.Builder
 	shortToken := ""
 	longToken := ""
 	choicesToken := ""
@@ -682,6 +682,7 @@ func (p *Parser) writeHelpOption(
 		return
 	}
 
+	line.Grow(64)
 	line.WriteString(strings.Repeat(" ", prefix))
 
 	if option.ShortName != 0 {
@@ -955,7 +956,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				return
 			}
 
-			for _, info := range grp.Options() {
+			for _, info := range c.sortedOptionsForGroup(grp) {
 				if !info.showInHelp() {
 					continue
 				}

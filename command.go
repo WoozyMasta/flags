@@ -461,6 +461,10 @@ func (c *Command) eachOption(f func(*Command, *Group, *Option)) {
 	})
 }
 
+func (c *Command) sortedOptionsForGroup(g *Group) []*Option {
+	return g.sortedOptionsForDisplay()
+}
+
 func (c *Command) eachCommand(f func(*Command)) {
 	f(c)
 

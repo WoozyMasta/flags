@@ -163,11 +163,25 @@ func (g *Group) Options() []*Option {
 	ret := make([]*Option, len(g.options))
 	copy(ret, g.options)
 
-	if p := g.parser(); p != nil {
+	if p := g.parser(); p != nil && p.shouldSortOptionsForDisplay(ret) {
 		return p.sortedOptions(ret)
 	}
 
 	return ret
+}
+
+func (g *Group) sortedOptionsForDisplay() []*Option {
+	if g == nil {
+		return nil
+	}
+
+	if p := g.parser(); p != nil && p.shouldSortOptionsForDisplay(g.options) {
+		ret := make([]*Option, len(g.options))
+		copy(ret, g.options)
+		return p.sortedOptions(ret)
+	}
+
+	return g.options
 }
 
 // Data returns the user-provided struct pointer backing this group.

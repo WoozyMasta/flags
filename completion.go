@@ -193,7 +193,7 @@ func (c *completion) completeOptionNames(s *parseState, prefix string, match str
 func (c *completion) collectOptionsForCompletion(s *parseState) []*Option {
 	var options []*Option
 	s.command.eachGroup(func(g *Group) {
-		options = append(options, g.Options()...)
+		options = append(options, s.command.sortedOptionsForGroup(g)...)
 	})
 
 	return options

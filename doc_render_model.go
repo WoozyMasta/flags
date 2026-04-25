@@ -176,7 +176,7 @@ func buildDocGroups(
 			Hidden:           group.Hidden,
 		}
 
-		for _, opt := range group.Options() {
+		for _, opt := range group.sortedOptionsForDisplay() {
 			if opt.ShortName == 0 && len(opt.LongName) == 0 {
 				continue
 			}
