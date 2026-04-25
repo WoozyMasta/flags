@@ -479,70 +479,68 @@ func (p *Parser) SetTagListDelimiter(delimiter rune) error {
 func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	c := mtag.cached()
 
-	alias := map[string]string{
-		p.flagTags.Short:               FlagTagShort,
-		p.flagTags.Long:                FlagTagLong,
-		p.flagTags.Required:            FlagTagRequired,
-		p.flagTags.Description:         FlagTagDescription,
-		p.flagTags.DescriptionI18n:     FlagTagDescriptionI18n,
-		p.flagTags.LongDescription:     FlagTagLongDescription,
-		p.flagTags.LongDescriptionI18n: FlagTagLongDescriptionI18n,
-		p.flagTags.NoFlag:              FlagTagNoFlag,
-		p.flagTags.Optional:            FlagTagOptional,
-		p.flagTags.OptionalValue:       FlagTagOptionalValue,
-		p.flagTags.Order:               FlagTagOrder,
-		p.flagTags.Default:             FlagTagDefault,
-		p.flagTags.Defaults:            FlagTagDefaults,
-		p.flagTags.DefaultMask:         FlagTagDefaultMask,
-		p.flagTags.Env:                 FlagTagEnv,
-		p.flagTags.AutoEnv:             FlagTagAutoEnv,
-		p.flagTags.EnvDelim:            FlagTagEnvDelim,
-		p.flagTags.ValueName:           FlagTagValueName,
-		p.flagTags.ValueNameI18n:       FlagTagValueNameI18n,
-		p.flagTags.Choice:              FlagTagChoice,
-		p.flagTags.Choices:             FlagTagChoices,
-		p.flagTags.Hidden:              FlagTagHidden,
-		p.flagTags.Immediate:           FlagTagImmediate,
-		p.flagTags.Base:                FlagTagBase,
-		p.flagTags.IniName:             FlagTagIniName,
-		p.flagTags.IniGroup:            FlagTagIniGroup,
-		p.flagTags.NoIni:               FlagTagNoIni,
-		p.flagTags.Group:               FlagTagGroup,
-		p.flagTags.GroupI18n:           FlagTagGroupI18n,
-		p.flagTags.Namespace:           FlagTagNamespace,
-		p.flagTags.EnvNamespace:        FlagTagEnvNamespace,
-		p.flagTags.Command:             FlagTagCommand,
-		p.flagTags.CommandI18n:         FlagTagCommandI18n,
-		p.flagTags.SubCommandsOptional: FlagTagSubCommandsOptional,
-		p.flagTags.Alias:               FlagTagAlias,
-		p.flagTags.Aliases:             FlagTagAliases,
-		p.flagTags.LongAlias:           FlagTagLongAlias,
-		p.flagTags.LongAliases:         FlagTagLongAliases,
-		p.flagTags.ShortAlias:          FlagTagShortAlias,
-		p.flagTags.ShortAliases:        FlagTagShortAliases,
-		p.flagTags.PositionalArgs:      FlagTagPositionalArgs,
-		p.flagTags.PositionalArgName:   FlagTagPositionalArgName,
-		p.flagTags.ArgNameI18n:         FlagTagArgNameI18n,
-		p.flagTags.ArgDescriptionI18n:  FlagTagArgDescriptionI18n,
-		p.flagTags.KeyValueDelimiter:   FlagTagKeyValueDelimiter,
-		p.flagTags.PassAfterNonOption:  FlagTagPassAfterNonOption,
-		p.flagTags.Unquote:             FlagTagUnquote,
-		p.flagTags.Terminator:          FlagTagTerminator,
+	normalizeTagAlias(c, p.flagTags.Short, FlagTagShort)
+	normalizeTagAlias(c, p.flagTags.Long, FlagTagLong)
+	normalizeTagAlias(c, p.flagTags.Required, FlagTagRequired)
+	normalizeTagAlias(c, p.flagTags.Description, FlagTagDescription)
+	normalizeTagAlias(c, p.flagTags.DescriptionI18n, FlagTagDescriptionI18n)
+	normalizeTagAlias(c, p.flagTags.LongDescription, FlagTagLongDescription)
+	normalizeTagAlias(c, p.flagTags.LongDescriptionI18n, FlagTagLongDescriptionI18n)
+	normalizeTagAlias(c, p.flagTags.NoFlag, FlagTagNoFlag)
+	normalizeTagAlias(c, p.flagTags.Optional, FlagTagOptional)
+	normalizeTagAlias(c, p.flagTags.OptionalValue, FlagTagOptionalValue)
+	normalizeTagAlias(c, p.flagTags.Order, FlagTagOrder)
+	normalizeTagAlias(c, p.flagTags.Default, FlagTagDefault)
+	normalizeTagAlias(c, p.flagTags.Defaults, FlagTagDefaults)
+	normalizeTagAlias(c, p.flagTags.DefaultMask, FlagTagDefaultMask)
+	normalizeTagAlias(c, p.flagTags.Env, FlagTagEnv)
+	normalizeTagAlias(c, p.flagTags.AutoEnv, FlagTagAutoEnv)
+	normalizeTagAlias(c, p.flagTags.EnvDelim, FlagTagEnvDelim)
+	normalizeTagAlias(c, p.flagTags.ValueName, FlagTagValueName)
+	normalizeTagAlias(c, p.flagTags.ValueNameI18n, FlagTagValueNameI18n)
+	normalizeTagAlias(c, p.flagTags.Choice, FlagTagChoice)
+	normalizeTagAlias(c, p.flagTags.Choices, FlagTagChoices)
+	normalizeTagAlias(c, p.flagTags.Hidden, FlagTagHidden)
+	normalizeTagAlias(c, p.flagTags.Immediate, FlagTagImmediate)
+	normalizeTagAlias(c, p.flagTags.Base, FlagTagBase)
+	normalizeTagAlias(c, p.flagTags.IniName, FlagTagIniName)
+	normalizeTagAlias(c, p.flagTags.IniGroup, FlagTagIniGroup)
+	normalizeTagAlias(c, p.flagTags.NoIni, FlagTagNoIni)
+	normalizeTagAlias(c, p.flagTags.Group, FlagTagGroup)
+	normalizeTagAlias(c, p.flagTags.GroupI18n, FlagTagGroupI18n)
+	normalizeTagAlias(c, p.flagTags.Namespace, FlagTagNamespace)
+	normalizeTagAlias(c, p.flagTags.EnvNamespace, FlagTagEnvNamespace)
+	normalizeTagAlias(c, p.flagTags.Command, FlagTagCommand)
+	normalizeTagAlias(c, p.flagTags.CommandI18n, FlagTagCommandI18n)
+	normalizeTagAlias(c, p.flagTags.SubCommandsOptional, FlagTagSubCommandsOptional)
+	normalizeTagAlias(c, p.flagTags.Alias, FlagTagAlias)
+	normalizeTagAlias(c, p.flagTags.Aliases, FlagTagAliases)
+	normalizeTagAlias(c, p.flagTags.LongAlias, FlagTagLongAlias)
+	normalizeTagAlias(c, p.flagTags.LongAliases, FlagTagLongAliases)
+	normalizeTagAlias(c, p.flagTags.ShortAlias, FlagTagShortAlias)
+	normalizeTagAlias(c, p.flagTags.ShortAliases, FlagTagShortAliases)
+	normalizeTagAlias(c, p.flagTags.PositionalArgs, FlagTagPositionalArgs)
+	normalizeTagAlias(c, p.flagTags.PositionalArgName, FlagTagPositionalArgName)
+	normalizeTagAlias(c, p.flagTags.ArgNameI18n, FlagTagArgNameI18n)
+	normalizeTagAlias(c, p.flagTags.ArgDescriptionI18n, FlagTagArgDescriptionI18n)
+	normalizeTagAlias(c, p.flagTags.KeyValueDelimiter, FlagTagKeyValueDelimiter)
+	normalizeTagAlias(c, p.flagTags.PassAfterNonOption, FlagTagPassAfterNonOption)
+	normalizeTagAlias(c, p.flagTags.Unquote, FlagTagUnquote)
+	normalizeTagAlias(c, p.flagTags.Terminator, FlagTagTerminator)
+}
+
+func normalizeTagAlias(tags map[string][]string, source string, target string) {
+	if source == "" || source == target {
+		return
 	}
 
-	for source, target := range alias {
-		if source == "" || source == target {
-			continue
-		}
+	values, ok := tags[source]
+	if !ok {
+		return
+	}
 
-		values, ok := c[source]
-		if !ok {
-			continue
-		}
-
-		if _, exists := c[target]; !exists {
-			c[target] = values
-		}
+	if _, exists := tags[target]; !exists {
+		tags[target] = values
 	}
 }
 
@@ -662,7 +660,7 @@ func (p *Parser) Parse() ([]string, error) {
 // EnsureBuiltinOptions materializes built-in help/version options (when enabled)
 // so they can be discovered and tuned before parsing.
 func (p *Parser) EnsureBuiltinOptions() {
-	if (p.Options & (HelpFlag | VersionFlag)) != None {
+	if (p.Options&(HelpFlag|VersionFlag)) != None && p.needsHelpGroups() {
 		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
 	}
 }

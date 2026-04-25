@@ -454,7 +454,7 @@ func (c *Command) scan() error {
 func (c *Command) eachOption(f func(*Command, *Group, *Option)) {
 	c.eachCommand(func(c *Command) {
 		c.eachGroup(func(g *Group) {
-			for _, option := range g.Options() {
+			for _, option := range g.options {
 				f(c, g, option)
 			}
 		})
@@ -488,6 +488,20 @@ func (c *Command) addHelpGroups(showHelp func() error, showVersion func() error)
 	for _, cc := range c.commands {
 		cc.addHelpGroups(showHelp, showVersion)
 	}
+}
+
+func (c *Command) needsHelpGroups() bool {
+	if !c.hasBuiltinHelpGroup {
+		return true
+	}
+
+	for _, cc := range c.commands {
+		if cc.needsHelpGroups() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Command) makeLookup() lookup {
