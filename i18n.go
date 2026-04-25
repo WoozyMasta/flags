@@ -33,7 +33,8 @@ type Localizer struct {
 }
 
 type i18nState struct {
-	cfg I18nConfig
+	cfg     I18nConfig
+	locales []string
 }
 
 // NewLocalizer creates a standalone localizer with the provided config.
@@ -59,6 +60,7 @@ func (p *Parser) SetI18nFallbackLocales(locales ...string) {
 	}
 
 	p.i18n.cfg.FallbackLocales = append([]string(nil), locales...)
+	p.i18n.resetLocaleCache()
 }
 
 // DisableI18n disables parser localization.
@@ -118,7 +120,10 @@ func newI18nState(cfg I18nConfig) *i18nState {
 	}
 	cfg.FallbackLocales = append([]string(nil), cfg.FallbackLocales...)
 
-	return &i18nState{cfg: cfg}
+	state := &i18nState{cfg: cfg}
+	state.resetLocaleCache()
+
+	return state
 }
 
 func (s *i18nState) text(key, fallback string) string {
@@ -182,6 +187,27 @@ func (s *i18nState) localeChain() []string {
 		return nil
 	}
 
+	if s.locales != nil {
+		return s.locales
+	}
+
+	return s.buildLocaleChain()
+}
+
+func (s *i18nState) resetLocaleCache() {
+	if s == nil {
+		return
+	}
+
+	if s.cfg.Locale == "" {
+		s.locales = nil
+		return
+	}
+
+	s.locales = s.buildLocaleChain()
+}
+
+func (s *i18nState) buildLocaleChain() []string {
 	var locales []string
 	appendLocale := func(candidate string) {
 		normalized := normalizeLocale(candidate)
