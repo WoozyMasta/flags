@@ -486,7 +486,7 @@ func TestHelpCommand(t *testing.T) {
 
 		var expected string
 
-		if runtime.GOOS == "windows" {
+		if defaultLongOptDelimiter == "/" {
 			expected = `Usage:
   TestHelpCommand [OPTIONS] command
 
@@ -499,7 +499,7 @@ Help Options:
   TestHelpCommand [OPTIONS] command
 
 Help Options:
-  -h, --help      Show this help message
+  -h, --help  Show this help message
 `
 		}
 
@@ -608,7 +608,7 @@ func commandOptionHelpMessage(t *testing.T, indent int) string {
 	}
 
 	helpArg := "--help"
-	if runtime.GOOS == "windows" {
+	if defaultLongOptDelimiter == "/" {
 		helpArg = "/?"
 	}
 
