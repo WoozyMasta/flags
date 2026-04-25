@@ -664,14 +664,28 @@ func (g *Group) checkForDuplicateFlags() *Error {
 	shortNames := make(map[rune]*Option)
 	longNames := make(map[string]*Option)
 
+	return addDuplicateFlagScope(g, shortNames, longNames)
+}
+
+func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[string]*Option) *Error {
+	if g == nil {
+		return nil
+	}
+
 	var duplicateError *Error
 
 	g.eachGroup(func(g *Group) {
+		if duplicateError != nil {
+			return
+		}
 		for _, option := range g.options {
 			if option.LongName != "" {
 				longName := option.LongNameWithNamespace()
 
 				if otherOption, ok := longNames[longName]; ok {
+					if duplicateAllowedForBuiltinOptions(option, otherOption) {
+						continue
+					}
 					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same long name as option `%s'", option, otherOption)
 					return
 				}
@@ -679,6 +693,9 @@ func (g *Group) checkForDuplicateFlags() *Error {
 			}
 			for _, alias := range option.LongAliasesWithNamespace() {
 				if otherOption, ok := longNames[alias]; ok {
+					if duplicateAllowedForBuiltinOptions(option, otherOption) {
+						continue
+					}
 					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same long alias `%s' as option `%s'", option, alias, otherOption)
 					return
 				}
@@ -686,6 +703,9 @@ func (g *Group) checkForDuplicateFlags() *Error {
 			}
 			if option.ShortName != 0 {
 				if otherOption, ok := shortNames[option.ShortName]; ok {
+					if duplicateAllowedForBuiltinOptions(option, otherOption) {
+						continue
+					}
 					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same short name as option `%s'", option, otherOption)
 					return
 				}
@@ -693,6 +713,9 @@ func (g *Group) checkForDuplicateFlags() *Error {
 			}
 			for _, alias := range option.ShortAliases {
 				if otherOption, ok := shortNames[alias]; ok {
+					if duplicateAllowedForBuiltinOptions(option, otherOption) {
+						continue
+					}
 					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same short alias `%c' as option `%s'", option, alias, otherOption)
 					return
 				}
@@ -702,6 +725,13 @@ func (g *Group) checkForDuplicateFlags() *Error {
 	})
 
 	return duplicateError
+}
+
+func duplicateAllowedForBuiltinOptions(a *Option, b *Option) bool {
+	return a != nil && b != nil &&
+		a.group != nil && b.group != nil &&
+		a.group.isBuiltinHelp && b.group.isBuiltinHelp &&
+		a.DescriptionI18nKey == b.DescriptionI18nKey
 }
 
 func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.StructField) (bool, error) {

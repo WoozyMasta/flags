@@ -2326,6 +2326,153 @@ func TestOptionAliasCollisions(t *testing.T) {
 	}
 }
 
+func TestRootAndCommandOptionShortNameConflict(t *testing.T) {
+	var opts struct {
+		Root bool `short:"x"`
+		Run  struct {
+			Command bool `short:"x"`
+		} `command:"run"`
+	}
+
+	_, err := NewParser(&opts, None).ParseArgs([]string{"run"})
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestRootAndCommandOptionLongNameConflict(t *testing.T) {
+	var opts struct {
+		Root bool `long:"mode"`
+		Run  struct {
+			Command bool `long:"mode"`
+		} `command:"run"`
+	}
+
+	_, err := NewParser(&opts, None).ParseArgs([]string{"run"})
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestRootAliasAndCommandOptionConflict(t *testing.T) {
+	var opts struct {
+		Root bool `long:"root" long-alias:"mode" short-alias:"m"`
+		Run  struct {
+			CommandLong  bool `long:"mode"`
+			CommandShort bool `short:"m"`
+		} `command:"run"`
+	}
+
+	_, err := NewParser(&opts, None).ParseArgs([]string{"run"})
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestParentAndSubcommandOptionConflict(t *testing.T) {
+	var opts struct {
+		Parent struct {
+			ParentFlag bool `short:"x" long:"mode"`
+			Sub        struct {
+				ChildFlag bool `short:"x" long:"mode"`
+			} `command:"sub"`
+		} `command:"parent"`
+	}
+
+	_, err := NewParser(&opts, None).ParseArgs([]string{"parent", "sub"})
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestSiblingCommandsCanReuseOptionNames(t *testing.T) {
+	var opts struct {
+		Run struct {
+			Shared bool `short:"x" long:"shared"`
+		} `command:"run"`
+		Status struct {
+			Shared bool `short:"x" long:"shared"`
+		} `command:"status"`
+	}
+
+	_, err := NewParser(&opts, None).ParseArgs([]string{"run", string(defaultShortOptDelimiter) + "x"})
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	if !opts.Run.Shared {
+		t.Fatalf("expected run shared flag to be parsed")
+	}
+	if opts.Status.Shared {
+		t.Fatalf("did not expect sibling command flag to be parsed")
+	}
+}
+
+func TestBuiltinVersionFlagConflictsWithApplicationOption(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v"`
+	}
+
+	_, err := NewParser(&opts, VersionFlag).ParseArgs(nil)
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestBuiltinHelpFlagConflictsWithCommandOption(t *testing.T) {
+	var opts struct {
+		Run struct {
+			Help bool `short:"h" long:"help"`
+		} `command:"run"`
+	}
+
+	_, err := NewParser(&opts, HelpFlag).ParseArgs([]string{"run"})
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
+func TestBuiltinVersionFlagConflictsWithCommandOption(t *testing.T) {
+	var opts struct {
+		Run struct {
+			Version bool `short:"v" long:"version"`
+		} `command:"run"`
+	}
+
+	_, err := NewParser(&opts, VersionFlag).ParseArgs([]string{"run"})
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
+	}
+}
+
 func TestOptionShortAliasTooLong(t *testing.T) {
 	var opts struct {
 		Value bool `short:"v" short-alias:"vv"`

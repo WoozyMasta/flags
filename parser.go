@@ -699,6 +699,10 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		return nil, p.printError(err)
 	}
 
+	// Add built-in help/version group before duplicate validation so their
+	// flags cannot silently shadow application or command flags.
+	p.EnsureBuiltinOptions()
+
 	if err := p.validateDuplicateFlags(); err != nil {
 		return nil, p.printError(err)
 	}
@@ -713,9 +717,6 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 	p.versionRequested = false
 	p.immediateRequested = false
-
-	// Add built-in help/version group to all commands if necessary.
-	p.EnsureBuiltinOptions()
 
 	compval := os.Getenv("GO_FLAGS_COMPLETION")
 
@@ -1524,7 +1525,7 @@ func (p *Parser) validateDuplicateFlags() error {
 			return
 		}
 
-		if err := c.checkForDuplicateFlags(); err != nil {
+		if err := c.checkForDuplicateFlagsInScope(); err != nil {
 			dupErr = err
 		}
 	})
@@ -1573,6 +1574,8 @@ func (p *Parser) Validate() error {
 	if err := p.applyConfigurators(); err != nil {
 		return err
 	}
+
+	p.EnsureBuiltinOptions()
 
 	return p.validateDuplicateFlags()
 }

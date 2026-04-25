@@ -58,7 +58,7 @@ type helpOptions struct {
 	} `group:"Subgroup" namespace:"sip"`
 
 	Bommand struct {
-		Hidden bool `long:"hidden" description:"A hidden option" hidden:"yes"`
+		Hidden bool `long:"command-hidden" description:"A hidden option" hidden:"yes"`
 	} `command:"bommand" description:"A command with only hidden options"`
 
 	Command struct {

@@ -46,7 +46,7 @@ type Options struct {
 		IncludeComments bool   `long:"include-comments" description-i18n:"opt.ini.include_comments.desc"`
 		CommentDefaults bool   `long:"comment-defaults" description-i18n:"opt.ini.comment_defaults.desc"`
 	} `command:"ini" command-i18n:"cmd.ini.desc" long-description-i18n:"cmd.ini.long" ini-group:"ini"`
-	Verbose bool `short:"v" long:"verbose" description-i18n:"opt.verbose.desc"`
+	Verbose bool `short:"V" long:"verbose" description-i18n:"opt.verbose.desc"`
 }
 
 func main() {

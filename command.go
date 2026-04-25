@@ -451,6 +451,40 @@ func (c *Command) scan() error {
 	return c.scanType(c.scanSubcommandHandler(c.Group))
 }
 
+func (c *Command) checkForDuplicateFlagsInScope() *Error {
+	shortNames := make(map[rune]*Option)
+	longNames := make(map[string]*Option)
+
+	for _, cmd := range c.optionScopeCommands() {
+		if err := addDuplicateFlagScope(cmd.Group, shortNames, longNames); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Command) optionScopeCommands() []*Command {
+	var reversed []*Command
+
+	for cmd := c; cmd != nil; {
+		reversed = append(reversed, cmd)
+
+		parent, ok := cmd.parent.(*Command)
+		if !ok {
+			break
+		}
+		cmd = parent
+	}
+
+	out := make([]*Command, 0, len(reversed))
+	for idx := len(reversed) - 1; idx >= 0; idx-- {
+		out = append(out, reversed[idx])
+	}
+
+	return out
+}
+
 func (c *Command) eachOption(f func(*Command, *Group, *Option)) {
 	c.eachCommand(func(c *Command) {
 		c.eachGroup(func(g *Group) {

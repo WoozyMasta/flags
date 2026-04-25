@@ -53,7 +53,7 @@ type AdvancedOptions struct {
 	SecretKey        string                 `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
 	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;light" default:"none" description:"Color scheme for built-in help output"`
 	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
-	Verbose          []bool                 `short:"v" long:"verbose" description:"Increase verbosity level" order:"100"`
+	Verbose          []bool                 `short:"V" long:"verbose" description:"Increase verbosity level" order:"100"`
 	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
 	Exec             []string               `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
 	Network          AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
