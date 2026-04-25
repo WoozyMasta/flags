@@ -38,16 +38,36 @@
 {{- if .Description }} - {{ quoteHTML .Description }}{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
         <ul>
-{{- if .Env }}          <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>{{ end }}
-{{- if .Choices }}      <li>{{ i18n "doc.tmpl.html.meta.choices" }}: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>{{ end }}
-{{- if .Optional }}     <li>{{ i18n "doc.tmpl.html.meta.optional_value" }}: <code>{{ quoteHTML .OptionalVal }}</code></li>{{ end }}
-{{- if .IniName }}      <li>{{ i18n "doc.tmpl.html.meta.ini_name" }}: <code>{{ quoteHTML .IniName }}</code></li>{{ end }}
-{{- if .KeyValueDelim }}<li>{{ i18n "doc.tmpl.html.meta.key_value_delimiter" }}: <code>{{ quoteHTML .KeyValueDelim }}</code></li>{{ end }}
-{{- if .Terminator }}   <li>{{ i18n "doc.tmpl.html.meta.terminator" }}: <code>{{ quoteHTML .Terminator }}</code></li>{{ end }}
-{{- if .DefaultMask }}  <li>{{ i18n "doc.tmpl.html.meta.default_mask" }}: <code>{{ quoteHTML .DefaultMask }}</code></li>{{ end }}
-{{- if .Base }}         <li>{{ i18n "doc.tmpl.html.meta.base" }}: <code>{{ quoteHTML .Base }}</code></li>{{ end }}
-{{- if .UnquoteTag }}   <li>{{ i18n "doc.tmpl.html.meta.unquote" }}: <code>{{ quoteHTML .UnquoteTag }}</code></li>{{ end }}
-{{- if ne .Order 0 }}   <li>{{ i18n "doc.tmpl.html.meta.order" }}: <code>{{ .Order }}</code></li>{{ end }}
+{{- if .Env }}
+          <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>
+{{- end }}
+{{- if .Choices }}
+          <li>{{ i18n "doc.tmpl.html.meta.choices" }}: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>
+{{- end }}
+{{- if .Optional }}
+          <li>{{ i18n "doc.tmpl.html.meta.optional_value" }}: <code>{{ quoteHTML .OptionalVal }}</code></li>
+{{- end }}
+{{- if .IniName }}
+          <li>{{ i18n "doc.tmpl.html.meta.ini_name" }}: <code>{{ quoteHTML .IniName }}</code></li>
+{{- end }}
+{{- if .KeyValueDelim }}
+          <li>{{ i18n "doc.tmpl.html.meta.key_value_delimiter" }}: <code>{{ quoteHTML .KeyValueDelim }}</code></li>
+{{- end }}
+{{- if .Terminator }}
+          <li>{{ i18n "doc.tmpl.html.meta.terminator" }}: <code>{{ quoteHTML .Terminator }}</code></li>
+{{- end }}
+{{- if .DefaultMask }}
+          <li>{{ i18n "doc.tmpl.html.meta.default_mask" }}: <code>{{ quoteHTML .DefaultMask }}</code></li>
+{{- end }}
+{{- if .Base }}
+          <li>{{ i18n "doc.tmpl.html.meta.base" }}: <code>{{ quoteHTML .Base }}</code></li>
+{{- end }}
+{{- if .UnquoteTag }}
+          <li>{{ i18n "doc.tmpl.html.meta.unquote" }}: <code>{{ quoteHTML .UnquoteTag }}</code></li>
+{{- end }}
+{{- if ne .Order 0 }}
+          <li>{{ i18n "doc.tmpl.html.meta.order" }}: <code>{{ .Order }}</code></li>
+{{- end }}
         </ul>
 {{- end }}
       </li>

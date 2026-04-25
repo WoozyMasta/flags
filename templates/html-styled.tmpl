@@ -177,15 +177,33 @@
 {{ defaultValue .Default }}
 {{- if .Description }} - {{ quoteHTML .Description }}{{ end }}
           <div class="meta">
-{{- if .Required }}<span class="chip required">{{ i18n "doc.tmpl.html.required" }}</span>{{ end }}
-{{- if hiddenMark .Hidden }}<span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>{{ end }}
-{{- if .Env }}<span class="chip">{{ i18n "doc.tmpl.html.meta.env" }} {{ quoteHTML .Env }}</span>{{ end }}
-{{- if .Choices }}<span class="chip">{{ i18n "doc.tmpl.html.meta.choices" }} {{ quoteHTML (join .Choices ", ") }}</span>{{ end }}
-{{- if .Optional }}<span class="chip">{{ i18n "doc.tmpl.html.meta.optional" }} {{ quoteHTML .OptionalVal }}</span>{{ end }}
-{{- if .IniName }}<span class="chip">{{ i18n "doc.tmpl.html.meta.ini" }} {{ quoteHTML .IniName }}</span>{{ end }}
-{{- if .Terminator }}<span class="chip">{{ i18n "doc.tmpl.html.meta.term" }} {{ quoteHTML .Terminator }}</span>{{ end }}
-{{- if .KeyValueDelim }}<span class="chip">{{ i18n "doc.tmpl.html.meta.kv" }} {{ quoteHTML .KeyValueDelim }}</span>{{ end }}
-{{- if .DefaultMask }}<span class="chip">{{ i18n "doc.tmpl.html.meta.mask" }} {{ quoteHTML .DefaultMask }}</span>{{ end }}
+{{- if .Required }}
+            <span class="chip required">{{ i18n "doc.tmpl.html.required" }}</span>
+{{- end }}
+{{- if hiddenMark .Hidden }}
+            <span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>
+{{- end }}
+{{- if .Env }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.env" }} {{ quoteHTML .Env }}</span>
+{{- end }}
+{{- if .Choices }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.choices" }} {{ quoteHTML (join .Choices ", ") }}</span>
+{{- end }}
+{{- if .Optional }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.optional" }} {{ quoteHTML .OptionalVal }}</span>
+{{- end }}
+{{- if .IniName }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.ini" }} {{ quoteHTML .IniName }}</span>
+{{- end }}
+{{- if .Terminator }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.term" }} {{ quoteHTML .Terminator }}</span>
+{{- end }}
+{{- if .KeyValueDelim }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.kv" }} {{ quoteHTML .KeyValueDelim }}</span>
+{{- end }}
+{{- if .DefaultMask }}
+            <span class="chip">{{ i18n "doc.tmpl.html.meta.mask" }} {{ quoteHTML .DefaultMask }}</span>
+{{- end }}
           </div>
         </li>
 {{- end }}
