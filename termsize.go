@@ -2,24 +2,42 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Project: https://github.com/woozymasta/flags
 
-//go:build !windows && !plan9 && !appengine && !wasm && !aix
+//go:build !plan9 && !appengine && !wasm
 
 package flags
 
 import (
-	"flag"
+	"os"
 
-	"golang.org/x/sys/unix"
+	"golang.org/x/term"
 )
 
 func getTerminalColumns() int {
-	if flag.Lookup("test.v") != nil {
-		return defaultTermSize
+	for _, file := range []*os.File{os.Stdout, os.Stderr, os.Stdin} {
+		if file == nil {
+			continue
+		}
+
+		fd, ok := terminalFD(file)
+		if !ok {
+			continue
+		}
+
+		width, _, err := term.GetSize(fd)
+		if err == nil && width > 0 {
+			return width
+		}
 	}
 
-	ws, err := unix.IoctlGetWinsize(0, unix.TIOCGWINSZ)
-	if err != nil {
-		return defaultTermSize
+	return defaultTermSize
+}
+
+func terminalFD(file *os.File) (int, bool) {
+	fd := file.Fd()
+	maxInt := int(^uint(0) >> 1)
+	if fd > uintptr(maxInt) {
+		return 0, false
 	}
-	return int(ws.Col)
+
+	return int(fd), true //nolint:gosec // fd is checked against max int above.
 }

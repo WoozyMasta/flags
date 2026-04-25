@@ -18,7 +18,9 @@ type alignmentInfo struct {
 	terminalColumns int
 	hasShort        bool
 	hasValueName    bool
-	indent          bool
+	reserveShort    bool
+	unlimitedWidth  bool
+	indent          int
 }
 
 const (
@@ -47,6 +49,10 @@ func (a *alignmentInfo) descriptionStart() int {
 func (a *alignmentInfo) optionDescriptionStart() int {
 	descstart := a.descriptionStart() + paddingBeforeOption
 
+	if a.unlimitedWidth {
+		return descstart
+	}
+
 	if a.maxLongLen <= a.terminalColumns/2 {
 		return descstart
 	}
@@ -60,12 +66,10 @@ func (a *alignmentInfo) optionDescriptionStart() int {
 	return descstart
 }
 
-func (a *alignmentInfo) updateLen(name string, indent bool) {
+func (a *alignmentInfo) updateLen(name string, indent int) {
 	l := textWidth(name)
 
-	if indent {
-		l += 4
-	}
+	l += indent
 
 	if l > a.maxLongLen {
 		a.maxLongLen = l
@@ -77,19 +81,25 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 		maxLongLen:      0,
 		hasShort:        false,
 		hasValueName:    false,
-		terminalColumns: getTerminalColumns(),
+		reserveShort:    false,
+		terminalColumns: p.helpColumns(),
 	}
-
-	if ret.terminalColumns <= 0 {
-		ret.terminalColumns = 80
+	if p.helpWidthSet && p.helpWidth == 0 {
+		ret.terminalColumns = unlimitedHelpWidth
+		ret.unlimitedWidth = true
 	}
 
 	var prevcmd *Command
 
 	p.eachActiveGroup(func(c *Command, grp *Group) {
+		indent := 0
+		if c != p.Command {
+			indent = p.commandOptionIndent
+		}
+
 		if c != prevcmd {
 			for _, arg := range c.args {
-				ret.updateLen(arg.localizedName(), c != p.Command)
+				ret.updateLen(arg.localizedName(), indent)
 			}
 			prevcmd = c
 		}
@@ -103,6 +113,7 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 
 			if info.ShortName != 0 {
 				ret.hasShort = true
+				ret.reserveShort = true
 			}
 
 			valueName := info.localizedValueName()
@@ -111,15 +122,45 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 			}
 
 			l := info.LongNameWithNamespace() + valueName
-			// Choices are rendered as a tail block and can move to their own
-			// lines in adaptive mode; keep base alignment focused on flag/value
-			// tokens to avoid over-expanding description gap.
+			if choiceToken, ok := inlineChoicesAlignmentToken(valueName, info.Choices, ret.terminalColumns); ok {
+				l += choiceToken
+			}
 
-			ret.updateLen(l, c != p.Command)
+			ret.updateLen(l, indent)
 		}
 	})
 
 	return ret
+}
+
+const unlimitedHelpWidth = 1 << 30
+
+func (p *Parser) helpColumns() int {
+	if p.helpWidthSet {
+		return p.helpWidth
+	}
+
+	width := getTerminalColumns()
+	if width <= 0 {
+		return defaultTermSize
+	}
+
+	return width
+}
+
+func inlineChoicesAlignmentToken(valueName string, choices []string, terminalColumns int) (string, bool) {
+	if valueName == "" || len(choices) == 0 {
+		return "", false
+	}
+
+	compact := "[" + strings.Join(choices, "|") + "]"
+	width := textWidth(compact)
+
+	if terminalColumns <= 0 {
+		terminalColumns = 80
+	}
+
+	return compact, width <= terminalColumns/6
 }
 
 func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
@@ -521,12 +562,10 @@ func (p *Parser) adaptiveWriteHelpOption(
 	forceSplit bool,
 ) bool {
 	prefix := paddingBeforeOption
-	if info.indent {
-		prefix += 4
-	}
+	prefix += info.indent
 
 	leftPrefix := prefix
-	if option.ShortName == 0 && info.hasShort {
+	if option.ShortName == 0 && info.reserveShort {
 		leftPrefix += 4
 	}
 
@@ -542,7 +581,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 	leftBody := strings.TrimPrefix(leftRaw, indentPrefix)
 
 	leftLen := textWidth(leftBody)
-	if !forceSplit && leftLen <= leftWidth+8 {
+	if !forceSplit && leftLen <= leftWidth {
 		return false
 	}
 
@@ -551,6 +590,15 @@ func (p *Parser) adaptiveWriteHelpOption(
 	if option.canArgument() {
 		if idx := strings.IndexRune(leftBody, format.nameDelimiter); idx >= 0 && idx+1 < len(leftBody) {
 			head := leftBody[:idx+1]
+			valueName := option.localizedValueName()
+			if valueName != "" {
+				candidate := head + valueName
+				if textWidth(candidate) <= leftWidth {
+					head = candidate
+					valueName = ""
+				}
+			}
+
 			headWrapped := wrapTextNoHyphen(head, leftWidth)
 			for line := range strings.SplitSeq(headWrapped, "\n") {
 				leftLinesPlain = append(leftLinesPlain, indentPrefix+line)
@@ -562,7 +610,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 
 			forceChoiceList := (p.Options & ShowChoiceListInHelp) != None
 			for _, line := range splitOptionTailLines(
-				option.localizedValueName(),
+				valueName,
 				option.Choices,
 				tailWidth,
 				forceChoiceList,
@@ -667,9 +715,7 @@ func (p *Parser) writeHelpOption(
 
 	prefix := paddingBeforeOption
 
-	if info.indent {
-		prefix += 4
-	}
+	prefix += info.indent
 
 	if option.Hidden {
 		return
@@ -689,7 +735,7 @@ func (p *Parser) writeHelpOption(
 		line.WriteRune(format.shortDelimiter)
 		line.WriteRune(option.ShortName)
 		shortToken = string(format.shortDelimiter) + string(option.ShortName)
-	} else if info.hasShort {
+	} else if info.reserveShort {
 		line.WriteString("  ")
 	}
 
@@ -698,7 +744,7 @@ func (p *Parser) writeHelpOption(
 	if len(option.LongName) > 0 {
 		if option.ShortName != 0 {
 			line.WriteString(", ")
-		} else if info.hasShort {
+		} else if info.reserveShort {
 			line.WriteString("  ")
 		}
 
@@ -760,6 +806,22 @@ func (p *Parser) writeHelpOption(
 	}
 
 	_, _ = writer.WriteString("\n")
+}
+
+func commandHasVisibleShortOption(c *Command) bool {
+	for _, grp := range c.groups {
+		if !grp.showInHelp() || grp.isBuiltinHelp {
+			continue
+		}
+
+		for _, opt := range grp.options {
+			if opt.showInHelp() && opt.ShortName != 0 {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func maxCommandLength(s []*Command) int {
@@ -824,7 +886,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	if p.Name != "" {
 		usageLabel := p.i18nText("help.usage", "Usage") + ":"
 		_, _ = wr.WriteString(p.colorizeHelp(usageLabel, p.helpColorScheme.UsageHeader))
-		if basePrefix != "" && p.helpColorScheme.BaseText.UseBG {
+		if basePrefix != "" && p.helpColorScheme.BaseText.UseBG && !aligninfo.unlimitedWidth {
 			pad := aligninfo.terminalColumns - textWidth(usageLabel)
 			if pad > 0 {
 				_, _ = wr.WriteString(strings.Repeat(" ", pad))
@@ -946,6 +1008,11 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 	for c != nil {
 		printcmd := c != p.Command
+		optionAlignInfo := aligninfo
+		if printcmd {
+			optionAlignInfo.reserveShort = commandHasVisibleShortOption(c)
+			optionAlignInfo.indent = p.commandOptionIndent
+		}
 
 		c.eachGroup(func(grp *Group) {
 			first := true
@@ -972,22 +1039,21 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						"\n%s\n",
 						p.colorizeHelp(header, p.helpColorScheme.SubcommandOptionsHeader),
 					)
-					aligninfo.indent = true
 					printcmd = false
 				}
 
 				if first && cmd.Group != grp {
 					_, _ = fmt.Fprintln(wr)
 
-					if aligninfo.indent {
-						_, _ = wr.WriteString("    ")
+					if optionAlignInfo.indent > 0 {
+						_, _ = wr.WriteString(strings.Repeat(" ", optionAlignInfo.indent))
 					}
 
 					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.localizedShortDescription(), p.helpColorScheme.GroupHeader))
 					first = false
 				}
 
-				p.writeHelpOption(wr, info, aligninfo, trimDescriptions, format)
+				p.writeHelpOption(wr, info, optionAlignInfo, trimDescriptions, format)
 			}
 		})
 

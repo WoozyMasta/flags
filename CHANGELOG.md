@@ -94,6 +94,10 @@ and this project adheres to [Semantic Versioning][].
 * Runtime render-style controls for help/doc output:
   `SetHelpFlagRenderStyle(...)`, `SetHelpEnvRenderStyle(...)`,
   and shell-detect options `DetectShellFlagStyle` / `DetectShellEnvStyle`.
+* Command option help indentation control via
+  `Parser.SetCommandOptionIndent(...)`.
+* Help output width control via `Parser.SetHelpWidth(...)`, with `0`
+  disabling wrapping.
 * Long option-name length guard with parser-level override:
   `Parser.SetMaxLongNameLength(...)`.
 * Positional arguments now support `default` / `defaults` tags,
@@ -136,7 +140,12 @@ and this project adheres to [Semantic Versioning][].
 * Windows `gofmt` instability fixed via `.gitattributes` (LF normalization).
 * Built-in help rendering for long option signatures
   (including long `choice` lists and value placeholders)
-  now wraps more predictably and keeps the description column readable.
+  now wraps more predictably, keeps short placeholders with their option
+  names when they fit, and keeps the description column readable.
+* Command option help rows now use the same indentation as top-level option
+  rows by default.
+* Terminal width detection now uses `golang.org/x/term` and probes stdout,
+  stderr, then stdin before falling back to 80 columns.
 
 [Unreleased]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.1...HEAD
 

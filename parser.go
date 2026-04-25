@@ -90,6 +90,12 @@ type Parser struct {
 	// Configured set of fields rendered by built-in version output.
 	versionFields VersionFields
 
+	// Extra spaces added before command option rows in built-in help output.
+	commandOptionIndent int
+
+	// Explicit help output width. Zero means unlimited when helpWidthSet is true.
+	helpWidth int
+
 	// TagListDelimiter splits values for list-based struct tags such as
 	// defaults/choices/aliases.
 	TagListDelimiter rune
@@ -111,6 +117,9 @@ type Parser struct {
 
 	// Preferred rendering style for env placeholders in help/doc output.
 	helpEnvStyle RenderStyle
+
+	// Tracks whether helpWidth was explicitly configured.
+	helpWidthSet bool
 
 	// Indicates that post-scan configurators should be applied before parse.
 	configDirty bool
@@ -441,6 +450,31 @@ func (p *Parser) SetHelpFlagRenderStyle(style RenderStyle) {
 // built-in help and doc templates.
 func (p *Parser) SetHelpEnvRenderStyle(style RenderStyle) {
 	p.helpEnvStyle = style
+}
+
+// SetCommandOptionIndent configures extra spaces before command option rows in
+// built-in help output. The default is 0, so top-level and command options use
+// the same indentation.
+func (p *Parser) SetCommandOptionIndent(indent int) error {
+	if indent < 0 {
+		return ErrNegativeCommandOptionIndent
+	}
+
+	p.commandOptionIndent = indent
+	return nil
+}
+
+// SetHelpWidth configures built-in help output wrapping width. When unset,
+// help uses the current terminal width with a fallback of 80 columns. Width 0
+// disables wrapping.
+func (p *Parser) SetHelpWidth(width int) error {
+	if width < 0 {
+		return ErrNegativeHelpWidth
+	}
+
+	p.helpWidth = width
+	p.helpWidthSet = true
+	return nil
 }
 
 // SetMaxLongNameLength sets the maximum allowed length for option `long` names.

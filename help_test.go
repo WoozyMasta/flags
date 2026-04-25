@@ -72,7 +72,7 @@ type helpOptions struct {
 	ParentCommand struct {
 		Opt        string `long:"opt" description:"This is a parent command option"`
 		SubCommand struct {
-			Opt string `long:"opt" description:"This is a sub command option"`
+			Opt string `long:"sub-opt" ini-name:"Opt" description:"This is a sub command option"`
 		} `command:"sub" description:"A sub command"`
 	} `command:"parent" description:"A parent command"`
 
@@ -491,8 +491,8 @@ func TestHelpCommand(t *testing.T) {
   TestHelpCommand [OPTIONS] command
 
 Help Options:
-  /?              Show this help message
-  /h, /help       Show this help message
+  /?          Show this help message
+  /h, /help   Show this help message
 `
 		} else {
 			expected = `Usage:
@@ -505,6 +505,163 @@ Help Options:
 
 		assertDiff(t, e.Message, expected, "help message")
 	}
+}
+
+func TestHelpCommandOptionsUseDefaultIndent(t *testing.T) {
+	got := commandOptionHelpMessage(t, 0)
+
+	if !strings.Contains(got, "[doc command options]\n  /format:ФОРМАТ") {
+		t.Fatalf("expected command option to use base option indent, got:\n%s", got)
+	}
+	if strings.Contains(got, "[doc command options]\n      /format:") {
+		t.Fatalf("did not expect legacy extra command option indent, got:\n%s", got)
+	}
+
+	assertHelpDescriptionColumn(t, got, "/h, /help", "Show this help message", "/format:ФОРМАТ", "Documentation format")
+}
+
+func TestHelpCommandOptionsCustomIndent(t *testing.T) {
+	got := commandOptionHelpMessage(t, 2)
+
+	if !strings.Contains(got, "[doc command options]\n    /format:ФОРМАТ") {
+		t.Fatalf("expected custom command option indent, got:\n%s", got)
+	}
+
+	assertHelpDescriptionColumn(t, got, "/h, /help", "Show this help message", "/format:ФОРМАТ", "Documentation format")
+}
+
+func TestSetCommandOptionIndentRejectsNegative(t *testing.T) {
+	p := NewNamedParser("TestCommandIndent", None)
+	if err := p.SetCommandOptionIndent(-1); !errors.Is(err, ErrNegativeCommandOptionIndent) {
+		t.Fatalf("expected ErrNegativeCommandOptionIndent, got %v", err)
+	}
+}
+
+func TestSetHelpWidthControlsWrapping(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"alpha beta gamma delta epsilon zeta eta theta"`
+	}
+
+	p := NewNamedParser("HelpWidth", None)
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	if err := p.SetHelpWidth(32); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	if !strings.Contains(out.String(), "\n             delta epsilon zeta") {
+		t.Fatalf("expected narrow help width to wrap description, got:\n%s", out.String())
+	}
+}
+
+func TestSetHelpWidthZeroDisablesWrapping(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"alpha beta gamma delta epsilon zeta eta theta"`
+	}
+
+	p := NewNamedParser("HelpWidthUnlimited", None)
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	if err := p.SetHelpWidth(0); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+	got := out.String()
+
+	if !strings.Contains(got, "/value:    alpha beta gamma delta epsilon zeta eta theta") {
+		t.Fatalf("expected unlimited help width to keep description on one line, got:\n%s", got)
+	}
+}
+
+func TestSetHelpWidthRejectsNegative(t *testing.T) {
+	p := NewNamedParser("HelpWidth", None)
+	if err := p.SetHelpWidth(-1); !errors.Is(err, ErrNegativeHelpWidth) {
+		t.Fatalf("expected ErrNegativeHelpWidth, got %v", err)
+	}
+}
+
+func commandOptionHelpMessage(t *testing.T, indent int) string {
+	t.Helper()
+
+	var opts struct {
+		Doc struct {
+			Format string `long:"format" value-name:"ФОРМАТ" choice:"markdown" choice:"html" choice:"man" description:"Documentation format"`
+		} `command:"doc" description:"Render docs"`
+	}
+
+	p := NewNamedParser("TestCommandIndent", HelpFlag)
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	if err := p.SetCommandOptionIndent(indent); err != nil {
+		t.Fatalf("unexpected set command option indent error: %v", err)
+	}
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	helpArg := "--help"
+	if runtime.GOOS == "windows" {
+		helpArg = "/?"
+	}
+
+	_, err := p.ParseArgs([]string{"doc", helpArg})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	return flagsErr.Message
+}
+
+func assertHelpDescriptionColumn(
+	t *testing.T,
+	help string,
+	leftNeedle string,
+	descNeedle string,
+	otherLeftNeedle string,
+	otherDescNeedle string,
+) {
+	t.Helper()
+
+	line := helpLineContaining(t, help, leftNeedle)
+	otherLine := helpLineContaining(t, help, otherLeftNeedle)
+
+	descIdx := strings.Index(line, descNeedle)
+	otherDescIdx := strings.Index(otherLine, otherDescNeedle)
+	if descIdx < 0 || otherDescIdx < 0 {
+		t.Fatalf("expected description markers in help lines:\n%s\n%s", line, otherLine)
+	}
+
+	descCol := textWidth(line[:descIdx])
+	otherDescCol := textWidth(otherLine[:otherDescIdx])
+	if descCol != otherDescCol {
+		t.Fatalf("expected description columns to match, got %d and %d:\n%s\n%s", descCol, otherDescCol, line, otherLine)
+	}
+}
+
+func helpLineContaining(t *testing.T, help string, needle string) string {
+	t.Helper()
+
+	for _, line := range strings.Split(help, "\n") {
+		if strings.Contains(line, needle) {
+			return line
+		}
+	}
+
+	t.Fatalf("expected help line containing %q, got:\n%s", needle, help)
+	return ""
 }
 
 func TestHiddenCommandNoBuiltinHelp(t *testing.T) {
@@ -573,7 +730,7 @@ func TestHiddenCommandNoBuiltinHelp(t *testing.T) {
 Long hidden command description
 
 [hidden command arguments]
-  <positional-foo>:         positional foo
+  <positional-foo>:     positional foo
 `
 		} else {
 			expected = `Usage:
@@ -582,7 +739,7 @@ Long hidden command description
 Long hidden command description
 
 [hidden command arguments]
-  <positional-foo>:         positional foo
+  <positional-foo>:     positional foo
 `
 		}
 		h := &bytes.Buffer{}
@@ -867,6 +1024,71 @@ func TestHelpAdaptiveLayoutBreaksAfterNameDelimiter(t *testing.T) {
 	if !strings.Contains(got, "valid values:") {
 		t.Fatalf("expected auto choice-list rendering marker, got:\n%s", got)
 	}
+}
+
+func TestHelpAdaptiveLayoutKeepsShortValueNameWithOption(t *testing.T) {
+	var opts struct {
+		Format string `long:"format" value-name:"ФОРМАТ" choice:"markdown" choice:"html" choice:"man" description:"Documentation format"`
+	}
+
+	p := NewNamedParser("AdaptiveHelpShortValue", None)
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	opt := p.FindOptionByLongName("format")
+	if opt == nil {
+		t.Fatalf("expected option to be registered")
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 30
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	if !strings.Contains(got, "/format:ФОРМАТ") {
+		t.Fatalf("expected value name to stay with short option form, got:\n%s", got)
+	}
+	if strings.Contains(got, "/format:\n") {
+		t.Fatalf("did not expect break immediately after name delimiter, got:\n%s", got)
+	}
+	if !strings.Contains(got, "valid values:") {
+		t.Fatalf("expected choice list rendering marker, got:\n%s", got)
+	}
+}
+
+func TestHelpShortInlineChoicesShiftGlobalDescriptionColumn(t *testing.T) {
+	var opts struct {
+		Locale  string `short:"l" long:"locale" value-name:"ЛОКАЛЬ" choice:"en" choice:"ru" choice:"eo" description:"Override locale"`
+		Verbose bool   `short:"V" long:"verbose" description:"Verbose output"`
+	}
+
+	p := NewNamedParser("InlineChoices", None)
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 80
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, p.FindOptionByLongName("locale"), info, true, p.optionRenderFormat())
+	p.writeHelpOption(w, p.FindOptionByLongName("verbose"), info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	if !strings.Contains(got, "/l, /locale:ЛОКАЛЬ[en|ru|eo]") {
+		t.Fatalf("expected short choices to remain inline, got:\n%s", got)
+	}
+
+	assertHelpDescriptionColumn(t, got, "/l, /locale", "Override locale", "/V, /verbose", "Verbose output")
 }
 
 func TestHelpShowChoiceListInHelpForcesList(t *testing.T) {

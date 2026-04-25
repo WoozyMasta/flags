@@ -25,6 +25,12 @@ var (
 	// ErrNegativeMaxLongNameLength indicates an invalid negative limit.
 	ErrNegativeMaxLongNameLength = errors.New("max long name length cannot be negative")
 
+	// ErrNegativeCommandOptionIndent indicates an invalid negative indent.
+	ErrNegativeCommandOptionIndent = errors.New("command option indent cannot be negative")
+
+	// ErrNegativeHelpWidth indicates an invalid negative help width.
+	ErrNegativeHelpWidth = errors.New("help width cannot be negative")
+
 	// ErrNULTagListDelimiter indicates that zero rune was used as delimiter.
 	ErrNULTagListDelimiter = errors.New("tag list delimiter cannot be NUL")
 

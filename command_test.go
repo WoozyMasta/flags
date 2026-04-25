@@ -166,15 +166,7 @@ func TestCommandFlagOverride1(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseSuccess(t, &opts, "-v", "cmd")
-
-	if !opts.Value {
-		t.Errorf("Expected Value to be true")
-	}
-
-	if opts.Command.Value {
-		t.Errorf("Expected Command.Value to be false")
-	}
+	assertCommandFlagOverrideRejected(t, &opts, "-v", "cmd")
 }
 
 func TestCommandFlagOverride2(t *testing.T) {
@@ -186,15 +178,7 @@ func TestCommandFlagOverride2(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseSuccess(t, &opts, "cmd", "-v")
-
-	if opts.Value {
-		t.Errorf("Expected Value to be false")
-	}
-
-	if !opts.Command.Value {
-		t.Errorf("Expected Command.Value to be true")
-	}
+	assertCommandFlagOverrideRejected(t, &opts, "cmd", "-v")
 }
 
 func TestCommandFlagOverrideSub(t *testing.T) {
@@ -210,19 +194,7 @@ func TestCommandFlagOverrideSub(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseSuccess(t, &opts, "cmd", "sub", "-v")
-
-	if opts.Value {
-		t.Errorf("Expected Value to be false")
-	}
-
-	if opts.Command.Value {
-		t.Errorf("Expected Command.Value to be false")
-	}
-
-	if !opts.Command.SubCommand.Value {
-		t.Errorf("Expected Command.Value to be true")
-	}
+	assertCommandFlagOverrideRejected(t, &opts, "cmd", "sub", "-v")
 }
 
 func TestCommandFlagOverrideSub2(t *testing.T) {
@@ -238,14 +210,19 @@ func TestCommandFlagOverrideSub2(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseSuccess(t, &opts, "cmd", "sub", "-v")
+	assertCommandFlagOverrideRejected(t, &opts, "cmd", "sub", "-v")
+}
 
-	if opts.Value {
-		t.Errorf("Expected Value to be false")
+func assertCommandFlagOverrideRejected(t *testing.T, data interface{}, args ...string) {
+	t.Helper()
+
+	_, err := NewParser(data, Default&^PrintErrors).ParseArgs(args)
+	if err == nil {
+		t.Fatalf("expected duplicate flag error")
 	}
 
-	if !opts.Command.Value {
-		t.Errorf("Expected Command.Value to be true")
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrDuplicatedFlag {
+		t.Fatalf("expected ErrDuplicatedFlag, got %v", err)
 	}
 }
 

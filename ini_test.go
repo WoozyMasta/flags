@@ -257,7 +257,7 @@ EnvDefault2 = env-def
 `,
 		},
 		{
-			[]string{"-vv", "filename", "0", "3.14", "parent", "--opt=p", "sub", "--opt=s"},
+			[]string{"-vv", "filename", "0", "3.14", "parent", "--opt=p", "sub", "--sub-opt=s"},
 			IniDefault,
 			`[Application Options]
 ; Show verbose debug information
