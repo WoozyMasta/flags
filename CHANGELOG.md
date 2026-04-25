@@ -18,117 +18,85 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
-* Completion script generation API:
-  `Parser.WriteCompletion(...)` and `Parser.WriteNamedCompletion(...)`
-  with `bash` and `zsh` support.
-* Completion suggestions now include option/command aliases, option
-  `choices`, and bool inline value candidates (`true/false`) when
-  `AllowBoolValues` is enabled; generated bash/zsh scripts also enable
-  no-space behavior for `--flag=value` completion flows.
-* Parser tag customization API:
-  `Parser.SetTagPrefix(...)` and `Parser.SetFlagTags(...)`.
-* Global environment variable prefix support via `Parser.SetEnvPrefix(...)`.
-* Dynamic defaults via `DefaultProvider`.
-* Opt-in localization support for parser help, parser errors,
-  generated documentation, INI examples, and user-facing metadata
-  via `*-i18n` tags, with JSON catalog loaders, locale fallback,
-  built-in catalogs, a standalone `Localizer`, and validation helpers.
-* Parser option `DefaultsIfEmpty` to apply defaults only to empty values.
-* Parser option `RequiredFromValues` to treat non-empty prefilled values as
-  satisfying `required`, plus convenience alias `ConfiguredValues`
-  (`DefaultsIfEmpty | RequiredFromValues`) for config-first flows.
-* Built-in version support via `VersionFlag` (`-v/--version`), plus parser
-  version metadata APIs `VersionInfo`, `WriteVersion`, override setters,
-  and field-mask control via `VersionFields*` / `SetVersionFields`.
-* `Group.Data()` accessor.
-* Support for `encoding.TextMarshaler` / `encoding.TextUnmarshaler`
-  (with `flags.Marshaler` / `flags.Unmarshaler` precedence).
-* `examples/zsh-completion` template.
-* Benchmarks for core parsing/help/INI flows.
-* `terminator` option tag for find-style terminated argument lists
-  (supports both `[]T` and `[][]T` option targets).
-* Parser option `KeepDescriptionWhitespace` to keep leading indentation in
-  multi-line help descriptions.
-* Parser option `EnvProvisioning` to auto-derive `env` keys from
-  `long` tags when `env` is not explicitly set.
-* Option tag `auto-env:"true"` for per-flag env key derivation from `long`
-  without enabling the global parser option.
-* `auto-env:"false"` per-option opt-out when global `EnvProvisioning` is enabled.
-* Unified boolean tag parsing for option/group/command boolean tags
-  (`true/false`, `yes/no`, `y/n`, `1/0`, `on/off`) with validation errors
-  for invalid values.
-* Configurable option sorting (`SetOptionSort`) with `order` tag priority,
-  plus customizable type rank for `OptionSortByType`.
-* Documentation rendering API:
-  `Parser.WriteDoc(...)`, `DocFormat`, built-in template registry
-  (`ListBuiltinTemplates`, `WriteBuiltinTemplate`), and markdown
-  template support (`markdown/list`, `markdown/table`, `markdown/code`).
-* Custom template execution for `DocFormatMan`
-  via `WithTemplateString` / `WithTemplateBytes`.
-* HTML documentation rendering with built-in template `html/default`,
-  `html/styled` and custom templates for `DocFormatHTML`.
-* Plural struct tags `defaults`, `choices`, `aliases` to avoid duplicate-tag
-  patterns, with parser-level delimiter control via
-  `Parser.SetTagListDelimiter(...)`.
-* Option aliases via `long-alias`/`long-aliases` and
-  `short-alias`/`short-aliases` with duplicate-name collision validation.
-* Parser options `PrintHelpOnStderr` and `PrintErrorsOnStdout` to control
-  where built-in help and parse errors are written when `PrintErrors`
-  is enabled.
-* Parser option `PrintHelpOnInputErrors` to print built-in help before common
-  user-input parser errors
-  (required flag/command, unknown flag/command, invalid choice, etc.).
-* Parser options `ShowCommandAliases` and `ShowRepeatableInHelp` to
-  enrich built-in help with command alias list and repeatable markers.
-* Parser option `HideEnvInHelp` to suppress env placeholders
-  in built-in help output.
-* Parser option `ColorHelp` and configurable help color schemes via
-  `SetHelpColorScheme(...)` (`DefaultHelpColorScheme`,
-  `HighContrastHelpColorScheme`).
-* Parser option `ColorErrors` and configurable error color roles via
-  `SetErrorColorScheme(...)`
-  (`DefaultErrorColorScheme`, `HighContrastErrorColorScheme`)
-  with separate warning/critical styling for parser errors.
-* Parser option `SetTerminalTitle` to set terminal window title from parser
-  `Name` (or `TerminalTitle` override) during parsing.
-* Runtime render-style controls for help/doc output:
-  `SetHelpFlagRenderStyle(...)`, `SetHelpEnvRenderStyle(...)`,
-  and shell-detect options `DetectShellFlagStyle` / `DetectShellEnvStyle`.
-* Command option help indentation control via
-  `Parser.SetCommandOptionIndent(...)`.
-* Help output width control via `Parser.SetHelpWidth(...)`, with `0`
-  disabling wrapping.
-* Long option-name length guard with parser-level override:
-  `Parser.SetMaxLongNameLength(...)`.
-* Positional arguments now support `default` / `defaults` tags,
-  including rendering positional defaults in built-in help output.
-* Programmatic post-scan parser configuration via `Configurer`,
-  with explicit `Parser.Validate()` and `Parser.Rebuild()` APIs.
-* Baseline runtime option setter API for metadata and low-level behavior
-  updates (including base/unquote/map delimiter/INI/env derivation controls).
-* Immediate parse mode via `immediate:"true"` tag
-  and `Option.SetImmediate(...)` / `Group.SetImmediate(...)`:
-  matching options bypass required validation and command execution while still
-  allowing built-in immediate flows (help/version) and custom demo/render flags.
-* Built-in help/version tuning API:
-  `Parser.EnsureBuiltinOptions()`, `Parser.BuiltinHelpOption()`,
-  and `Parser.BuiltinVersionOption()` for pre-parse access to built-in
-  option metadata (short/long names, descriptions, aliases, etc.).
-* INI example rendering API via `IniParser.WriteExample(...)` and
-  `IniParser.WriteExampleWithOptions(...)` with wrapped metadata comments,
-  `required`-aware active keys, and optional comment-width control.
-* Text wrapping and help alignment now use display width instead of byte length.
+* Shell completion script generation via `Parser.WriteCompletion(...)`
+  and `Parser.WriteNamedCompletion(...)` for bash and zsh.
+  Completion output  includes command/option aliases, option `choices`,
+  bool value candidates when
+  `AllowBoolValues` is enabled, and no-space handling for inline option values.
+* Template-based parser documentation rendering via `Parser.WriteDoc(...)`,
+  `DocFormat`, `DocOption`, built-in markdown/html/man templates,
+  custom template sources/data, hidden-entity controls, and template registry
+  helpers `ListBuiltinTemplates(...)` / `WriteBuiltinTemplate(...)`.
+* Opt-in i18n for built-in help, errors, version output, generated docs,
+  INI examples, completion descriptions, and user-facing metadata through
+  `*-i18n` tags, JSON catalog loaders, built-in locale catalogs,
+  locale fallback, `Localizer`, and catalog coverage validation helpers.
+* Built-in version output via `VersionFlag`, `VersionInfo`,
+  `ReadVersionInfo(...)`, `Parser.WriteVersion(...)`, version override setters,
+  and `VersionFields` field masks.
+* Configurable help/error presentation: `ColorHelp`, `ColorErrors`,
+  help/error color schemes, `ShowCommandAliases`, `ShowRepeatableInHelp`,
+  `HideEnvInHelp`, `KeepDescriptionWhitespace`, shell-aware render styles,
+  help width control, command option indentation control,
+  and terminal-title updates.
+* Parser error/output routing controls:
+  `PrintHelpOnStderr`, `PrintErrorsOnStdout` and `PrintHelpOnInputErrors`.
+* Extended struct-tag support: parser tag remapping,
+  plural list tags (`defaults`, `choices`, `aliases`),
+  configurable list delimiters, option aliases,
+  `terminator`, `order`, `auto-env`, `immediate`, command aliases,
+  command-local parsing controls, i18n tags, stable INI names,
+  and positional argument defaults.
+* Runtime configuration APIs for parser, command, group, option
+  and positional metadata, including `Configurer`, `Parser.Validate()`,
+  `Parser.Rebuild()`, built-in option accessors,
+  and setter methods for aliases, visibility, defaults, choices,
+  env/INI metadata, parsing behavior, and display metadata.
+* Configuration-first parsing helpers:
+  `DefaultsIfEmpty`, `RequiredFromValues`, and `ConfiguredValues`.
+* Environment provisioning helpers:
+  `Parser.SetEnvPrefix(...)`, `EnvProvisioning`,
+  and per-option `auto-env` opt-in/opt-out behavior.
+* Dynamic defaults via `DefaultProvider`,
+  plus support for `encoding.TextMarshaler` / `encoding.TextUnmarshaler`
+  with existing `flags.Marshaler` / `flags.Unmarshaler` precedence.
+* Configurable option ordering through `Parser.SetOptionSort(...)`,
+  `Parser.SetOptionTypeOrder(...)`, and the `order` tag.
+* INI example rendering via `IniParser.WriteExample(...)`
+  and `IniParser.WriteExampleWithOptions(...)`.
+* Advanced examples, i18n examples, custom tag examples,
+  rendered documentation snapshots, zsh completion template,
+  and benchmark coverage for core parse/help/INI/doc flows.
 
 ### Changed
 
 * Module path moved to `github.com/woozymasta/flags`.
-* Dependency switched from `github.com/sergi/go-diff` to
-  `github.com/google/go-cmp`.
-* Package/module docs and README were reworked and expanded.
-* SPDX headers were introduced across source files.
-* CI/checking pipeline was modernized (linting, alignment, cross-platform jobs).
-* `WriteManPage` / `DocFormatMan` default rendering now goes through template
-  execution path (`man/default`) instead of legacy writer implementation.
+* Dependency switched from `github.com/sergi/go-diff`
+  to `github.com/google/go-cmp`.
+* Minimum Go version and dependencies were modernized, including
+  `golang.org/x/sys`, `golang.org/x/text`, and `golang.org/x/term`.
+* Built-in help rendering was overhauled:
+  wrapping/alignment use display width,
+  terminal width is detected through `x/term` with stdio fallback,
+  choice lists and value placeholders adapt to available width,
+  command option descriptions share the global description column,
+  and width can be disabled with `Parser.SetHelpWidth(0)`.
+* Built-in documentation/man rendering now goes through the shared template
+  renderer; the legacy standalone man writer was replaced by `man/default`.
+* Parser validation now reports duplicate short/long/env names
+  and alias collisions, including built-in help/version option conflicts;
+  metadata setter methods validate updates before applying them.
+* Boolean struct-tag parsing is unified across option/group/command tags
+  and rejects invalid boolean values consistently.
+* Built-in help/version options are materialized lazily
+  and can be customized before parsing.
+* Package documentation, README content, examples,
+  and struct-tag reference were rewritten around the forked module path
+  and current feature set.
+* CI/checking workflow was replaced with lint, formatting, security,
+  cross-platform, race, benchmark, generated-output, and release checks.
+* Source headers, repository metadata, line-ending normalization,
+  markdown linting and license text were normalized.
 * ⚠️ **breaking**: default maximum `long` flag length is now `32`.
   For longer names, configure parser limit explicitly via
   `Parser.SetMaxLongNameLength(...)`.
@@ -136,16 +104,18 @@ and this project adheres to [Semantic Versioning][].
 ### Fixed
 
 * `examples/main.go` now checks help errors via `*flags.Error` + `errors.As`.
-* Duplicate `default` struct tags in examples were removed.
-* Windows `gofmt` instability fixed via `.gitattributes` (LF normalization).
-* Built-in help rendering for long option signatures
-  (including long `choice` lists and value placeholders)
-  now wraps more predictably, keeps short placeholders with their option
-  names when they fit, and keeps the description column readable.
-* Command option help rows now use the same indentation as top-level option
-  rows by default.
-* Terminal width detection now uses `golang.org/x/term` and probes stdout,
-  stderr, then stdin before falling back to 80 columns.
+* Positional help rendering no longer panics
+  for positional-only parsers or unicode positional names.
+* Generated man-page timestamps honor `SOURCE_DATE_EPOCH` in UTC.
+* Duplicate `default` tags and other invalid example metadata were removed.
+* Invalid env-provided `choices` values now report validation errors.
+
+### Removed
+
+* Legacy GitHub workflow and cross-compile shell script
+  were replaced by the new CI/release workflow and Makefile targets.
+* Legacy standalone man-page implementation was removed
+  in favor of the template-backed documentation renderer.
 
 [Unreleased]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.1...HEAD
 
