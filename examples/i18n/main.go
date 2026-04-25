@@ -19,6 +19,8 @@ import (
 var catalogFS embed.FS
 
 type Options struct {
+	// i18n tags point to catalog keys. The fallback text lives in code paths
+	// that call Localize, while parser metadata resolves through SetI18n.
 	Greet struct {
 		Excited bool `short:"e" long:"excited" description-i18n:"opt.excited.desc"`
 		Args    struct {
@@ -56,6 +58,8 @@ func main() {
 	parser := flags.NewNamedParser("i18n-demo", flags.Default|flags.VersionFlag)
 	parser.SetLongDescriptionI18nKey("app.description")
 
+	// Groups can also be localized after registration. This keeps ordinary
+	// library defaults readable while still allowing application-specific text.
 	group, err := parser.AddGroup("Application Options", "", &opts)
 	if err != nil {
 		os.Exit(1)
@@ -73,6 +77,8 @@ func main() {
 		FallbackLocales: []string{"en"},
 		UserCatalog:     userCatalog,
 	}
+	// The parser uses this config for help/errors/docs/INI output. The
+	// standalone Localizer below uses the same config for application messages.
 	parser.SetI18n(i18nConfig)
 	localizer := flags.NewLocalizer(i18nConfig)
 
@@ -111,6 +117,8 @@ func runGreet(localizer *flags.Localizer, opts *Options) {
 	}
 
 	line := localizer.Localize(
+		// Localize supports placeholder substitution for application text that
+		// is not part of parser metadata.
 		"app.greeting",
 		"Hello, {target}",
 		map[string]string{"target": target},
@@ -144,6 +152,8 @@ func runDoc(parser *flags.Parser, localizer *flags.Localizer, opts *Options) err
 	var renderOpts []flags.DocOption
 	renderOpts = append(renderOpts, flags.WithBuiltinTemplate(templateName))
 
+	// Hidden output has two independent switches: include controls model
+	// visibility, mark controls whether included hidden entities are labeled.
 	if opts.Doc.IncludeHidden {
 		renderOpts = append(renderOpts, flags.WithIncludeHidden(true))
 	}
@@ -160,11 +170,15 @@ func runINI(parser *flags.Parser, localizer *flags.Localizer, opts *Options) err
 
 	switch opts.INI.Mode {
 	case "example":
+		// WriteExample renders a documented config template without requiring
+		// command-line values to have been provided.
 		ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{
 			CommentWidth: opts.INI.CommentWidth,
 		})
 		return nil
 	case "current":
+		// Write renders current parser values. The mask chooses whether comments
+		// and defaults are included or commented out.
 		mask := flags.IniNone
 		if opts.INI.IncludeComments {
 			mask |= flags.IniIncludeComments
@@ -188,6 +202,8 @@ func runINI(parser *flags.Parser, localizer *flags.Localizer, opts *Options) err
 }
 
 func resolveDocMode(localizer *flags.Localizer, format string, template string) (flags.DocFormat, string, error) {
+	// User-facing choices are intentionally small. This switch translates them
+	// to the exact built-in template IDs expected by WriteDoc.
 	switch format {
 	case "markdown":
 		switch template {
@@ -238,6 +254,8 @@ func resolveDocMode(localizer *flags.Localizer, format string, template string) 
 }
 
 func detectLocaleArg(args []string) string {
+	// Locale must be known before parser.Parse so parse errors and --help can
+	// be localized on the first render.
 	for idx := range args {
 		arg := args[idx]
 

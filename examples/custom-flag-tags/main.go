@@ -13,10 +13,14 @@ import (
 )
 
 type PrefixTagsOptions struct {
+	// SetTagPrefix("flag-") maps these tags back to the standard short/long
+	// and description tag meanings.
 	Path string `flag-short:"p" flag-long:"path" flag-description:"Path to input file"`
 }
 
 type CustomTagsOptions struct {
+	// SetFlagTags can replace individual tag names while leaving all other
+	// standard tags unchanged.
 	Path  string `x-short:"p" long:"path" description:"Path to input file"`
 	Level int    `long:"level" default:"1" description:"Verbosity level"`
 }
@@ -44,6 +48,8 @@ func runPrefixTagsDemo(args []string) error {
 	if _, err := p.AddGroup("Application Options", "Tag prefix demo", &opts); err != nil {
 		return err
 	}
+	// SetTagPrefix rescans already registered groups, so it can be called after
+	// AddGroup when a parser is assembled by reusable setup code.
 	if err := p.SetTagPrefix("flag-"); err != nil {
 		return err
 	}
@@ -61,6 +67,8 @@ func runCustomTagsDemo(args []string) error {
 
 	tags := flags.NewFlagTags()
 	tags.Short = "x-short"
+	// Only the short tag is customized here. NewFlagTags supplies defaults for
+	// every tag that is not explicitly changed.
 	if err := p.SetFlagTags(tags); err != nil {
 		return err
 	}
@@ -72,6 +80,8 @@ func runCustomTagsDemo(args []string) error {
 func main() {
 	root := RootOptions{}
 	p := flags.NewNamedParser("custom-flag-tags", flags.Default)
+	// The root parser only selects which tag-mapping demo to run. Each command
+	// creates a separate child parser so the two mappings do not interfere.
 	p.Usage = "[OPTIONS] <prefix|custom> [ARGS]"
 	p.LongDescription = "Subcommands:\n  prefix  Demonstrates SetTagPrefix(\"flag-\")\n  custom  Demonstrates SetFlagTags(...)"
 

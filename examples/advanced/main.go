@@ -18,12 +18,16 @@ import (
 type DynamicToken string
 
 func (d *DynamicToken) Default() ([]string, error) {
+	// DefaultProvider is evaluated during parsing, so defaults can come from
+	// runtime state instead of fixed struct tags.
 	return []string{"token-from-provider"}, nil
 }
 
 type ServiceLabel string
 
 func (l *ServiceLabel) UnmarshalText(text []byte) error {
+	// encoding.TextUnmarshaler is enough for custom value parsing when the
+	// type does not need the flags-specific Marshaler interface.
 	if len(text) == 0 {
 		return errors.New("service label cannot be empty")
 	}
@@ -32,6 +36,7 @@ func (l *ServiceLabel) UnmarshalText(text []byte) error {
 }
 
 func (l ServiceLabel) MarshalText() ([]byte, error) {
+	// MarshalText is used when the parser renders current/default values.
 	if l == "" {
 		return nil, errors.New("service label cannot be empty")
 	}
@@ -39,6 +44,8 @@ func (l ServiceLabel) MarshalText() ([]byte, error) {
 }
 
 type AdvancedOptions struct {
+	// A positional-args struct keeps required positional values close to the
+	// option model while still giving them their own help metadata.
 	Positional AdvancedPositionalArgs `positional-args:"yes" required:"yes"`
 
 	Alpha            string                 `long:"alpha" description:"Example string flag for sort demo" default:"a"`
@@ -76,6 +83,8 @@ type AdvancedNetworkOptions struct {
 	TLS      bool          `long:"tls" description:"Enable TLS" order:"50"`
 }
 
+// AdvancedDemoOptions is tagged as an immediate group in AdvancedOptions, so
+// these render/demo flags can run without satisfying normal required values.
 type AdvancedDemoOptions struct {
 	Help       string `long:"demo-help" value-name:"MODE" choices:"decl;name-asc;name-desc;type" description:"Render built-in help with selected sort mode and exit"`
 	Completion string `long:"demo-completion" value-name:"SHELL" choices:"bash;zsh" description:"Render shell completion script and exit"`
@@ -90,6 +99,8 @@ type AdvancedDeployCommand struct {
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {
+	// NewNamedParser is useful for examples/tests because the displayed command
+	// name is stable and not derived from os.Args[0].
 	p := flags.NewNamedParser(
 		"advanced-cli",
 		flags.Default|
@@ -101,9 +112,13 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 			flags.DetectShellEnvStyle,
 	)
 	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block"
+	// EnvPrefix composes with env-namespace/auto-env tags, keeping all derived
+	// environment variables under one application prefix.
 	p.SetEnvPrefix("DEMO_APP")
 	p.SetVersionURL("https://github.com/woozymasta/flags")
 	p.SetVersionFields(flags.VersionFieldsAll)
+	// Long option names are intentionally used here to demonstrate wrapping;
+	// production CLIs can opt into a larger limit when needed.
 	if err := p.SetMaxLongNameLength(256); err != nil {
 		panic(err)
 	}
@@ -117,6 +132,8 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 }
 
 func applySortMode(p *flags.Parser, mode string) error {
+	// Sorting is configured on the parser and then reflected in every rendered
+	// help/doc surface that uses grouped option presentation.
 	switch mode {
 	case "decl":
 		p.SetOptionSort(flags.OptionSortByDeclaration)
@@ -142,6 +159,8 @@ func applySortMode(p *flags.Parser, mode string) error {
 }
 
 func applyHelpColorMode(p *flags.Parser, mode string) error {
+	// ColorHelp is opt-in and can be combined with a custom scheme. The "light"
+	// branch shows that applications can define every style role themselves.
 	switch mode {
 	case "", "none":
 		p.Options &^= flags.ColorHelp
@@ -179,6 +198,8 @@ func applyHelpColorMode(p *flags.Parser, mode string) error {
 }
 
 func detectHelpColorArg(args []string) (string, bool) {
+	// This option is inspected before Parse so the selected color scheme is
+	// already active when a later --help request renders built-in help.
 	for i, arg := range args {
 		if v, ok := strings.CutPrefix(arg, "--help-color="); ok {
 			return v, true
@@ -193,6 +214,9 @@ func detectHelpColorArg(args []string) (string, bool) {
 }
 
 func demoOutput(opts *AdvancedOptions, p *flags.Parser) (bool, error) {
+	// Demo flags are normal parsed options. After parsing, this helper turns
+	// them into generated artifacts and reports whether normal app flow should
+	// stop.
 	if opts.Demo.Help != "" {
 		if err := applySortMode(p, opts.Demo.Help); err != nil {
 			return true, err
@@ -228,6 +252,8 @@ func demoOutput(opts *AdvancedOptions, p *flags.Parser) (bool, error) {
 }
 
 func resolveDocMode(format, style string) (flags.DocFormat, string, error) {
+	// WriteDoc separates the output format from the template name. That lets an
+	// app expose a small UX vocabulary while still using built-in templates.
 	switch format {
 	case "html":
 		return flags.DocFormatHTML, flags.DocTemplateHTMLDefault, nil
@@ -252,6 +278,8 @@ func resolveDocMode(format, style string) (flags.DocFormat, string, error) {
 func main() {
 	opts := &AdvancedOptions{}
 	p := newParser(opts)
+	// Pre-parse hooks like this are a practical way to let a flag influence
+	// parser rendering behavior before Parse handles --help.
 	if mode, ok := detectHelpColorArg(os.Args[1:]); ok {
 		if err := applyHelpColorMode(p, mode); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)

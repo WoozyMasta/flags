@@ -24,6 +24,9 @@ type Point struct {
 }
 
 func (p *Point) UnmarshalFlag(value string) error {
+	// Implementing flags.Unmarshaler lets a domain type own its CLI syntax.
+	// The parser calls this method for --point=1,2 instead of requiring a
+	// separate string option and manual conversion after parsing.
 	parts := strings.Split(value, ",")
 
 	if len(parts) != 2 {
@@ -50,23 +53,26 @@ func (p *Point) UnmarshalFlag(value string) error {
 
 //nolint:unparam // required by flags.Marshaler interface
 func (p Point) MarshalFlag() (string, error) {
+	// MarshalFlag controls how defaults and current values for custom types
+	// are rendered back into help, docs, and other generated output.
 	return fmt.Sprintf("%d,%d", p.X, p.Y), nil
 }
 
 type Options struct {
-	// Example of map defaults set in code with stable help text
+	// Map values can be pre-populated in Go code. default-mask keeps help text
+	// stable without duplicating all map defaults in struct tags.
 	Users map[string]string `long:"users" description:"User e-mail map" default-mask:"system:system@example.org, admin:admin@example.org"`
 
-	// Example of option group
+	// Nested structs become grouped options in help output.
 	Editor EditorOptions `group:"Editor Options"`
 
-	// Example of optional value
+	// optional-value allows both --user and --user=name forms.
 	User string `short:"u" long:"user" description:"User name" optional:"yes" optional-value:"pancake"`
 
-	// Example of verbosity with level
+	// Repeating -v appends to the slice, so len(Verbose) is the level.
 	Verbose []bool `short:"v" long:"verbose" description:"Verbose output"`
 
-	// Example of custom type Marshal/Unmarshal
+	// Point uses the MarshalFlag/UnmarshalFlag methods above.
 	Point Point `long:"point" description:"A x,y point" default:"1,2"`
 }
 
@@ -81,6 +87,8 @@ var parser = flags.NewParser(&options, flags.Default)
 
 func main() {
 	if _, err := parser.Parse(); err != nil {
+		// Help is delivered as a typed parser error so applications can
+		// distinguish a successful help/version flow from real failures.
 		var flagsErr *flags.Error
 		if errors.As(err, &flagsErr) && flagsErr.Type == flags.ErrHelp {
 			os.Exit(0)
