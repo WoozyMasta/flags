@@ -237,6 +237,17 @@ func TestSetI18nFallbackLocalesUpdatesLocaleChain(t *testing.T) {
 }
 
 func TestSetI18nFallbackLocalesEnablesI18nWhenDisabled(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	_ = os.Setenv("LC_ALL", "")
+	_ = os.Setenv("LC_MESSAGES", "")
+	_ = os.Setenv("LANG", "")
+	_ = os.Setenv("LANGUAGE", "")
+
+	oldOSFallback := detectLocaleOSFallbackFunc
+	defer func() { detectLocaleOSFallbackFunc = oldOSFallback }()
+	detectLocaleOSFallbackFunc = func() string { return "" }
+
 	parser := NewNamedParser("i18n", None)
 	parser.SetI18nFallbackLocales("ru")
 
