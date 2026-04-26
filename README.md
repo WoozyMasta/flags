@@ -41,6 +41,7 @@ rich help, completion, and docs out of the box.
 * [Hidden and Secret Options](#hidden-and-secret-options)
 * [Documentation Rendering](#documentation-rendering)
 * [Templating](#templating)
+* [Roadmap](#roadmap)
 
 ## Installation
 
@@ -1111,6 +1112,20 @@ Built-in helper functions available in templates:
 * `hasEnv`: returns `true` when option has resolved environment key.
 * `isBool`: returns `true` for boolean options.
 * `isCollection`: returns `true` for slice/array/map options.
+
+## Roadmap
+
+This fork is intentionally moving in small, practical steps.
+The goal is to keep it usable as a drop-in replacement while it stabilizes,
+then lock down a solid baseline before any larger redesign.
+
+* `v0.1.0` / `v0.x`: stabilization and real-world validation.
+* `v1.0.0` / `v1.x`: stable baseline, mostly fixes and safe improvements.
+* `v2.0.0` / `v2.x`: intentional breaking changes and larger cleanup.
+
+> [!NOTE]
+> `v1.x` and `v2.x` are planned and not released yet.
+> The current active release line is `v0.x`.
 
 ## Documentation and Examples
 
