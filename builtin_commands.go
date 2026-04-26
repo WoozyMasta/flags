@@ -200,7 +200,7 @@ func (c *builtinVersionCommand) Execute(_ []string) error {
 type builtinCompletionCommand struct {
 	parser *Parser
 
-	Shell CompletionShell `long:"shell" value-name:"SHELL" value-name-i18n:"help.builtin.command.value.shell" choices:"bash;zsh" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc"`
+	Shell CompletionShell `long:"shell" value-name:"SHELL" value-name-i18n:"help.builtin.command.value.shell" choices:"bash;zsh;pwsh" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`

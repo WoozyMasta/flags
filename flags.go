@@ -179,7 +179,7 @@ and [ConfigCommand]. [HelpCommands] enables the full set. Built-in commands
 are grouped as `Help Commands` in help/docs by default; use
 [Parser.SetBuiltinCommandGroup] to rename that display group or set it to an
 empty string. Built-in `completion` auto-detects shell format when `--shell`
-is omitted and falls back to `bash`.
+is omitted (`zsh`/`pwsh`) and falls back to `bash`.
 
 Command-local options become valid after the command token is parsed.
 With a global `-v` option and an `add` command, these are equivalent:

@@ -34,8 +34,8 @@ func TestEnvironmentAPIDetectEnvironmentSnapshot(t *testing.T) {
 	if env.Shell != "pwsh" {
 		t.Fatalf("expected pwsh shell, got %q", env.Shell)
 	}
-	if env.CompletionShell != CompletionShellBash {
-		t.Fatalf("expected bash completion fallback, got %q", env.CompletionShell)
+	if env.CompletionShell != CompletionShellPwsh {
+		t.Fatalf("expected pwsh completion shell, got %q", env.CompletionShell)
 	}
 	if env.TerminalColumns <= 0 {
 		t.Fatalf("expected positive terminal width, got %d", env.TerminalColumns)

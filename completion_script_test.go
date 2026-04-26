@@ -43,6 +43,23 @@ func TestWriteNamedCompletionZsh(t *testing.T) {
 	}
 }
 
+func TestWriteNamedCompletionPwsh(t *testing.T) {
+	p := NewNamedParser("app", None)
+	var out strings.Builder
+
+	if err := p.WriteNamedCompletion(&out, CompletionShellPwsh, "my-app"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, "Register-ArgumentCompleter") {
+		t.Fatalf("missing pwsh completer registration:\n%s", got)
+	}
+	if !strings.Contains(got, "GO_FLAGS_COMPLETION") {
+		t.Fatalf("missing GO_FLAGS_COMPLETION integration in pwsh script:\n%s", got)
+	}
+}
+
 func TestWriteCompletionUsesParserName(t *testing.T) {
 	p := NewNamedParser("tool-name", None)
 	var out strings.Builder
@@ -84,7 +101,7 @@ func TestWriteAutoCompletionDetectsZsh(t *testing.T) {
 	}
 }
 
-func TestWriteAutoCompletionFallbacksToBash(t *testing.T) {
+func TestWriteAutoCompletionDetectsPwsh(t *testing.T) {
 	t.Setenv("GO_FLAGS_SHELL", "pwsh")
 
 	p := NewNamedParser("app", None)
@@ -94,7 +111,22 @@ func TestWriteAutoCompletionFallbacksToBash(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
+	if !strings.Contains(out.String(), "Register-ArgumentCompleter") {
+		t.Fatalf("expected pwsh completion output:\n%s", out.String())
+	}
+}
+
+func TestWriteAutoCompletionFallbacksToBash(t *testing.T) {
+	t.Setenv("GO_FLAGS_SHELL", "fish")
+
+	p := NewNamedParser("app", None)
+	var out strings.Builder
+
+	if err := p.WriteAutoCompletion(&out); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	if !strings.Contains(out.String(), "complete -F _app app") {
-		t.Fatalf("expected bash completion output:\n%s", out.String())
+		t.Fatalf("expected bash completion fallback output:\n%s", out.String())
 	}
 }

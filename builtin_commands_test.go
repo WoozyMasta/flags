@@ -257,11 +257,11 @@ func TestBuiltinCompletionCommandAutoDetectsShell(t *testing.T) {
 	}
 }
 
-func TestBuiltinCompletionCommandAutoDetectFallbacksToBash(t *testing.T) {
+func TestBuiltinCompletionCommandAutoDetectsPwsh(t *testing.T) {
 	t.Setenv("GO_FLAGS_SHELL", "pwsh")
 
-	p := NewNamedParser("builtin-completion-auto-bash", CompletionCommand)
-	out := filepath.Join(t.TempDir(), "completion.bash")
+	p := NewNamedParser("builtin-completion-auto-pwsh", CompletionCommand)
+	out := filepath.Join(t.TempDir(), "completion.ps1")
 
 	if _, err := p.ParseArgs([]string{"completion", out}); err != nil {
 		t.Fatalf("unexpected parse error: %v", err)
@@ -271,8 +271,8 @@ func TestBuiltinCompletionCommandAutoDetectFallbacksToBash(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected read error: %v", err)
 	}
-	if !strings.Contains(string(got), "complete -F _") {
-		t.Fatalf("expected bash completion fallback script, got:\n%s", string(got))
+	if !strings.Contains(string(got), "Register-ArgumentCompleter") {
+		t.Fatalf("expected pwsh completion script, got:\n%s", string(got))
 	}
 }
 

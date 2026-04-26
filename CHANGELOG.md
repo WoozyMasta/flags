@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning][].
 ### Added
 
 * Shell completion script generation via `Parser.WriteCompletion(...)`
-  and `Parser.WriteNamedCompletion(...)` for bash and zsh.
+  and `Parser.WriteNamedCompletion(...)` for bash, zsh, and pwsh.
   Completion output includes command/option aliases, option `choices`,
   `completion` tag hints (`file`, `dir`, `none`) for options/positionals,
   bool value candidates when

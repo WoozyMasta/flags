@@ -87,7 +87,7 @@ type AdvancedNetworkOptions struct {
 // these render/demo flags can run without satisfying normal required values.
 type AdvancedDemoOptions struct {
 	Help       string `long:"demo-help" value-name:"MODE" choices:"decl;name-asc;name-desc;type" description:"Render built-in help with selected sort mode and exit"`
-	Completion string `long:"demo-completion" value-name:"SHELL" choices:"bash;zsh" description:"Render shell completion script and exit"`
+	Completion string `long:"demo-completion" value-name:"SHELL" choices:"bash;zsh;pwsh" description:"Render shell completion script and exit"`
 	DocFormat  string `long:"demo-doc-format" value-name:"FORMAT" choices:"markdown;html;man" description:"Render documentation in selected format and exit"`
 	DocStyle   string `long:"demo-doc-style" value-name:"STYLE" choices:"list;table;code" description:"Render markdown style variant for --demo-doc-format=markdown"`
 	INI        bool   `long:"demo-ini" description:"Render example INI and exit"`

@@ -372,8 +372,8 @@ parser := flags.NewParser(&opts, flags.Default|flags.HelpCommands)
 `HelpCommands` enables `help`, `version`, `completion`, `docs`, and `config`.
 You can enable them individually with `HelpCommand`, `VersionCommand`,
 `CompletionCommand`, `DocsCommand`, and `ConfigCommand`.
-When `completion --shell` is omitted, shell format is auto-detected and
-falls back to `bash`.
+When `completion --shell` is omitted, shell format is auto-detected
+(`zsh`/`pwsh`) and falls back to `bash`.
 
 By default these commands are shown under `Help Commands` in help/docs.
 Use `parser.SetBuiltinCommandGroup("Reference")` to rename the display group,
@@ -385,6 +385,7 @@ Common command forms:
 app help
 app version
 app completion --shell bash ./completion.bash
+app completion --shell pwsh ./completion.ps1
 app docs md --template table ./docs.md
 app docs html --template styled ./docs.html
 app docs man ./app.1
@@ -523,7 +524,8 @@ Focused helpers:
 * `flags.RuntimeOS()`: runtime OS (`windows`, `linux`, `darwin`, ...).
 * `flags.DetectShell()`: shell name (`bash`, `zsh`, `pwsh`, `cmd`, ...).
 * `flags.DetectShellStyle()`: render style (`POSIX` vs `Windows`).
-* `flags.DetectCompletionShell()`: completion format with `bash` fallback.
+* `flags.DetectCompletionShell()`: completion format (`bash`, `zsh`, `pwsh`)
+  with `bash` fallback for unsupported shells.
 * `flags.DetectTerminalSize()`: terminal size `(columns, rows)`.
 * `flags.DetectColorSupport(io.Writer)`: whether ANSI colors should be used
   (`NO_COLOR`, `FORCE_COLOR`, tty).

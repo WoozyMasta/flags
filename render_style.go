@@ -238,6 +238,8 @@ func DetectCompletionShell() CompletionShell {
 	switch DetectShell() {
 	case string(CompletionShellZsh):
 		return CompletionShellZsh
+	case string(CompletionShellPwsh), "powershell":
+		return CompletionShellPwsh
 	default:
 		// Unsupported/unknown shells fallback to bash completion script.
 		return CompletionShellBash
