@@ -9,6 +9,33 @@ import (
 	"reflect"
 )
 
+// Validate re-runs parser-level metadata checks after programmatic mutations.
+// It applies Configurer hooks and then validates duplicate flag names.
+func (p *Parser) Validate() error {
+	if p.internalError != nil {
+		return p.internalError
+	}
+
+	if err := p.applyConfigurators(); err != nil {
+		return err
+	}
+
+	p.EnsureBuiltinOptions()
+	if err := p.EnsureBuiltinCommands(); err != nil {
+		return err
+	}
+	if err := p.validateDuplicateCommands(); err != nil {
+		return err
+	}
+
+	return p.validateDuplicateFlags()
+}
+
+// Rebuild rescans groups and commands using current tag mapping options.
+func (p *Parser) Rebuild() error {
+	return p.rebuildTree()
+}
+
 func (p *Parser) applyConfigurators() error {
 	if !p.configDirty || p.configuring {
 		return nil
@@ -158,31 +185,4 @@ func (p *Parser) validateDuplicateEnvKeys() error {
 	})
 
 	return dupErr
-}
-
-// Validate re-runs parser-level metadata checks after programmatic mutations.
-// It applies Configurer hooks and then validates duplicate flag names.
-func (p *Parser) Validate() error {
-	if p.internalError != nil {
-		return p.internalError
-	}
-
-	if err := p.applyConfigurators(); err != nil {
-		return err
-	}
-
-	p.EnsureBuiltinOptions()
-	if err := p.EnsureBuiltinCommands(); err != nil {
-		return err
-	}
-	if err := p.validateDuplicateCommands(); err != nil {
-		return err
-	}
-
-	return p.validateDuplicateFlags()
-}
-
-// Rebuild rescans groups and commands using current tag mapping options.
-func (p *Parser) Rebuild() error {
-	return p.rebuildTree()
 }

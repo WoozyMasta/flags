@@ -68,18 +68,6 @@ func (p *Parser) DisableI18n() {
 	p.i18n = nil
 }
 
-func (p *Parser) i18nText(key, fallback string) string {
-	if p == nil || p.i18n == nil {
-		return fallback
-	}
-
-	return p.i18n.text(key, fallback)
-}
-
-func (p *Parser) i18nTextf(key, fallback string, data map[string]string) string {
-	return formatI18nText(p.i18nText(key, fallback), data)
-}
-
 // Localize returns localized text for key with source fallback and optional
 // placeholder substitutions.
 func (p *Parser) Localize(key, fallback string, data map[string]string) string {
@@ -112,6 +100,32 @@ func (l *Localizer) LocaleChain() []string {
 	}
 
 	return l.i18n.chainCopy()
+}
+
+// DetectLocale returns detected locale using environment variables and
+// OS-specific fallback.
+func DetectLocale() string {
+	if locale := detectLocaleFromEnv(); locale != "" {
+		return locale
+	}
+
+	if locale := detectLocaleOSFallbackFunc(); locale != "" {
+		return locale
+	}
+
+	return ""
+}
+
+func (p *Parser) i18nText(key, fallback string) string {
+	if p == nil || p.i18n == nil {
+		return fallback
+	}
+
+	return p.i18n.text(key, fallback)
+}
+
+func (p *Parser) i18nTextf(key, fallback string, data map[string]string) string {
+	return formatI18nText(p.i18nText(key, fallback), data)
 }
 
 func newI18nState(cfg I18nConfig) *i18nState {
@@ -301,20 +315,6 @@ func cleanLocaleToken(raw string) string {
 	token = strings.TrimSpace(token)
 
 	return token
-}
-
-// DetectLocale returns detected locale using environment variables and
-// OS-specific fallback.
-func DetectLocale() string {
-	if locale := detectLocaleFromEnv(); locale != "" {
-		return locale
-	}
-
-	if locale := detectLocaleOSFallbackFunc(); locale != "" {
-		return locale
-	}
-
-	return ""
 }
 
 func detectLocaleFromEnv() string {

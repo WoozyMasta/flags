@@ -88,12 +88,6 @@ type lookup struct {
 	commands map[string]*Command
 }
 
-func (c *Command) touchLookupCache() {
-	if p := c.parser(); p != nil {
-		p.invalidateLookupCache()
-	}
-}
-
 // AddCommand adds a new command to the parser with the given name and data. The
 // data needs to be a pointer to a struct from which the fields indicate which
 // options are in the command. The provided data can implement the Command and
@@ -255,6 +249,12 @@ func (c *Command) Args() []*Arg {
 	copy(ret, c.args)
 
 	return ret
+}
+
+func (c *Command) touchLookupCache() {
+	if p := c.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
 }
 
 func newCommand(name string, shortDescription string, longDescription string, data any) *Command {
@@ -701,25 +701,13 @@ func (c *Command) iniLookupNames() []string {
 	return ret
 }
 
-type commandList []*Command
-
-func (c commandList) Less(i, j int) bool {
-	return c[i].Name < c[j].Name
-}
-
-func (c commandList) Len() int {
-	return len(c)
-}
-
-func (c commandList) Swap(i, j int) {
-	c[i], c[j] = c[j], c[i]
-}
-
 func (c *Command) sortedVisibleCommands() []*Command {
-	ret := commandList(c.visibleCommands())
-	sort.Sort(ret)
+	ret := c.visibleCommands()
+	sort.Slice(ret, func(i, j int) bool {
+		return ret[i].Name < ret[j].Name
+	})
 
-	return []*Command(ret)
+	return ret
 }
 
 func (c *Command) visibleCommands() []*Command {

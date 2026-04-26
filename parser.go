@@ -430,11 +430,6 @@ func NewNamedParser(appname string, options Options) *Parser {
 	return p
 }
 
-func (p *Parser) invalidateLookupCache() {
-	p.lookupGeneration++
-	p.configDirty = true
-}
-
 // SetTagPrefix configures a common prefix for all struct tags used by the parser.
 // It rescans already attached top-level groups and commands.
 func (p *Parser) SetTagPrefix(prefix string) error {
@@ -535,77 +530,6 @@ func (p *Parser) SetTagListDelimiter(delimiter rune) error {
 	return p.rebuildTree()
 }
 
-func (p *Parser) normalizeStructTag(mtag *multiTag) {
-	c := mtag.cached()
-
-	normalizeTagAlias(c, p.flagTags.Short, FlagTagShort)
-	normalizeTagAlias(c, p.flagTags.Long, FlagTagLong)
-	normalizeTagAlias(c, p.flagTags.Required, FlagTagRequired)
-	normalizeTagAlias(c, p.flagTags.Description, FlagTagDescription)
-	normalizeTagAlias(c, p.flagTags.DescriptionI18n, FlagTagDescriptionI18n)
-	normalizeTagAlias(c, p.flagTags.LongDescription, FlagTagLongDescription)
-	normalizeTagAlias(c, p.flagTags.LongDescriptionI18n, FlagTagLongDescriptionI18n)
-	normalizeTagAlias(c, p.flagTags.NoFlag, FlagTagNoFlag)
-	normalizeTagAlias(c, p.flagTags.Optional, FlagTagOptional)
-	normalizeTagAlias(c, p.flagTags.OptionalValue, FlagTagOptionalValue)
-	normalizeTagAlias(c, p.flagTags.Order, FlagTagOrder)
-	normalizeTagAlias(c, p.flagTags.Default, FlagTagDefault)
-	normalizeTagAlias(c, p.flagTags.Defaults, FlagTagDefaults)
-	normalizeTagAlias(c, p.flagTags.DefaultMask, FlagTagDefaultMask)
-	normalizeTagAlias(c, p.flagTags.Env, FlagTagEnv)
-	normalizeTagAlias(c, p.flagTags.AutoEnv, FlagTagAutoEnv)
-	normalizeTagAlias(c, p.flagTags.EnvDelim, FlagTagEnvDelim)
-	normalizeTagAlias(c, p.flagTags.ValueName, FlagTagValueName)
-	normalizeTagAlias(c, p.flagTags.ValueNameI18n, FlagTagValueNameI18n)
-	normalizeTagAlias(c, p.flagTags.Choice, FlagTagChoice)
-	normalizeTagAlias(c, p.flagTags.Choices, FlagTagChoices)
-	normalizeTagAlias(c, p.flagTags.Completion, FlagTagCompletion)
-	normalizeTagAlias(c, p.flagTags.Hidden, FlagTagHidden)
-	normalizeTagAlias(c, p.flagTags.Immediate, FlagTagImmediate)
-	normalizeTagAlias(c, p.flagTags.Base, FlagTagBase)
-	normalizeTagAlias(c, p.flagTags.IniName, FlagTagIniName)
-	normalizeTagAlias(c, p.flagTags.IniGroup, FlagTagIniGroup)
-	normalizeTagAlias(c, p.flagTags.NoIni, FlagTagNoIni)
-	normalizeTagAlias(c, p.flagTags.Group, FlagTagGroup)
-	normalizeTagAlias(c, p.flagTags.GroupI18n, FlagTagGroupI18n)
-	normalizeTagAlias(c, p.flagTags.Namespace, FlagTagNamespace)
-	normalizeTagAlias(c, p.flagTags.EnvNamespace, FlagTagEnvNamespace)
-	normalizeTagAlias(c, p.flagTags.Command, FlagTagCommand)
-	normalizeTagAlias(c, p.flagTags.CommandI18n, FlagTagCommandI18n)
-	normalizeTagAlias(c, p.flagTags.CommandGroup, FlagTagCommandGroup)
-	normalizeTagAlias(c, p.flagTags.SubCommandsOptional, FlagTagSubCommandsOptional)
-	normalizeTagAlias(c, p.flagTags.Alias, FlagTagAlias)
-	normalizeTagAlias(c, p.flagTags.Aliases, FlagTagAliases)
-	normalizeTagAlias(c, p.flagTags.LongAlias, FlagTagLongAlias)
-	normalizeTagAlias(c, p.flagTags.LongAliases, FlagTagLongAliases)
-	normalizeTagAlias(c, p.flagTags.ShortAlias, FlagTagShortAlias)
-	normalizeTagAlias(c, p.flagTags.ShortAliases, FlagTagShortAliases)
-	normalizeTagAlias(c, p.flagTags.PositionalArgs, FlagTagPositionalArgs)
-	normalizeTagAlias(c, p.flagTags.PositionalArgName, FlagTagPositionalArgName)
-	normalizeTagAlias(c, p.flagTags.ArgGroup, FlagTagArgGroup)
-	normalizeTagAlias(c, p.flagTags.ArgNameI18n, FlagTagArgNameI18n)
-	normalizeTagAlias(c, p.flagTags.ArgDescriptionI18n, FlagTagArgDescriptionI18n)
-	normalizeTagAlias(c, p.flagTags.KeyValueDelimiter, FlagTagKeyValueDelimiter)
-	normalizeTagAlias(c, p.flagTags.PassAfterNonOption, FlagTagPassAfterNonOption)
-	normalizeTagAlias(c, p.flagTags.Unquote, FlagTagUnquote)
-	normalizeTagAlias(c, p.flagTags.Terminator, FlagTagTerminator)
-}
-
-func normalizeTagAlias(tags map[string][]string, source string, target string) {
-	if source == "" || source == target {
-		return
-	}
-
-	values, ok := tags[source]
-	if !ok {
-		return
-	}
-
-	if _, exists := tags[target]; !exists {
-		tags[target] = values
-	}
-}
-
 // SetOptionSort configures option order mode for grouped option presentation.
 func (p *Parser) SetOptionSort(mode OptionSortMode) {
 	p.optionSort = mode
@@ -619,124 +543,6 @@ func (p *Parser) SetOptionTypeOrder(order []OptionTypeClass) error {
 	}
 	p.optionTypeRank = rank
 	return nil
-}
-
-type groupSpec struct {
-	data             any
-	shortDescription string
-	longDescription  string
-	namespace        string
-	envNamespace     string
-	iniName          string
-	hidden           bool
-}
-
-type commandSpec struct {
-	data                any
-	name                string
-	shortDescription    string
-	longDescription     string
-	iniName             string
-	aliases             []string
-	subcommandsOptional bool
-	passAfterNonOption  bool
-	hidden              bool
-}
-
-func (p *Parser) rebuildTree() error {
-	groups := make([]groupSpec, 0, len(p.groups))
-	commands := make([]commandSpec, 0, len(p.commands))
-	rootOptions := append([]*Option(nil), p.options...)
-
-	for _, g := range p.groups {
-		if g.isBuiltinHelp {
-			continue
-		}
-
-		groups = append(groups, groupSpec{
-			shortDescription: g.ShortDescription,
-			longDescription:  g.LongDescription,
-			namespace:        g.Namespace,
-			envNamespace:     g.EnvNamespace,
-			iniName:          g.IniName,
-			hidden:           g.Hidden,
-			data:             g.data,
-		})
-	}
-
-	for _, c := range p.commands {
-		commands = append(commands, commandSpec{
-			name:                c.Name,
-			shortDescription:    c.ShortDescription,
-			longDescription:     c.LongDescription,
-			iniName:             c.IniName,
-			aliases:             append([]string(nil), c.Aliases...),
-			subcommandsOptional: c.SubcommandsOptional,
-			passAfterNonOption:  c.PassAfterNonOption,
-			hidden:              c.Hidden,
-			data:                c.data,
-		})
-	}
-
-	p.groups = nil
-	p.commands = nil
-	p.options = rootOptions
-	p.args = nil
-	p.Active = nil
-	p.hasBuiltinHelpGroup = false
-	p.lookupCacheValid = false
-
-	for _, g := range groups {
-		ng, err := p.AddGroup(g.shortDescription, g.longDescription, g.data)
-		if err != nil {
-			return fmt.Errorf("failed to rescan group %q: %w", g.shortDescription, err)
-		}
-		ng.Namespace = g.namespace
-		ng.EnvNamespace = g.envNamespace
-		ng.IniName = g.iniName
-		ng.Hidden = g.hidden
-	}
-
-	for _, c := range commands {
-		if existing := p.Find(c.name); existing != nil && sameCommandData(existing.data, c.data) {
-			continue
-		}
-
-		nc, err := p.AddCommand(c.name, c.shortDescription, c.longDescription, c.data)
-		if err != nil {
-			return fmt.Errorf("failed to rescan command %q: %w", c.name, err)
-		}
-		nc.Aliases = c.aliases
-		nc.IniName = c.iniName
-		nc.SubcommandsOptional = c.subcommandsOptional
-		nc.PassAfterNonOption = c.passAfterNonOption
-		nc.Hidden = c.hidden
-	}
-
-	p.invalidateLookupCache()
-	return nil
-}
-
-func sameCommandData(a any, b any) bool {
-	if a == nil || b == nil {
-		return a == nil && b == nil
-	}
-
-	av := reflect.ValueOf(a)
-	bv := reflect.ValueOf(b)
-	if av.Type() != bv.Type() {
-		return false
-	}
-
-	switch av.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
-		return av.Pointer() == bv.Pointer()
-	default:
-		if av.Type().Comparable() {
-			return a == b
-		}
-		return false
-	}
 }
 
 // Parse parses the command line arguments from os.Args using Parser.ParseArgs.
@@ -1009,4 +815,198 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	}
 
 	return s.retargs, nil
+}
+
+func (p *Parser) normalizeStructTag(mtag *multiTag) {
+	c := mtag.cached()
+
+	normalizeTagAlias(c, p.flagTags.Short, FlagTagShort)
+	normalizeTagAlias(c, p.flagTags.Long, FlagTagLong)
+	normalizeTagAlias(c, p.flagTags.Required, FlagTagRequired)
+	normalizeTagAlias(c, p.flagTags.Description, FlagTagDescription)
+	normalizeTagAlias(c, p.flagTags.DescriptionI18n, FlagTagDescriptionI18n)
+	normalizeTagAlias(c, p.flagTags.LongDescription, FlagTagLongDescription)
+	normalizeTagAlias(c, p.flagTags.LongDescriptionI18n, FlagTagLongDescriptionI18n)
+	normalizeTagAlias(c, p.flagTags.NoFlag, FlagTagNoFlag)
+	normalizeTagAlias(c, p.flagTags.Optional, FlagTagOptional)
+	normalizeTagAlias(c, p.flagTags.OptionalValue, FlagTagOptionalValue)
+	normalizeTagAlias(c, p.flagTags.Order, FlagTagOrder)
+	normalizeTagAlias(c, p.flagTags.Default, FlagTagDefault)
+	normalizeTagAlias(c, p.flagTags.Defaults, FlagTagDefaults)
+	normalizeTagAlias(c, p.flagTags.DefaultMask, FlagTagDefaultMask)
+	normalizeTagAlias(c, p.flagTags.Env, FlagTagEnv)
+	normalizeTagAlias(c, p.flagTags.AutoEnv, FlagTagAutoEnv)
+	normalizeTagAlias(c, p.flagTags.EnvDelim, FlagTagEnvDelim)
+	normalizeTagAlias(c, p.flagTags.ValueName, FlagTagValueName)
+	normalizeTagAlias(c, p.flagTags.ValueNameI18n, FlagTagValueNameI18n)
+	normalizeTagAlias(c, p.flagTags.Choice, FlagTagChoice)
+	normalizeTagAlias(c, p.flagTags.Choices, FlagTagChoices)
+	normalizeTagAlias(c, p.flagTags.Completion, FlagTagCompletion)
+	normalizeTagAlias(c, p.flagTags.Hidden, FlagTagHidden)
+	normalizeTagAlias(c, p.flagTags.Immediate, FlagTagImmediate)
+	normalizeTagAlias(c, p.flagTags.Base, FlagTagBase)
+	normalizeTagAlias(c, p.flagTags.IniName, FlagTagIniName)
+	normalizeTagAlias(c, p.flagTags.IniGroup, FlagTagIniGroup)
+	normalizeTagAlias(c, p.flagTags.NoIni, FlagTagNoIni)
+	normalizeTagAlias(c, p.flagTags.Group, FlagTagGroup)
+	normalizeTagAlias(c, p.flagTags.GroupI18n, FlagTagGroupI18n)
+	normalizeTagAlias(c, p.flagTags.Namespace, FlagTagNamespace)
+	normalizeTagAlias(c, p.flagTags.EnvNamespace, FlagTagEnvNamespace)
+	normalizeTagAlias(c, p.flagTags.Command, FlagTagCommand)
+	normalizeTagAlias(c, p.flagTags.CommandI18n, FlagTagCommandI18n)
+	normalizeTagAlias(c, p.flagTags.CommandGroup, FlagTagCommandGroup)
+	normalizeTagAlias(c, p.flagTags.SubCommandsOptional, FlagTagSubCommandsOptional)
+	normalizeTagAlias(c, p.flagTags.Alias, FlagTagAlias)
+	normalizeTagAlias(c, p.flagTags.Aliases, FlagTagAliases)
+	normalizeTagAlias(c, p.flagTags.LongAlias, FlagTagLongAlias)
+	normalizeTagAlias(c, p.flagTags.LongAliases, FlagTagLongAliases)
+	normalizeTagAlias(c, p.flagTags.ShortAlias, FlagTagShortAlias)
+	normalizeTagAlias(c, p.flagTags.ShortAliases, FlagTagShortAliases)
+	normalizeTagAlias(c, p.flagTags.PositionalArgs, FlagTagPositionalArgs)
+	normalizeTagAlias(c, p.flagTags.PositionalArgName, FlagTagPositionalArgName)
+	normalizeTagAlias(c, p.flagTags.ArgGroup, FlagTagArgGroup)
+	normalizeTagAlias(c, p.flagTags.ArgNameI18n, FlagTagArgNameI18n)
+	normalizeTagAlias(c, p.flagTags.ArgDescriptionI18n, FlagTagArgDescriptionI18n)
+	normalizeTagAlias(c, p.flagTags.KeyValueDelimiter, FlagTagKeyValueDelimiter)
+	normalizeTagAlias(c, p.flagTags.PassAfterNonOption, FlagTagPassAfterNonOption)
+	normalizeTagAlias(c, p.flagTags.Unquote, FlagTagUnquote)
+	normalizeTagAlias(c, p.flagTags.Terminator, FlagTagTerminator)
+}
+
+func normalizeTagAlias(tags map[string][]string, source string, target string) {
+	if source == "" || source == target {
+		return
+	}
+
+	values, ok := tags[source]
+	if !ok {
+		return
+	}
+
+	if _, exists := tags[target]; !exists {
+		tags[target] = values
+	}
+}
+
+func (p *Parser) invalidateLookupCache() {
+	p.lookupGeneration++
+	p.configDirty = true
+}
+
+type groupSpec struct {
+	data             any
+	shortDescription string
+	longDescription  string
+	namespace        string
+	envNamespace     string
+	iniName          string
+	hidden           bool
+}
+
+type commandSpec struct {
+	data                any
+	name                string
+	shortDescription    string
+	longDescription     string
+	iniName             string
+	aliases             []string
+	subcommandsOptional bool
+	passAfterNonOption  bool
+	hidden              bool
+}
+
+func (p *Parser) rebuildTree() error {
+	groups := make([]groupSpec, 0, len(p.groups))
+	commands := make([]commandSpec, 0, len(p.commands))
+	rootOptions := append([]*Option(nil), p.options...)
+
+	for _, g := range p.groups {
+		if g.isBuiltinHelp {
+			continue
+		}
+
+		groups = append(groups, groupSpec{
+			shortDescription: g.ShortDescription,
+			longDescription:  g.LongDescription,
+			namespace:        g.Namespace,
+			envNamespace:     g.EnvNamespace,
+			iniName:          g.IniName,
+			hidden:           g.Hidden,
+			data:             g.data,
+		})
+	}
+
+	for _, c := range p.commands {
+		commands = append(commands, commandSpec{
+			name:                c.Name,
+			shortDescription:    c.ShortDescription,
+			longDescription:     c.LongDescription,
+			iniName:             c.IniName,
+			aliases:             append([]string(nil), c.Aliases...),
+			subcommandsOptional: c.SubcommandsOptional,
+			passAfterNonOption:  c.PassAfterNonOption,
+			hidden:              c.Hidden,
+			data:                c.data,
+		})
+	}
+
+	p.groups = nil
+	p.commands = nil
+	p.options = rootOptions
+	p.args = nil
+	p.Active = nil
+	p.hasBuiltinHelpGroup = false
+	p.lookupCacheValid = false
+
+	for _, g := range groups {
+		ng, err := p.AddGroup(g.shortDescription, g.longDescription, g.data)
+		if err != nil {
+			return fmt.Errorf("failed to rescan group %q: %w", g.shortDescription, err)
+		}
+		ng.Namespace = g.namespace
+		ng.EnvNamespace = g.envNamespace
+		ng.IniName = g.iniName
+		ng.Hidden = g.hidden
+	}
+
+	for _, c := range commands {
+		if existing := p.Find(c.name); existing != nil && sameCommandData(existing.data, c.data) {
+			continue
+		}
+
+		nc, err := p.AddCommand(c.name, c.shortDescription, c.longDescription, c.data)
+		if err != nil {
+			return fmt.Errorf("failed to rescan command %q: %w", c.name, err)
+		}
+		nc.Aliases = c.aliases
+		nc.IniName = c.iniName
+		nc.SubcommandsOptional = c.subcommandsOptional
+		nc.PassAfterNonOption = c.passAfterNonOption
+		nc.Hidden = c.hidden
+	}
+
+	p.invalidateLookupCache()
+	return nil
+}
+
+func sameCommandData(a any, b any) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+	if av.Type() != bv.Type() {
+		return false
+	}
+
+	switch av.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+		return av.Pointer() == bv.Pointer()
+	default:
+		if av.Type().Comparable() {
+			return a == b
+		}
+		return false
+	}
 }

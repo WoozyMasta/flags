@@ -338,7 +338,9 @@ func docCommands(c *Command, includeHidden bool) []*Command {
 	if includeHidden {
 		ret := make([]*Command, len(c.commands))
 		copy(ret, c.commands)
-		sort.Sort(commandList(ret))
+		sort.Slice(ret, func(i, j int) bool {
+			return ret[i].Name < ret[j].Name
+		})
 		return ret
 	}
 	return c.sortedVisibleCommands()

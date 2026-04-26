@@ -68,12 +68,6 @@ type Group struct {
 
 type scanHandler func(reflect.Value, *reflect.StructField) (bool, error)
 
-func (g *Group) touchLookupCache() {
-	if p := g.parser(); p != nil {
-		p.invalidateLookupCache()
-	}
-}
-
 // AddGroup adds a new group to the command with the given name and data. The
 // data needs to be a pointer to a struct from which the fields indicate which
 // options are in the group.
@@ -170,20 +164,6 @@ func (g *Group) Options() []*Option {
 	return ret
 }
 
-func (g *Group) sortedOptionsForDisplay() []*Option {
-	if g == nil {
-		return nil
-	}
-
-	if p := g.parser(); p != nil && p.shouldSortOptionsForDisplay(g.options) {
-		ret := make([]*Option, len(g.options))
-		copy(ret, g.options)
-		return p.sortedOptions(ret)
-	}
-
-	return g.options
-}
-
 // Data returns the user-provided struct pointer backing this group.
 func (g *Group) Data() any {
 	return g.data
@@ -215,26 +195,6 @@ func (g *Group) Find(shortDescription string) *Group {
 	return ret
 }
 
-func (g *Group) iniSectionName() string {
-	if g.IniName != "" {
-		return g.IniName
-	}
-
-	return g.ShortDescription
-}
-
-func (g *Group) findOption(matcher func(*Option) bool) (option *Option) {
-	g.eachGroup(func(g *Group) {
-		for _, opt := range g.options {
-			if option == nil && matcher(opt) {
-				option = opt
-			}
-		}
-	})
-
-	return option
-}
-
 // FindOptionByLongName finds an option that is part of the group, or any of its
 // subgroups, by matching its long name (including the option namespace).
 func (g *Group) FindOptionByLongName(longName string) *Option {
@@ -255,6 +215,26 @@ func (g *Group) FindOptionByShortName(shortName rune) *Option {
 		}
 		return slices.Contains(option.ShortAliases, shortName)
 	})
+}
+
+func (g *Group) iniSectionName() string {
+	if g.IniName != "" {
+		return g.IniName
+	}
+
+	return g.ShortDescription
+}
+
+func (g *Group) findOption(matcher func(*Option) bool) (option *Option) {
+	g.eachGroup(func(g *Group) {
+		for _, opt := range g.options {
+			if option == nil && matcher(opt) {
+				option = opt
+			}
+		}
+	})
+
+	return option
 }
 
 func newGroup(shortDescription string, longDescription string, data any) *Group {
@@ -283,6 +263,26 @@ func (g *Group) parser() *Parser {
 	}
 
 	return nil
+}
+
+func (g *Group) touchLookupCache() {
+	if p := g.parser(); p != nil {
+		p.invalidateLookupCache()
+	}
+}
+
+func (g *Group) sortedOptionsForDisplay() []*Option {
+	if g == nil {
+		return nil
+	}
+
+	if p := g.parser(); p != nil && p.shouldSortOptionsForDisplay(g.options) {
+		ret := make([]*Option, len(g.options))
+		copy(ret, g.options)
+		return p.sortedOptions(ret)
+	}
+
+	return g.options
 }
 
 func (g *Group) optionByName(name string, namematch func(*Option, string) bool) *Option {

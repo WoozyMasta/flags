@@ -48,71 +48,6 @@ var shellStyles = map[string]RenderStyle{
 	"pwsh":       RenderStyleWindows,
 }
 
-func (p *Parser) resolveFlagRenderStyle() RenderStyle {
-	style := p.helpFlagStyle
-	if style == RenderStyleAuto && (p.Options&DetectShellFlagStyle) != None {
-		style = RenderStyleShell
-	}
-	return p.resolveRenderStyle(style, true)
-}
-
-func (p *Parser) resolveEnvRenderStyle() RenderStyle {
-	style := p.helpEnvStyle
-	if style == RenderStyleAuto && (p.Options&DetectShellEnvStyle) != None {
-		style = RenderStyleShell
-	}
-	return p.resolveRenderStyle(style, false)
-}
-
-func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyle {
-	switch style {
-	case RenderStylePOSIX, RenderStyleWindows:
-		return style
-	case RenderStyleShell:
-		return DetectShellStyle()
-	default:
-		if forFlags {
-			if defaultLongOptDelimiter == "--" {
-				return RenderStylePOSIX
-			}
-			return RenderStyleWindows
-		}
-		if isWindowsRuntime() {
-			return RenderStyleWindows
-		}
-		return RenderStylePOSIX
-	}
-}
-
-func (p *Parser) optionRenderFormat() optionRenderFormat {
-	flagsStyle := p.resolveFlagRenderStyle()
-	envStyle := p.resolveEnvRenderStyle()
-
-	format := optionRenderFormat{
-		shortDelimiter: defaultShortOptDelimiter,
-		longDelimiter:  defaultLongOptDelimiter,
-		nameDelimiter:  defaultNameArgDelimiter,
-		envPrefix:      "$",
-	}
-
-	if flagsStyle == RenderStyleWindows {
-		format.shortDelimiter = '/'
-		format.longDelimiter = "/"
-		format.nameDelimiter = ':'
-	} else {
-		format.shortDelimiter = '-'
-		format.longDelimiter = "--"
-		format.nameDelimiter = '='
-	}
-
-	if envStyle == RenderStyleWindows {
-		format.envPrefix = "%"
-		format.envSuffix = "%"
-	}
-
-	return format
-}
-
 // DetectShellStyle returns detected shell rendering style.
 func DetectShellStyle() RenderStyle {
 	if explicit := shellKind(strings.TrimSpace(os.Getenv("GO_FLAGS_SHELL"))); explicit != RenderStyleAuto {
@@ -169,6 +104,25 @@ func DetectShell() string {
 	}
 
 	return ""
+}
+
+// DetectCompletionShell returns detected completion shell format.
+// Unsupported/unknown shells fallback to bash.
+func DetectCompletionShell() CompletionShell {
+	switch DetectShell() {
+	case string(CompletionShellZsh):
+		return CompletionShellZsh
+	case string(CompletionShellPwsh), "powershell":
+		return CompletionShellPwsh
+	default:
+		// Unsupported/unknown shells fallback to bash completion script.
+		return CompletionShellBash
+	}
+}
+
+// RuntimeOS returns runtime OS identifier (for example: windows, linux, darwin).
+func RuntimeOS() string {
+	return runtime.GOOS
 }
 
 func candidateShellNames() []string {
@@ -232,21 +186,67 @@ func isLikelyMSYSSession() bool {
 	return false
 }
 
-// DetectCompletionShell returns detected completion shell format.
-// Unsupported/unknown shells fallback to bash.
-func DetectCompletionShell() CompletionShell {
-	switch DetectShell() {
-	case string(CompletionShellZsh):
-		return CompletionShellZsh
-	case string(CompletionShellPwsh), "powershell":
-		return CompletionShellPwsh
+func (p *Parser) resolveFlagRenderStyle() RenderStyle {
+	style := p.helpFlagStyle
+	if style == RenderStyleAuto && (p.Options&DetectShellFlagStyle) != None {
+		style = RenderStyleShell
+	}
+	return p.resolveRenderStyle(style, true)
+}
+
+func (p *Parser) resolveEnvRenderStyle() RenderStyle {
+	style := p.helpEnvStyle
+	if style == RenderStyleAuto && (p.Options&DetectShellEnvStyle) != None {
+		style = RenderStyleShell
+	}
+	return p.resolveRenderStyle(style, false)
+}
+
+func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyle {
+	switch style {
+	case RenderStylePOSIX, RenderStyleWindows:
+		return style
+	case RenderStyleShell:
+		return DetectShellStyle()
 	default:
-		// Unsupported/unknown shells fallback to bash completion script.
-		return CompletionShellBash
+		if forFlags {
+			if defaultLongOptDelimiter == "--" {
+				return RenderStylePOSIX
+			}
+			return RenderStyleWindows
+		}
+		if isWindowsRuntime() {
+			return RenderStyleWindows
+		}
+		return RenderStylePOSIX
 	}
 }
 
-// RuntimeOS returns runtime OS identifier (for example: windows, linux, darwin).
-func RuntimeOS() string {
-	return runtime.GOOS
+func (p *Parser) optionRenderFormat() optionRenderFormat {
+	flagsStyle := p.resolveFlagRenderStyle()
+	envStyle := p.resolveEnvRenderStyle()
+
+	format := optionRenderFormat{
+		shortDelimiter: defaultShortOptDelimiter,
+		longDelimiter:  defaultLongOptDelimiter,
+		nameDelimiter:  defaultNameArgDelimiter,
+		envPrefix:      "$",
+	}
+
+	if flagsStyle == RenderStyleWindows {
+		format.shortDelimiter = '/'
+		format.longDelimiter = "/"
+		format.nameDelimiter = ':'
+	} else {
+		format.shortDelimiter = '-'
+		format.longDelimiter = "--"
+		format.nameDelimiter = '='
+	}
+
+	if envStyle == RenderStyleWindows {
+		format.envPrefix = "%"
+		format.envSuffix = "%"
+	}
+
+	return format
 }

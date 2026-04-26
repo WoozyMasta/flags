@@ -13,6 +13,358 @@ import (
 	"strings"
 )
 
+// WroteHelp is a helper to test the error from ParseArgs() to
+// determine if the help message was written. It is safe to
+// call without first checking that error is nil.
+func WroteHelp(err error) bool {
+	if err == nil { // No error
+		return false
+	}
+
+	flagError, ok := err.(*Error)
+	if !ok { // Not a go-flag error
+		return false
+	}
+
+	if flagError.Type != ErrHelp { // Did not print the help message
+		return false
+	}
+
+	return true
+}
+
+func (p *Parser) WriteHelp(writer io.Writer) {
+	if writer == nil {
+		return
+	}
+
+	prevHelpColorEnabled := p.helpColorEnabled
+	p.helpColorEnabled = DetectColorSupport(writer)
+	defer func() {
+		p.helpColorEnabled = prevHelpColorEnabled
+	}()
+
+	// Keep WriteHelp behavior consistent with ParseArgs:
+	// when builtin help/version flags are enabled, ensure
+	// corresponding options are present in help output.
+	if (p.Options & (HelpFlag | VersionFlag)) != None {
+		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
+	}
+	_ = p.EnsureBuiltinCommands()
+
+	wr := bufio.NewWriter(writer)
+	basePrefix := ""
+	if (p.Options&ColorHelp) != None && p.helpColorEnabled {
+		basePrefix = helpStylePrefix(p.helpColorScheme.BaseText)
+		if basePrefix != "" {
+			_, _ = wr.WriteString(basePrefix)
+		}
+	}
+	aligninfo := p.getAlignmentInfo()
+	format := p.optionRenderFormat()
+	trimDescriptions := (p.Options & KeepDescriptionWhitespace) == None
+
+	cmd := p.Command
+
+	for cmd.Active != nil {
+		cmd = cmd.Active
+	}
+
+	if p.Name != "" {
+		usageLabel := p.i18nText("help.usage", "Usage") + ":"
+		_, _ = wr.WriteString(p.colorizeHelp(usageLabel, p.helpColorScheme.UsageHeader))
+		if basePrefix != "" && p.helpColorScheme.BaseText.UseBG && !aligninfo.unlimitedWidth {
+			pad := aligninfo.terminalColumns - textWidth(usageLabel)
+			if pad > 0 {
+				_, _ = wr.WriteString(strings.Repeat(" ", pad))
+			}
+		}
+		_, _ = wr.WriteString("\n")
+		_, _ = wr.WriteString(" ")
+
+		allcmd := p.Command
+
+		for allcmd != nil {
+			var usage string
+
+			if allcmd == p.Command {
+				if len(p.Usage) != 0 {
+					usage = p.Usage
+				} else if p.Options&HelpFlag != 0 {
+					usage = "[OPTIONS]"
+				}
+			} else if us, ok := allcmd.data.(Usage); ok {
+				usage = us.Usage()
+			} else if allcmd.hasHelpOptions() {
+				usage = fmt.Sprintf("[%s-OPTIONS]", allcmd.Name)
+			}
+
+			if len(usage) != 0 {
+				_, _ = fmt.Fprintf(
+					wr,
+					" %s %s",
+					p.colorizeHelp(allcmd.Name, p.helpColorScheme.UsageText),
+					p.colorizeHelp(usage, p.helpColorScheme.UsageText),
+				)
+			} else {
+				_, _ = fmt.Fprintf(wr, " %s", p.colorizeHelp(allcmd.Name, p.helpColorScheme.UsageText))
+			}
+
+			if len(allcmd.args) > 0 {
+				_, _ = fmt.Fprintf(wr, " ")
+			}
+
+			for i, arg := range allcmd.args {
+				if i != 0 {
+					_, _ = fmt.Fprintf(wr, " ")
+				}
+
+				name := arg.localizedName()
+
+				if arg.isRemaining() {
+					name += "..."
+				}
+
+				if !allcmd.ArgsRequired {
+					if arg.Required > 0 {
+						_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(name, p.helpColorScheme.UsageText))
+					} else {
+						_, _ = fmt.Fprintf(wr, "[%s]", p.colorizeHelp(name, p.helpColorScheme.UsageText))
+					}
+				} else {
+					_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(name, p.helpColorScheme.UsageText))
+				}
+			}
+
+			if allcmd.Active == nil && len(allcmd.commands) > 0 {
+				var co, cc string
+
+				if allcmd.SubcommandsOptional {
+					co, cc = "[", "]"
+				} else {
+					co, cc = "<", ">"
+				}
+
+				visibleCommands := allcmd.visibleCommands()
+
+				if len(visibleCommands) > 3 {
+					_, _ = fmt.Fprintf(
+						wr,
+						" %s%s%s",
+						co,
+						p.colorizeHelp(p.i18nText("help.command_placeholder", "command"), p.helpColorScheme.UsageText),
+						cc,
+					)
+				} else {
+					subcommands := allcmd.sortedVisibleCommands()
+					names := make([]string, len(subcommands))
+
+					for i, subc := range subcommands {
+						names[i] = subc.Name
+					}
+
+					_, _ = fmt.Fprintf(
+						wr,
+						" %s%s%s",
+						co,
+						p.colorizeHelp(strings.Join(names, " | "), p.helpColorScheme.UsageText),
+						cc,
+					)
+				}
+			}
+
+			allcmd = allcmd.Active
+		}
+
+		_, _ = fmt.Fprintln(wr)
+
+		longDescription := cmd.localizedLongDescription()
+		if len(longDescription) != 0 {
+			_, _ = fmt.Fprintln(wr)
+
+			t := wrapText(longDescription,
+				aligninfo.terminalColumns,
+				"",
+				trimDescriptions)
+
+			_, _ = fmt.Fprintln(wr, p.colorizeHelp(t, p.helpColorScheme.LongDescription))
+		}
+	}
+
+	c := p.Command
+
+	for c != nil {
+		printcmd := c != p.Command
+		optionAlignInfo := aligninfo
+		if printcmd {
+			optionAlignInfo.reserveShort = commandHasVisibleShortOption(c)
+			optionAlignInfo.indent = p.commandOptionIndent
+		}
+
+		c.eachGroup(func(grp *Group) {
+			first := true
+
+			// Skip built-in help group for all commands except the top-level
+			// parser
+			if grp.Hidden || (grp.isBuiltinHelp && c != p.Command) {
+				return
+			}
+
+			for _, info := range c.sortedOptionsForGroup(grp) {
+				if !info.showInHelp() {
+					continue
+				}
+
+				if printcmd {
+					header := p.i18nTextf(
+						"help.command.options_header",
+						"[{command} command options]",
+						map[string]string{"command": c.Name},
+					)
+					_, _ = fmt.Fprintf(
+						wr,
+						"\n%s\n",
+						p.colorizeHelp(header, p.helpColorScheme.SubcommandOptionsHeader),
+					)
+					printcmd = false
+				}
+
+				if first && cmd.Group != grp {
+					_, _ = fmt.Fprintln(wr)
+
+					if optionAlignInfo.indent > 0 {
+						_, _ = wr.WriteString(strings.Repeat(" ", optionAlignInfo.indent))
+					}
+
+					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.localizedShortDescription(), p.helpColorScheme.GroupHeader))
+					first = false
+				}
+
+				p.writeHelpOption(wr, info, optionAlignInfo, trimDescriptions, format)
+			}
+		})
+
+		var args []*Arg
+		for _, arg := range c.args {
+			if arg.localizedDescription() != "" {
+				args = append(args, arg)
+			}
+		}
+
+		if len(args) > 0 {
+			if c == p.Command {
+				_, _ = fmt.Fprintf(
+					wr,
+					"\n%s:\n",
+					p.colorizeHelp(p.i18nText("help.arguments", "Arguments"), p.helpColorScheme.ArgumentsHeader),
+				)
+			} else {
+				header := p.i18nTextf(
+					"help.command.arguments_header",
+					"[{command} command arguments]",
+					map[string]string{"command": c.Name},
+				)
+				_, _ = fmt.Fprintf(wr, "\n%s\n", p.colorizeHelp(header, p.helpColorScheme.ArgumentsHeader))
+			}
+
+			argIndent := paddingBeforeOption
+			argGroups := groupedHelpArgs(p, args)
+			if len(argGroups) == 1 && argGroups[0].name == "" {
+				for _, arg := range argGroups[0].args {
+					p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
+				}
+			} else {
+				for gi, group := range argGroups {
+					if group.name != "" {
+						_, _ = fmt.Fprintf(
+							wr,
+							"%s%s:\n",
+							strings.Repeat(" ", paddingBeforeOption),
+							p.colorizeHelp(group.name, p.helpColorScheme.ArgumentsHeader),
+						)
+						argIndent = paddingBeforeOption * 2
+					} else {
+						argIndent = paddingBeforeOption
+					}
+					for _, arg := range group.args {
+						p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
+					}
+					if gi < len(argGroups)-1 {
+						_, _ = fmt.Fprintln(wr)
+					}
+				}
+			}
+		}
+
+		c = c.Active
+	}
+
+	scommands := cmd.sortedVisibleCommands()
+
+	if len(scommands) > 0 {
+		maxnamelen := maxCommandLength(scommands)
+
+		_, _ = fmt.Fprintln(wr)
+		_, _ = fmt.Fprintln(
+			wr,
+			p.colorizeHelp(p.i18nText("help.available_commands", "Available commands")+":", p.helpColorScheme.CommandsHeader),
+		)
+
+		commandGroups := groupedHelpCommands(p, scommands)
+		commandIndent := paddingBeforeOption
+		for gi, group := range commandGroups {
+			if len(commandGroups) > 1 || group.name != "" {
+				if group.name != "" {
+					_, _ = fmt.Fprintf(
+						wr,
+						"%s%s:\n",
+						strings.Repeat(" ", paddingBeforeOption),
+						p.colorizeHelp(group.name, p.helpColorScheme.CommandsHeader),
+					)
+					commandIndent = paddingBeforeOption * 2
+				} else {
+					commandIndent = paddingBeforeOption
+				}
+			}
+
+			for _, c := range group.commands {
+				_, _ = fmt.Fprintf(wr, "%s%s", strings.Repeat(" ", commandIndent), p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
+
+				shortDescription := c.localizedShortDescription()
+				if len(shortDescription) > 0 {
+					pad := strings.Repeat(" ", maxnamelen-textWidth(c.Name))
+					_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(shortDescription, p.helpColorScheme.CommandDesc))
+				}
+
+				if len(c.Aliases) > 0 &&
+					(len(shortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
+					aliases := p.i18nTextf(
+						"help.command.aliases_suffix",
+						" (aliases: {aliases})",
+						map[string]string{"aliases": strings.Join(c.Aliases, ", ")},
+					)
+					_, _ = fmt.Fprintf(
+						wr,
+						"%s",
+						p.colorizeHelp(aliases, p.helpColorScheme.CommandAliases),
+					)
+				}
+
+				_, _ = fmt.Fprintln(wr)
+			}
+			if gi < len(commandGroups)-1 {
+				_, _ = fmt.Fprintln(wr)
+			}
+		}
+	}
+
+	if basePrefix != "" {
+		_, _ = wr.WriteString("\x1b[0m")
+	}
+
+	_ = wr.Flush()
+}
+
 type alignmentInfo struct {
 	maxLongLen      int
 	terminalColumns int
@@ -852,354 +1204,3 @@ func (p *Parser) writeHelpArgument(
 // option provides a convenient way to add a -h/--help option group to the
 // command line parser which will automatically show the help messages using
 // this method.
-func (p *Parser) WriteHelp(writer io.Writer) {
-	if writer == nil {
-		return
-	}
-
-	prevHelpColorEnabled := p.helpColorEnabled
-	p.helpColorEnabled = DetectColorSupport(writer)
-	defer func() {
-		p.helpColorEnabled = prevHelpColorEnabled
-	}()
-
-	// Keep WriteHelp behavior consistent with ParseArgs:
-	// when builtin help/version flags are enabled, ensure
-	// corresponding options are present in help output.
-	if (p.Options & (HelpFlag | VersionFlag)) != None {
-		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
-	}
-	_ = p.EnsureBuiltinCommands()
-
-	wr := bufio.NewWriter(writer)
-	basePrefix := ""
-	if (p.Options&ColorHelp) != None && p.helpColorEnabled {
-		basePrefix = helpStylePrefix(p.helpColorScheme.BaseText)
-		if basePrefix != "" {
-			_, _ = wr.WriteString(basePrefix)
-		}
-	}
-	aligninfo := p.getAlignmentInfo()
-	format := p.optionRenderFormat()
-	trimDescriptions := (p.Options & KeepDescriptionWhitespace) == None
-
-	cmd := p.Command
-
-	for cmd.Active != nil {
-		cmd = cmd.Active
-	}
-
-	if p.Name != "" {
-		usageLabel := p.i18nText("help.usage", "Usage") + ":"
-		_, _ = wr.WriteString(p.colorizeHelp(usageLabel, p.helpColorScheme.UsageHeader))
-		if basePrefix != "" && p.helpColorScheme.BaseText.UseBG && !aligninfo.unlimitedWidth {
-			pad := aligninfo.terminalColumns - textWidth(usageLabel)
-			if pad > 0 {
-				_, _ = wr.WriteString(strings.Repeat(" ", pad))
-			}
-		}
-		_, _ = wr.WriteString("\n")
-		_, _ = wr.WriteString(" ")
-
-		allcmd := p.Command
-
-		for allcmd != nil {
-			var usage string
-
-			if allcmd == p.Command {
-				if len(p.Usage) != 0 {
-					usage = p.Usage
-				} else if p.Options&HelpFlag != 0 {
-					usage = "[OPTIONS]"
-				}
-			} else if us, ok := allcmd.data.(Usage); ok {
-				usage = us.Usage()
-			} else if allcmd.hasHelpOptions() {
-				usage = fmt.Sprintf("[%s-OPTIONS]", allcmd.Name)
-			}
-
-			if len(usage) != 0 {
-				_, _ = fmt.Fprintf(
-					wr,
-					" %s %s",
-					p.colorizeHelp(allcmd.Name, p.helpColorScheme.UsageText),
-					p.colorizeHelp(usage, p.helpColorScheme.UsageText),
-				)
-			} else {
-				_, _ = fmt.Fprintf(wr, " %s", p.colorizeHelp(allcmd.Name, p.helpColorScheme.UsageText))
-			}
-
-			if len(allcmd.args) > 0 {
-				_, _ = fmt.Fprintf(wr, " ")
-			}
-
-			for i, arg := range allcmd.args {
-				if i != 0 {
-					_, _ = fmt.Fprintf(wr, " ")
-				}
-
-				name := arg.localizedName()
-
-				if arg.isRemaining() {
-					name += "..."
-				}
-
-				if !allcmd.ArgsRequired {
-					if arg.Required > 0 {
-						_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(name, p.helpColorScheme.UsageText))
-					} else {
-						_, _ = fmt.Fprintf(wr, "[%s]", p.colorizeHelp(name, p.helpColorScheme.UsageText))
-					}
-				} else {
-					_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(name, p.helpColorScheme.UsageText))
-				}
-			}
-
-			if allcmd.Active == nil && len(allcmd.commands) > 0 {
-				var co, cc string
-
-				if allcmd.SubcommandsOptional {
-					co, cc = "[", "]"
-				} else {
-					co, cc = "<", ">"
-				}
-
-				visibleCommands := allcmd.visibleCommands()
-
-				if len(visibleCommands) > 3 {
-					_, _ = fmt.Fprintf(
-						wr,
-						" %s%s%s",
-						co,
-						p.colorizeHelp(p.i18nText("help.command_placeholder", "command"), p.helpColorScheme.UsageText),
-						cc,
-					)
-				} else {
-					subcommands := allcmd.sortedVisibleCommands()
-					names := make([]string, len(subcommands))
-
-					for i, subc := range subcommands {
-						names[i] = subc.Name
-					}
-
-					_, _ = fmt.Fprintf(
-						wr,
-						" %s%s%s",
-						co,
-						p.colorizeHelp(strings.Join(names, " | "), p.helpColorScheme.UsageText),
-						cc,
-					)
-				}
-			}
-
-			allcmd = allcmd.Active
-		}
-
-		_, _ = fmt.Fprintln(wr)
-
-		longDescription := cmd.localizedLongDescription()
-		if len(longDescription) != 0 {
-			_, _ = fmt.Fprintln(wr)
-
-			t := wrapText(longDescription,
-				aligninfo.terminalColumns,
-				"",
-				trimDescriptions)
-
-			_, _ = fmt.Fprintln(wr, p.colorizeHelp(t, p.helpColorScheme.LongDescription))
-		}
-	}
-
-	c := p.Command
-
-	for c != nil {
-		printcmd := c != p.Command
-		optionAlignInfo := aligninfo
-		if printcmd {
-			optionAlignInfo.reserveShort = commandHasVisibleShortOption(c)
-			optionAlignInfo.indent = p.commandOptionIndent
-		}
-
-		c.eachGroup(func(grp *Group) {
-			first := true
-
-			// Skip built-in help group for all commands except the top-level
-			// parser
-			if grp.Hidden || (grp.isBuiltinHelp && c != p.Command) {
-				return
-			}
-
-			for _, info := range c.sortedOptionsForGroup(grp) {
-				if !info.showInHelp() {
-					continue
-				}
-
-				if printcmd {
-					header := p.i18nTextf(
-						"help.command.options_header",
-						"[{command} command options]",
-						map[string]string{"command": c.Name},
-					)
-					_, _ = fmt.Fprintf(
-						wr,
-						"\n%s\n",
-						p.colorizeHelp(header, p.helpColorScheme.SubcommandOptionsHeader),
-					)
-					printcmd = false
-				}
-
-				if first && cmd.Group != grp {
-					_, _ = fmt.Fprintln(wr)
-
-					if optionAlignInfo.indent > 0 {
-						_, _ = wr.WriteString(strings.Repeat(" ", optionAlignInfo.indent))
-					}
-
-					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.localizedShortDescription(), p.helpColorScheme.GroupHeader))
-					first = false
-				}
-
-				p.writeHelpOption(wr, info, optionAlignInfo, trimDescriptions, format)
-			}
-		})
-
-		var args []*Arg
-		for _, arg := range c.args {
-			if arg.localizedDescription() != "" {
-				args = append(args, arg)
-			}
-		}
-
-		if len(args) > 0 {
-			if c == p.Command {
-				_, _ = fmt.Fprintf(
-					wr,
-					"\n%s:\n",
-					p.colorizeHelp(p.i18nText("help.arguments", "Arguments"), p.helpColorScheme.ArgumentsHeader),
-				)
-			} else {
-				header := p.i18nTextf(
-					"help.command.arguments_header",
-					"[{command} command arguments]",
-					map[string]string{"command": c.Name},
-				)
-				_, _ = fmt.Fprintf(wr, "\n%s\n", p.colorizeHelp(header, p.helpColorScheme.ArgumentsHeader))
-			}
-
-			argIndent := paddingBeforeOption
-			argGroups := groupedHelpArgs(p, args)
-			if len(argGroups) == 1 && argGroups[0].name == "" {
-				for _, arg := range argGroups[0].args {
-					p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
-				}
-			} else {
-				for gi, group := range argGroups {
-					if group.name != "" {
-						_, _ = fmt.Fprintf(
-							wr,
-							"%s%s:\n",
-							strings.Repeat(" ", paddingBeforeOption),
-							p.colorizeHelp(group.name, p.helpColorScheme.ArgumentsHeader),
-						)
-						argIndent = paddingBeforeOption * 2
-					} else {
-						argIndent = paddingBeforeOption
-					}
-					for _, arg := range group.args {
-						p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
-					}
-					if gi < len(argGroups)-1 {
-						_, _ = fmt.Fprintln(wr)
-					}
-				}
-			}
-		}
-
-		c = c.Active
-	}
-
-	scommands := cmd.sortedVisibleCommands()
-
-	if len(scommands) > 0 {
-		maxnamelen := maxCommandLength(scommands)
-
-		_, _ = fmt.Fprintln(wr)
-		_, _ = fmt.Fprintln(
-			wr,
-			p.colorizeHelp(p.i18nText("help.available_commands", "Available commands")+":", p.helpColorScheme.CommandsHeader),
-		)
-
-		commandGroups := groupedHelpCommands(p, scommands)
-		commandIndent := paddingBeforeOption
-		for gi, group := range commandGroups {
-			if len(commandGroups) > 1 || group.name != "" {
-				if group.name != "" {
-					_, _ = fmt.Fprintf(
-						wr,
-						"%s%s:\n",
-						strings.Repeat(" ", paddingBeforeOption),
-						p.colorizeHelp(group.name, p.helpColorScheme.CommandsHeader),
-					)
-					commandIndent = paddingBeforeOption * 2
-				} else {
-					commandIndent = paddingBeforeOption
-				}
-			}
-
-			for _, c := range group.commands {
-				_, _ = fmt.Fprintf(wr, "%s%s", strings.Repeat(" ", commandIndent), p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
-
-				shortDescription := c.localizedShortDescription()
-				if len(shortDescription) > 0 {
-					pad := strings.Repeat(" ", maxnamelen-textWidth(c.Name))
-					_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(shortDescription, p.helpColorScheme.CommandDesc))
-				}
-
-				if len(c.Aliases) > 0 &&
-					(len(shortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
-					aliases := p.i18nTextf(
-						"help.command.aliases_suffix",
-						" (aliases: {aliases})",
-						map[string]string{"aliases": strings.Join(c.Aliases, ", ")},
-					)
-					_, _ = fmt.Fprintf(
-						wr,
-						"%s",
-						p.colorizeHelp(aliases, p.helpColorScheme.CommandAliases),
-					)
-				}
-
-				_, _ = fmt.Fprintln(wr)
-			}
-			if gi < len(commandGroups)-1 {
-				_, _ = fmt.Fprintln(wr)
-			}
-		}
-	}
-
-	if basePrefix != "" {
-		_, _ = wr.WriteString("\x1b[0m")
-	}
-
-	_ = wr.Flush()
-}
-
-// WroteHelp is a helper to test the error from ParseArgs() to
-// determine if the help message was written. It is safe to
-// call without first checking that error is nil.
-func WroteHelp(err error) bool {
-	if err == nil { // No error
-		return false
-	}
-
-	flagError, ok := err.(*Error)
-	if !ok { // Not a go-flag error
-		return false
-	}
-
-	if flagError.Type != ErrHelp { // Did not print the help message
-		return false
-	}
-
-	return true
-}

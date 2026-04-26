@@ -13,10 +13,56 @@ type multiTag struct {
 	value string
 }
 
+func (x *multiTag) Parse() error {
+	vals, err := x.scan()
+	x.cache = vals
+
+	return err
+}
+
+func (x *multiTag) Get(key string) string {
+	c := x.cached()
+
+	if v, ok := c[key]; ok {
+		return v[len(v)-1]
+	}
+
+	return ""
+}
+
+func (x *multiTag) GetMany(key string) []string {
+	c := x.cached()
+	return c[key]
+}
+
+func (x *multiTag) Set(key string, value string) {
+	c := x.cached()
+	c[key] = []string{value}
+}
+
+func (x *multiTag) SetMany(key string, value []string) {
+	c := x.cached()
+	c[key] = value
+}
+
 func newMultiTag(v string) multiTag {
 	return multiTag{
 		value: v,
 	}
+}
+
+func (x *multiTag) cached() map[string][]string {
+	if x.cache == nil {
+		cache, _ := x.scan()
+
+		if cache == nil {
+			cache = make(map[string][]string)
+		}
+
+		x.cache = cache
+	}
+
+	return x.cache
 }
 
 func (x *multiTag) scan() (map[string][]string, error) {
@@ -95,50 +141,4 @@ func (x *multiTag) scan() (map[string][]string, error) {
 	}
 
 	return ret, nil
-}
-
-func (x *multiTag) Parse() error {
-	vals, err := x.scan()
-	x.cache = vals
-
-	return err
-}
-
-func (x *multiTag) cached() map[string][]string {
-	if x.cache == nil {
-		cache, _ := x.scan()
-
-		if cache == nil {
-			cache = make(map[string][]string)
-		}
-
-		x.cache = cache
-	}
-
-	return x.cache
-}
-
-func (x *multiTag) Get(key string) string {
-	c := x.cached()
-
-	if v, ok := c[key]; ok {
-		return v[len(v)-1]
-	}
-
-	return ""
-}
-
-func (x *multiTag) GetMany(key string) []string {
-	c := x.cached()
-	return c[key]
-}
-
-func (x *multiTag) Set(key string, value string) {
-	c := x.cached()
-	c[key] = []string{value}
-}
-
-func (x *multiTag) SetMany(key string, value []string) {
-	c := x.cached()
-	c[key] = value
 }

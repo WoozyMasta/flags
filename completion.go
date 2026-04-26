@@ -68,16 +68,6 @@ const (
 // Filename is a string alias which provides filename completion.
 type Filename string
 
-func completionsWithoutDescriptions(items []string) []Completion {
-	ret := make([]Completion, len(items))
-
-	for i, v := range items {
-		ret[i].Item = v
-	}
-
-	return ret
-}
-
 // Complete returns a list of existing files with the given
 // prefix.
 func (f *Filename) Complete(match string) []Completion {
@@ -88,6 +78,117 @@ func (f *Filename) Complete(match string) []Completion {
 		}
 	}
 	return completionsWithoutDescriptions(ret)
+}
+
+// WriteCompletion writes a shell completion script for the parser command name.
+func (p *Parser) WriteCompletion(w io.Writer, shell CompletionShell) error {
+	return p.WriteNamedCompletion(w, shell, p.Name)
+}
+
+// WriteAutoCompletion writes a shell completion script using detected shell.
+// Unsupported/unknown shell environments fallback to bash format.
+func (p *Parser) WriteAutoCompletion(w io.Writer) error {
+	return p.WriteCompletion(w, DetectCompletionShell())
+}
+
+// WriteNamedCompletion writes a shell completion script for commandName.
+func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, commandName string) error {
+	if commandName == "" {
+		return ErrEmptyCommandName
+	}
+
+	functionName := completionFunctionName(commandName)
+
+	switch shell {
+	case CompletionShellBash:
+		_, err := fmt.Fprintf(w, `_%[1]s() {
+	args=("${COMP_WORDS[@]:1:$COMP_CWORD}")
+	cur="${COMP_WORDS[COMP_CWORD]}"
+
+	local IFS=$'\n'
+	COMPREPLY=($(GO_FLAGS_COMPLETION=1 ${COMP_WORDS[0]} "${args[@]}"))
+
+	if [[ "$cur" == --*=* || "$cur" == -*=* ]]; then
+		compopt -o nospace 2>/dev/null
+	fi
+
+	return 0
+}
+
+complete -F _%[1]s %[2]s
+`, functionName, commandName)
+		return err
+	case CompletionShellZsh:
+		_, err := fmt.Fprintf(w, `#compdef %[2]s
+
+_%[1]s() {
+	local -a completions
+	local IFS=$'\n'
+	local cur="${words[CURRENT]}"
+
+	completions=($(GO_FLAGS_COMPLETION=1 "${words[@]}"))
+	(( ${#completions} )) || return 1
+
+	if [[ "$cur" == --*=* || "$cur" == -*=* ]]; then
+		compadd -S '' -- "${completions[@]}"
+	else
+		compadd -- "${completions[@]}"
+	fi
+
+	return 0
+}
+
+compdef _%[1]s %[2]s
+`, functionName, commandName)
+		return err
+	case CompletionShellPwsh:
+		_, err := fmt.Fprintf(w, `$__goFlagsCommand = '%[2]s'
+
+Register-ArgumentCompleter -Native -CommandName $__goFlagsCommand -ScriptBlock {
+	param($wordToComplete, $commandAst, $cursorPosition)
+
+	$elements = @($commandAst.CommandElements | ForEach-Object { $_.Extent.Text })
+	if ($elements.Count -eq 0) {
+		return
+	}
+
+	$exe = $elements[0]
+	$args = @()
+	if ($elements.Count -gt 1) {
+		$args = $elements[1..($elements.Count - 1)]
+	}
+
+	$prev = $env:GO_FLAGS_COMPLETION
+	$env:GO_FLAGS_COMPLETION = '1'
+	try {
+		$items = & $exe @args
+	} finally {
+		if ($null -ne $prev) {
+			$env:GO_FLAGS_COMPLETION = $prev
+		} else {
+			Remove-Item Env:GO_FLAGS_COMPLETION -ErrorAction SilentlyContinue
+		}
+	}
+
+	foreach ($item in $items) {
+		[System.Management.Automation.CompletionResult]::new($item, $item, 'ParameterValue', $item)
+	}
+}
+`, functionName, commandName)
+		return err
+	default:
+		return fmt.Errorf("unsupported completion shell %q", shell)
+	}
+}
+
+func completionsWithoutDescriptions(items []string) []Completion {
+	ret := make([]Completion, len(items))
+
+	for i, v := range items {
+		ret[i].Item = v
+	}
+
+	return ret
 }
 
 func (c *completion) skipPositional(s *parseState, n int) {
@@ -480,107 +581,6 @@ func (c *completion) print(items []Completion, showDescriptions bool) {
 		for _, v := range items {
 			fmt.Println(v.Item)
 		}
-	}
-}
-
-// WriteCompletion writes a shell completion script for the parser command name.
-func (p *Parser) WriteCompletion(w io.Writer, shell CompletionShell) error {
-	return p.WriteNamedCompletion(w, shell, p.Name)
-}
-
-// WriteAutoCompletion writes a shell completion script using detected shell.
-// Unsupported/unknown shell environments fallback to bash format.
-func (p *Parser) WriteAutoCompletion(w io.Writer) error {
-	return p.WriteCompletion(w, DetectCompletionShell())
-}
-
-// WriteNamedCompletion writes a shell completion script for commandName.
-func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, commandName string) error {
-	if commandName == "" {
-		return ErrEmptyCommandName
-	}
-
-	functionName := completionFunctionName(commandName)
-
-	switch shell {
-	case CompletionShellBash:
-		_, err := fmt.Fprintf(w, `_%[1]s() {
-	args=("${COMP_WORDS[@]:1:$COMP_CWORD}")
-	cur="${COMP_WORDS[COMP_CWORD]}"
-
-	local IFS=$'\n'
-	COMPREPLY=($(GO_FLAGS_COMPLETION=1 ${COMP_WORDS[0]} "${args[@]}"))
-
-	if [[ "$cur" == --*=* || "$cur" == -*=* ]]; then
-		compopt -o nospace 2>/dev/null
-	fi
-
-	return 0
-}
-
-complete -F _%[1]s %[2]s
-`, functionName, commandName)
-		return err
-	case CompletionShellZsh:
-		_, err := fmt.Fprintf(w, `#compdef %[2]s
-
-_%[1]s() {
-	local -a completions
-	local IFS=$'\n'
-	local cur="${words[CURRENT]}"
-
-	completions=($(GO_FLAGS_COMPLETION=1 "${words[@]}"))
-	(( ${#completions} )) || return 1
-
-	if [[ "$cur" == --*=* || "$cur" == -*=* ]]; then
-		compadd -S '' -- "${completions[@]}"
-	else
-		compadd -- "${completions[@]}"
-	fi
-
-	return 0
-}
-
-compdef _%[1]s %[2]s
-`, functionName, commandName)
-		return err
-	case CompletionShellPwsh:
-		_, err := fmt.Fprintf(w, `$__goFlagsCommand = '%[2]s'
-
-Register-ArgumentCompleter -Native -CommandName $__goFlagsCommand -ScriptBlock {
-	param($wordToComplete, $commandAst, $cursorPosition)
-
-	$elements = @($commandAst.CommandElements | ForEach-Object { $_.Extent.Text })
-	if ($elements.Count -eq 0) {
-		return
-	}
-
-	$exe = $elements[0]
-	$args = @()
-	if ($elements.Count -gt 1) {
-		$args = $elements[1..($elements.Count - 1)]
-	}
-
-	$prev = $env:GO_FLAGS_COMPLETION
-	$env:GO_FLAGS_COMPLETION = '1'
-	try {
-		$items = & $exe @args
-	} finally {
-		if ($null -ne $prev) {
-			$env:GO_FLAGS_COMPLETION = $prev
-		} else {
-			Remove-Item Env:GO_FLAGS_COMPLETION -ErrorAction SilentlyContinue
-		}
-	}
-
-	foreach ($item in $items) {
-		[System.Management.Automation.CompletionResult]::new($item, $item, 'ParameterValue', $item)
-	}
-}
-`, functionName, commandName)
-		return err
-	default:
-		return fmt.Errorf("unsupported completion shell %q", shell)
 	}
 }
 
