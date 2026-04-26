@@ -25,7 +25,7 @@ func (x *AddCommand) Execute(args []string) error {
 }
 
 func init() {
-	// This file shares the package-level parser from examples/main.go. Splitting
+	// This file shares the package-level parser from examples/basic/main.go. Splitting
 	// commands across files mirrors how larger CLIs can register subcommands
 	// from separate packages or files.
 	_, _ = parser.AddCommand("add",

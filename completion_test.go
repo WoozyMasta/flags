@@ -108,15 +108,12 @@ func init() {
 	}
 
 	completionTestSubdir := []string{
-		filepath.Join(completionTestSourcedir, "examples/add.go"),
 		filepath.Join(completionTestSourcedir, "examples/advanced"),
-		filepath.Join(completionTestSourcedir, "examples/bash-completion"),
+		filepath.Join(completionTestSourcedir, "examples/basic"),
+		filepath.Join(completionTestSourcedir, "examples/completion"),
 		filepath.Join(completionTestSourcedir, "examples/custom-flag-tags"),
 		filepath.Join(completionTestSourcedir, "examples/doc-rendered"),
 		filepath.Join(completionTestSourcedir, "examples/i18n"),
-		filepath.Join(completionTestSourcedir, "examples/main.go"),
-		filepath.Join(completionTestSourcedir, "examples/rm.go"),
-		filepath.Join(completionTestSourcedir, "examples/zsh-completion"),
 	}
 
 	completionTests = []completionTest{
@@ -273,8 +270,8 @@ func init() {
 
 		{
 			// To subdir
-			[]string{"rm", "--filename", filepath.Join(completionTestSourcedir, "examples/bash-")},
-			[]string{filepath.Join(completionTestSourcedir, "examples/bash-completion/")},
+			[]string{"rm", "--filename", filepath.Join(completionTestSourcedir, "examples/completion/ba")},
+			[]string{filepath.Join(completionTestSourcedir, "examples/completion/bash")},
 			false,
 		},
 

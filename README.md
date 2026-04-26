@@ -898,6 +898,16 @@ if versionOpt := parser.BuiltinVersionOption(); versionOpt != nil {
 
 ## Shell Completion
 
+Supported shells:
+
+* `bash`: requires Bash programmable completion (`complete`/`compopt`).
+  Works in Bash-compatible environments
+  (for example Git Bash, MSYS2, WSL Bash).
+* `zsh`: requires completion system initialization (`compinit`/`compdef`).
+* `pwsh`: requires PowerShell native completer support
+  (`Register-ArgumentCompleter -Native`).
+* `sh`/`ash`/`dash` are not supported completion targets.
+
 Generate shell script output from your app:
 
 ```go
@@ -925,8 +935,9 @@ GO_FLAGS_COMPLETION=1 ./myapp --some-arg prefix
 ```
 
 Templates:
-[`examples/bash-completion`](examples/bash-completion),
-[`examples/zsh-completion`](examples/zsh-completion).
+[`examples/completion/bash`](examples/completion/bash),
+[`examples/completion/zsh`](examples/completion/zsh),
+[`examples/completion/pwsh.ps1`](examples/completion/pwsh.ps1).
 
 Completion value source priority:
 
@@ -1130,4 +1141,24 @@ then lock down a solid baseline before any larger redesign.
 ## Documentation and Examples
 
 * API docs: <https://pkg.go.dev/github.com/woozymasta/flags>
-* Example app: [`examples/main.go`](examples/main.go)
+* Basic CLI example:
+  [`examples/basic/main.go`](examples/basic/main.go).
+  Minimal end-to-end app with commands, groups, defaults, and parse flow.
+* Advanced feature demo:
+  [`examples/advanced/main.go`](examples/advanced/main.go).
+  Demonstrates built-in help commands, sorting modes, env/INI flow,
+  dynamic defaults, and rendering options.
+* i18n demo:
+  [`examples/i18n/main.go`](examples/i18n/main.go).
+  Shows locale catalogs and localized help/errors/messages.
+* Custom tag names:
+  [`examples/custom-flag-tags/main.go`](examples/custom-flag-tags/main.go).
+  Shows tag prefix remapping and explicit tag mapping.
+* Completion templates:
+  [`examples/completion/bash`](examples/completion/bash),
+  [`examples/completion/zsh`](examples/completion/zsh),
+  [`examples/completion/pwsh.ps1`](examples/completion/pwsh.ps1).
+  Ready-to-use shell registration templates.
+* Rendered docs snapshots:
+  [`examples/doc-rendered`](examples/doc-rendered).
+  Reference outputs for markdown, HTML, and man rendering variants.

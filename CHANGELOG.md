@@ -118,7 +118,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixed
 
-* `examples/main.go` now checks help errors via `*flags.Error` + `errors.As`.
+* `examples/basic/main.go` now checks help errors via
+  `*flags.Error` + `errors.As`.
 * Positional help rendering no longer panics
   for positional-only parsers or unicode positional names.
 * Generated man-page timestamps honor `SOURCE_DATE_EPOCH` in UTC.
