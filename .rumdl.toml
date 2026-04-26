@@ -1,0 +1,66 @@
+[MD003]
+style = "consistent"
+
+[MD004]
+style = "consistent"
+
+[MD007]
+indent = 2
+start-indented = false
+style = "fixed"
+
+[MD009]
+br-spaces = 2
+list-item-empty-lines = false
+strict = false
+
+[MD012]
+maximum = 1
+
+[MD013]
+code-blocks = false
+headings = true
+line-length = 80
+strict = false
+tables = false
+
+[MD022]
+lines-above = 1
+lines-below = 1
+
+[MD024]
+siblings-only = true
+
+[MD026]
+punctuation = ".,;:!。，；：！?"
+
+[MD029]
+style = "one_or_ordered"
+
+[MD030]
+ol-multi = 1
+ol-single = 1
+ul-multi = 1
+ul-single = 1
+
+[MD031]
+list-items = true
+
+[MD033]
+allowed-elements = []
+
+[MD035]
+style = "consistent"
+
+[MD036]
+punctuation = ".,;:!?。，；：！？"
+
+[MD044]
+code-blocks = true
+names = []
+
+[MD046]
+style = "consistent"
+
+[MD048]
+style = "consistent"

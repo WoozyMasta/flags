@@ -20,9 +20,7 @@ jobs:
       - name: Run CI
         run: make ci test-race crosscompile
 
-      - uses: DavidAnson/markdownlint-cli2-action@v23
-        with:
-          globs: '**/*.md'
+      - uses: rvben/rumdl@v0
 
       - name: Extract changelog
         run: make release-notes > release.md

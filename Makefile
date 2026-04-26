@@ -2,7 +2,7 @@ GO           ?= go
 LINTER       ?= golangci-lint
 ALIGNER      ?= betteralign
 VULNCHECK    ?= govulncheck
-MARKDOWNLINT ?= markdownlint-cli2
+MARKDOWNLINT ?= rumdl
 BENCHSTAT    ?= benchstat
 BENCH_COUNT  ?= 6
 BENCH_REF    ?= bench_baseline.txt
@@ -100,10 +100,10 @@ vulncheck:
 
 markdownlint:
 	@if command -v $(MARKDOWNLINT) >/dev/null 2>&1; then \
-		$(MARKDOWNLINT) "**/*.md"; \
+		$(MARKDOWNLINT) check; \
 	else \
 		echo "WARN: $(MARKDOWNLINT) not found; skipping markdown lint."; \
-		echo 'WARN: Install it with: npm i -g markdownlint-cli2'; \
+		echo 'WARN: Install it https://github.com/rvben/rumdl'; \
 	fi
 
 tools: tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat
