@@ -6,6 +6,6 @@
 
 package flags
 
-func detectParentShellStyle() RenderStyle {
-	return RenderStyleAuto
+func detectParentShellName() string {
+	return ""
 }

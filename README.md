@@ -29,6 +29,7 @@ rich help, completion, and docs out of the box.
 * [Commands](#commands)
 * [Defaults](#defaults)
 * [Localization](#localization)
+* [Environment Detection API](#environment-detection-api)
 * [Environment Variables](#environment-variables)
 * [INI Config](#ini-config)
 * [Programmatic Configuration](#programmatic-configuration)
@@ -368,6 +369,8 @@ parser := flags.NewParser(&opts, flags.Default|flags.HelpCommands)
 `HelpCommands` enables `help`, `version`, `completion`, `docs`, and `config`.
 You can enable them individually with `HelpCommand`, `VersionCommand`,
 `CompletionCommand`, `DocsCommand`, and `ConfigCommand`.
+When `completion --shell` is omitted, shell format is auto-detected and
+falls back to `bash`.
 
 By default these commands are shown under `Help Commands` in help/docs.
 Use `parser.SetBuiltinCommandGroup("Reference")` to rename the display group,
@@ -493,6 +496,44 @@ to catch missing catalog keys and placeholder mismatches.
 
 End-to-end example with embedded catalogs:
 [`examples/i18n/main.go`](examples/i18n/main.go).
+
+## Environment Detection API
+
+Public helpers are available when application code needs runtime environment
+hints aligned with parser internals:
+
+Recommended entry point:
+
+* `flags.DetectEnvironment()`: one-call snapshot with OS, shell, render style,
+  completion shell, terminal size, locale, and tty state.
+
+TTY helpers:
+
+* `flags.DetectTTY()`: returns `TTYInfo{Stdin, Stdout, Stderr}`.
+* `flags.DetectFileTTY(*os.File)`: checks tty for an opened file descriptor.
+* `flags.DetectFDTTY(uintptr)`: checks tty for a raw file descriptor id
+  (for example `0`, `1`, `2`, `12`).
+* `flags.DetectWriterTTY(io.Writer)`: checks arbitrary writer.
+
+Focused helpers:
+
+* `flags.RuntimeOS()`: runtime OS (`windows`, `linux`, `darwin`, ...).
+* `flags.DetectShell()`: shell name (`bash`, `zsh`, `pwsh`, `cmd`, ...).
+* `flags.DetectShellStyle()`: render style (`POSIX` vs `Windows`).
+* `flags.DetectCompletionShell()`: completion format with `bash` fallback.
+* `flags.DetectTerminalSize()`: terminal size `(columns, rows)`.
+* `flags.DetectColorSupport(io.Writer)`: whether ANSI colors should be used
+  (`NO_COLOR`, `FORCE_COLOR`, tty).
+* `flags.DetectLocale()`: locale from env + OS fallback.
+
+Example:
+
+```go
+env := flags.DetectEnvironment()
+if flags.DetectColorSupport(os.Stdout) {
+  // Enable colors only for interactive terminal output.
+}
+```
 
 ## Environment Variables
 

@@ -6,7 +6,6 @@ package flags
 
 import (
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -238,39 +237,11 @@ func (p *Parser) colorizeHelp(text string, role HelpTextStyle) string {
 	return styled
 }
 
-func hasNOColor() bool {
-	_, exists := os.LookupEnv("NO_COLOR")
-	return exists
-}
-
-func writerIsTTY(writer io.Writer) bool {
-	file, ok := writer.(*os.File)
-	if !ok {
-		// Unknown writer type: keep color behavior unchanged.
-		return true
-	}
-
-	info, err := file.Stat()
-	if err != nil {
-		return false
-	}
-
-	return (info.Mode() & os.ModeCharDevice) != 0
-}
-
-func (p *Parser) shouldUseColors(writer io.Writer) bool {
-	if hasNOColor() {
-		return false
-	}
-
-	return writerIsTTY(writer)
-}
-
 func (p *Parser) colorizeError(err error, text string, writer io.Writer) string {
 	if text == "" || (p.Options&ColorErrors) == None {
 		return text
 	}
-	if !p.shouldUseColors(writer) {
+	if !DetectColorSupport(writer) {
 		return text
 	}
 

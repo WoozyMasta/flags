@@ -104,7 +104,7 @@ func TestHelpRenderStyleDetectWindowsPrefersWindowsOverShellVar(t *testing.T) {
 	_ = os.Unsetenv("MSYSTEM")
 	_ = os.Unsetenv("OSTYPE")
 
-	if detectParentShellStyle() == RenderStylePOSIX {
+	if shellKind(detectParentShellName()) == RenderStylePOSIX {
 		t.Skip("session has POSIX-like parent shell on Windows; windows-preference assertion not applicable")
 	}
 

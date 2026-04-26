@@ -18,10 +18,10 @@ type processInfo struct {
 	parentID uint32
 }
 
-func detectParentShellStyle() RenderStyle {
+func detectParentShellName() string {
 	procs, ok := snapshotProcesses()
 	if !ok {
-		return RenderStyleAuto
+		return ""
 	}
 
 	pid := windows.GetCurrentProcessId()
@@ -30,22 +30,22 @@ func detectParentShellStyle() RenderStyle {
 	for range 12 {
 		current, ok := procs[pid]
 		if !ok || current.parentID == 0 || current.parentID == pid {
-			return RenderStyleAuto
+			return ""
 		}
 
 		parent, ok := procs[current.parentID]
 		if !ok {
-			return RenderStyleAuto
+			return ""
 		}
 
-		if style := shellKind(parent.name); style != RenderStyleAuto {
-			return style
+		if name := normalizeShellName(parent.name); name != "" {
+			return name
 		}
 
 		pid = current.parentID
 	}
 
-	return RenderStyleAuto
+	return ""
 }
 
 func snapshotProcesses() (map[uint32]processInfo, bool) {

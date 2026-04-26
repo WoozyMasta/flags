@@ -5,3 +5,4 @@
 package flags
 
 const defaultTermSize = 80
+const defaultTermRows = 24

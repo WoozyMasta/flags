@@ -116,7 +116,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 	}
 	model.ArgGroups = buildDocArgGroups(model.Args)
 
-	for _, cmd := range p.docCommands(cfg.includeHidden) {
+	for _, cmd := range docCommands(p.Command, cfg.includeHidden) {
 		model.Commands = append(model.Commands, buildDocCommand("", p.Name+" "+usage, cmd, cfg.includeHidden, format))
 	}
 	model.CommandGroups = buildDocCommandGroups(model.Commands)
@@ -342,10 +342,6 @@ func docCommands(c *Command, includeHidden bool) []*Command {
 		return ret
 	}
 	return c.sortedVisibleCommands()
-}
-
-func (p *Parser) docCommands(includeHidden bool) []*Command {
-	return docCommands(p.Command, includeHidden)
 }
 
 func optionSignature(opt *Option, format optionRenderFormat) string {

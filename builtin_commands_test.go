@@ -238,6 +238,44 @@ func TestBuiltinCompletionCommandWritesFile(t *testing.T) {
 	}
 }
 
+func TestBuiltinCompletionCommandAutoDetectsShell(t *testing.T) {
+	t.Setenv("GO_FLAGS_SHELL", "zsh")
+
+	p := NewNamedParser("builtin-completion-auto-zsh", CompletionCommand)
+	out := filepath.Join(t.TempDir(), "completion.zsh")
+
+	if _, err := p.ParseArgs([]string{"completion", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	if !strings.Contains(string(got), "#compdef") {
+		t.Fatalf("expected zsh completion script, got:\n%s", string(got))
+	}
+}
+
+func TestBuiltinCompletionCommandAutoDetectFallbacksToBash(t *testing.T) {
+	t.Setenv("GO_FLAGS_SHELL", "pwsh")
+
+	p := NewNamedParser("builtin-completion-auto-bash", CompletionCommand)
+	out := filepath.Join(t.TempDir(), "completion.bash")
+
+	if _, err := p.ParseArgs([]string{"completion", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	if !strings.Contains(string(got), "complete -F _") {
+		t.Fatalf("expected bash completion fallback script, got:\n%s", string(got))
+	}
+}
+
 func TestBuiltinCommandSkipsApplicationRequiredValidation(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" required:"true"`

@@ -7,6 +7,7 @@ package flags
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -33,6 +34,20 @@ type optionRenderFormat struct {
 	nameDelimiter  rune
 }
 
+var shellStyles = map[string]RenderStyle{
+	"sh":         RenderStylePOSIX,
+	"ash":        RenderStylePOSIX,
+	"dash":       RenderStylePOSIX,
+	"bash":       RenderStylePOSIX,
+	"zsh":        RenderStylePOSIX,
+	"fish":       RenderStylePOSIX,
+	"ksh":        RenderStylePOSIX,
+	"mksh":       RenderStylePOSIX,
+	"cmd":        RenderStyleWindows,
+	"powershell": RenderStyleWindows,
+	"pwsh":       RenderStyleWindows,
+}
+
 func (p *Parser) resolveFlagRenderStyle() RenderStyle {
 	style := p.helpFlagStyle
 	if style == RenderStyleAuto && (p.Options&DetectShellFlagStyle) != None {
@@ -54,7 +69,7 @@ func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyl
 	case RenderStylePOSIX, RenderStyleWindows:
 		return style
 	case RenderStyleShell:
-		return detectShellRenderStyle()
+		return DetectShellStyle()
 	default:
 		if forFlags {
 			if defaultLongOptDelimiter == "--" {
@@ -98,22 +113,16 @@ func (p *Parser) optionRenderFormat() optionRenderFormat {
 	return format
 }
 
-func detectShellRenderStyle() RenderStyle {
+// DetectShellStyle returns detected shell rendering style.
+func DetectShellStyle() RenderStyle {
 	if explicit := shellKind(strings.TrimSpace(os.Getenv("GO_FLAGS_SHELL"))); explicit != RenderStyleAuto {
 		return explicit
 	}
 
-	if isWindowsRuntime() {
-		if parentStyle := detectParentShellStyle(); parentStyle != RenderStyleAuto {
-			return parentStyle
+	if name := DetectShell(); name != "" {
+		if style := shellKind(name); style != RenderStyleAuto {
+			return style
 		}
-	}
-
-	if msystem := strings.TrimSpace(os.Getenv("MSYSTEM")); msystem != "" && isLikelyMSYSSession() {
-		return RenderStylePOSIX
-	}
-	if ostype := strings.ToLower(strings.TrimSpace(os.Getenv("OSTYPE"))); (strings.HasPrefix(ostype, "msys") || strings.HasPrefix(ostype, "cygwin")) && isLikelyMSYSSession() {
-		return RenderStylePOSIX
 	}
 
 	if isWindowsRuntime() {
@@ -131,6 +140,35 @@ func detectShellRenderStyle() RenderStyle {
 	}
 
 	return RenderStylePOSIX
+}
+
+// DetectShell returns detected shell name (for example: bash, zsh, pwsh).
+// Returns empty string when shell cannot be detected.
+func DetectShell() string {
+	if explicit := normalizeShellName(strings.TrimSpace(os.Getenv("GO_FLAGS_SHELL"))); explicit != "" {
+		return explicit
+	}
+
+	if isWindowsRuntime() {
+		if parentName := detectParentShellName(); parentName != "" {
+			return parentName
+		}
+	}
+
+	if msystem := strings.TrimSpace(os.Getenv("MSYSTEM")); msystem != "" && isLikelyMSYSSession() {
+		return "bash"
+	}
+	if ostype := strings.ToLower(strings.TrimSpace(os.Getenv("OSTYPE"))); (strings.HasPrefix(ostype, "msys") || strings.HasPrefix(ostype, "cygwin")) && isLikelyMSYSSession() {
+		return "bash"
+	}
+
+	for _, name := range candidateShellNames() {
+		if normalized := normalizeShellName(name); normalized != "" {
+			return normalized
+		}
+	}
+
+	return ""
 }
 
 func candidateShellNames() []string {
@@ -156,18 +194,24 @@ func candidateShellNames() []string {
 	return candidates
 }
 
-func shellKind(raw string) RenderStyle {
+func normalizeShellName(raw string) string {
 	name := strings.ToLower(strings.TrimSpace(raw))
 	name = strings.TrimSuffix(filepath.Base(name), ".exe")
 
-	switch name {
-	case "sh", "ash", "dash", "bash", "zsh", "fish", "ksh", "mksh":
-		return RenderStylePOSIX
-	case "cmd", "powershell", "pwsh":
-		return RenderStyleWindows
-	default:
+	if _, ok := shellStyles[name]; ok {
+		return name
+	}
+
+	return ""
+}
+
+func shellKind(raw string) RenderStyle {
+	name := normalizeShellName(raw)
+	if name == "" {
 		return RenderStyleAuto
 	}
+
+	return shellStyles[name]
 }
 
 func isWindowsRuntime() bool {
@@ -186,4 +230,21 @@ func isLikelyMSYSSession() bool {
 	}
 
 	return false
+}
+
+// DetectCompletionShell returns detected completion shell format.
+// Unsupported/unknown shells fallback to bash.
+func DetectCompletionShell() CompletionShell {
+	switch DetectShell() {
+	case string(CompletionShellZsh):
+		return CompletionShellZsh
+	default:
+		// Unsupported/unknown shells fallback to bash completion script.
+		return CompletionShellBash
+	}
+}
+
+// RuntimeOS returns runtime OS identifier (for example: windows, linux, darwin).
+func RuntimeOS() string {
+	return runtime.GOOS
 }

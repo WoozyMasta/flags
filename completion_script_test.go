@@ -68,3 +68,33 @@ func TestWriteNamedCompletionErrors(t *testing.T) {
 		t.Fatal("expected error for unsupported shell")
 	}
 }
+
+func TestWriteAutoCompletionDetectsZsh(t *testing.T) {
+	t.Setenv("GO_FLAGS_SHELL", "zsh")
+
+	p := NewNamedParser("app", None)
+	var out strings.Builder
+
+	if err := p.WriteAutoCompletion(&out); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out.String(), "#compdef app") {
+		t.Fatalf("expected zsh completion output:\n%s", out.String())
+	}
+}
+
+func TestWriteAutoCompletionFallbacksToBash(t *testing.T) {
+	t.Setenv("GO_FLAGS_SHELL", "pwsh")
+
+	p := NewNamedParser("app", None)
+	var out strings.Builder
+
+	if err := p.WriteAutoCompletion(&out); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(out.String(), "complete -F _app app") {
+		t.Fatalf("expected bash completion output:\n%s", out.String())
+	}
+}

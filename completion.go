@@ -199,14 +199,6 @@ func (c *completion) collectOptionsForCompletion(s *parseState) []*Option {
 	return options
 }
 
-func (c *completion) completeNamesForLongPrefix(s *parseState, prefix string, match string) []Completion {
-	return c.completeOptionNames(s, prefix, match, false)
-}
-
-func (c *completion) completeNamesForShortPrefix(s *parseState, prefix string, match string) []Completion {
-	return c.completeOptionNames(s, prefix, match, true)
-}
-
 func (c *completion) completeCommands(s *parseState, match string) []Completion {
 	n := make([]Completion, 0, len(s.command.commands))
 	seen := make(map[string]bool)
@@ -383,7 +375,7 @@ func (c *completion) complete(args []string) []Completion {
 			if opt := s.lookup.shortNames[sname]; opt != nil && opt.canArgument() {
 				ret = c.completeValue(opt, opt.value, prefix+sname, optname[n:])
 			} else {
-				ret = c.completeNamesForShortPrefix(s, prefix, optname)
+				ret = c.completeOptionNames(s, prefix, optname, true)
 				optionNameCompletion = true
 			}
 		case hasArgument:
@@ -397,10 +389,10 @@ func (c *completion) complete(args []string) []Completion {
 				ret = c.completeValue(opt, opt.value, prefix+optname+split, argument)
 			}
 		case islong:
-			ret = c.completeNamesForLongPrefix(s, prefix, optname)
+			ret = c.completeOptionNames(s, prefix, optname, false)
 			optionNameCompletion = true
 		default:
-			ret = c.completeNamesForShortPrefix(s, prefix, optname)
+			ret = c.completeOptionNames(s, prefix, optname, true)
 			optionNameCompletion = true
 		}
 	case len(s.positional) > 0:
@@ -446,6 +438,12 @@ func (c *completion) print(items []Completion, showDescriptions bool) {
 // WriteCompletion writes a shell completion script for the parser command name.
 func (p *Parser) WriteCompletion(w io.Writer, shell CompletionShell) error {
 	return p.WriteNamedCompletion(w, shell, p.Name)
+}
+
+// WriteAutoCompletion writes a shell completion script using detected shell.
+// Unsupported/unknown shell environments fallback to bash format.
+func (p *Parser) WriteAutoCompletion(w io.Writer) error {
+	return p.WriteCompletion(w, DetectCompletionShell())
 }
 
 // WriteNamedCompletion writes a shell completion script for commandName.

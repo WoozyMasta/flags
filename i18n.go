@@ -228,7 +228,7 @@ func (s *i18nState) buildLocaleChain() []string {
 
 	if s.cfg.Locale != "" {
 		appendLocale(s.cfg.Locale)
-	} else if detected := detectLocale(); detected != "" {
+	} else if detected := DetectLocale(); detected != "" {
 		appendLocale(detected)
 	}
 
@@ -303,7 +303,9 @@ func cleanLocaleToken(raw string) string {
 	return token
 }
 
-func detectLocale() string {
+// DetectLocale returns detected locale using environment variables and
+// OS-specific fallback.
+func DetectLocale() string {
 	if locale := detectLocaleFromEnv(); locale != "" {
 		return locale
 	}

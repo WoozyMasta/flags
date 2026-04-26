@@ -12,7 +12,8 @@ import (
 	"golang.org/x/term"
 )
 
-func getTerminalColumns() int {
+// DetectTerminalSize returns detected terminal size in columns and rows.
+func DetectTerminalSize() (int, int) {
 	for _, file := range []*os.File{os.Stdout, os.Stderr, os.Stdin} {
 		if file == nil {
 			continue
@@ -23,13 +24,13 @@ func getTerminalColumns() int {
 			continue
 		}
 
-		width, _, err := term.GetSize(fd)
-		if err == nil && width > 0 {
-			return width
+		width, height, err := term.GetSize(fd)
+		if err == nil && width > 0 && height > 0 {
+			return width, height
 		}
 	}
 
-	return defaultTermSize
+	return defaultTermSize, defaultTermRows
 }
 
 func terminalFD(file *os.File) (int, bool) {

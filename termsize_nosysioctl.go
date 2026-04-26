@@ -7,6 +7,7 @@
 
 package flags
 
-func getTerminalColumns() int {
-	return defaultTermSize
+// DetectTerminalSize returns detected terminal size in columns and rows.
+func DetectTerminalSize() (int, int) {
+	return defaultTermSize, defaultTermRows
 }

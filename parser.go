@@ -1018,7 +1018,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 func (p *Parser) shouldSkipRequiredValidation() bool {
 	if p.Command != nil {
-		for cmd := p.Command.Active; cmd != nil; cmd = cmd.Active {
+		for cmd := p.Active; cmd != nil; cmd = cmd.Active {
 			if _, ok := cmd.data.(builtinCommand); ok {
 				return true
 			}

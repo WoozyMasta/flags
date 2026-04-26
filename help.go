@@ -141,7 +141,7 @@ func (p *Parser) helpColumns() int {
 		return p.helpWidth
 	}
 
-	width := getTerminalColumns()
+	width, _ := DetectTerminalSize()
 	if width <= 0 {
 		return defaultTermSize
 	}
@@ -988,7 +988,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	}
 
 	prevHelpColorEnabled := p.helpColorEnabled
-	p.helpColorEnabled = p.shouldUseColors(writer)
+	p.helpColorEnabled = DetectColorSupport(writer)
 	defer func() {
 		p.helpColorEnabled = prevHelpColorEnabled
 	}()
