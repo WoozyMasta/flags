@@ -344,7 +344,7 @@ func TestBuiltinHelpCommandShowsCommandHelpForTarget(t *testing.T) {
 		"builtin-help-target",
 		"deploy",
 		"[deploy command options]",
-		"/force",
+		defaultLongOptDelimiter + "force",
 	} {
 		if !strings.Contains(stdout, want) {
 			t.Fatalf("expected command help to contain %q, got:\n%s", want, stdout)
