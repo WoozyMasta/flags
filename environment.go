@@ -14,21 +14,32 @@ import (
 
 // TTYInfo describes tty availability for standard streams.
 type TTYInfo struct {
-	Stdin  bool
+	// Stdin reports whether os.Stdin is a tty.
+	Stdin bool
+	// Stdout reports whether os.Stdout is a tty.
 	Stdout bool
+	// Stderr reports whether os.Stderr is a tty.
 	Stderr bool
 }
 
 // EnvironmentInfo describes detected runtime environment hints.
 type EnvironmentInfo struct {
-	OS              string
-	Shell           string
+	// OS is runtime OS identifier (for example: windows, linux, darwin).
+	OS string
+	// Shell is detected shell name (for example: bash, zsh, pwsh).
+	Shell string
+	// CompletionShell is detected completion script format.
 	CompletionShell CompletionShell
-	Locale          string
+	// Locale is detected locale identifier.
+	Locale string
+	// TerminalColumns is detected terminal width in columns.
 	TerminalColumns int
-	TerminalRows    int
-	TTY             TTYInfo
-	ShellStyle      RenderStyle
+	// TerminalRows is detected terminal height in rows.
+	TerminalRows int
+	// TTY is tty state snapshot for standard streams.
+	TTY TTYInfo
+	// ShellStyle is detected render style for flags and env placeholders.
+	ShellStyle RenderStyle
 }
 
 // DetectEnvironment returns a snapshot of detected runtime environment hints.
