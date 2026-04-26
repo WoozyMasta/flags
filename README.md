@@ -207,6 +207,8 @@ All struct tags are configurable:
 * `value-name-i18n`: i18n key for value placeholder text.
 * `default` / `defaults`: default value(s) for missing option input.
 * `choice` / `choices`: allowed value whitelist.
+* `completion`: completion hint (`file`, `dir`, `none`) when no custom
+  completer or `choices` are set.
 * `short-alias` / `short-aliases`: additional short names.
 * `long-alias` / `long-aliases`: additional long names.
 * `default-mask`: hides real default in help/docs (for secrets/tokens).
@@ -267,6 +269,7 @@ All struct tags are configurable:
 * `description`: help/docs description for the positional argument.
 * `arg-description-i18n`: i18n key for positional description text.
 * `default` / `defaults`: fallback values for positional argument.
+* `completion`: positional completion hint (`file`, `dir`, `none`).
 
 ### Tag conflicts
 
@@ -921,6 +924,13 @@ GO_FLAGS_COMPLETION=1 ./myapp --some-arg prefix
 Templates:
 [`examples/bash-completion`](examples/bash-completion),
 [`examples/zsh-completion`](examples/zsh-completion).
+
+Completion value source priority:
+
+* custom `Completer` implementation
+* `choice` / `choices`
+* `completion` hint (`file`, `dir`, `none`)
+* built-in bool completion (`true`/`false`) when `AllowBoolValues` is enabled
 
 ## Color Schemes
 

@@ -415,3 +415,118 @@ func TestCompletionSkipPositional(t *testing.T) {
 		t.Fatalf("expected positional args to be cleared")
 	}
 }
+
+func completionItemsForArgs(t *testing.T, parser *Parser, args []string) []string {
+	t.Helper()
+
+	c := &completion{parser: parser}
+	completions := c.complete(args)
+	items := make([]string, len(completions))
+	for i, item := range completions {
+		items[i] = item.Item
+	}
+	sort.Strings(items)
+
+	return items
+}
+
+func TestCompletionHintFile(t *testing.T) {
+	tempDir := t.TempDir()
+	first := filepath.Join(tempDir, "cfg-a.yaml")
+	second := filepath.Join(tempDir, "cfg-b.yaml")
+	if err := os.WriteFile(first, []byte("a"), 0o600); err != nil {
+		t.Fatalf("write file error: %v", err)
+	}
+	if err := os.WriteFile(second, []byte("b"), 0o600); err != nil {
+		t.Fatalf("write file error: %v", err)
+	}
+
+	var opts struct {
+		Config string `long:"config" completion:"file"`
+	}
+	p := NewParser(&opts, None)
+	items := completionItemsForArgs(t, p, []string{"--config", filepath.Join(tempDir, "cfg-")})
+
+	want := []string{first, second}
+	sort.Strings(want)
+	if diff := cmp.Diff(want, items); diff != "" {
+		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCompletionHintDir(t *testing.T) {
+	tempDir := t.TempDir()
+	dirA := filepath.Join(tempDir, "work-a")
+	dirB := filepath.Join(tempDir, "work-b")
+	if err := os.Mkdir(dirA, 0o755); err != nil {
+		t.Fatalf("mkdir error: %v", err)
+	}
+	if err := os.Mkdir(dirB, 0o755); err != nil {
+		t.Fatalf("mkdir error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "work-file.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatalf("write file error: %v", err)
+	}
+
+	var opts struct {
+		Dir string `long:"dir" completion:"dir"`
+	}
+	p := NewParser(&opts, None)
+	items := completionItemsForArgs(t, p, []string{"--dir", filepath.Join(tempDir, "work-")})
+
+	want := []string{dirA + "/", dirB + "/"}
+	sort.Strings(want)
+	if diff := cmp.Diff(want, items); diff != "" {
+		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCompletionHintNoneDisablesBoolCompletion(t *testing.T) {
+	var opts struct {
+		Debug bool `long:"debug" completion:"none"`
+	}
+	p := NewParser(&opts, None|AllowBoolValues)
+	items := completionItemsForArgs(t, p, []string{"--debug="})
+	if len(items) != 0 {
+		t.Fatalf("expected no completion items, got %#v", items)
+	}
+}
+
+func TestCompletionHintChoicesOverrideNone(t *testing.T) {
+	var opts struct {
+		Mode string `long:"mode" choices:"fast;safe" completion:"none"`
+	}
+	p := NewParser(&opts, None)
+	items := completionItemsForArgs(t, p, []string{"--mode=f"})
+
+	want := []string{"--mode=fast"}
+	if diff := cmp.Diff(want, items); diff != "" {
+		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCompletionHintPositionalDir(t *testing.T) {
+	tempDir := t.TempDir()
+	dir := filepath.Join(tempDir, "target-dir")
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatalf("mkdir error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "target-file.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatalf("write file error: %v", err)
+	}
+
+	var opts struct {
+		Run struct {
+			Positional struct {
+				Path string `completion:"dir"`
+			} `positional-args:"yes"`
+		} `command:"run"`
+	}
+	p := NewParser(&opts, None)
+	items := completionItemsForArgs(t, p, []string{"run", filepath.Join(tempDir, "target-")})
+
+	want := []string{dir + "/"}
+	if diff := cmp.Diff(want, items); diff != "" {
+		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	}
+}

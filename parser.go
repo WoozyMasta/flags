@@ -565,6 +565,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.ValueNameI18n, FlagTagValueNameI18n)
 	normalizeTagAlias(c, p.flagTags.Choice, FlagTagChoice)
 	normalizeTagAlias(c, p.flagTags.Choices, FlagTagChoices)
+	normalizeTagAlias(c, p.flagTags.Completion, FlagTagCompletion)
 	normalizeTagAlias(c, p.flagTags.Hidden, FlagTagHidden)
 	normalizeTagAlias(c, p.flagTags.Immediate, FlagTagImmediate)
 	normalizeTagAlias(c, p.flagTags.Base, FlagTagBase)

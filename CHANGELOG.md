@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning][].
 * Shell completion script generation via `Parser.WriteCompletion(...)`
   and `Parser.WriteNamedCompletion(...)` for bash and zsh.
   Completion output includes command/option aliases, option `choices`,
+  `completion` tag hints (`file`, `dir`, `none`) for options/positionals,
   bool value candidates when
   `AllowBoolValues` is enabled, and no-space handling for inline option values.
 * Template-based parser documentation rendering via `Parser.WriteDoc(...)`,

@@ -312,6 +312,10 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				if descriptionI18n == "" {
 					descriptionI18n = m.Get(FlagTagDescriptionI18n)
 				}
+				completionHint, err := parseCompletionHint(m.Get(FlagTagCompletion), field.Name)
+				if err != nil {
+					return true, err
+				}
 
 				required := -1
 				requiredMaximum := -1
@@ -350,6 +354,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					DescriptionI18nKey: descriptionI18n,
 					Group:              firstNonEmpty(m.Get(FlagTagArgGroup), mtag.Get(FlagTagArgGroup)),
 					Default:            def,
+					CompletionHint:     completionHint,
 					Required:           required,
 					RequiredMaximum:    requiredMaximum,
 

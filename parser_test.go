@@ -2250,6 +2250,21 @@ func TestChoiceAndChoicesTagsConflict(t *testing.T) {
 	}
 }
 
+func TestInvalidCompletionTagValue(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" completion:"wat"`
+	}
+
+	_, err := ParseArgs(&opts, nil)
+	if err == nil {
+		t.Fatalf("expected parse error")
+	}
+
+	if flagsErr, ok := err.(*Error); !ok || flagsErr.Type != ErrInvalidTag {
+		t.Fatalf("expected ErrInvalidTag, got %v", err)
+	}
+}
+
 func TestOptionLongAlias(t *testing.T) {
 	var opts struct {
 		NoCache bool `long:"nocache" long-alias:"no-cache"`

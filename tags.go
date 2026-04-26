@@ -49,6 +49,8 @@ const (
 	FlagTagChoice = "choice"
 	// FlagTagChoices restricts allowed option values as a delimiter-separated list.
 	FlagTagChoices = "choices"
+	// FlagTagCompletion configures completion hint (file, dir, none).
+	FlagTagCompletion = "completion"
 	// FlagTagHidden hides option/group/command from help and completion output.
 	FlagTagHidden = "hidden"
 	// FlagTagImmediate marks options/groups/commands that should bypass required checks.
@@ -158,6 +160,8 @@ type FlagTags struct {
 	Choice string
 	// Choices maps to multi allowed-values tag (default: "choices").
 	Choices string
+	// Completion maps to completion hint tag (default: "completion").
+	Completion string
 	// Hidden maps to hide-from-help tag (default: "hidden").
 	Hidden string
 	// Immediate maps to immediate-processing tag (default: "immediate").
@@ -247,6 +251,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		ValueNameI18n:       prefix + FlagTagValueNameI18n,
 		Choice:              prefix + FlagTagChoice,
 		Choices:             prefix + FlagTagChoices,
+		Completion:          prefix + FlagTagCompletion,
 		Hidden:              prefix + FlagTagHidden,
 		Immediate:           prefix + FlagTagImmediate,
 		Base:                prefix + FlagTagBase,
@@ -344,6 +349,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Choices != "" {
 		d.Choices = t.Choices
+	}
+	if t.Completion != "" {
+		d.Completion = t.Completion
 	}
 	if t.Hidden != "" {
 		d.Hidden = t.Hidden

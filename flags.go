@@ -93,6 +93,8 @@ Value and default tags:
   - `choice`: allowed value constraint (repeatable), for example
     `long:"animal" choices:"cat;dog"`
   - `choices`: delimiter-separated allowed values (non-repeatable)
+  - `completion`: completion hint (`file`, `dir`, `none`) used when no
+    custom completer or choices are defined
   - `base`: radix for integer parsing, default `10`
   - `key-value-delimiter`: delimiter used when parsing map values, default `:`
   - `unquote`: when set to `false`, disables automatic unquoting of argument values
@@ -121,6 +123,7 @@ Group and command tags:
   - `positional-args`: map trailing positional arguments into struct fields
   - `positional-arg-name`: placeholder label for positional help
   - `arg-group`: display group for positional argument help/docs
+  - `completion`: positional completion hint (`file`, `dir`, `none`)
 
 For `positional-args`, arguments are optional by default.
 Use `required` either on the positional struct field or on individual fields.
@@ -216,5 +219,7 @@ when `GO_FLAGS_COMPLETION` is set.
 For custom value completion, implement [Completer].
 [Filename] is a built-in example. Slices and arrays are also completable when
 their element type implements [Completer].
+When no custom completer is available, completion source priority is:
+`choices` -> `completion` hint (`file`/`dir`/`none`) -> built-in bool values.
 */
 package flags

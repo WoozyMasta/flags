@@ -246,7 +246,42 @@ func completeChoices(choices []string, prefix string, match string) []Completion
 	return ret
 }
 
-func (c *completion) completeValue(opt *Option, value reflect.Value, prefix string, match string) []Completion {
+func completeFilesystem(match string, dirsOnly bool) []Completion {
+	ret := make([]Completion, 0)
+
+	items, _ := filepath.Glob(match + "*")
+	for _, item := range items {
+		info, err := os.Stat(item)
+		if err != nil {
+			continue
+		}
+
+		if info.IsDir() {
+			ret = append(ret, Completion{Item: item + "/"})
+			continue
+		}
+		if dirsOnly {
+			continue
+		}
+
+		ret = append(ret, Completion{Item: item})
+	}
+
+	return ret
+}
+
+func completionHintFor(opt *Option, arg *Arg) completionHint {
+	if opt != nil {
+		return opt.CompletionHint
+	}
+	if arg != nil {
+		return arg.CompletionHint
+	}
+
+	return completionHintAuto
+}
+
+func (c *completion) completeValue(opt *Option, arg *Arg, value reflect.Value, prefix string, match string) []Completion {
 	if value.Kind() == reflect.Slice {
 		value = reflect.New(value.Type().Elem())
 	}
@@ -262,12 +297,21 @@ func (c *completion) completeValue(opt *Option, value reflect.Value, prefix stri
 		}
 	}
 
-	if ret == nil && opt != nil && opt.isBool() && (c.parser.Options&AllowBoolValues) != None {
-		return completeChoices([]string{"true", "false"}, prefix, match)
-	}
-
 	if ret == nil && opt != nil && len(opt.Choices) > 0 {
 		return completeChoices(opt.Choices, prefix, match)
+	}
+	if ret == nil {
+		switch completionHintFor(opt, arg) {
+		case completionHintFile:
+			ret = completeFilesystem(match, false)
+		case completionHintDir:
+			ret = completeFilesystem(match, true)
+		case completionHintNone:
+			ret = []Completion{}
+		}
+	}
+	if ret == nil && opt != nil && opt.isBool() && (c.parser.Options&AllowBoolValues) != None {
+		return completeChoices([]string{"true", "false"}, prefix, match)
 	}
 
 	for i, v := range ret {
@@ -361,7 +405,7 @@ func (c *completion) complete(args []string) []Completion {
 	switch {
 	case opt != nil:
 		// Completion for the argument of 'opt'
-		ret = c.completeValue(opt, opt.value, "", lastarg)
+		ret = c.completeValue(opt, nil, opt.value, "", lastarg)
 	case argumentStartsOption(lastarg):
 		// Complete the option
 		prefix, optname, islong := stripOptionPrefix(lastarg)
@@ -373,7 +417,7 @@ func (c *completion) complete(args []string) []Completion {
 			sname := string(rname)
 
 			if opt := s.lookup.shortNames[sname]; opt != nil && opt.canArgument() {
-				ret = c.completeValue(opt, opt.value, prefix+sname, optname[n:])
+				ret = c.completeValue(opt, nil, opt.value, prefix+sname, optname[n:])
 			} else {
 				ret = c.completeOptionNames(s, prefix, optname, true)
 				optionNameCompletion = true
@@ -386,7 +430,7 @@ func (c *completion) complete(args []string) []Completion {
 			}
 
 			if opt != nil {
-				ret = c.completeValue(opt, opt.value, prefix+optname+split, argument)
+				ret = c.completeValue(opt, nil, opt.value, prefix+optname+split, argument)
 			}
 		case islong:
 			ret = c.completeOptionNames(s, prefix, optname, false)
@@ -397,7 +441,7 @@ func (c *completion) complete(args []string) []Completion {
 		}
 	case len(s.positional) > 0:
 		// Complete for positional argument
-		ret = c.completeValue(nil, s.positional[0].value, "", lastarg)
+		ret = c.completeValue(nil, s.positional[0], s.positional[0].value, "", lastarg)
 	case len(s.command.commands) > 0:
 		// Complete for command
 		ret = c.completeCommands(s, lastarg)

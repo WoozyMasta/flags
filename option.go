@@ -88,6 +88,9 @@ type Option struct {
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
 
+	// Completion hint controls fallback completion mode (file, dir, none).
+	CompletionHint completionHint
+
 	// Additional short names for the option.
 	ShortAliases []rune
 
