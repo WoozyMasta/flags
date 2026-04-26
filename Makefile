@@ -20,11 +20,12 @@ TARGETS ?= \
 	solaris/amd64
 
 .PHONY: test test-race test-short bench bench-fast bench-reset verify vet check ci \
-	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck markdownlint \
+	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck \
 	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat \
+	markdownlint markdownlint-fix \
 	release-notes crosscompile docs-render docs-render-check
 
-check: verify vulncheck tidy fmt vet lint-fix align-fix test docs-render markdownlint
+check: verify vulncheck tidy fmt vet lint-fix align-fix test docs-render markdownlint-fix
 ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test docs-render-check
 
 fmt:
@@ -101,6 +102,14 @@ vulncheck:
 markdownlint:
 	@if command -v $(MARKDOWNLINT) >/dev/null 2>&1; then \
 		$(MARKDOWNLINT) check; \
+	else \
+		echo "WARN: $(MARKDOWNLINT) not found; skipping markdown lint."; \
+		echo 'WARN: Install it https://github.com/rvben/rumdl'; \
+	fi
+
+markdownlint-fix:
+	@if command -v $(MARKDOWNLINT) >/dev/null 2>&1; then \
+		$(MARKDOWNLINT) check --fix; \
 	else \
 		echo "WARN: $(MARKDOWNLINT) not found; skipping markdown lint."; \
 		echo 'WARN: Install it https://github.com/rvben/rumdl'; \
