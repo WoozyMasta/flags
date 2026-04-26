@@ -18,12 +18,14 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
-* Shell completion script generation via `Parser.WriteCompletion(...)`
-  and `Parser.WriteNamedCompletion(...)` for bash, zsh, and pwsh.
+* Shell completion script generation via `Parser.WriteCompletion(...)`,
+  `Parser.WriteNamedCompletion(...)`, and `Parser.WriteAutoCompletion(...)`
+  for bash, zsh, and pwsh.
   Completion output includes command/option aliases, option `choices`,
   `completion` tag hints (`file`, `dir`, `none`) for options/positionals,
   bool value candidates when
   `AllowBoolValues` is enabled, and no-space handling for inline option values.
+  Shell auto-detection (`zsh` / `pwsh`) falls back to `bash` when unknown.
 * Template-based parser documentation rendering via `Parser.WriteDoc(...)`,
   `DocFormat`, `DocOption`, built-in markdown/html/man templates,
   custom template sources/data, hidden-entity controls, and template registry
@@ -65,6 +67,9 @@ and this project adheres to [Semantic Versioning][].
 * Environment provisioning helpers:
   `Parser.SetEnvPrefix(...)`, `EnvProvisioning`,
   and per-option `auto-env` opt-in/opt-out behavior.
+* Environment detection API for runtime hints:
+  `DetectEnvironment()`, `DetectTTY()`, `DetectFileTTY(...)`,
+  `DetectWriterTTY(...)`, and `DetectColorSupport(...)`.
 * Dynamic defaults via `DefaultProvider`,
   plus support for `encoding.TextMarshaler` / `encoding.TextUnmarshaler`
   with existing `flags.Marshaler` / `flags.Unmarshaler` precedence.
