@@ -37,30 +37,27 @@ Windows-specific behavior:
 
 # Quick Start
 
-Define options as struct fields and annotate them with tags:
+Minimal parse flow:
 
 	type Options struct {
-		Verbose []bool `short:"v" long:"verbose" description:"Show verbose output"`
+		Verbose bool   `short:"v" long:"verbose" description:"Show verbose output"`
+		Region  string `long:"region" default:"eu-west-1" description:"Cloud region"`
 	}
 
-If `-v` or `--verbose` appears, `true` is appended to `Verbose`.
-For example, `-vvv` yields `[]bool{true, true, true}`.
+	var opts Options
+	parser := NewParser(&opts, Default|HelpCommands)
 
-Slices accept repeated values naturally:
-
-	type Options struct {
-		Include []string `short:"I" description:"Include directory"`
+	_, err := parser.Parse()
+	if err != nil {
+		var ferr *Error
+		if errors.As(err, &ferr) && ferr.Type == ErrHelp {
+			os.Exit(0)
+		}
+		os.Exit(1)
 	}
 
-Maps are parsed as `key:value`:
-
-	type Options struct {
-		AuthorInfo map[string]string `short:"a"`
-	}
-
-Example input:
-
-	-a name:Jesse -a "surname:van den Kieboom"
+`HelpCommands` opt-in enables built-in commands:
+`help`, `version`, `completion`, `docs`, `config`.
 
 For custom value conversion, implement [Marshaler] and [Unmarshaler].
 
