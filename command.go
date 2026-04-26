@@ -354,7 +354,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					DescriptionI18nKey: descriptionI18n,
 					Group:              firstNonEmpty(m.Get(FlagTagArgGroup), mtag.Get(FlagTagArgGroup)),
 					Default:            def,
-					CompletionHint:     completionHint,
+					completionHint:     completionHint,
 					Required:           required,
 					RequiredMaximum:    requiredMaximum,
 

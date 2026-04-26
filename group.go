@@ -622,7 +622,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			ValueNameI18nKey:   valueNameI18n,
 			DefaultMask:        defaultMask,
 			Choices:            choices,
-			CompletionHint:     completionHint,
+			completionHint:     completionHint,
 			Hidden:             hidden,
 			Immediate:          immediate,
 			Terminator:         mtag.Get(FlagTagTerminator),

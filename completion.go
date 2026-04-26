@@ -276,10 +276,10 @@ func completeFilesystem(match string, dirsOnly bool) []Completion {
 
 func completionHintFor(opt *Option, arg *Arg) completionHint {
 	if opt != nil {
-		return opt.CompletionHint
+		return opt.completionHint
 	}
 	if arg != nil {
-		return arg.CompletionHint
+		return arg.completionHint
 	}
 
 	return completionHintAuto

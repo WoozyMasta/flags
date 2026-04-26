@@ -103,8 +103,8 @@ type Option struct {
 	// or LongName needs to be non-empty.
 	ShortName rune
 
-	// Completion hint controls fallback completion mode (file, dir, none).
-	CompletionHint completionHint
+	// completionHint controls fallback completion mode (file, dir, none).
+	completionHint completionHint
 
 	defaultLiteralInitialized bool
 

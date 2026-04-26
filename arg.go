@@ -33,8 +33,8 @@ type Arg struct {
 	// The default value(s) of the positional argument.
 	Default []string
 
-	// Completion hint controls fallback completion mode (file, dir, none).
-	CompletionHint completionHint
+	// completionHint controls fallback completion mode (file, dir, none).
+	completionHint completionHint
 
 	// The minimal number of required positional arguments
 	Required int
