@@ -77,8 +77,10 @@ and this project adheres to [Semantic Versioning][].
 * Module path moved to `github.com/woozymasta/flags`.
 * Dependency switched from `github.com/sergi/go-diff`
   to `github.com/google/go-cmp`.
-* Minimum Go version and dependencies were modernized, including
-  `golang.org/x/sys`, `golang.org/x/text`, and `golang.org/x/term`.
+* ⚠️ **breaking**: minimum supported Go version increased
+  from `1.20` to `1.25`.
+* Dependencies were modernized, including `golang.org/x/sys`,
+  `golang.org/x/text`, and `golang.org/x/term`.
 * Built-in help rendering was overhauled:
   wrapping/alignment use display width,
   terminal width is detected through `x/term` with stdio fallback,
