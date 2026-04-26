@@ -33,6 +33,11 @@ func WroteHelp(err error) bool {
 	return true
 }
 
+// WriteHelp writes a help message containing all the possible options and
+// their descriptions to the provided writer. Note that the HelpFlag parser
+// option provides a convenient way to add a -h/--help option group to the
+// command line parser which will automatically show the help messages using
+// this method.
 func (p *Parser) WriteHelp(writer io.Writer) {
 	if writer == nil {
 		return
