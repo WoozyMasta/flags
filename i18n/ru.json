@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Сгенерировать shell completion",
   "help.builtin.command.completion.shell.desc": "Формат shell completion",
   "help.builtin.command.config.comment_width.desc": "Максимальная ширина переноса комментариев",
-  "help.builtin.command.config.desc": "Сгенерировать пример конфигурации",
+  "help.builtin.command.config.desc": "Сгенерировать пример INI-конфигурации",
   "help.builtin.command.docs.desc": "Сгенерировать документацию",
   "help.builtin.command.docs.html.desc": "Сгенерировать HTML-документацию",
   "help.builtin.command.docs.include_hidden.desc": "Включать скрытые опции, группы и команды",

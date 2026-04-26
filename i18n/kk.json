@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Shell completion жасау",
   "help.builtin.command.completion.shell.desc": "Shell completion пішімі",
   "help.builtin.command.config.comment_width.desc": "Тасымалданған түсініктемелердің ең үлкен ені",
-  "help.builtin.command.config.desc": "Конфигурация мысалын жасау",
+  "help.builtin.command.config.desc": "INI конфигурация мысалын жасау",
   "help.builtin.command.docs.desc": "Құжаттама жасау",
   "help.builtin.command.docs.html.desc": "HTML құжаттамасын жасау",
   "help.builtin.command.docs.include_hidden.desc": "Жасырын опцияларды, топтарды және командаларды қосу",

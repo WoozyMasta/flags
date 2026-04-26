@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "शेल completion जनरेट करें",
   "help.builtin.command.completion.shell.desc": "शेल completion फ़ॉर्मैट",
   "help.builtin.command.config.comment_width.desc": "लपेटी गई टिप्पणियों की अधिकतम चौड़ाई",
-  "help.builtin.command.config.desc": "कॉन्फ़िगरेशन उदाहरण जनरेट करें",
+  "help.builtin.command.config.desc": "INI कॉन्फ़िगरेशन उदाहरण जनरेट करें",
   "help.builtin.command.docs.desc": "दस्तावेज़ जनरेट करें",
   "help.builtin.command.docs.html.desc": "HTML दस्तावेज़ जनरेट करें",
   "help.builtin.command.docs.include_hidden.desc": "छिपे विकल्प, समूह और कमांड शामिल करें",

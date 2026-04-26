@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "生成 shell 补全",
   "help.builtin.command.completion.shell.desc": "Shell 补全格式",
   "help.builtin.command.config.comment_width.desc": "换行注释的最大宽度",
-  "help.builtin.command.config.desc": "生成配置示例",
+  "help.builtin.command.config.desc": "生成 INI 配置示例",
   "help.builtin.command.docs.desc": "生成文档",
   "help.builtin.command.docs.html.desc": "生成 HTML 文档",
   "help.builtin.command.docs.include_hidden.desc": "包含隐藏的选项、组和命令",

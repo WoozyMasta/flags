@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "셸 완성 생성",
   "help.builtin.command.completion.shell.desc": "셸 완성 형식",
   "help.builtin.command.config.comment_width.desc": "줄바꿈된 주석의 최대 너비",
-  "help.builtin.command.config.desc": "구성 예제 생성",
+  "help.builtin.command.config.desc": "INI 구성 예제 생성",
   "help.builtin.command.docs.desc": "문서 생성",
   "help.builtin.command.docs.html.desc": "HTML 문서 생성",
   "help.builtin.command.docs.include_hidden.desc": "숨겨진 옵션, 그룹 및 명령 포함",

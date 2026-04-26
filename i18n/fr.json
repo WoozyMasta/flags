@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Générer la complétion shell",
   "help.builtin.command.completion.shell.desc": "Format de complétion shell",
   "help.builtin.command.config.comment_width.desc": "Largeur maximale des commentaires repliés",
-  "help.builtin.command.config.desc": "Générer un exemple de configuration",
+  "help.builtin.command.config.desc": "Générer un exemple de configuration INI",
   "help.builtin.command.docs.desc": "Générer la documentation",
   "help.builtin.command.docs.html.desc": "Générer la documentation HTML",
   "help.builtin.command.docs.include_hidden.desc": "Inclure les options, groupes et commandes masqués",

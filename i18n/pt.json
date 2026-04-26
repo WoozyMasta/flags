@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Gerar conclusão de shell",
   "help.builtin.command.completion.shell.desc": "Formato de conclusão de shell",
   "help.builtin.command.config.comment_width.desc": "Largura máxima para comentários quebrados",
-  "help.builtin.command.config.desc": "Gerar exemplo de configuração",
+  "help.builtin.command.config.desc": "Gerar exemplo de configuração INI",
   "help.builtin.command.docs.desc": "Gerar documentação",
   "help.builtin.command.docs.html.desc": "Gerar documentação HTML",
   "help.builtin.command.docs.include_hidden.desc": "Incluir opções, grupos e comandos ocultos",

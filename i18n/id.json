@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Buat completion shell",
   "help.builtin.command.completion.shell.desc": "Format completion shell",
   "help.builtin.command.config.comment_width.desc": "Lebar maksimum untuk komentar yang dibungkus",
-  "help.builtin.command.config.desc": "Buat contoh konfigurasi",
+  "help.builtin.command.config.desc": "Buat contoh konfigurasi INI",
   "help.builtin.command.docs.desc": "Buat dokumentasi",
   "help.builtin.command.docs.html.desc": "Buat dokumentasi HTML",
   "help.builtin.command.docs.include_hidden.desc": "Sertakan opsi, grup, dan perintah tersembunyi",

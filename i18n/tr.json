@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Kabuk tamamlama üret",
   "help.builtin.command.completion.shell.desc": "Kabuk tamamlama biçimi",
   "help.builtin.command.config.comment_width.desc": "Sarılmış yorumlar için en büyük genişlik",
-  "help.builtin.command.config.desc": "Yapılandırma örneği üret",
+  "help.builtin.command.config.desc": "INI yapılandırma örneği üret",
   "help.builtin.command.docs.desc": "Belgelendirme üret",
   "help.builtin.command.docs.html.desc": "HTML belgelendirmesi üret",
   "help.builtin.command.docs.include_hidden.desc": "Gizli seçenekleri, grupları ve komutları dahil et",

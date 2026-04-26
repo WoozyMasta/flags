@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Shell-Completion generieren",
   "help.builtin.command.completion.shell.desc": "Shell-Completion-Format",
   "help.builtin.command.config.comment_width.desc": "Maximale Breite für umgebrochene Kommentare",
-  "help.builtin.command.config.desc": "Beispielkonfiguration generieren",
+  "help.builtin.command.config.desc": "Beispiel-INI-Konfiguration generieren",
   "help.builtin.command.docs.desc": "Dokumentation generieren",
   "help.builtin.command.docs.html.desc": "HTML-Dokumentation generieren",
   "help.builtin.command.docs.include_hidden.desc": "Versteckte Optionen, Gruppen und Befehle einschließen",

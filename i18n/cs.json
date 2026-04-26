@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Vygenerovat shell completion",
   "help.builtin.command.completion.shell.desc": "Formát shell completion",
   "help.builtin.command.config.comment_width.desc": "Maximální šířka zalamování komentářů",
-  "help.builtin.command.config.desc": "Vygenerovat příklad konfigurace",
+  "help.builtin.command.config.desc": "Vygenerovat příklad INI konfigurace",
   "help.builtin.command.docs.desc": "Vygenerovat dokumentaci",
   "help.builtin.command.docs.html.desc": "Vygenerovat HTML dokumentaci",
   "help.builtin.command.docs.include_hidden.desc": "Zahrnout skryté volby, skupiny a příkazy",

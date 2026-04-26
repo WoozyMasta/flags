@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "シェル補完を生成",
   "help.builtin.command.completion.shell.desc": "シェル補完形式",
   "help.builtin.command.config.comment_width.desc": "折り返しコメントの最大幅",
-  "help.builtin.command.config.desc": "設定例を生成",
+  "help.builtin.command.config.desc": "INI 設定例を生成",
   "help.builtin.command.docs.desc": "ドキュメントを生成",
   "help.builtin.command.docs.html.desc": "HTML ドキュメントを生成",
   "help.builtin.command.docs.include_hidden.desc": "非表示のオプション、グループ、コマンドを含める",

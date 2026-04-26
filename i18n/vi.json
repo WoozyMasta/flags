@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Tạo shell completion",
   "help.builtin.command.completion.shell.desc": "Định dạng shell completion",
   "help.builtin.command.config.comment_width.desc": "Độ rộng tối đa cho chú thích xuống dòng",
-  "help.builtin.command.config.desc": "Tạo ví dụ cấu hình",
+  "help.builtin.command.config.desc": "Tạo ví dụ cấu hình INI",
   "help.builtin.command.docs.desc": "Tạo tài liệu",
   "help.builtin.command.docs.html.desc": "Tạo tài liệu HTML",
   "help.builtin.command.docs.include_hidden.desc": "Bao gồm tùy chọn, nhóm và lệnh bị ẩn",

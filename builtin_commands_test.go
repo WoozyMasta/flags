@@ -85,7 +85,7 @@ func TestBuiltinCommandHelpTextIsLocalized(t *testing.T) {
 		"Показать информацию о версии",
 		"Сгенерировать shell completion",
 		"Сгенерировать документацию",
-		"Сгенерировать пример конфигурации",
+		"Сгенерировать пример INI-конфигурации",
 	} {
 		if !strings.Contains(out.String(), want) {
 			t.Fatalf("expected root help to contain %q, got:\n%s", want, out.String())

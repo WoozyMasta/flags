@@ -132,7 +132,7 @@
   "help.builtin.command.completion.desc": "Wygeneruj uzupełnianie powłoki",
   "help.builtin.command.completion.shell.desc": "Format uzupełniania powłoki",
   "help.builtin.command.config.comment_width.desc": "Maksymalna szerokość zawijanych komentarzy",
-  "help.builtin.command.config.desc": "Wygeneruj przykładową konfigurację",
+  "help.builtin.command.config.desc": "Wygeneruj przykładową konfigurację INI",
   "help.builtin.command.docs.desc": "Wygeneruj dokumentację",
   "help.builtin.command.docs.html.desc": "Wygeneruj dokumentację HTML",
   "help.builtin.command.docs.include_hidden.desc": "Uwzględnij ukryte opcje, grupy i polecenia",
