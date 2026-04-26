@@ -357,6 +357,34 @@ If command type implements `Execute(args []string) error`, it will be called.
 Use `command-group` only for display grouping in help/docs; keep `ini-group`
 for stable INI section names.
 
+### Built-in help commands
+
+Built-in command entry points are opt-in:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.HelpCommands)
+```
+
+`HelpCommands` enables `help`, `version`, `completion`, `docs`, and `config`.
+You can enable them individually with `HelpCommand`, `VersionCommand`,
+`CompletionCommand`, `DocsCommand`, and `ConfigCommand`.
+
+By default these commands are shown under `Help Commands` in help/docs.
+Use `parser.SetBuiltinCommandGroup("Reference")` to rename the display group,
+or `parser.SetBuiltinCommandGroup("")` to render them without a group.
+
+Common command forms:
+
+```bash
+app help
+app version
+app completion --shell bash ./completion.bash
+app docs md --template table ./docs.md
+app docs html --template styled ./docs.html
+app docs man ./app.1
+app config --comment-width 88 ./config.ini
+```
+
 ## Defaults
 
 Prefer `defaults:"..."` for new code.

@@ -90,6 +90,12 @@ type Parser struct {
 	// Configured set of fields rendered by built-in version output.
 	versionFields VersionFields
 
+	// Display group assigned to built-in commands in help/docs.
+	builtinCommandGroup string
+
+	// Optional i18n key for builtinCommandGroup.
+	builtinCommandGroupI18nKey string
+
 	// Extra spaces added before command option rows in built-in help output.
 	commandOptionIndent int
 
@@ -129,6 +135,9 @@ type Parser struct {
 
 	// Set by built-in version option handler during parse.
 	versionRequested bool
+
+	// Built-in command options that have already been attached.
+	builtinCommandsAdded Options
 
 	// Set when any immediate option/group is requested during parse.
 	immediateRequested bool
@@ -298,6 +307,23 @@ const (
 	// TerminalTitle or parser Name.
 	SetTerminalTitle
 
+	// HelpCommand adds a built-in `help` command that writes parser help.
+	HelpCommand
+
+	// VersionCommand adds a built-in `version` command that writes version info.
+	VersionCommand
+
+	// CompletionCommand adds a built-in `completion` command that writes shell
+	// completion scripts.
+	CompletionCommand
+
+	// DocsCommand adds a built-in `docs` command with format subcommands.
+	DocsCommand
+
+	// ConfigCommand adds a built-in `config` command that writes an example INI
+	// configuration.
+	ConfigCommand
+
 	// DetectShellFlagStyle enables shell-based flag style rendering in help
 	// and doc output when no explicit render style is set.
 	DetectShellFlagStyle
@@ -309,6 +335,9 @@ const (
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
+
+	// HelpCommands enables all built-in help-related commands.
+	HelpCommands = HelpCommand | VersionCommand | CompletionCommand | DocsCommand | ConfigCommand
 
 	// ConfiguredValues is a convenience mode for config-first flows
 	// (for example YAML/JSON prefill before Parse):
@@ -381,23 +410,25 @@ func NewParser(data any, options Options) *Parser {
 // be added to this parser by using AddGroup and AddCommand.
 func NewNamedParser(appname string, options Options) *Parser {
 	p := &Parser{
-		Command:               newCommand(appname, "", "", nil),
-		Options:               options,
-		NamespaceDelimiter:    ".",
-		EnvNamespaceDelimiter: "_",
-		MaxLongNameLength:     DefaultMaxLongNameLength,
-		lookupGeneration:      1,
-		flagTags:              NewFlagTags(),
-		helpColorScheme:       DefaultHelpColorScheme(),
-		errorColorScheme:      DefaultErrorColorScheme(),
-		helpColorEnabled:      true,
-		optionSort:            OptionSortByDeclaration,
-		optionTypeRank:        defaultOptionTypeRank(),
-		TagListDelimiter:      ';',
-		helpFlagStyle:         RenderStyleAuto,
-		helpEnvStyle:          RenderStyleAuto,
-		versionFields:         VersionFieldsCore,
-		configDirty:           true,
+		Command:                    newCommand(appname, "", "", nil),
+		Options:                    options,
+		NamespaceDelimiter:         ".",
+		EnvNamespaceDelimiter:      "_",
+		MaxLongNameLength:          DefaultMaxLongNameLength,
+		lookupGeneration:           1,
+		flagTags:                   NewFlagTags(),
+		helpColorScheme:            DefaultHelpColorScheme(),
+		errorColorScheme:           DefaultErrorColorScheme(),
+		helpColorEnabled:           true,
+		optionSort:                 OptionSortByDeclaration,
+		optionTypeRank:             defaultOptionTypeRank(),
+		TagListDelimiter:           ';',
+		helpFlagStyle:              RenderStyleAuto,
+		helpEnvStyle:               RenderStyleAuto,
+		versionFields:              VersionFieldsCore,
+		builtinCommandGroup:        "Help Commands",
+		builtinCommandGroupI18nKey: "help.command_group.help_commands",
+		configDirty:                true,
 	}
 
 	p.parent = p
@@ -672,6 +703,10 @@ func (p *Parser) rebuildTree() error {
 	}
 
 	for _, c := range commands {
+		if existing := p.Find(c.name); existing != nil && sameCommandData(existing.data, c.data) {
+			continue
+		}
+
 		nc, err := p.AddCommand(c.name, c.shortDescription, c.longDescription, c.data)
 		if err != nil {
 			return fmt.Errorf("failed to rescan command %q: %w", c.name, err)
@@ -687,6 +722,28 @@ func (p *Parser) rebuildTree() error {
 	return nil
 }
 
+func sameCommandData(a any, b any) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+	if av.Type() != bv.Type() {
+		return false
+	}
+
+	switch av.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+		return av.Pointer() == bv.Pointer()
+	default:
+		if av.Type().Comparable() {
+			return a == b
+		}
+		return false
+	}
+}
+
 // Parse parses the command line arguments from os.Args using Parser.ParseArgs.
 // For more detailed information see ParseArgs.
 func (p *Parser) Parse() ([]string, error) {
@@ -698,6 +755,24 @@ func (p *Parser) Parse() ([]string, error) {
 func (p *Parser) EnsureBuiltinOptions() {
 	if (p.Options&(HelpFlag|VersionFlag)) != None && p.needsHelpGroups() {
 		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
+	}
+}
+
+// EnsureBuiltinCommands materializes built-in commands when enabled.
+func (p *Parser) EnsureBuiltinCommands() error {
+	return p.ensureBuiltinCommands()
+}
+
+// SetBuiltinCommandGroup configures the display group used by built-in
+// commands in help/docs. Use an empty string to render them without a group.
+func (p *Parser) SetBuiltinCommandGroup(group string) {
+	p.builtinCommandGroup = group
+	p.builtinCommandGroupI18nKey = ""
+	for _, commandName := range []string{"help", "version", "completion", "docs", "config"} {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.CommandGroup = group
+			cmd.CommandGroupI18nKey = ""
+		}
 	}
 }
 
@@ -738,8 +813,14 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	// Add built-in help/version group before duplicate validation so their
 	// flags cannot silently shadow application or command flags.
 	p.EnsureBuiltinOptions()
+	if err := p.EnsureBuiltinCommands(); err != nil {
+		return nil, p.printError(err)
+	}
 
 	if err := p.validateDuplicateFlags(); err != nil {
+		return nil, p.printError(err)
+	}
+	if err := p.validateDuplicateCommands(); err != nil {
 		return nil, p.printError(err)
 	}
 
@@ -936,6 +1017,14 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 }
 
 func (p *Parser) shouldSkipRequiredValidation() bool {
+	if p.Command != nil {
+		for cmd := p.Command.Active; cmd != nil; cmd = cmd.Active {
+			if _, ok := cmd.data.(builtinCommand); ok {
+				return true
+			}
+		}
+	}
+
 	return p.immediateRequested
 }
 
@@ -1457,17 +1546,23 @@ func (p *parseState) applyPositionalDefaults(parser *Parser, defaultsIfEmpty boo
 }
 
 func (p *Parser) parseNonOption(s *parseState) error {
-	if len(s.positional) > 0 {
-		return s.addArgs(s.arg)
-	}
-
 	if len(s.command.commands) > 0 && len(s.retargs) == 0 {
 		if cmd := s.lookup.commands[s.arg]; cmd != nil {
+			if len(s.positional) > 0 {
+				if _, ok := cmd.data.(builtinCommand); !ok {
+					return s.addArgs(s.arg)
+				}
+			}
+
 			s.command.Active = cmd
 			cmd.fillParseState(s)
 
 			return nil
 		} else if !s.command.SubcommandsOptional {
+			if len(s.positional) > 0 {
+				return s.addArgs(s.arg)
+			}
+
 			if err := s.addArgs(s.arg); err != nil {
 				return err
 			}
@@ -1480,6 +1575,10 @@ func (p *Parser) parseNonOption(s *parseState) error {
 				),
 			)
 		}
+	}
+
+	if len(s.positional) > 0 {
+		return s.addArgs(s.arg)
 	}
 
 	return s.addArgs(s.arg)
@@ -1569,6 +1668,42 @@ func (p *Parser) validateDuplicateFlags() error {
 	return dupErr
 }
 
+func (p *Parser) validateDuplicateCommands() error {
+	var dupErr error
+
+	p.eachCommand(func(c *Command) {
+		if dupErr != nil {
+			return
+		}
+
+		seen := make(map[string]*Command)
+		for _, cmd := range c.commands {
+			names := append([]string{cmd.Name}, cmd.Aliases...)
+			for _, name := range names {
+				if name == "" {
+					continue
+				}
+				if other, ok := seen[name]; ok {
+					if other == cmd {
+						continue
+					}
+					dupErr = newErrorf(
+						ErrDuplicatedFlag,
+						"command `%s' uses the same name or alias `%s' as command `%s'",
+						cmd.Name,
+						name,
+						other.Name,
+					)
+					return
+				}
+				seen[name] = cmd
+			}
+		}
+	})
+
+	return dupErr
+}
+
 func (p *Parser) validateDuplicateEnvKeys() error {
 	envKeys := make(map[string]*Option)
 	var dupErr error
@@ -1612,6 +1747,12 @@ func (p *Parser) Validate() error {
 	}
 
 	p.EnsureBuiltinOptions()
+	if err := p.EnsureBuiltinCommands(); err != nil {
+		return err
+	}
+	if err := p.validateDuplicateCommands(); err != nil {
+		return err
+	}
 
 	return p.validateDuplicateFlags()
 }

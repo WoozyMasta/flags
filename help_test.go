@@ -1329,6 +1329,42 @@ func TestWriteHelpGroupsPositionalArgs(t *testing.T) {
 	}
 }
 
+func TestWriteHelpGroupsPositionalArgsWithMainGroupFirst(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			GroupArg string `positional-arg-name:"grouped" arg-group:"Output" description:"Output file"`
+			MainArg  string `positional-arg-name:"main" description:"Main file"`
+		} `positional-args:"yes"`
+	}
+
+	p := NewNamedParser("help-arg-main-group", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	for _, want := range []string{
+		"Arguments:",
+		"  Main Arguments:",
+		"    main:",
+		"  Output:",
+		"    grouped:",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q in grouped positional help, got:\n%s", want, got)
+		}
+	}
+
+	mainIdx := strings.Index(got, "  Main Arguments:")
+	outputIdx := strings.Index(got, "  Output:")
+	if mainIdx == -1 || outputIdx == -1 || mainIdx > outputIdx {
+		t.Fatalf("expected Main Arguments group before Output, got:\n%s", got)
+	}
+}
+
 func TestWriteHelpGroupsCommands(t *testing.T) {
 	var opts struct {
 		Add struct{} `command:"add" command-group:"Content" description:"Add item"`
@@ -1358,6 +1394,50 @@ func TestWriteHelpGroupsCommands(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Fatalf("expected %q in grouped command help, got:\n%s", want, got)
 		}
+	}
+}
+
+func TestWriteHelpGroupsCommandsMainFirstBuiltinLast(t *testing.T) {
+	var opts struct {
+		Deploy struct{} `command:"deploy" description:"Deploy selected targets"`
+
+		Admin struct{} `command:"admin" command-group:"Administration" description:"Admin action"`
+	}
+
+	p := NewNamedParser("help-command-groups-order", HelpCommands)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	for _, want := range []string{
+		"Available commands:",
+		"  Main Commands:",
+		"    deploy",
+		"Deploy selected targets",
+		"  Administration:",
+		"    admin",
+		"Admin action",
+		"  Help Commands:",
+		"    help",
+		"Show help",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q in grouped command help, got:\n%s", want, got)
+		}
+	}
+
+	mainIdx := strings.Index(got, "  Main Commands:")
+	adminIdx := strings.Index(got, "  Administration:")
+	helpIdx := strings.Index(got, "  Help Commands:")
+	if mainIdx == -1 || adminIdx == -1 || helpIdx == -1 {
+		t.Fatalf("missing expected command group headings, got:\n%s", got)
+	}
+	if !(mainIdx < adminIdx && adminIdx < helpIdx) {
+		t.Fatalf("expected Main Commands first and Help Commands last, got:\n%s", got)
 	}
 }
 

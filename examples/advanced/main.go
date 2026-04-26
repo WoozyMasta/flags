@@ -104,6 +104,7 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 	p := flags.NewNamedParser(
 		"advanced-cli",
 		flags.Default|
+			flags.HelpCommands|
 			flags.VersionFlag|
 			flags.ColorErrors|
 			flags.EnvProvisioning|

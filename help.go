@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -843,45 +844,96 @@ func maxCommandLength(s []*Command) int {
 }
 
 type helpArgGroup struct {
-	name string
-	args []*Arg
+	name     string
+	args     []*Arg
+	sortRank int
 }
 
 type helpCommandGroup struct {
 	name     string
 	commands []*Command
+	sortRank int
 }
 
-func groupedHelpArgs(args []*Arg) []helpArgGroup {
+func groupedHelpArgs(p *Parser, args []*Arg) []helpArgGroup {
 	groups := make([]helpArgGroup, 0)
 	index := make(map[string]int)
 
+	hasNamedGroups := false
 	for _, arg := range args {
-		idx, ok := index[arg.Group]
+		if arg.Group != "" {
+			hasNamedGroups = true
+			break
+		}
+	}
+
+	for _, arg := range args {
+		name := arg.Group
+		rank := 1
+		if hasNamedGroups && name == "" {
+			name = p.i18nText("help.arg_group.main_arguments", "Main Arguments")
+			rank = 0
+		}
+
+		key := fmt.Sprintf("%d\x00%s", rank, name)
+		idx, ok := index[key]
 		if !ok {
 			idx = len(groups)
-			index[arg.Group] = idx
-			groups = append(groups, helpArgGroup{name: arg.Group})
+			index[key] = idx
+			groups = append(groups, helpArgGroup{name: name, sortRank: rank})
 		}
 		groups[idx].args = append(groups[idx].args, arg)
 	}
 
+	sort.SliceStable(groups, func(i, j int) bool {
+		if groups[i].sortRank != groups[j].sortRank {
+			return groups[i].sortRank < groups[j].sortRank
+		}
+		return groups[i].name < groups[j].name
+	})
+
 	return groups
 }
 
-func groupedHelpCommands(commands []*Command) []helpCommandGroup {
+func groupedHelpCommands(p *Parser, commands []*Command) []helpCommandGroup {
 	groups := make([]helpCommandGroup, 0)
 	index := make(map[string]int)
 
+	hasNamedGroups := false
 	for _, command := range commands {
-		idx, ok := index[command.CommandGroup]
+		if command.localizedCommandGroup() != "" {
+			hasNamedGroups = true
+			break
+		}
+	}
+
+	for _, command := range commands {
+		name := command.localizedCommandGroup()
+		rank := 1
+		if hasNamedGroups && name == "" {
+			name = p.i18nText("help.command_group.main_commands", "Main Commands")
+			rank = 0
+		}
+		if _, ok := command.data.(builtinCommand); ok {
+			rank = 2
+		}
+
+		key := fmt.Sprintf("%d\x00%s", rank, name)
+		idx, ok := index[key]
 		if !ok {
 			idx = len(groups)
-			index[command.CommandGroup] = idx
-			groups = append(groups, helpCommandGroup{name: command.CommandGroup})
+			index[key] = idx
+			groups = append(groups, helpCommandGroup{name: name, sortRank: rank})
 		}
 		groups[idx].commands = append(groups[idx].commands, command)
 	}
+
+	sort.SliceStable(groups, func(i, j int) bool {
+		if groups[i].sortRank != groups[j].sortRank {
+			return groups[i].sortRank < groups[j].sortRank
+		}
+		return groups[i].name < groups[j].name
+	})
 
 	return groups
 }
@@ -947,6 +999,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	if (p.Options & (HelpFlag | VersionFlag)) != None {
 		p.addHelpGroups(p.showBuiltinHelp, p.markVersionRequested)
 	}
+	_ = p.EnsureBuiltinCommands()
 
 	wr := bufio.NewWriter(writer)
 	basePrefix := ""
@@ -1164,13 +1217,13 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			}
 
 			argIndent := paddingBeforeOption
-			argGroups := groupedHelpArgs(args)
+			argGroups := groupedHelpArgs(p, args)
 			if len(argGroups) == 1 && argGroups[0].name == "" {
 				for _, arg := range argGroups[0].args {
 					p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
 				}
 			} else {
-				for _, group := range argGroups {
+				for gi, group := range argGroups {
 					if group.name != "" {
 						_, _ = fmt.Fprintf(
 							wr,
@@ -1184,6 +1237,9 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					}
 					for _, arg := range group.args {
 						p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
+					}
+					if gi < len(argGroups)-1 {
+						_, _ = fmt.Fprintln(wr)
 					}
 				}
 			}
@@ -1203,9 +1259,9 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			p.colorizeHelp(p.i18nText("help.available_commands", "Available commands")+":", p.helpColorScheme.CommandsHeader),
 		)
 
-		commandGroups := groupedHelpCommands(scommands)
+		commandGroups := groupedHelpCommands(p, scommands)
 		commandIndent := paddingBeforeOption
-		for _, group := range commandGroups {
+		for gi, group := range commandGroups {
 			if len(commandGroups) > 1 || group.name != "" {
 				if group.name != "" {
 					_, _ = fmt.Fprintf(
@@ -1243,6 +1299,9 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					)
 				}
 
+				_, _ = fmt.Fprintln(wr)
+			}
+			if gi < len(commandGroups)-1 {
 				_, _ = fmt.Fprintln(wr)
 			}
 		}

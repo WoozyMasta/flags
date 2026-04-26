@@ -45,6 +45,9 @@ and this project adheres to [Semantic Versioning][].
   generated documentation via `command-group`, `arg-group`,
   `Command.SetCommandGroup(...)`, `Arg.SetGroup(...)`,
   `.Doc.CommandGroups`, and `.Doc.ArgGroups`.
+* Opt-in built-in `help`, `version`, `completion`, `docs`, and `config`
+  commands via `HelpCommand`, `VersionCommand`, `CompletionCommand`,
+  `DocsCommand`, `ConfigCommand`, and the `HelpCommands` convenience mask.
 * Extended struct-tag support: parser tag remapping,
   plural list tags (`defaults`, `choices`, `aliases`),
   configurable list delimiters, option aliases,

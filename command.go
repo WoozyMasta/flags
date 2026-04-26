@@ -33,6 +33,9 @@ type Command struct {
 	// Group name used to organize commands in help/docs.
 	CommandGroup string
 
+	// Optional i18n key for CommandGroup.
+	CommandGroupI18nKey string
+
 	// All direct subcommands of this command.
 	commands []*Command
 
@@ -128,6 +131,7 @@ func (c *Command) SetAliases(aliases ...string) {
 // SetCommandGroup updates help/docs group used for this command.
 func (c *Command) SetCommandGroup(group string) {
 	c.CommandGroup = group
+	c.CommandGroupI18nKey = ""
 }
 
 // AddAlias appends one command alias.

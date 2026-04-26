@@ -84,6 +84,22 @@ func (cmd *Command) localizedLongDescription() string {
 	return cmd.Group.localizedLongDescription()
 }
 
+func (cmd *Command) localizedCommandGroup() string {
+	if cmd == nil {
+		return ""
+	}
+
+	if cmd.CommandGroupI18nKey == "" {
+		return cmd.CommandGroup
+	}
+
+	if p := cmd.parser(); p != nil {
+		return p.i18nText(cmd.CommandGroupI18nKey, cmd.CommandGroup)
+	}
+
+	return cmd.CommandGroup
+}
+
 func (arg *Arg) localizedName() string {
 	if arg == nil {
 		return ""

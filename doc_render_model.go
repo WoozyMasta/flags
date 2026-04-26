@@ -159,7 +159,7 @@ func buildDocCommand(
 		SubcommandsOptional: cmd.SubcommandsOptional,
 		PassAfterNonOption:  cmd.PassAfterNonOption,
 		Hidden:              cmd.Hidden,
-		Group:               cmd.CommandGroup,
+		Group:               cmd.localizedCommandGroup(),
 		Args:                buildDocArgs(cmd, includeHidden),
 		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format),
 	}

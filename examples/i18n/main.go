@@ -33,21 +33,6 @@ type Options struct {
 	Display struct {
 		Style string `long:"style" default:"plain" choices:"plain;fancy" description-i18n:"opt.style.desc"`
 	} `group:"Display" group-i18n:"group.display" long-description-i18n:"group.display.long" ini-group:"display"`
-
-	Doc struct {
-		Format        string `long:"format" default:"markdown" choices:"markdown;html;man" description-i18n:"opt.doc.format.desc" value-name-i18n:"opt.doc.format.value"`
-		Template      string `long:"template" choices:"list;table;code;default;styled" description-i18n:"opt.doc.template.desc" value-name-i18n:"opt.doc.template.value"`
-		IncludeHidden bool   `long:"include-hidden" description-i18n:"opt.doc.include_hidden.desc"`
-		MarkHidden    bool   `long:"mark-hidden" description-i18n:"opt.doc.mark_hidden.desc"`
-	} `command:"doc" command-i18n:"cmd.doc.desc" long-description-i18n:"cmd.doc.long" ini-group:"doc"`
-
-	INI struct {
-		Mode            string `long:"mode" default:"example" choices:"example;current" description-i18n:"opt.ini.mode.desc" value-name-i18n:"opt.ini.mode.value"`
-		CommentWidth    int    `long:"comment-width" default:"88" description-i18n:"opt.ini.comment_width.desc" value-name-i18n:"opt.ini.comment_width.value"`
-		IncludeDefaults bool   `long:"include-defaults" description-i18n:"opt.ini.include_defaults.desc"`
-		IncludeComments bool   `long:"include-comments" description-i18n:"opt.ini.include_comments.desc"`
-		CommentDefaults bool   `long:"comment-defaults" description-i18n:"opt.ini.comment_defaults.desc"`
-	} `command:"ini" command-i18n:"cmd.ini.desc" long-description-i18n:"cmd.ini.long" ini-group:"ini"`
 	Verbose bool `short:"V" long:"verbose" description-i18n:"opt.verbose.desc"`
 }
 
@@ -55,7 +40,7 @@ func main() {
 	var opts Options
 	localeOverride := detectLocaleArg(os.Args[1:])
 
-	parser := flags.NewNamedParser("i18n-demo", flags.Default|flags.VersionFlag)
+	parser := flags.NewNamedParser("i18n-demo", flags.Default|flags.VersionFlag|flags.HelpCommands)
 	parser.SetLongDescriptionI18nKey("app.description")
 
 	// Groups can also be localized after registration. This keeps ordinary
@@ -97,16 +82,6 @@ func main() {
 	switch parser.Active.Name {
 	case "greet":
 		runGreet(localizer, &opts)
-	case "doc":
-		if err := runDoc(parser, localizer, &opts); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	case "ini":
-		if err := runINI(parser, localizer, &opts); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
 	}
 }
 
@@ -141,116 +116,6 @@ func runGreet(localizer *flags.Localizer, opts *Options) {
 	}
 
 	_, _ = fmt.Fprintln(os.Stdout, line)
-}
-
-func runDoc(parser *flags.Parser, localizer *flags.Localizer, opts *Options) error {
-	format, templateName, err := resolveDocMode(localizer, opts.Doc.Format, opts.Doc.Template)
-	if err != nil {
-		return err
-	}
-
-	var renderOpts []flags.DocOption
-	renderOpts = append(renderOpts, flags.WithBuiltinTemplate(templateName))
-
-	// Hidden output has two independent switches: include controls model
-	// visibility, mark controls whether included hidden entities are labeled.
-	if opts.Doc.IncludeHidden {
-		renderOpts = append(renderOpts, flags.WithIncludeHidden(true))
-	}
-
-	if opts.Doc.MarkHidden {
-		renderOpts = append(renderOpts, flags.WithMarkHidden(true))
-	}
-
-	return parser.WriteDoc(os.Stdout, format, renderOpts...)
-}
-
-func runINI(parser *flags.Parser, localizer *flags.Localizer, opts *Options) error {
-	ini := flags.NewIniParser(parser)
-
-	switch opts.INI.Mode {
-	case "example":
-		// WriteExample renders a documented config template without requiring
-		// command-line values to have been provided.
-		ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{
-			CommentWidth: opts.INI.CommentWidth,
-		})
-		return nil
-	case "current":
-		// Write renders current parser values. The mask chooses whether comments
-		// and defaults are included or commented out.
-		mask := flags.IniNone
-		if opts.INI.IncludeComments {
-			mask |= flags.IniIncludeComments
-		}
-		if opts.INI.IncludeDefaults {
-			mask |= flags.IniIncludeDefaults
-		}
-		if opts.INI.CommentDefaults {
-			mask |= flags.IniCommentDefaults
-		}
-
-		ini.Write(os.Stdout, mask)
-		return nil
-	default:
-		return fmt.Errorf(
-			"%s: %s",
-			localizer.Localize("app.error.invalid_ini_mode", "invalid ini mode", nil),
-			opts.INI.Mode,
-		)
-	}
-}
-
-func resolveDocMode(localizer *flags.Localizer, format string, template string) (flags.DocFormat, string, error) {
-	// User-facing choices are intentionally small. This switch translates them
-	// to the exact built-in template IDs expected by WriteDoc.
-	switch format {
-	case "markdown":
-		switch template {
-		case "", "list":
-			return flags.DocFormatMarkdown, flags.DocTemplateMarkdownList, nil
-		case "table":
-			return flags.DocFormatMarkdown, flags.DocTemplateMarkdownTable, nil
-		case "code":
-			return flags.DocFormatMarkdown, flags.DocTemplateMarkdownCode, nil
-		default:
-			return "", "", fmt.Errorf(
-				"%s: %s",
-				localizer.Localize("app.error.invalid_markdown_template", "invalid markdown template", nil),
-				template,
-			)
-		}
-	case "html":
-		switch template {
-		case "", "default":
-			return flags.DocFormatHTML, flags.DocTemplateHTMLDefault, nil
-		case "styled":
-			return flags.DocFormatHTML, flags.DocTemplateHTMLStyled, nil
-		default:
-			return "", "", fmt.Errorf(
-				"%s: %s",
-				localizer.Localize("app.error.invalid_html_template", "invalid html template", nil),
-				template,
-			)
-		}
-	case "man":
-		switch template {
-		case "", "default":
-			return flags.DocFormatMan, flags.DocTemplateManDefault, nil
-		default:
-			return "", "", fmt.Errorf(
-				"%s: %s",
-				localizer.Localize("app.error.invalid_man_template", "invalid man template", nil),
-				template,
-			)
-		}
-	default:
-		return "", "", fmt.Errorf(
-			"%s: %s",
-			localizer.Localize("app.error.invalid_doc_format", "invalid doc format", nil),
-			format,
-		)
-	}
 }
 
 func detectLocaleArg(args []string) string {

@@ -170,6 +170,13 @@ Commands split CLI behavior into explicit actions (similar to `git add`,
 If the selected command implements [Commander], its `Execute` method runs
 after parsing with the remaining arguments.
 
+Built-in command entry points are opt-in through parser option bits:
+[HelpCommand], [VersionCommand], [CompletionCommand], [DocsCommand],
+and [ConfigCommand]. [HelpCommands] enables the full set. Built-in commands
+are grouped as `Help Commands` in help/docs by default; use
+[Parser.SetBuiltinCommandGroup] to rename that display group or set it to an
+empty string.
+
 Command-local options become valid after the command token is parsed.
 With a global `-v` option and an `add` command, these are equivalent:
 
