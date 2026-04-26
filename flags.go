@@ -112,6 +112,7 @@ Group and command tags:
   - `namespace`: prefix long option names inside group hierarchy
   - `env-namespace`: prefix environment variable names inside group hierarchy
   - `command`: treat struct field as a command
+  - `command-group`: display group for command help/docs
   - `subcommands-optional`: make subcommands under this command optional
   - `pass-after-non-option`: for this command, stop option parsing after the
     first non-option argument
@@ -119,6 +120,7 @@ Group and command tags:
   - `aliases`: delimiter-separated command aliases (non-repeatable)
   - `positional-args`: map trailing positional arguments into struct fields
   - `positional-arg-name`: placeholder label for positional help
+  - `arg-group`: display group for positional argument help/docs
 
 For `positional-args`, arguments are optional by default.
 Use `required` either on the positional struct field or on individual fields.

@@ -20,8 +20,10 @@ type docParser struct {
 	GeneratedAt      time.Time
 	Usage            string
 	Args             []docArg
+	ArgGroups        []docArgGroup
 	Groups           []docGroup
 	Commands         []docCommand
+	CommandGroups    []docCommandGroup
 }
 
 type docCommand struct {
@@ -29,10 +31,13 @@ type docCommand struct {
 	ShortDescription    string
 	LongDescription     string
 	UsageLine           string
+	Group               string
 	Aliases             []string
 	Args                []docArg
+	ArgGroups           []docArgGroup
 	Groups              []docGroup
 	Commands            []docCommand
+	CommandGroups       []docCommandGroup
 	SubcommandsOptional bool
 	PassAfterNonOption  bool
 	Hidden              bool
@@ -41,7 +46,18 @@ type docCommand struct {
 type docArg struct {
 	Name        string
 	Description string
+	Group       string
 	Required    bool
+}
+
+type docArgGroup struct {
+	Name string
+	Args []docArg
+}
+
+type docCommandGroup struct {
+	Name     string
+	Commands []docCommand
 }
 
 type docGroup struct {
@@ -98,10 +114,12 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		Args:             buildDocArgs(p.Command, cfg.includeHidden),
 		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format),
 	}
+	model.ArgGroups = buildDocArgGroups(model.Args)
 
 	for _, cmd := range p.docCommands(cfg.includeHidden) {
 		model.Commands = append(model.Commands, buildDocCommand("", p.Name+" "+usage, cmd, cfg.includeHidden, format))
 	}
+	model.CommandGroups = buildDocCommandGroups(model.Commands)
 
 	return model
 }
@@ -141,13 +159,16 @@ func buildDocCommand(
 		SubcommandsOptional: cmd.SubcommandsOptional,
 		PassAfterNonOption:  cmd.PassAfterNonOption,
 		Hidden:              cmd.Hidden,
+		Group:               cmd.CommandGroup,
 		Args:                buildDocArgs(cmd, includeHidden),
 		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format),
 	}
+	doc.ArgGroups = buildDocArgGroups(doc.Args)
 
 	for _, sub := range docCommands(cmd, includeHidden) {
 		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden, format))
 	}
+	doc.CommandGroups = buildDocCommandGroups(doc.Commands)
 
 	return doc
 }
@@ -253,10 +274,45 @@ func buildDocArgs(cmd *Command, includeHidden bool) []docArg {
 		ret = append(ret, docArg{
 			Name:        arg.localizedName(),
 			Description: argDescription,
+			Group:       arg.Group,
 			Required:    required,
 		})
 	}
 	return ret
+}
+
+func buildDocArgGroups(args []docArg) []docArgGroup {
+	groups := make([]docArgGroup, 0)
+	index := make(map[string]int)
+
+	for _, arg := range args {
+		idx, ok := index[arg.Group]
+		if !ok {
+			idx = len(groups)
+			index[arg.Group] = idx
+			groups = append(groups, docArgGroup{Name: arg.Group})
+		}
+		groups[idx].Args = append(groups[idx].Args, arg)
+	}
+
+	return groups
+}
+
+func buildDocCommandGroups(commands []docCommand) []docCommandGroup {
+	groups := make([]docCommandGroup, 0)
+	index := make(map[string]int)
+
+	for _, command := range commands {
+		idx, ok := index[command.Group]
+		if !ok {
+			idx = len(groups)
+			index[command.Group] = idx
+			groups = append(groups, docCommandGroup{Name: command.Group})
+		}
+		groups[idx].Commands = append(groups[idx].Commands, command)
+	}
+
+	return groups
 }
 
 func parseDocBoolTag(raw string) bool {

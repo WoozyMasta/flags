@@ -246,6 +246,8 @@ All struct tags are configurable:
 * `long-description`: full command description for docs/man output.
 * `long-description-i18n`: i18n key for command long description text.
 * `command-i18n`: i18n key for command summary text.
+* `command-group`: display group for command help/docs; it does not affect
+  parsing or INI section names.
 * `alias` / `aliases`: command aliases.
 * `ini-group`: stable INI section token for this command root.
 * `subcommands-optional`: command can run without child subcommand selection.
@@ -259,6 +261,7 @@ All struct tags are configurable:
 * `required`: for positional args you can use `yes/no`, `1` (required), `N`
   (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
 * `positional-arg-name`: custom display name for usage/help placeholders.
+* `arg-group`: display group for positional argument help/docs.
 * `arg-name-i18n`: i18n key for positional display name text.
 * `description`: help/docs description for the positional argument.
 * `arg-description-i18n`: i18n key for positional description text.
@@ -310,8 +313,8 @@ Use `positional-args:"yes"` on a struct field:
 ```go
 type Options struct {
   Args struct {
-    Input  string
-    Output string
+    Input  string `arg-group:"Input"`
+    Output string `arg-group:"Output"`
   } `positional-args:"yes" required:"yes"`
 }
 ```
@@ -346,11 +349,13 @@ Example:
 type Options struct {
   Add struct {
     Force bool `short:"f" long:"force"`
-  } `command:"add" description:"Add an item"`
+  } `command:"add" command-group:"Content" description:"Add an item"`
 }
 ```
 
 If command type implements `Execute(args []string) error`, it will be called.
+Use `command-group` only for display grouping in help/docs; keep `ini-group`
+for stable INI section names.
 
 ## Defaults
 

@@ -215,6 +215,25 @@
 {{- if .Doc.Commands }}
     <section>
       <h2>{{ i18n "doc.tmpl.html.section.commands" }}</h2>
+{{- if hasNamedCommandGroups .Doc.CommandGroups }}
+{{- range .Doc.CommandGroups }}
+{{- if .Name }}
+      <h3>{{ quoteHTML .Name }}</h3>
+{{- end }}
+{{- range .Commands }}
+      <article>
+        <h3>{{ quoteHTML .Name }}</h3>
+        <p>{{ quoteHTML .ShortDescription }}</p>
+{{- if .UsageLine }}
+        <p><strong>{{ i18n "doc.tmpl.html.label.usage" }}:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
+{{- end }}
+{{- if .Aliases }}
+        <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
+{{- end }}
+      </article>
+{{- end }}
+{{- end }}
+{{- else }}
 {{- range .Doc.Commands }}
       <article>
         <h3>{{ quoteHTML .Name }}</h3>
@@ -226,6 +245,7 @@
         <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
 {{- end }}
       </article>
+{{- end }}
 {{- end }}
     </section>
 {{- end }}

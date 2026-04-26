@@ -651,3 +651,117 @@ func TestWriteDocTemplateHasFullTagMetadata(t *testing.T) {
 		}
 	}
 }
+
+func TestWriteDocTemplateIncludesCommandAndArgGroups(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Input  string `positional-arg-name:"input" arg-group:"Input" description:"Input file"`
+			Output string `positional-arg-name:"output" arg-group:"Output" description:"Output file"`
+		} `positional-args:"yes"`
+
+		Add struct{} `command:"add" command-group:"Content" description:"Add item"`
+
+		Config struct{} `command:"config" command-group:"Administration" description:"Configure app"`
+	}
+
+	p := NewNamedParser("group-doc", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	tpl := strings.Join([]string{
+		"arg-group={{ (index .Doc.ArgGroups 0).Name }}:",
+		"{{ (index (index .Doc.ArgGroups 0).Args 0).Name }},",
+		"cmd-group={{ (index .Doc.CommandGroups 0).Name }}:",
+		"{{ (index (index .Doc.CommandGroups 0).Commands 0).Name }}",
+	}, "")
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithTemplateString(tpl)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+	for _, needle := range []string{
+		"arg-group=Input:input",
+		"cmd-group=Content:add",
+	} {
+		if !strings.Contains(got, needle) {
+			t.Fatalf("expected %q in grouped metadata output, got:\n%s", needle, got)
+		}
+	}
+}
+
+func TestWriteDocBuiltinTemplatesRenderCommandAndArgGroups(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Input string `positional-arg-name:"input" arg-group:"Input" description:"Input file"`
+		} `positional-args:"yes"`
+
+		Add struct{} `command:"add" command-group:"Content" description:"Add item"`
+	}
+
+	p := NewNamedParser("group-doc", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	tests := []struct {
+		name     string
+		format   DocFormat
+		template string
+		want     []string
+	}{
+		{
+			name:     "markdown list",
+			format:   DocFormatMarkdown,
+			template: DocTemplateMarkdownList,
+			want:     []string{"**Content**", "### Input"},
+		},
+		{
+			name:     "markdown table",
+			format:   DocFormatMarkdown,
+			template: DocTemplateMarkdownTable,
+			want:     []string{"**Content**", "### Input"},
+		},
+		{
+			name:     "markdown code",
+			format:   DocFormatMarkdown,
+			template: DocTemplateMarkdownCode,
+			want:     []string{"**Content**", "[Input]"},
+		},
+		{
+			name:     "html default",
+			format:   DocFormatHTML,
+			template: DocTemplateHTMLDefault,
+			want:     []string{"<h3>Content</h3>"},
+		},
+		{
+			name:     "html styled",
+			format:   DocFormatHTML,
+			template: DocTemplateHTMLStyled,
+			want:     []string{"<h3>Content</h3>"},
+		},
+		{
+			name:     "man default",
+			format:   DocFormatMan,
+			template: DocTemplateManDefault,
+			want:     []string{"\\fBContent\\fP"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var out bytes.Buffer
+			if err := p.WriteDoc(&out, test.format, WithBuiltinTemplate(test.template)); err != nil {
+				t.Fatalf("unexpected write doc error: %v", err)
+			}
+			got := out.String()
+			for _, want := range test.want {
+				if !strings.Contains(got, want) {
+					t.Fatalf("expected %q in grouped built-in doc output, got:\n%s", want, got)
+				}
+			}
+		})
+	}
+}

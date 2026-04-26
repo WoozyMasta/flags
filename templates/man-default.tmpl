@@ -62,8 +62,20 @@
 {{- end }}
 {{- if .Doc.Commands }}
 .SH {{ quoteMan (i18n "doc.tmpl.man.section.commands") }}
+{{- if hasNamedCommandGroups .Doc.CommandGroups }}
+{{- range .Doc.CommandGroups }}
+{{- if .Name }}
+.PP
+\fB{{ quoteMan .Name }}\fP
+{{- end }}
+{{- range .Commands }}
+{{ template "command" . }}
+{{- end }}
+{{- end }}
+{{- else }}
 {{- range .Doc.Commands }}
 {{ template "command" . }}
+{{- end }}
 {{- end }}
 {{- end }}
 
@@ -131,7 +143,19 @@
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if hasNamedCommandGroups .CommandGroups }}
+{{- range .CommandGroups }}
+{{- if .Name }}
+.PP
+\fB{{ quoteMan .Name }}\fP
+{{- end }}
 {{- range .Commands }}
 {{ template "command" . }}
+{{- end }}
+{{- end }}
+{{- else }}
+{{- range .Commands }}
+{{ template "command" . }}
+{{- end }}
 {{- end }}
 {{ end }}

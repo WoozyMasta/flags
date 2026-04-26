@@ -73,6 +73,8 @@ const (
 	FlagTagCommand = "command"
 	// FlagTagCommandI18n provides i18n key for command short description.
 	FlagTagCommandI18n = "command-i18n"
+	// FlagTagCommandGroup groups commands in help and documentation output.
+	FlagTagCommandGroup = "command-group"
 	// FlagTagSubCommandsOptional makes child subcommands optional.
 	FlagTagSubCommandsOptional = "subcommands-optional"
 	// FlagTagAlias adds extra command names (repeatable).
@@ -91,6 +93,8 @@ const (
 	FlagTagPositionalArgs = "positional-args"
 	// FlagTagPositionalArgName sets display name for a positional argument.
 	FlagTagPositionalArgName = "positional-arg-name"
+	// FlagTagArgGroup groups positional arguments in help and documentation output.
+	FlagTagArgGroup = "arg-group"
 	// FlagTagArgNameI18n provides i18n key for positional arg display name.
 	FlagTagArgNameI18n = "arg-name-i18n"
 	// FlagTagArgDescriptionI18n provides i18n key for positional arg description.
@@ -178,6 +182,8 @@ type FlagTags struct {
 	Command string
 	// CommandI18n maps to i18n key for command short description tag.
 	CommandI18n string
+	// CommandGroup maps to command group tag (default: "command-group").
+	CommandGroup string
 	// SubCommandsOptional maps to optional-subcommands tag (default: "subcommands-optional").
 	SubCommandsOptional string
 	// Alias maps to command alias tag (default: "alias").
@@ -196,6 +202,8 @@ type FlagTags struct {
 	PositionalArgs string
 	// PositionalArgName maps to positional display-name tag (default: "positional-arg-name").
 	PositionalArgName string
+	// ArgGroup maps to positional argument group tag (default: "arg-group").
+	ArgGroup string
 	// ArgNameI18n maps to positional i18n display-name tag.
 	ArgNameI18n string
 	// ArgDescriptionI18n maps to positional i18n description tag.
@@ -251,6 +259,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		EnvNamespace:        prefix + FlagTagEnvNamespace,
 		Command:             prefix + FlagTagCommand,
 		CommandI18n:         prefix + FlagTagCommandI18n,
+		CommandGroup:        prefix + FlagTagCommandGroup,
 		SubCommandsOptional: prefix + FlagTagSubCommandsOptional,
 		Alias:               prefix + FlagTagAlias,
 		Aliases:             prefix + FlagTagAliases,
@@ -260,6 +269,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		ShortAliases:        prefix + FlagTagShortAliases,
 		PositionalArgs:      prefix + FlagTagPositionalArgs,
 		PositionalArgName:   prefix + FlagTagPositionalArgName,
+		ArgGroup:            prefix + FlagTagArgGroup,
 		ArgNameI18n:         prefix + FlagTagArgNameI18n,
 		ArgDescriptionI18n:  prefix + FlagTagArgDescriptionI18n,
 		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
@@ -371,6 +381,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	if t.CommandI18n != "" {
 		d.CommandI18n = t.CommandI18n
 	}
+	if t.CommandGroup != "" {
+		d.CommandGroup = t.CommandGroup
+	}
 	if t.SubCommandsOptional != "" {
 		d.SubCommandsOptional = t.SubCommandsOptional
 	}
@@ -397,6 +410,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.PositionalArgName != "" {
 		d.PositionalArgName = t.PositionalArgName
+	}
+	if t.ArgGroup != "" {
+		d.ArgGroup = t.ArgGroup
 	}
 	if t.ArgNameI18n != "" {
 		d.ArgNameI18n = t.ArgNameI18n

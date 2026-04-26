@@ -842,6 +842,89 @@ func maxCommandLength(s []*Command) int {
 	return ret
 }
 
+type helpArgGroup struct {
+	name string
+	args []*Arg
+}
+
+type helpCommandGroup struct {
+	name     string
+	commands []*Command
+}
+
+func groupedHelpArgs(args []*Arg) []helpArgGroup {
+	groups := make([]helpArgGroup, 0)
+	index := make(map[string]int)
+
+	for _, arg := range args {
+		idx, ok := index[arg.Group]
+		if !ok {
+			idx = len(groups)
+			index[arg.Group] = idx
+			groups = append(groups, helpArgGroup{name: arg.Group})
+		}
+		groups[idx].args = append(groups[idx].args, arg)
+	}
+
+	return groups
+}
+
+func groupedHelpCommands(commands []*Command) []helpCommandGroup {
+	groups := make([]helpCommandGroup, 0)
+	index := make(map[string]int)
+
+	for _, command := range commands {
+		idx, ok := index[command.CommandGroup]
+		if !ok {
+			idx = len(groups)
+			index[command.CommandGroup] = idx
+			groups = append(groups, helpCommandGroup{name: command.CommandGroup})
+		}
+		groups[idx].commands = append(groups[idx].commands, command)
+	}
+
+	return groups
+}
+
+func (p *Parser) writeHelpArgument(
+	wr *bufio.Writer,
+	arg *Arg,
+	aligninfo *alignmentInfo,
+	indent int,
+	trimDescriptions bool,
+) {
+	descStart := aligninfo.optionDescriptionStart()
+	argPrefix := strings.Repeat(" ", indent)
+	argPrefix += arg.localizedName()
+
+	argDescriptionText := arg.localizedDescription()
+	if len(argDescriptionText) > 0 {
+		argPrefix += ":"
+		_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
+
+		descPadding := strings.Repeat(
+			" ",
+			max(descStart-textWidth(argPrefix), 1),
+		)
+		descWidth := aligninfo.terminalColumns - 1 - descStart
+		descPrefix := strings.Repeat(" ", descStart)
+
+		_, _ = wr.WriteString(descPadding)
+		argDescription := argDescriptionText
+		if def := arg.defaultLiteral(); def != "" {
+			defaultLabel := p.i18nText("help.meta.default", "default")
+			argDescription += " (" + defaultLabel + ": " + def + ")"
+		}
+
+		argDesc := wrapText(argDescription, descWidth, descPrefix, trimDescriptions)
+		_, _ = wr.WriteString(p.colorizeHelp(argDesc, p.helpColorScheme.ArgumentDesc))
+	} else {
+		_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
+	}
+
+	_, _ = fmt.Fprintln(wr)
+}
+
 // WriteHelp writes a help message containing all the possible options and
 // their descriptions to the provided writer. Note that the HelpFlag parser
 // option provides a convenient way to add a -h/--help option group to the
@@ -1080,41 +1163,29 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				_, _ = fmt.Fprintf(wr, "\n%s\n", p.colorizeHelp(header, p.helpColorScheme.ArgumentsHeader))
 			}
 
-			descStart := aligninfo.optionDescriptionStart()
-
-			for _, arg := range args {
-				argPrefix := strings.Repeat(" ", paddingBeforeOption)
-				argPrefix += arg.localizedName()
-
-				argDescriptionText := arg.localizedDescription()
-				if len(argDescriptionText) > 0 {
-					argPrefix += ":"
-					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
-
-					// Space between "arg:" and the description start
-					descPadding := strings.Repeat(
-						" ",
-						max(descStart-textWidth(argPrefix), 1),
-					)
-					// How much space the description gets before wrapping
-					descWidth := aligninfo.terminalColumns - 1 - descStart
-					// Whitespace to which we can indent new description lines
-					descPrefix := strings.Repeat(" ", descStart)
-
-					_, _ = wr.WriteString(descPadding)
-					argDescription := argDescriptionText
-					if def := arg.defaultLiteral(); def != "" {
-						defaultLabel := p.i18nText("help.meta.default", "default")
-						argDescription += " (" + defaultLabel + ": " + def + ")"
-					}
-
-					argDesc := wrapText(argDescription, descWidth, descPrefix, trimDescriptions)
-					_, _ = wr.WriteString(p.colorizeHelp(argDesc, p.helpColorScheme.ArgumentDesc))
-				} else {
-					_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))
+			argIndent := paddingBeforeOption
+			argGroups := groupedHelpArgs(args)
+			if len(argGroups) == 1 && argGroups[0].name == "" {
+				for _, arg := range argGroups[0].args {
+					p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
 				}
-
-				_, _ = fmt.Fprintln(wr)
+			} else {
+				for _, group := range argGroups {
+					if group.name != "" {
+						_, _ = fmt.Fprintf(
+							wr,
+							"%s%s:\n",
+							strings.Repeat(" ", paddingBeforeOption),
+							p.colorizeHelp(group.name, p.helpColorScheme.ArgumentsHeader),
+						)
+						argIndent = paddingBeforeOption * 2
+					} else {
+						argIndent = paddingBeforeOption
+					}
+					for _, arg := range group.args {
+						p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
+					}
+				}
 			}
 		}
 
@@ -1132,30 +1203,48 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			p.colorizeHelp(p.i18nText("help.available_commands", "Available commands")+":", p.helpColorScheme.CommandsHeader),
 		)
 
-		for _, c := range scommands {
-			_, _ = fmt.Fprintf(wr, "  %s", p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
-
-			shortDescription := c.localizedShortDescription()
-			if len(shortDescription) > 0 {
-				pad := strings.Repeat(" ", maxnamelen-textWidth(c.Name))
-				_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(shortDescription, p.helpColorScheme.CommandDesc))
+		commandGroups := groupedHelpCommands(scommands)
+		commandIndent := paddingBeforeOption
+		for _, group := range commandGroups {
+			if len(commandGroups) > 1 || group.name != "" {
+				if group.name != "" {
+					_, _ = fmt.Fprintf(
+						wr,
+						"%s%s:\n",
+						strings.Repeat(" ", paddingBeforeOption),
+						p.colorizeHelp(group.name, p.helpColorScheme.CommandsHeader),
+					)
+					commandIndent = paddingBeforeOption * 2
+				} else {
+					commandIndent = paddingBeforeOption
+				}
 			}
 
-			if len(c.Aliases) > 0 &&
-				(len(shortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
-				aliases := p.i18nTextf(
-					"help.command.aliases_suffix",
-					" (aliases: {aliases})",
-					map[string]string{"aliases": strings.Join(c.Aliases, ", ")},
-				)
-				_, _ = fmt.Fprintf(
-					wr,
-					"%s",
-					p.colorizeHelp(aliases, p.helpColorScheme.CommandAliases),
-				)
-			}
+			for _, c := range group.commands {
+				_, _ = fmt.Fprintf(wr, "%s%s", strings.Repeat(" ", commandIndent), p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
 
-			_, _ = fmt.Fprintln(wr)
+				shortDescription := c.localizedShortDescription()
+				if len(shortDescription) > 0 {
+					pad := strings.Repeat(" ", maxnamelen-textWidth(c.Name))
+					_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(shortDescription, p.helpColorScheme.CommandDesc))
+				}
+
+				if len(c.Aliases) > 0 &&
+					(len(shortDescription) > 0 || (p.Options&ShowCommandAliases) != None) {
+					aliases := p.i18nTextf(
+						"help.command.aliases_suffix",
+						" (aliases: {aliases})",
+						map[string]string{"aliases": strings.Join(c.Aliases, ", ")},
+					)
+					_, _ = fmt.Fprintf(
+						wr,
+						"%s",
+						p.colorizeHelp(aliases, p.helpColorScheme.CommandAliases),
+					)
+				}
+
+				_, _ = fmt.Fprintln(wr)
+			}
 		}
 	}
 

@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning][].
 
 * Shell completion script generation via `Parser.WriteCompletion(...)`
   and `Parser.WriteNamedCompletion(...)` for bash and zsh.
-  Completion output  includes command/option aliases, option `choices`,
+  Completion output includes command/option aliases, option `choices`,
   bool value candidates when
   `AllowBoolValues` is enabled, and no-space handling for inline option values.
 * Template-based parser documentation rendering via `Parser.WriteDoc(...)`,
@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning][].
   and terminal-title updates.
 * Parser error/output routing controls:
   `PrintHelpOnStderr`, `PrintErrorsOnStdout` and `PrintHelpOnInputErrors`.
+* Display grouping for commands and positional arguments in CLI help and
+  generated documentation via `command-group`, `arg-group`,
+  `Command.SetCommandGroup(...)`, `Arg.SetGroup(...)`,
+  `.Doc.CommandGroups`, and `.Doc.ArgGroups`.
 * Extended struct-tag support: parser tag remapping,
   plural list tags (`defaults`, `choices`, `aliases`),
   configurable list delimiters, option aliases,

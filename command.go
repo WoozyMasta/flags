@@ -30,6 +30,9 @@ type Command struct {
 	// Aliases for the command
 	Aliases []string
 
+	// Group name used to organize commands in help/docs.
+	CommandGroup string
+
 	// All direct subcommands of this command.
 	commands []*Command
 
@@ -120,6 +123,11 @@ func (c *Command) SetName(name string) {
 func (c *Command) SetAliases(aliases ...string) {
 	c.Aliases = append(c.Aliases[:0], aliases...)
 	c.touchLookupCache()
+}
+
+// SetCommandGroup updates help/docs group used for this command.
+func (c *Command) SetCommandGroup(group string) {
+	c.CommandGroup = group
 }
 
 // AddAlias appends one command alias.
@@ -252,6 +260,16 @@ func newCommand(name string, shortDescription string, longDescription string, da
 	}
 }
 
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+
+	return ""
+}
+
 func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 	f := func(realval reflect.Value, sfield *reflect.StructField) (bool, error) {
 		mtag := newMultiTag(string(sfield.Tag))
@@ -326,6 +344,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					NameI18nKey:        nameI18n,
 					Description:        m.Get(FlagTagDescription),
 					DescriptionI18nKey: descriptionI18n,
+					Group:              firstNonEmpty(m.Get(FlagTagArgGroup), mtag.Get(FlagTagArgGroup)),
 					Default:            def,
 					Required:           required,
 					RequiredMaximum:    requiredMaximum,
@@ -419,6 +438,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			subc.Hidden = hidden
 			subc.Immediate = immediate
 			subc.IniName = iniGroup
+			subc.CommandGroup = mtag.Get(FlagTagCommandGroup)
 			subc.ShortDescriptionI18nKey = shortDescriptionI18n
 			subc.LongDescriptionI18nKey = longDescriptionI18n
 

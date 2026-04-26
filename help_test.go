@@ -1299,6 +1299,68 @@ func TestWriteHelpWithOnlyPositionalArgsUnicodeNameNoPanic(t *testing.T) {
 	}
 }
 
+func TestWriteHelpGroupsPositionalArgs(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Input  string `positional-arg-name:"input" arg-group:"Input" description:"Input file"`
+			Output string `positional-arg-name:"output" arg-group:"Output" description:"Output file"`
+		} `positional-args:"yes"`
+	}
+
+	p := NewNamedParser("help-arg-groups", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	for _, want := range []string{
+		"Arguments:",
+		"  Input:",
+		"    input:",
+		"  Output:",
+		"    output:",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q in grouped positional help, got:\n%s", want, got)
+		}
+	}
+}
+
+func TestWriteHelpGroupsCommands(t *testing.T) {
+	var opts struct {
+		Add struct{} `command:"add" command-group:"Content" description:"Add item"`
+
+		Rm struct{} `command:"rm" command-group:"Content" description:"Remove item"`
+
+		Config struct{} `command:"config" command-group:"Administration" description:"Configure app"`
+	}
+
+	p := NewNamedParser("help-command-groups", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	for _, want := range []string{
+		"Available commands:",
+		"  Administration:",
+		"    config  Configure app",
+		"  Content:",
+		"    add     Add item",
+		"    rm      Remove item",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q in grouped command help, got:\n%s", want, got)
+		}
+	}
+}
+
 func TestWriteHelpAddsBuiltinHelpGroupWithoutParse(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"Value option"`
