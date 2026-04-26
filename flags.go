@@ -91,7 +91,7 @@ Value and default tags:
   - `env-delim`: split `env` value by delimiter for slice/map fields
   - `value-name`: placeholder name shown in help
   - `choice`: allowed value constraint (repeatable), for example
-    `long:"animal" choice:"cat" choice:"dog"`
+    `long:"animal" choices:"cat;dog"`
   - `choices`: delimiter-separated allowed values (non-repeatable)
   - `base`: radix for integer parsing, default `10`
   - `key-value-delimiter`: delimiter used when parsing map values, default `:`

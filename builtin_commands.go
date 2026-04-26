@@ -200,7 +200,7 @@ func (c *builtinVersionCommand) Execute(_ []string) error {
 type builtinCompletionCommand struct {
 	parser *Parser
 
-	Shell CompletionShell `long:"shell" value-name:"SHELL" value-name-i18n:"help.builtin.command.value.shell" choice:"bash" choice:"zsh" default:"bash" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc"`
+	Shell CompletionShell `long:"shell" value-name:"SHELL" value-name-i18n:"help.builtin.command.value.shell" choices:"bash;zsh" default:"bash" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
@@ -252,7 +252,7 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 type builtinDocHTMLCommand struct {
 	parser *Parser
 
-	Template      string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choice:"default" choice:"styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc"`
+	Template      string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"default;styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc"`
 	IncludeHidden bool   `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool   `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 
@@ -282,7 +282,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 type builtinDocMarkdownCommand struct {
 	parser *Parser
 
-	Template      string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choice:"list" choice:"table" choice:"code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc"`
+	Template      string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"list;table;code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc"`
 	IncludeHidden bool   `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool   `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 
