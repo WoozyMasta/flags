@@ -71,22 +71,9 @@
 {{ if .Doc.Args }}
 ## {{ i18n "doc.tmpl.markdown.section.arguments" }}
 
-{{ if hasNamedArgGroups .Doc.ArgGroups }}
-{{ range .Doc.ArgGroups }}
-{{ if .Name }}
-### {{ .Name }}
-
-{{ end }}
-{{ range .Args }}
-* {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
-  * {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
-{{ end }}
-{{ end }}
-{{ else }}
 {{ range .Doc.Args }}
 * {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
   * {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
-{{ end }}
 {{ end }}
 {{ end }}
 
@@ -139,24 +126,9 @@
 {{ if .Args }}
 #### {{ i18n "doc.tmpl.markdown.section.arguments_title" }}
 
-{{ if hasNamedArgGroups .ArgGroups }}
-{{ range .ArgGroups }}
-{{ if .Name }}
-##### {{ .Name }}
-
-{{ end }}
 {{ range .Args }}
 * {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
   * {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
-{{ end }}
-
-{{ end }}
-{{ else }}
-{{ range .Args }}
-* {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
-  * {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
-{{ end }}
-
 {{ end }}
 {{ end }}
 {{ if hasNamedCommandGroups .CommandGroups }}

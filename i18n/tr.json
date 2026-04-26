@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "terminated option flag `{flag}' cannot use inline argument syntax",
   "err.unknown_flag": "bilinmeyen bayrak `{flag}'",
   "help.arguments": "Argümanlar",
-  "help.arg_group.main_arguments": "Ana argümanlar",
   "help.available_commands": "Kullanılabilir komutlar",
 
   "help.builtin.command.completion.desc": "Kabuk tamamlama üret",

@@ -115,6 +115,9 @@ type Parser struct {
 	// Active option sorting mode for grouped option presentation.
 	optionSort OptionSortMode
 
+	// Active command sorting mode for command presentation in help/docs.
+	commandSort CommandSortMode
+
 	// Preferred rendering style for flags in help/doc output.
 	helpFlagStyle RenderStyle
 
@@ -174,6 +177,9 @@ type Options uint
 // OptionSortMode configures how options are ordered within each group block.
 type OptionSortMode uint8
 
+// CommandSortMode configures how commands are ordered in help/docs.
+type CommandSortMode uint8
+
 const (
 	// OptionSortByDeclaration keeps original declaration order.
 	OptionSortByDeclaration OptionSortMode = iota
@@ -183,6 +189,15 @@ const (
 	OptionSortByNameDesc
 	// OptionSortByType sorts by configured type rank, then by name.
 	OptionSortByType
+)
+
+const (
+	// CommandSortByDeclaration keeps original declaration order.
+	CommandSortByDeclaration CommandSortMode = iota
+	// CommandSortByNameAsc sorts by command name ascending.
+	CommandSortByNameAsc
+	// CommandSortByNameDesc sorts by command name descending.
+	CommandSortByNameDesc
 )
 
 // OptionTypeClass groups option value types for type-based sorting.
@@ -280,7 +295,7 @@ const (
 	ShowCommandAliases
 
 	// ShowRepeatableInHelp appends a repeatable marker to option descriptions
-	// in built-in help output for collection options (slice/map).
+	// (slice/map options) and repeatable positional arguments (slice).
 	ShowRepeatableInHelp
 
 	// ShowChoiceListInHelp forces rendering choices as a vertical list
@@ -415,6 +430,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		errorColorScheme:           DefaultErrorColorScheme(),
 		helpColorEnabled:           true,
 		optionSort:                 OptionSortByDeclaration,
+		commandSort:                CommandSortByNameAsc,
 		optionTypeRank:             defaultOptionTypeRank(),
 		TagListDelimiter:           ';',
 		helpFlagStyle:              RenderStyleAuto,
@@ -533,6 +549,11 @@ func (p *Parser) SetTagListDelimiter(delimiter rune) error {
 // SetOptionSort configures option order mode for grouped option presentation.
 func (p *Parser) SetOptionSort(mode OptionSortMode) {
 	p.optionSort = mode
+}
+
+// SetCommandSort configures command order mode for help/docs presentation.
+func (p *Parser) SetCommandSort(mode CommandSortMode) {
+	p.commandSort = mode
 }
 
 // SetOptionTypeOrder customizes type rank used by OptionSortByType.
@@ -864,7 +885,6 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.ShortAliases, FlagTagShortAliases)
 	normalizeTagAlias(c, p.flagTags.PositionalArgs, FlagTagPositionalArgs)
 	normalizeTagAlias(c, p.flagTags.PositionalArgName, FlagTagPositionalArgName)
-	normalizeTagAlias(c, p.flagTags.ArgGroup, FlagTagArgGroup)
 	normalizeTagAlias(c, p.flagTags.ArgNameI18n, FlagTagArgNameI18n)
 	normalizeTagAlias(c, p.flagTags.ArgDescriptionI18n, FlagTagArgDescriptionI18n)
 	normalizeTagAlias(c, p.flagTags.KeyValueDelimiter, FlagTagKeyValueDelimiter)

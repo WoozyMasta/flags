@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "终止型选项标志 `{flag}` 不能使用内联参数语法",
   "err.unknown_flag": "未知标志 `{flag}`",
   "help.arguments": "参数",
-  "help.arg_group.main_arguments": "主要参数",
   "help.available_commands": "可用命令",
 
   "help.builtin.command.completion.desc": "生成 shell 补全",

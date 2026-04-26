@@ -270,15 +270,6 @@ func docTemplateFuncs(parser *Parser, markHidden bool, format optionRenderFormat
 			return false
 		},
 
-		"hasNamedArgGroups": func(groups []docArgGroup) bool {
-			for _, group := range groups {
-				if group.Name != "" {
-					return true
-				}
-			}
-			return false
-		},
-
 		"hasNamedCommandGroups": func(groups []docCommandGroup) bool {
 			for _, group := range groups {
 				if group.Name != "" {

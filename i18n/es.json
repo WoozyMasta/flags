@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "la bandera de opción terminada `{flag}` no puede usar la sintaxis de argumento inline",
   "err.unknown_flag": "bandera desconocida `{flag}`",
   "help.arguments": "Argumentos",
-  "help.arg_group.main_arguments": "Argumentos principales",
   "help.available_commands": "Comandos disponibles",
 
   "help.builtin.command.completion.desc": "Generar autocompletado de shell",

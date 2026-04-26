@@ -18,6 +18,7 @@ import (
 // therefore also carries a set of command specific options.
 type Command struct {
 	lookupCache lookup
+
 	// Embedded, see Group for more information
 	*Group
 
@@ -27,20 +28,24 @@ type Command struct {
 	// The name by which the command can be invoked
 	Name string
 
-	// Aliases for the command
-	Aliases []string
-
 	// Group name used to organize commands in help/docs.
 	CommandGroup string
 
 	// Optional i18n key for CommandGroup.
 	CommandGroupI18nKey string
 
+	// Aliases for the command
+	Aliases []string
+
 	// All direct subcommands of this command.
 	commands []*Command
 
 	// Positional arguments declared for this command.
 	args []*Arg
+
+	// Display sort index used in help/docs command ordering.
+	// Positive values are shown first, then zero, then negative.
+	Order int
 
 	lookupCacheGeneration uint64
 
@@ -126,6 +131,11 @@ func (c *Command) SetAliases(aliases ...string) {
 func (c *Command) SetCommandGroup(group string) {
 	c.CommandGroup = group
 	c.CommandGroupI18nKey = ""
+}
+
+// SetOrder updates display sort index used for help/docs command ordering.
+func (c *Command) SetOrder(order int) {
+	c.Order = order
 }
 
 // AddAlias appends one command alias.
@@ -264,16 +274,6 @@ func newCommand(name string, shortDescription string, longDescription string, da
 	}
 }
 
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-
-	return ""
-}
-
 func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 	f := func(realval reflect.Value, sfield *reflect.StructField) (bool, error) {
 		mtag := newMultiTag(string(sfield.Tag))
@@ -352,7 +352,6 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					NameI18nKey:        nameI18n,
 					Description:        m.Get(FlagTagDescription),
 					DescriptionI18nKey: descriptionI18n,
-					Group:              firstNonEmpty(m.Get(FlagTagArgGroup), mtag.Get(FlagTagArgGroup)),
 					Default:            def,
 					completionHint:     completionHint,
 					Required:           required,
@@ -428,6 +427,20 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			if err != nil {
 				return true, err
 			}
+			order := 0
+			if rawOrder := mtag.Get(FlagTagOrder); rawOrder != "" {
+				parsedOrder, convErr := strconv.Atoi(rawOrder)
+				if convErr != nil {
+					return true, newErrorf(
+						ErrInvalidTag,
+						"invalid integer value `%s' for tag `%s' on field `%s'",
+						rawOrder,
+						FlagTagOrder,
+						sfield.Name,
+					)
+				}
+				order = parsedOrder
+			}
 
 			hidden, _, err := parseStructBoolTag(mtag, FlagTagHidden, sfield.Name)
 			if err != nil {
@@ -450,6 +463,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			subc.CommandGroup = mtag.Get(FlagTagCommandGroup)
 			subc.ShortDescriptionI18nKey = shortDescriptionI18n
 			subc.LongDescriptionI18nKey = longDescriptionI18n
+			subc.Order = order
 
 			if subcommandsOptional {
 				subc.SubcommandsOptional = true
@@ -703,11 +717,57 @@ func (c *Command) iniLookupNames() []string {
 
 func (c *Command) sortedVisibleCommands() []*Command {
 	ret := c.visibleCommands()
-	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].Name < ret[j].Name
+	p := c.parser()
+	if p == nil {
+		sort.Slice(ret, func(i, j int) bool {
+			return ret[i].Name < ret[j].Name
+		})
+		return ret
+	}
+	if !p.shouldSortCommandsForDisplay(ret) {
+		return ret
+	}
+	sort.SliceStable(ret, func(i, j int) bool {
+		return p.compareCommands(ret[i], ret[j]) < 0
 	})
 
 	return ret
+}
+
+func (p *Parser) shouldSortCommandsForDisplay(commands []*Command) bool {
+	if p.commandSort != CommandSortByDeclaration {
+		return true
+	}
+
+	for _, cmd := range commands {
+		if cmd.Order != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *Parser) compareCommands(a *Command, b *Command) int {
+	ab := orderBucket(a.Order)
+	bb := orderBucket(b.Order)
+	if ab != bb {
+		return compareInt(ab, bb)
+	}
+
+	if a.Order != b.Order {
+		// Higher order first within same bucket.
+		return compareInt(b.Order, a.Order)
+	}
+
+	switch p.commandSort {
+	case CommandSortByNameDesc:
+		return compareString(b.Name, a.Name)
+	case CommandSortByNameAsc:
+		return compareString(a.Name, b.Name)
+	default:
+		return 0
+	}
 }
 
 func (c *Command) visibleCommands() []*Command {

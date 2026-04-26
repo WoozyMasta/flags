@@ -27,9 +27,6 @@ type Arg struct {
 	// Optional i18n key for Description.
 	DescriptionI18nKey string
 
-	// Group name used to organize positional arguments in help/docs.
-	Group string
-
 	// The default value(s) of the positional argument.
 	Default []string
 
@@ -61,11 +58,6 @@ func (a *Arg) SetDescription(description string) {
 // SetDescriptionI18nKey sets i18n key used to localize positional argument description.
 func (a *Arg) SetDescriptionI18nKey(key string) {
 	a.DescriptionI18nKey = key
-}
-
-// SetGroup updates help/docs group used for this positional argument.
-func (a *Arg) SetGroup(group string) {
-	a.Group = group
 }
 
 // SetDefault replaces positional argument default values.

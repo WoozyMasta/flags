@@ -55,17 +55,8 @@
 ## {{ i18n "doc.tmpl.markdown.section.arguments" }}
 
 {{ codeFenceOpen }}
-{{ if hasNamedArgGroups .Doc.ArgGroups }}
-{{ range .Doc.ArgGroups }}
-{{ if .Name }}[{{ .Name }}]
-{{ end }}{{ range .Args }}
-{{ .Name }}{{ if .Required }} ({{ i18n "doc.tmpl.markdown.required" }}){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
-{{ end }}
-{{ end }}
-{{ else }}
 {{ range .Doc.Args }}
 {{ .Name }}{{ if .Required }} ({{ i18n "doc.tmpl.markdown.required" }}){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
-{{ end }}
 {{ end }}
 {{ codeFenceClose }}
 {{ end }}
@@ -104,17 +95,8 @@
 #### {{ i18n "doc.tmpl.markdown.section.arguments_title" }}
 
 {{ codeFenceOpen }}
-{{ if hasNamedArgGroups .ArgGroups }}
-{{ range .ArgGroups }}
-{{ if .Name }}[{{ .Name }}]
-{{ end }}{{ range .Args }}
-{{ .Name }}{{ if .Required }} ({{ i18n "doc.tmpl.markdown.required" }}){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
-{{ end }}
-{{ end }}
-{{ else }}
 {{ range .Args }}
 {{ .Name }}{{ if .Required }} ({{ i18n "doc.tmpl.markdown.required" }}){{ end }}{{ if .Description }} - {{ .Description }}{{ end }}
-{{ end }}
 {{ end }}
 {{ codeFenceClose }}
 

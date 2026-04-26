@@ -55,24 +55,10 @@
 {{ if .Doc.Args }}
 ## {{ i18n "doc.tmpl.markdown.section.arguments" }}
 
-{{ if hasNamedArgGroups .Doc.ArgGroups }}
-{{ range .Doc.ArgGroups }}
-{{ if .Name }}
-### {{ .Name }}
-
-{{ end }}
-|{{ i18n "doc.tmpl.markdown.table.name" }}|{{ i18n "doc.tmpl.markdown.table.description" }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
-|---|---|---|
-{{ range .Args }}
-|{{ code .Name }}|{{ .Description }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
-{{ end }}
-{{ end }}
-{{ else }}
 |{{ i18n "doc.tmpl.markdown.table.name" }}|{{ i18n "doc.tmpl.markdown.table.description" }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
 |---|---|---|
 {{ range .Doc.Args }}
 |{{ code .Name }}|{{ .Description }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
-{{ end }}
 {{ end }}
 {{ end }}
 
@@ -110,26 +96,10 @@
 {{ if .Args }}
 #### {{ i18n "doc.tmpl.markdown.section.arguments_title" }}
 
-{{ if hasNamedArgGroups .ArgGroups }}
-{{ range .ArgGroups }}
-{{ if .Name }}
-##### {{ .Name }}
-
-{{ end }}
 |{{ i18n "doc.tmpl.markdown.table.name" }}|{{ i18n "doc.tmpl.markdown.table.description" }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
 |---|---|---|
 {{ range .Args }}
 |{{ code .Name }}|{{ .Description }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
-{{ end }}
-
-{{ end }}
-{{ else }}
-|{{ i18n "doc.tmpl.markdown.table.name" }}|{{ i18n "doc.tmpl.markdown.table.description" }}|{{ i18n "doc.tmpl.markdown.table.required" }}|
-|---|---|---|
-{{ range .Args }}
-|{{ code .Name }}|{{ .Description }}|{{ if .Required }}{{ i18n "doc.tmpl.markdown.value.yes" }}{{ else }}{{ i18n "doc.tmpl.markdown.value.no" }}{{ end }}|
-{{ end }}
-
 {{ end }}
 {{ end }}
 {{ if hasNamedCommandGroups .CommandGroups }}

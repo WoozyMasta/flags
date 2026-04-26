@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "cờ có ký hiệu kết thúc `{flag}' không thể dùng cú pháp đối số inline",
   "err.unknown_flag": "cờ không xác định `{flag}'",
   "help.arguments": "Đối số",
-  "help.arg_group.main_arguments": "Tham số chính",
   "help.available_commands": "Lệnh có sẵn",
 
   "help.builtin.command.completion.desc": "Tạo shell completion",

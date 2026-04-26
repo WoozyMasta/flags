@@ -44,10 +44,8 @@ and this project adheres to [Semantic Versioning][].
   and terminal-title updates.
 * Parser error/output routing controls:
   `PrintHelpOnStderr`, `PrintErrorsOnStdout` and `PrintHelpOnInputErrors`.
-* Display grouping for commands and positional arguments in CLI help and
-  generated documentation via `command-group`, `arg-group`,
-  `Command.SetCommandGroup(...)`, `Arg.SetGroup(...)`,
-  `.Doc.CommandGroups`, and `.Doc.ArgGroups`.
+* Display grouping for commands in CLI help and generated documentation via
+  `command-group`, `Command.SetCommandGroup(...)`, and `.Doc.CommandGroups`.
 * Opt-in built-in `help`, `version`, `completion`, `docs`, and `config`
   commands via `HelpCommand`, `VersionCommand`, `CompletionCommand`,
   `DocsCommand`, `ConfigCommand`, and the `HelpCommands` convenience mask.

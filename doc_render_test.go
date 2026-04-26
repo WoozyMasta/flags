@@ -652,11 +652,11 @@ func TestWriteDocTemplateHasFullTagMetadata(t *testing.T) {
 	}
 }
 
-func TestWriteDocTemplateIncludesCommandAndArgGroups(t *testing.T) {
+func TestWriteDocTemplateIncludesCommandGroupsAndLinearArgs(t *testing.T) {
 	var opts struct {
 		Positional struct {
-			Input  string `positional-arg-name:"input" arg-group:"Input" description:"Input file"`
-			Output string `positional-arg-name:"output" arg-group:"Output" description:"Output file"`
+			Input  string `positional-arg-name:"input" description:"Input file"`
+			Output string `positional-arg-name:"output" description:"Output file"`
 		} `positional-args:"yes"`
 
 		Add struct{} `command:"add" command-group:"Content" description:"Add item"`
@@ -670,8 +670,8 @@ func TestWriteDocTemplateIncludesCommandAndArgGroups(t *testing.T) {
 	}
 
 	tpl := strings.Join([]string{
-		"arg-group={{ (index .Doc.ArgGroups 0).Name }}:",
-		"{{ (index (index .Doc.ArgGroups 0).Args 0).Name }},",
+		"arg0={{ (index .Doc.Args 0).Name }},",
+		"arg1={{ (index .Doc.Args 1).Name }},",
 		"cmd-group={{ (index .Doc.CommandGroups 0).Name }}:",
 		"{{ (index (index .Doc.CommandGroups 0).Commands 0).Name }}",
 	}, "")
@@ -683,7 +683,7 @@ func TestWriteDocTemplateIncludesCommandAndArgGroups(t *testing.T) {
 
 	got := out.String()
 	for _, needle := range []string{
-		"arg-group=Input:input",
+		"arg0=input,arg1=output",
 		"cmd-group=Content:add",
 	} {
 		if !strings.Contains(got, needle) {
@@ -692,10 +692,10 @@ func TestWriteDocTemplateIncludesCommandAndArgGroups(t *testing.T) {
 	}
 }
 
-func TestWriteDocBuiltinTemplatesRenderCommandAndArgGroups(t *testing.T) {
+func TestWriteDocBuiltinTemplatesRenderCommandGroupsAndLinearArgs(t *testing.T) {
 	var opts struct {
 		Positional struct {
-			Input string `positional-arg-name:"input" arg-group:"Input" description:"Input file"`
+			Input string `positional-arg-name:"input" description:"Input file"`
 		} `positional-args:"yes"`
 
 		Add struct{} `command:"add" command-group:"Content" description:"Add item"`
@@ -716,19 +716,19 @@ func TestWriteDocBuiltinTemplatesRenderCommandAndArgGroups(t *testing.T) {
 			name:     "markdown list",
 			format:   DocFormatMarkdown,
 			template: DocTemplateMarkdownList,
-			want:     []string{"**Content**", "### Input"},
+			want:     []string{"**Content**", "`input`"},
 		},
 		{
 			name:     "markdown table",
 			format:   DocFormatMarkdown,
 			template: DocTemplateMarkdownTable,
-			want:     []string{"**Content**", "### Input"},
+			want:     []string{"**Content**", "`input`"},
 		},
 		{
 			name:     "markdown code",
 			format:   DocFormatMarkdown,
 			template: DocTemplateMarkdownCode,
-			want:     []string{"**Content**", "[Input]"},
+			want:     []string{"**Content**", "input - Input file"},
 		},
 		{
 			name:     "html default",

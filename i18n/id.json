@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "terminated option flag `{flag}' cannot use inline argument syntax",
   "err.unknown_flag": "flag tidak dikenal `{flag}'",
   "help.arguments": "Argumen",
-  "help.arg_group.main_arguments": "Argumen utama",
   "help.available_commands": "Perintah tersedia",
 
   "help.builtin.command.completion.desc": "Buat completion shell",

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -272,32 +273,8 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 				_, _ = fmt.Fprintf(wr, "\n%s\n", p.colorizeHelp(header, p.helpColorScheme.ArgumentsHeader))
 			}
 
-			argIndent := paddingBeforeOption
-			argGroups := groupedHelpArgs(p, args)
-			if len(argGroups) == 1 && argGroups[0].name == "" {
-				for _, arg := range argGroups[0].args {
-					p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
-				}
-			} else {
-				for gi, group := range argGroups {
-					if group.name != "" {
-						_, _ = fmt.Fprintf(
-							wr,
-							"%s%s:\n",
-							strings.Repeat(" ", paddingBeforeOption),
-							p.colorizeHelp(group.name, p.helpColorScheme.ArgumentsHeader),
-						)
-						argIndent = paddingBeforeOption * 2
-					} else {
-						argIndent = paddingBeforeOption
-					}
-					for _, arg := range group.args {
-						p.writeHelpArgument(wr, arg, &aligninfo, argIndent, trimDescriptions)
-					}
-					if gi < len(argGroups)-1 {
-						_, _ = fmt.Fprintln(wr)
-					}
-				}
+			for _, arg := range args {
+				p.writeHelpArgument(wr, arg, &aligninfo, paddingBeforeOption, trimDescriptions)
 			}
 		}
 
@@ -1194,6 +1171,10 @@ func (p *Parser) writeHelpArgument(
 			defaultLabel := p.i18nText("help.meta.default", "default")
 			argDescription += " (" + defaultLabel + ": " + def + ")"
 		}
+		if (p.Options&ShowRepeatableInHelp) != None && arg.isRemaining() {
+			repeatableLabel := p.i18nText("help.meta.repeatable", "repeatable")
+			argDescription += " (" + repeatableLabel + ")"
+		}
 
 		argDesc := wrapText(argDescription, descWidth, descPrefix, trimDescriptions)
 		_, _ = wr.WriteString(p.colorizeHelp(argDesc, p.helpColorScheme.ArgumentDesc))
@@ -1204,8 +1185,85 @@ func (p *Parser) writeHelpArgument(
 	_, _ = fmt.Fprintln(wr)
 }
 
-// WriteHelp writes a help message containing all the possible options and
-// their descriptions to the provided writer. Note that the HelpFlag parser
-// option provides a convenient way to add a -h/--help option group to the
-// command line parser which will automatically show the help messages using
-// this method.
+func commandHasVisibleShortOption(c *Command) bool {
+	for _, grp := range c.groups {
+		if !grp.showInHelp() || grp.isBuiltinHelp {
+			continue
+		}
+
+		for _, opt := range grp.options {
+			if opt.showInHelp() && opt.ShortName != 0 {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func maxCommandLength(s []*Command) int {
+	if len(s) == 0 {
+		return 0
+	}
+
+	ret := textWidth(s[0].Name)
+
+	for _, v := range s[1:] {
+		l := textWidth(v.Name)
+
+		if l > ret {
+			ret = l
+		}
+	}
+
+	return ret
+}
+
+type helpCommandGroup struct {
+	name     string
+	commands []*Command
+	sortRank int
+}
+
+func groupedHelpCommands(p *Parser, commands []*Command) []helpCommandGroup {
+	groups := make([]helpCommandGroup, 0)
+	index := make(map[string]int)
+
+	hasNamedGroups := false
+	for _, command := range commands {
+		if command.localizedCommandGroup() != "" {
+			hasNamedGroups = true
+			break
+		}
+	}
+
+	for _, command := range commands {
+		name := command.localizedCommandGroup()
+		rank := 1
+		if hasNamedGroups && name == "" {
+			name = p.i18nText("help.command_group.main_commands", "Main Commands")
+			rank = 0
+		}
+		if _, ok := command.data.(builtinCommand); ok {
+			rank = 2
+		}
+
+		key := fmt.Sprintf("%d\x00%s", rank, name)
+		idx, ok := index[key]
+		if !ok {
+			idx = len(groups)
+			index[key] = idx
+			groups = append(groups, helpCommandGroup{name: name, sortRank: rank})
+		}
+		groups[idx].commands = append(groups[idx].commands, command)
+	}
+
+	sort.SliceStable(groups, func(i, j int) bool {
+		if groups[i].sortRank != groups[j].sortRank {
+			return groups[i].sortRank < groups[j].sortRank
+		}
+		return groups[i].name < groups[j].name
+	})
+
+	return groups
+}

@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "терминаторы бар `{flag}` жалаушасы inline аргумент синтаксисін қолдана алмайды",
   "err.unknown_flag": "белгісіз жалауша `{flag}`",
   "help.arguments": "Аргументтер",
-  "help.arg_group.main_arguments": "Негізгі аргументтер",
   "help.available_commands": "Қолжетімді командалар",
 
   "help.builtin.command.completion.desc": "Shell completion жасау",

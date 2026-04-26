@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "terminiertes Options-Flag `{flag}` darf keine Inline-Argumentsyntax verwenden",
   "err.unknown_flag": "unbekanntes Flag `{flag}`",
   "help.arguments": "Argumente",
-  "help.arg_group.main_arguments": "Hauptargumente",
   "help.available_commands": "Verfügbare Befehle",
 
   "help.builtin.command.completion.desc": "Shell-Completion generieren",

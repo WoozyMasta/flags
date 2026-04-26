@@ -27,7 +27,7 @@ const (
 	FlagTagOptional = "optional"
 	// FlagTagOptionalValue defines fallback value when optional arg is omitted.
 	FlagTagOptionalValue = "optional-value"
-	// FlagTagOrder sets display/completion priority order for options.
+	// FlagTagOrder sets display/completion priority order for options and commands.
 	FlagTagOrder = "order"
 	// FlagTagDefault sets default option value (repeatable for slices/maps).
 	FlagTagDefault = "default"
@@ -95,8 +95,6 @@ const (
 	FlagTagPositionalArgs = "positional-args"
 	// FlagTagPositionalArgName sets display name for a positional argument.
 	FlagTagPositionalArgName = "positional-arg-name"
-	// FlagTagArgGroup groups positional arguments in help and documentation output.
-	FlagTagArgGroup = "arg-group"
 	// FlagTagArgNameI18n provides i18n key for positional arg display name.
 	FlagTagArgNameI18n = "arg-name-i18n"
 	// FlagTagArgDescriptionI18n provides i18n key for positional arg description.
@@ -206,8 +204,6 @@ type FlagTags struct {
 	PositionalArgs string
 	// PositionalArgName maps to positional display-name tag (default: "positional-arg-name").
 	PositionalArgName string
-	// ArgGroup maps to positional argument group tag (default: "arg-group").
-	ArgGroup string
 	// ArgNameI18n maps to positional i18n display-name tag.
 	ArgNameI18n string
 	// ArgDescriptionI18n maps to positional i18n description tag.
@@ -274,7 +270,6 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		ShortAliases:        prefix + FlagTagShortAliases,
 		PositionalArgs:      prefix + FlagTagPositionalArgs,
 		PositionalArgName:   prefix + FlagTagPositionalArgName,
-		ArgGroup:            prefix + FlagTagArgGroup,
 		ArgNameI18n:         prefix + FlagTagArgNameI18n,
 		ArgDescriptionI18n:  prefix + FlagTagArgDescriptionI18n,
 		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
@@ -418,9 +413,6 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.PositionalArgName != "" {
 		d.PositionalArgName = t.PositionalArgName
-	}
-	if t.ArgGroup != "" {
-		d.ArgGroup = t.ArgGroup
 	}
 	if t.ArgNameI18n != "" {
 		d.ArgNameI18n = t.ArgNameI18n

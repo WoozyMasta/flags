@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "ukončovaný přepínač `{flag}` nemůže použít inline syntaxi argumentu",
   "err.unknown_flag": "neznámý přepínač `{flag}`",
   "help.arguments": "Argumenty",
-  "help.arg_group.main_arguments": "Hlavní argumenty",
   "help.available_commands": "Dostupné příkazy",
 
   "help.builtin.command.completion.desc": "Vygenerovat shell completion",

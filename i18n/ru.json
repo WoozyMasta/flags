@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "флаг с терминатором `{flag}' не может использовать inline-синтаксис аргумента",
   "err.unknown_flag": "неизвестный флаг `{flag}'",
   "help.arguments": "Аргументы",
-  "help.arg_group.main_arguments": "Основные аргументы",
   "help.available_commands": "Доступные команды",
 
   "help.builtin.command.completion.desc": "Сгенерировать shell completion",

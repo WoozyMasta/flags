@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "समापक वाला फ्लैग `{flag}' inline तर्क syntax का उपयोग नहीं कर सकता",
   "err.unknown_flag": "अज्ञात फ्लैग `{flag}'",
   "help.arguments": "तर्क",
-  "help.arg_group.main_arguments": "मुख्य आर्ग्युमेंट्स",
   "help.available_commands": "उपलब्ध कमांड",
 
   "help.builtin.command.completion.desc": "शेल completion जनरेट करें",

@@ -119,7 +119,6 @@ Group and command tags:
   - `aliases`: delimiter-separated command aliases (non-repeatable)
   - `positional-args`: map trailing positional arguments into struct fields
   - `positional-arg-name`: placeholder label for positional help
-  - `arg-group`: display group for positional argument help/docs
   - `completion`: positional completion hint (`file`, `dir`, `none`)
 
 For `positional-args`, arguments are optional by default.

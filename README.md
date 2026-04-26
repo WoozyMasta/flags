@@ -256,6 +256,7 @@ All struct tags are configurable:
 * `ini-group`: stable INI section token for this command root.
 * `subcommands-optional`: command can run without child subcommand selection.
 * `pass-after-non-option`: enables command-local POSIX pass-through mode.
+* `order`: explicit render priority in command lists for help/docs.
 * `hidden`: hides command from help/completion/docs, keeps it executable.
 * `immediate`: marks command scope as immediate for required/execution bypass.
 
@@ -265,7 +266,6 @@ All struct tags are configurable:
 * `required`: for positional args you can use `yes/no`, `1` (required), `N`
   (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
 * `positional-arg-name`: custom display name for usage/help placeholders.
-* `arg-group`: display group for positional argument help/docs.
 * `arg-name-i18n`: i18n key for positional display name text.
 * `description`: help/docs description for the positional argument.
 * `arg-description-i18n`: i18n key for positional description text.
@@ -318,8 +318,8 @@ Use `positional-args:"yes"` on a struct field:
 ```go
 type Options struct {
   Args struct {
-    Input  string `arg-group:"Input"`
-    Output string `arg-group:"Output"`
+    Input  string
+    Output string
   } `positional-args:"yes" required:"yes"`
 }
 ```
@@ -711,10 +711,23 @@ Supported modes:
 * `flags.OptionSortByNameDesc`
 * `flags.OptionSortByType`
 
-Use `order:"N"` on option fields for priority within a group block:
+Command lists in help/docs are configured independently:
 
-* `order > 0` moves option toward top
-* `order < 0` moves option toward bottom
+```go
+parser := flags.NewParser(&opts, flags.Default)
+parser.SetCommandSort(flags.CommandSortByNameDesc)
+```
+
+Supported command modes:
+
+* `flags.CommandSortByDeclaration`
+* `flags.CommandSortByNameAsc`
+* `flags.CommandSortByNameDesc`
+
+Use `order:"N"` on option or command fields for priority:
+
+* `order > 0` moves item toward top
+* `order < 0` moves item toward bottom
 * `order == 0` uses configured sort mode
 
 ### Type Rank Customization

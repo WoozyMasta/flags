@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "終端付きオプションフラグ `{flag}` ではインライン引数構文を使用できません",
   "err.unknown_flag": "不明なフラグ `{flag}`",
   "help.arguments": "引数",
-  "help.arg_group.main_arguments": "メイン引数",
   "help.available_commands": "利用可能なコマンド",
 
   "help.builtin.command.completion.desc": "シェル補完を生成",

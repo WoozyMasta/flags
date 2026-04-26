@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "terminated option flag `{flag}' cannot use inline argument syntax",
   "err.unknown_flag": "flag desconhecida `{flag}'",
   "help.arguments": "Argumentos",
-  "help.arg_group.main_arguments": "Argumentos principais",
   "help.available_commands": "Comandos disponíveis",
 
   "help.builtin.command.completion.desc": "Gerar conclusão de shell",

@@ -20,7 +20,6 @@ type docParser struct {
 	GeneratedAt      time.Time
 	Usage            string
 	Args             []docArg
-	ArgGroups        []docArgGroup
 	Groups           []docGroup
 	Commands         []docCommand
 	CommandGroups    []docCommandGroup
@@ -34,7 +33,6 @@ type docCommand struct {
 	Group               string
 	Aliases             []string
 	Args                []docArg
-	ArgGroups           []docArgGroup
 	Groups              []docGroup
 	Commands            []docCommand
 	CommandGroups       []docCommandGroup
@@ -46,13 +44,7 @@ type docCommand struct {
 type docArg struct {
 	Name        string
 	Description string
-	Group       string
 	Required    bool
-}
-
-type docArgGroup struct {
-	Name string
-	Args []docArg
 }
 
 type docCommandGroup struct {
@@ -114,7 +106,6 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		Args:             buildDocArgs(p.Command, cfg.includeHidden),
 		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format),
 	}
-	model.ArgGroups = buildDocArgGroups(model.Args)
 
 	for _, cmd := range docCommands(p.Command, cfg.includeHidden) {
 		model.Commands = append(model.Commands, buildDocCommand("", p.Name+" "+usage, cmd, cfg.includeHidden, format))
@@ -163,7 +154,6 @@ func buildDocCommand(
 		Args:                buildDocArgs(cmd, includeHidden),
 		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format),
 	}
-	doc.ArgGroups = buildDocArgGroups(doc.Args)
 
 	for _, sub := range docCommands(cmd, includeHidden) {
 		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden, format))
@@ -274,28 +264,10 @@ func buildDocArgs(cmd *Command, includeHidden bool) []docArg {
 		ret = append(ret, docArg{
 			Name:        arg.localizedName(),
 			Description: argDescription,
-			Group:       arg.Group,
 			Required:    required,
 		})
 	}
 	return ret
-}
-
-func buildDocArgGroups(args []docArg) []docArgGroup {
-	groups := make([]docArgGroup, 0)
-	index := make(map[string]int)
-
-	for _, arg := range args {
-		idx, ok := index[arg.Group]
-		if !ok {
-			idx = len(groups)
-			index[arg.Group] = idx
-			groups = append(groups, docArgGroup{Name: arg.Group})
-		}
-		groups[idx].Args = append(groups[idx].Args, arg)
-	}
-
-	return groups
 }
 
 func buildDocCommandGroups(commands []docCommand) []docCommandGroup {
@@ -338,9 +310,17 @@ func docCommands(c *Command, includeHidden bool) []*Command {
 	if includeHidden {
 		ret := make([]*Command, len(c.commands))
 		copy(ret, c.commands)
-		sort.Slice(ret, func(i, j int) bool {
-			return ret[i].Name < ret[j].Name
-		})
+		if p := c.parser(); p != nil {
+			if p.shouldSortCommandsForDisplay(ret) {
+				sort.SliceStable(ret, func(i, j int) bool {
+					return p.compareCommands(ret[i], ret[j]) < 0
+				})
+			}
+		} else {
+			sort.Slice(ret, func(i, j int) bool {
+				return ret[i].Name < ret[j].Name
+			})
+		}
 		return ret
 	}
 	return c.sortedVisibleCommands()

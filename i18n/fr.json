@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "le drapeau d'option terminé `{flag}` ne peut pas utiliser la syntaxe d'argument inline",
   "err.unknown_flag": "drapeau inconnu `{flag}`",
   "help.arguments": "Arguments",
-  "help.arg_group.main_arguments": "Arguments principaux",
   "help.available_commands": "Commandes disponibles",
 
   "help.builtin.command.completion.desc": "Générer la complétion shell",

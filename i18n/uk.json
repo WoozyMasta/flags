@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "прапорець з термінатором `{flag}` не може використовувати inline-синтаксис аргументу",
   "err.unknown_flag": "невідомий прапорець `{flag}`",
   "help.arguments": "Аргументи",
-  "help.arg_group.main_arguments": "Основні аргументи",
   "help.available_commands": "Доступні команди",
 
   "help.builtin.command.completion.desc": "Згенерувати shell completion",

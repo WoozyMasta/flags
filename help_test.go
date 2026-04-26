@@ -1299,15 +1299,15 @@ func TestWriteHelpWithOnlyPositionalArgsUnicodeNameNoPanic(t *testing.T) {
 	}
 }
 
-func TestWriteHelpGroupsPositionalArgs(t *testing.T) {
+func TestWriteHelpPositionalArgsNoGroups(t *testing.T) {
 	var opts struct {
 		Positional struct {
-			Input  string `positional-arg-name:"input" arg-group:"Input" description:"Input file"`
-			Output string `positional-arg-name:"output" arg-group:"Output" description:"Output file"`
+			Input  string `positional-arg-name:"input" description:"Input file"`
+			Output string `positional-arg-name:"output" description:"Output file"`
 		} `positional-args:"yes"`
 	}
 
-	p := NewNamedParser("help-arg-groups", None)
+	p := NewNamedParser("help-args-no-groups", None)
 	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
 		t.Fatalf("unexpected add group error: %v", err)
 	}
@@ -1318,26 +1318,28 @@ func TestWriteHelpGroupsPositionalArgs(t *testing.T) {
 	got := out.String()
 	for _, want := range []string{
 		"Arguments:",
-		"  Input:",
-		"    input:",
-		"  Output:",
-		"    output:",
+		"  input:",
+		"  output:",
 	} {
 		if !strings.Contains(got, want) {
-			t.Fatalf("expected %q in grouped positional help, got:\n%s", want, got)
+			t.Fatalf("expected %q in positional help output, got:\n%s", want, got)
 		}
+	}
+	if strings.Contains(got, "Main Arguments:") || strings.Contains(got, "Input:") || strings.Contains(got, "Output:") {
+		t.Fatalf("did not expect positional argument grouping in help output, got:\n%s", got)
 	}
 }
 
-func TestWriteHelpGroupsPositionalArgsWithMainGroupFirst(t *testing.T) {
+func TestWriteHelpPositionalArgsPreserveDeclarationOrder(t *testing.T) {
 	var opts struct {
 		Positional struct {
-			GroupArg string `positional-arg-name:"grouped" arg-group:"Output" description:"Output file"`
-			MainArg  string `positional-arg-name:"main" description:"Main file"`
+			First  string `positional-arg-name:"first" description:"First input"`
+			Second string `positional-arg-name:"second" description:"Second output"`
+			Third  string `positional-arg-name:"third" description:"Third input"`
 		} `positional-args:"yes"`
 	}
 
-	p := NewNamedParser("help-arg-main-group", None)
+	p := NewNamedParser("help-arg-order", None)
 	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
 		t.Fatalf("unexpected add group error: %v", err)
 	}
@@ -1346,22 +1348,44 @@ func TestWriteHelpGroupsPositionalArgsWithMainGroupFirst(t *testing.T) {
 	p.WriteHelp(&out)
 
 	got := out.String()
-	for _, want := range []string{
-		"Arguments:",
-		"  Main Arguments:",
-		"    main:",
-		"  Output:",
-		"    grouped:",
-	} {
-		if !strings.Contains(got, want) {
-			t.Fatalf("expected %q in grouped positional help, got:\n%s", want, got)
-		}
+	firstIdx := strings.Index(got, "first:")
+	secondIdx := strings.Index(got, "second:")
+	thirdIdx := strings.Index(got, "third:")
+	if firstIdx == -1 || secondIdx == -1 || thirdIdx == -1 {
+		t.Fatalf("expected positional args in help output, got:\n%s", got)
+	}
+	if !(firstIdx < secondIdx && secondIdx < thirdIdx) {
+		t.Fatalf("expected positional args in declaration order, got:\n%s", got)
+	}
+}
+
+func TestWriteHelpPositionalRepeatableMarker(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Items []string `positional-arg-name:"item" description:"Input item"`
+		} `positional-args:"yes"`
 	}
 
-	mainIdx := strings.Index(got, "  Main Arguments:")
-	outputIdx := strings.Index(got, "  Output:")
-	if mainIdx == -1 || outputIdx == -1 || mainIdx > outputIdx {
-		t.Fatalf("expected Main Arguments group before Output, got:\n%s", got)
+	pWith := NewNamedParser("help-positional-repeatable", ShowRepeatableInHelp)
+	if _, err := pWith.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var withOut bytes.Buffer
+	pWith.WriteHelp(&withOut)
+	if !strings.Contains(withOut.String(), "Input item (repeatable)") {
+		t.Fatalf("expected positional repeatable marker, got:\n%s", withOut.String())
+	}
+
+	pWithout := NewNamedParser("help-positional-repeatable", None)
+	if _, err := pWithout.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var withoutOut bytes.Buffer
+	pWithout.WriteHelp(&withoutOut)
+	if strings.Contains(withoutOut.String(), "(repeatable)") {
+		t.Fatalf("did not expect positional repeatable marker without flag, got:\n%s", withoutOut.String())
 	}
 }
 
@@ -1438,6 +1462,72 @@ func TestWriteHelpGroupsCommandsMainFirstBuiltinLast(t *testing.T) {
 	}
 	if !(mainIdx < adminIdx && adminIdx < helpIdx) {
 		t.Fatalf("expected Main Commands first and Help Commands last, got:\n%s", got)
+	}
+
+	helpCmdIdx := strings.Index(got, "\n    help")
+	versionCmdIdx := strings.Index(got, "\n    version")
+	completionCmdIdx := strings.Index(got, "\n    completion")
+	if helpCmdIdx == -1 || versionCmdIdx == -1 || completionCmdIdx == -1 {
+		t.Fatalf("missing expected builtin commands, got:\n%s", got)
+	}
+	if !(helpCmdIdx < versionCmdIdx && versionCmdIdx < completionCmdIdx) {
+		t.Fatalf("expected builtin command order help -> version -> others, got:\n%s", got)
+	}
+}
+
+func TestWriteHelpCommandSortByNameDesc(t *testing.T) {
+	var opts struct {
+		Alpha struct{} `command:"alpha" description:"Alpha command"`
+		Beta  struct{} `command:"beta" description:"Beta command"`
+		Zeta  struct{} `command:"zeta" description:"Zeta command"`
+	}
+
+	p := NewNamedParser("help-command-sort-desc", None)
+	p.SetCommandSort(CommandSortByNameDesc)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	zetaIdx := strings.Index(got, "\n  zeta")
+	betaIdx := strings.Index(got, "\n  beta")
+	alphaIdx := strings.Index(got, "\n  alpha")
+	if zetaIdx == -1 || betaIdx == -1 || alphaIdx == -1 {
+		t.Fatalf("missing commands in help output:\n%s", got)
+	}
+	if !(zetaIdx < betaIdx && betaIdx < alphaIdx) {
+		t.Fatalf("expected descending command order, got:\n%s", got)
+	}
+}
+
+func TestWriteHelpCommandSortRespectsOrderTag(t *testing.T) {
+	var opts struct {
+		Alpha struct{} `command:"alpha" order:"-10" description:"Alpha command"`
+		Beta  struct{} `command:"beta" description:"Beta command"`
+		Gamma struct{} `command:"gamma" order:"10" description:"Gamma command"`
+	}
+
+	p := NewNamedParser("help-command-sort-order", None)
+	p.SetCommandSort(CommandSortByNameAsc)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+
+	got := out.String()
+	gammaIdx := strings.Index(got, "\n  gamma")
+	betaIdx := strings.Index(got, "\n  beta")
+	alphaIdx := strings.Index(got, "\n  alpha")
+	if alphaIdx == -1 || betaIdx == -1 || gammaIdx == -1 {
+		t.Fatalf("missing commands in help output:\n%s", got)
+	}
+	if !(gammaIdx < betaIdx && betaIdx < alphaIdx) {
+		t.Fatalf("expected order-tag buckets (positive -> zero -> negative), got:\n%s", got)
 	}
 }
 

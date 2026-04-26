@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "flaga zakończona terminatorem `{flag}` nie może używać składni argumentu inline",
   "err.unknown_flag": "nieznana flaga `{flag}`",
   "help.arguments": "Argumenty",
-  "help.arg_group.main_arguments": "Główne argumenty",
   "help.available_commands": "Dostępne polecenia",
 
   "help.builtin.command.completion.desc": "Wygeneruj uzupełnianie powłoki",

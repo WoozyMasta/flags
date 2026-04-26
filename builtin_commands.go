@@ -295,7 +295,7 @@ func (p *Parser) ensureBuiltinCommands() error {
 		}
 	}
 	if (missing & ConfigCommand) != None {
-		if err := p.addBuiltinCommand("config", "Generate configuration example", "help.builtin.command.config.desc", &builtinConfigCommand{parser: p}); err != nil {
+		if err := p.addBuiltinCommand("config", "Generate INI configuration example", "help.builtin.command.config.desc", &builtinConfigCommand{parser: p}); err != nil {
 			return err
 		}
 	}
@@ -320,8 +320,20 @@ func (p *Parser) addBuiltinCommand(name string, shortDescription string, shortDe
 	cmd.CommandGroup = p.builtinCommandGroup
 	cmd.CommandGroupI18nKey = p.builtinCommandGroupI18nKey
 	cmd.ShortDescriptionI18nKey = shortDescriptionI18n
+	cmd.Order = builtinCommandOrder(name)
 
 	return nil
+}
+
+func builtinCommandOrder(name string) int {
+	switch name {
+	case "help":
+		return 200
+	case "version":
+		return 190
+	default:
+		return 0
+	}
 }
 
 func (*builtinHelpCommand) isBuiltinCommand()        {}

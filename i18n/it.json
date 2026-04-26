@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "il flag terminato `{flag}` non può usare la sintassi inline dell'argomento",
   "err.unknown_flag": "flag sconosciuto `{flag}`",
   "help.arguments": "Argomenti",
-  "help.arg_group.main_arguments": "Argomenti principali",
   "help.available_commands": "Comandi disponibili",
 
   "help.builtin.command.completion.desc": "Genera completamento shell",

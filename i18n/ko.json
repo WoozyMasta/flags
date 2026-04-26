@@ -126,7 +126,6 @@
   "err.terminated.inline_argument": "종결자 플래그 `{flag}'에는 inline 인수 구문을 사용할 수 없습니다",
   "err.unknown_flag": "알 수 없는 플래그 `{flag}'",
   "help.arguments": "인수",
-  "help.arg_group.main_arguments": "기본 인자",
   "help.available_commands": "사용 가능한 명령",
 
   "help.builtin.command.completion.desc": "셸 완성 생성",
