@@ -45,6 +45,9 @@ func (p *Parser) printError(err error) error {
 		}
 
 		_, _ = fmt.Fprintln(writer, p.colorizeError(err, err.Error(), writer))
+		if (p.Options&ColorErrors) != None && DetectColorSupport(writer) {
+			writeANSIReset(writer)
+		}
 	}
 
 	return err

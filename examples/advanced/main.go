@@ -58,7 +58,7 @@ type AdvancedOptions struct {
 	ManualEnvOnly    string                 `long:"manual-env-only" description:"Explicit opt-out from global auto env" auto-env:"false" default:"local" order:"-40"`
 	ReleaseID        string                 `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
 	SecretKey        string                 `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
-	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;light" default:"none" description:"Color scheme for built-in help output"`
+	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;gray;light" default:"none" description:"Color scheme for built-in help output"`
 	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
 	Verbose          []bool                 `short:"V" long:"verbose" description:"Increase verbosity level" order:"100"`
 	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
@@ -171,25 +171,31 @@ func applyHelpColorMode(p *flags.Parser, mode string) error {
 	case "contrast":
 		p.Options |= flags.ColorHelp
 		p.SetHelpColorScheme(flags.HighContrastHelpColorScheme())
+	case "gray":
+		p.Options |= flags.ColorHelp
+		p.SetHelpColorScheme(flags.GrayHelpColorScheme())
 	case "light":
 		p.Options |= flags.ColorHelp
 		p.SetHelpColorScheme(flags.HelpColorScheme{
-			BaseText:        flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack, UseBG: true, BG: flags.ColorBrightWhite},
-			OptionShort:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
-			OptionLong:      flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
-			OptionDesc:      flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
-			OptionEnv:       flags.HelpTextStyle{UseFG: true, FG: flags.ColorCyan},
-			OptionDefault:   flags.HelpTextStyle{UseFG: true, FG: flags.ColorMagenta},
-			OptionChoices:   flags.HelpTextStyle{UseFG: true, FG: flags.ColorGreen, Bold: true},
-			UsageHeader:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true},
-			UsageText:       flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack, Bold: true},
-			CommandsHeader:  flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
-			CommandName:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
-			CommandDesc:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow},
-			ArgumentsHeader: flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true},
-			ArgumentName:    flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, Bold: true},
-			ArgumentDesc:    flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
-			GroupHeader:     flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true, Underline: true},
+			BaseText:             flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack, UseBG: true, BG: flags.ColorBrightWhite},
+			OptionShort:          flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			OptionLong:           flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			OptionDesc:           flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
+			OptionEnv:            flags.HelpTextStyle{UseFG: true, FG: flags.ColorCyan},
+			OptionDefault:        flags.HelpTextStyle{UseFG: true, FG: flags.ColorMagenta},
+			OptionChoices:        flags.HelpTextStyle{UseFG: true, FG: flags.ColorGreen, Bold: true},
+			VersionLabel:         flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, Bold: true},
+			VersionValue:         flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
+			UsageHeader:          flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true},
+			UsageText:            flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack, Bold: true},
+			CommandSectionHeader: flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			CommandGroupHeader:   flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			CommandName:          flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, UseBG: true, BG: flags.ColorBrightYellow, Bold: true},
+			CommandDesc:          flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlack, UseBG: true, BG: flags.ColorBrightYellow},
+			ArgumentsHeader:      flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true},
+			ArgumentName:         flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, Bold: true},
+			ArgumentDesc:         flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
+			GroupHeader:          flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true, Underline: true},
 		})
 	default:
 		return fmt.Errorf("unknown help color mode %q", mode)

@@ -10,6 +10,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -181,6 +182,26 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 
 	info := p.VersionInfo()
 
+	prevHelpColorEnabled := p.helpColorEnabled
+	p.helpColorEnabled = DetectColorSupport(w)
+	defer func() {
+		p.helpColorEnabled = prevHelpColorEnabled
+	}()
+
+	basePrefix := ""
+	padToTerminalWidth := false
+	terminalColumns := 0
+	if (p.Options&ColorHelp) != None && p.helpColorEnabled {
+		basePrefix = helpStylePrefix(p.helpColorScheme.BaseText)
+		if basePrefix != "" {
+			_, _ = io.WriteString(w, basePrefix)
+		}
+		if p.helpColorScheme.BaseText.UseBG {
+			terminalColumns = p.helpColumns()
+			padToTerminalWidth = terminalColumns > 0
+		}
+	}
+
 	version := info.Version
 	if version == "" {
 		version = p.i18nText("version.value.unknown", "unknown")
@@ -246,35 +267,55 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	goLabel := p.i18nText("version.label.go", "go")
 	targetLabel := p.i18nText("version.label.target", "target")
 
+	writeVersionLine := func(label string, value string) {
+		padded := fmt.Sprintf("%-9s", label+":")
+		plain := padded + " " + value
+		colored := p.colorizeHelp(padded, p.helpColorScheme.VersionLabel)
+		coloredValue := p.colorizeHelp(value, p.helpColorScheme.VersionValue)
+
+		line := fmt.Sprintf("%s %s", colored, coloredValue)
+		if padToTerminalWidth {
+			if pad := terminalColumns - textWidth(plain); pad > 0 {
+				line += strings.Repeat(" ", pad)
+			}
+		}
+
+		_, _ = fmt.Fprintln(w, line)
+	}
+
 	if (fields & VersionFieldFile) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", fileLabel+":", file)
+		writeVersionLine(fileLabel, file)
 	}
 	if (fields & VersionFieldVersion) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", versionLabel+":", version)
+		writeVersionLine(versionLabel, version)
 	}
 	if (fields & VersionFieldCommit) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", commitLabel+":", commit)
+		writeVersionLine(commitLabel, commit)
 	}
 	if (fields & VersionFieldBuilt) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", builtLabel+":", built)
+		writeVersionLine(builtLabel, built)
 	}
 	if (fields & VersionFieldURL) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", urlLabel+":", url)
+		writeVersionLine(urlLabel, url)
 	}
 	if (fields & VersionFieldPath) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", pathLabel+":", path)
+		writeVersionLine(pathLabel, path)
 	}
 	if (fields & VersionFieldModule) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", moduleLabel+":", module)
+		writeVersionLine(moduleLabel, module)
 	}
 	if (fields & VersionFieldModified) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %t\n", modifiedLabel+":", info.Modified)
+		writeVersionLine(modifiedLabel, strconv.FormatBool(info.Modified))
 	}
 	if (fields & VersionFieldGoVersion) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", goLabel+":", goVersion)
+		writeVersionLine(goLabel, goVersion)
 	}
 	if (fields & VersionFieldTarget) != 0 {
-		_, _ = fmt.Fprintf(w, "%-9s %s\n", targetLabel+":", target)
+		writeVersionLine(targetLabel, target)
+	}
+
+	if (p.Options&ColorHelp) != None && p.helpColorEnabled {
+		writeANSIReset(w)
 	}
 }
 

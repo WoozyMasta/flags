@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"os"
 	"runtime"
 	"strings"
 	"testing"
@@ -74,5 +75,50 @@ func TestWriteVersionTargetFieldFallback(t *testing.T) {
 	want := "target:   " + runtime.GOOS + "/" + runtime.GOARCH
 	if !strings.Contains(out, want) {
 		t.Fatalf("expected runtime target fallback %q, got:\n%s", want, out)
+	}
+}
+
+func TestWriteVersionEndsWithANSIResetWhenColorEnabled(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	_ = os.Setenv("FORCE_COLOR", "1")
+
+	p := NewNamedParser("myapp", ColorHelp)
+	p.SetVersion("v1.2.3")
+	p.SetHelpColorScheme(DefaultHelpColorScheme())
+
+	var b strings.Builder
+	p.WriteVersion(&b, VersionFieldVersion)
+	out := b.String()
+
+	if !strings.Contains(out, "\x1b[") {
+		t.Fatalf("expected ANSI colored output, got:\n%s", out)
+	}
+	if !strings.HasSuffix(out, ansiReset) {
+		t.Fatalf("expected version output to end with ANSI reset, got:\n%s", out)
+	}
+}
+
+func TestWriteVersionPadsLinesWithBaseBackground(t *testing.T) {
+	p := NewNamedParser("myapp", ColorHelp)
+	p.SetVersion("v1.2.3")
+	p.SetHelpColorScheme(HelpColorScheme{
+		BaseText:     HelpTextStyle{UseBG: true, BG: ColorBrightWhite},
+		VersionLabel: HelpTextStyle{UseFG: true, FG: ColorBlue, Bold: true},
+		VersionValue: HelpTextStyle{UseFG: true, FG: ColorBlack},
+	})
+	if err := p.SetHelpWidth(24); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
+
+	var b strings.Builder
+	p.WriteVersion(&b, VersionFieldVersion)
+	out := b.String()
+	lines := strings.Split(strings.TrimSuffix(out, ansiReset), "\n")
+	if len(lines) == 0 {
+		t.Fatalf("expected at least one version line, got empty output")
+	}
+	if got := textWidth(lines[0]); got != 24 {
+		t.Fatalf("expected padded line width 24, got %d line=%q", got, lines[0])
 	}
 }

@@ -289,7 +289,10 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		_, _ = fmt.Fprintln(wr)
 		_, _ = fmt.Fprintln(
 			wr,
-			p.colorizeHelp(p.i18nText("help.available_commands", "Available commands")+":", p.helpColorScheme.CommandsHeader),
+			p.colorizeHelp(
+				p.i18nText("help.available_commands", "Available commands")+":",
+				p.helpColorScheme.CommandSectionHeader,
+			),
 		)
 
 		commandGroups := groupedHelpCommands(p, scommands)
@@ -301,7 +304,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						wr,
 						"%s%s:\n",
 						strings.Repeat(" ", paddingBeforeOption),
-						p.colorizeHelp(group.name, p.helpColorScheme.CommandsHeader),
+						p.colorizeHelp(group.name, p.helpColorScheme.CommandGroupHeader),
 					)
 					commandIndent = paddingBeforeOption * 2
 				} else {
@@ -340,8 +343,8 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		}
 	}
 
-	if basePrefix != "" {
-		_, _ = wr.WriteString("\x1b[0m")
+	if (p.Options&ColorHelp) != None && p.helpColorEnabled {
+		writeANSIReset(wr)
 	}
 
 	_ = wr.Flush()
@@ -632,6 +635,7 @@ func renderChoiceToken(option *Option, leftWidth int, prefixLen int) string {
 type optionTailLine struct {
 	Text     string
 	IsChoice bool
+	IsValue  bool
 }
 
 func renderChoicePipeLines(choices []string, width int) []string {
@@ -726,7 +730,7 @@ func splitOptionTailLines(
 		raw := strings.Split(wrapTextNoHyphen(valueName, width), "\n")
 		lines := make([]optionTailLine, 0, len(raw))
 		for _, line := range raw {
-			lines = append(lines, optionTailLine{Text: line})
+			lines = append(lines, optionTailLine{Text: line, IsValue: true})
 		}
 		return lines
 	}
@@ -734,7 +738,7 @@ func splitOptionTailLines(
 	lines := make([]optionTailLine, 0, len(choices)+2)
 	if valueName != "" {
 		for line := range strings.SplitSeq(wrapTextNoHyphen(valueName, width), "\n") {
-			lines = append(lines, optionTailLine{Text: line})
+			lines = append(lines, optionTailLine{Text: line, IsValue: true})
 		}
 	}
 
@@ -887,6 +891,27 @@ func (p *Parser) buildHelpOptionDescription(
 	return lines, defaultFrag, envFrag, repeatableFrag
 }
 
+func isHelpTextStyleSet(style HelpTextStyle) bool {
+	return style.UseFG || style.UseBG || style.Bold || style.Italic || style.Underline
+}
+
+func (p *Parser) colorizeOptionPunctuation(text string, format optionRenderFormat) string {
+	style := p.helpColorScheme.OptionPunctuation
+	if text == "" || !isHelpTextStyleSet(style) {
+		return text
+	}
+
+	for _, token := range []string{
+		",",
+		string(format.nameDelimiter),
+	} {
+		colored := p.colorizeHelp(token, style)
+		text = strings.ReplaceAll(text, token, colored)
+	}
+
+	return text
+}
+
 func (p *Parser) adaptiveWriteHelpOption(
 	writer *bufio.Writer,
 	option *Option,
@@ -921,6 +946,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 
 	leftLinesPlain := make([]string, 0, 4)
 	leftLinesChoice := make([]bool, 0, 4)
+	leftLinesValue := make([]bool, 0, 4)
 	if option.canArgument() {
 		if idx := strings.IndexRune(leftBody, format.nameDelimiter); idx >= 0 && idx+1 < len(leftBody) {
 			head := leftBody[:idx+1]
@@ -937,6 +963,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 			for line := range strings.SplitSeq(headWrapped, "\n") {
 				leftLinesPlain = append(leftLinesPlain, indentPrefix+line)
 				leftLinesChoice = append(leftLinesChoice, false)
+				leftLinesValue = append(leftLinesValue, false)
 			}
 
 			continuationPrefix := strings.Repeat(" ", leftPrefix+2)
@@ -952,6 +979,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 			) {
 				leftLinesPlain = append(leftLinesPlain, continuationPrefix+line.Text)
 				leftLinesChoice = append(leftLinesChoice, line.IsChoice)
+				leftLinesValue = append(leftLinesValue, line.IsValue)
 			}
 		}
 	}
@@ -961,6 +989,7 @@ func (p *Parser) adaptiveWriteHelpOption(
 		for line := range strings.SplitSeq(leftWrapped, "\n") {
 			leftLinesPlain = append(leftLinesPlain, indentPrefix+line)
 			leftLinesChoice = append(leftLinesChoice, false)
+			leftLinesValue = append(leftLinesValue, false)
 		}
 	}
 
@@ -980,7 +1009,10 @@ func (p *Parser) adaptiveWriteHelpOption(
 		}
 		if i < len(leftLinesChoice) && leftLinesChoice[i] {
 			colored = p.colorizeHelp(colored, p.helpColorScheme.OptionChoices)
+		} else if i < len(leftLinesValue) && leftLinesValue[i] {
+			colored = p.colorizeHelp(colored, p.helpColorScheme.OptionValueName)
 		}
+		colored = p.colorizeOptionPunctuation(colored, format)
 		leftLines[i] = colored
 	}
 
@@ -1113,6 +1145,13 @@ func (p *Parser) writeHelpOption(
 	if choicesToken != "" {
 		lineText = strings.Replace(lineText, choicesToken, p.colorizeHelp(choicesToken, p.helpColorScheme.OptionChoices), 1)
 	}
+	if option.canArgument() {
+		valueName := option.localizedValueName()
+		if valueName != "" {
+			lineText = strings.Replace(lineText, valueName, p.colorizeHelp(valueName, p.helpColorScheme.OptionValueName), 1)
+		}
+	}
+	lineText = p.colorizeOptionPunctuation(lineText, format)
 	_, _ = writer.WriteString(lineText)
 
 	if option.localizedDescription() != "" {

@@ -1849,6 +1849,28 @@ func TestPrintErrorsColorDisabledByNO_COLOR(t *testing.T) {
 	}
 }
 
+func TestPrintErrorsEndsWithANSIResetWhenColorEnabled(t *testing.T) {
+	oldEnv := EnvSnapshot()
+	defer oldEnv.Restore()
+	_ = os.Setenv("FORCE_COLOR", "1")
+
+	var opts struct {
+		Value bool `long:"value"`
+	}
+
+	parser := NewParser(&opts, Default|ColorErrors)
+	_, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{"--unknown"})
+	})
+
+	if !strings.Contains(stderr, "\x1b[") {
+		t.Fatalf("expected ANSI color sequences when FORCE_COLOR is set, got %q", stderr)
+	}
+	if !strings.HasSuffix(stderr, ansiReset) {
+		t.Fatalf("expected colored error output to end with ANSI reset, got %q", stderr)
+	}
+}
+
 func TestPrintErrorsInternalParserErrorDestination(t *testing.T) {
 	type invalidOptions struct {
 		One bool `long:"dup"`

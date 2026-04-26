@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const ansiReset = "\x1b[0m"
+
 // ANSIColor is an ANSI 16-color palette entry.
 type ANSIColor uint8
 
@@ -63,16 +65,21 @@ type HelpTextStyle struct {
 type HelpColorScheme struct {
 	BaseText                HelpTextStyle
 	LongDescription         HelpTextStyle
+	VersionLabel            HelpTextStyle
+	VersionValue            HelpTextStyle
 	SubcommandOptionsHeader HelpTextStyle
 	OptionShort             HelpTextStyle
 	OptionLong              HelpTextStyle
+	OptionValueName         HelpTextStyle
+	OptionPunctuation       HelpTextStyle
 	OptionDesc              HelpTextStyle
 	OptionEnv               HelpTextStyle
 	OptionDefault           HelpTextStyle
 	OptionChoices           HelpTextStyle
 	UsageHeader             HelpTextStyle
 	UsageText               HelpTextStyle
-	CommandsHeader          HelpTextStyle
+	CommandSectionHeader    HelpTextStyle
+	CommandGroupHeader      HelpTextStyle
 	CommandName             HelpTextStyle
 	CommandDesc             HelpTextStyle
 	CommandAliases          HelpTextStyle
@@ -93,17 +100,22 @@ func DefaultHelpColorScheme() HelpColorScheme {
 	return HelpColorScheme{
 		BaseText:                HelpTextStyle{},
 		LongDescription:         HelpTextStyle{},
+		VersionLabel:            HelpTextStyle{UseFG: true, FG: ColorBrightBlack},
+		VersionValue:            HelpTextStyle{},
 		SubcommandOptionsHeader: HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		OptionShort:             HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
 		OptionLong:              HelpTextStyle{UseFG: true, FG: ColorCyan, Bold: true},
+		OptionValueName:         HelpTextStyle{},
+		OptionPunctuation:       HelpTextStyle{UseFG: true, FG: ColorBrightBlack},
 		OptionDesc:              HelpTextStyle{},
 		OptionEnv:               HelpTextStyle{UseFG: true, FG: ColorBrightBlue},
 		OptionDefault:           HelpTextStyle{UseFG: true, FG: ColorBrightMagenta},
 		OptionChoices:           HelpTextStyle{UseFG: true, FG: ColorBrightGreen},
 		UsageHeader:             HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
 		UsageText:               HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
-		CommandsHeader:          HelpTextStyle{UseFG: true, FG: ColorBrightYellow},
-		CommandName:             HelpTextStyle{UseFG: true, FG: ColorBrightYellow},
+		CommandSectionHeader:    HelpTextStyle{UseFG: true, FG: ColorBrightYellow},
+		CommandGroupHeader:      HelpTextStyle{UseFG: true, FG: ColorBrightYellow},
+		CommandName:             HelpTextStyle{UseFG: true, FG: ColorBrightCyan},
 		CommandDesc:             HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		CommandAliases:          HelpTextStyle{UseFG: true, FG: ColorBrightBlack},
 		ArgumentsHeader:         HelpTextStyle{UseFG: true, FG: ColorBrightYellow},
@@ -118,24 +130,60 @@ func HighContrastHelpColorScheme() HelpColorScheme {
 	return HelpColorScheme{
 		BaseText:                HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		LongDescription:         HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
-		SubcommandOptionsHeader: HelpTextStyle{UseFG: true, FG: ColorBrightBlue},
-		OptionShort:             HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
-		OptionLong:              HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
+		VersionLabel:            HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
+		VersionValue:            HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
+		SubcommandOptionsHeader: HelpTextStyle{UseFG: true, FG: ColorBrightWhite, Bold: true, Underline: true},
+		OptionShort:             HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
+		OptionLong:              HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
+		OptionValueName:         HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
+		OptionPunctuation:       HelpTextStyle{UseFG: true, FG: ColorBrightBlack, Bold: true},
 		OptionDesc:              HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
-		OptionEnv:               HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
+		OptionEnv:               HelpTextStyle{UseFG: true, FG: ColorBrightBlue, Bold: true},
 		OptionDefault:           HelpTextStyle{UseFG: true, FG: ColorBrightMagenta, Bold: true},
 		OptionChoices:           HelpTextStyle{UseFG: true, FG: ColorBrightGreen, Bold: true},
-		UsageHeader:             HelpTextStyle{UseFG: true, FG: ColorBrightBlue, Bold: true},
+		UsageHeader:             HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true, Underline: true},
 		UsageText:               HelpTextStyle{UseFG: true, FG: ColorBrightWhite, Bold: true},
-		CommandsHeader:          HelpTextStyle{UseFG: true, FG: ColorBrightBlue},
-		CommandName:             HelpTextStyle{UseFG: true, FG: ColorBrightBlue, Bold: true},
+		CommandSectionHeader:    HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true, Underline: true},
+		CommandGroupHeader:      HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true, Underline: true},
+		CommandName:             HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
 		CommandDesc:             HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		CommandAliases:          HelpTextStyle{UseFG: true, FG: ColorBrightCyan},
-		ArgumentsHeader:         HelpTextStyle{UseFG: true, FG: ColorBrightBlue},
-		ArgumentName:            HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
+		ArgumentsHeader:         HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true, Underline: true},
+		ArgumentName:            HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
 		ArgumentDesc:            HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		GroupHeader:             HelpTextStyle{UseFG: true, FG: ColorBrightWhite, Bold: true, Underline: true},
 	}
+}
+
+// GrayHelpColorScheme returns a subtle gray-toned scheme for help/version
+// while keeping most default role colors intact.
+func GrayHelpColorScheme() HelpColorScheme {
+	scheme := DefaultHelpColorScheme()
+	gray := HelpTextStyle{UseFG: true, FG: ColorBrightBlack}
+
+	scheme.LongDescription = gray
+	scheme.OptionShort = gray
+	scheme.OptionLong = gray
+	scheme.OptionValueName = gray
+	scheme.OptionPunctuation = gray
+	scheme.OptionEnv = gray
+	scheme.OptionDefault = gray
+	scheme.OptionChoices = gray
+	scheme.UsageHeader = HelpTextStyle{}
+	scheme.UsageText = HelpTextStyle{}
+	scheme.CommandSectionHeader = HelpTextStyle{}
+	scheme.CommandGroupHeader = HelpTextStyle{}
+	scheme.ArgumentsHeader = HelpTextStyle{}
+	scheme.GroupHeader = HelpTextStyle{}
+	scheme.SubcommandOptionsHeader = HelpTextStyle{}
+	scheme.ArgumentName = gray
+	scheme.CommandName = gray
+	scheme.CommandDesc = HelpTextStyle{}
+	scheme.CommandAliases = gray
+	scheme.VersionLabel = gray
+	scheme.VersionValue = HelpTextStyle{}
+
+	return scheme
 }
 
 // DefaultErrorColorScheme returns default parser error color roles.
@@ -144,6 +192,12 @@ func DefaultErrorColorScheme() ErrorColorScheme {
 		Warning:  HelpTextStyle{UseFG: true, FG: ColorBrightYellow, Bold: true},
 		Critical: HelpTextStyle{UseFG: true, FG: ColorBrightRed, Bold: true},
 	}
+}
+
+// GrayErrorColorScheme is an alias of DefaultErrorColorScheme.
+// Error output keeps warning/critical contrast (yellow/red) for readability.
+func GrayErrorColorScheme() ErrorColorScheme {
+	return DefaultErrorColorScheme()
 }
 
 // HighContrastErrorColorScheme returns a high-contrast parser error scheme.
@@ -194,7 +248,7 @@ func applyHelpTextStyle(text string, style HelpTextStyle) string {
 		return text
 	}
 
-	return prefix + text + "\x1b[0m"
+	return prefix + text + ansiReset
 }
 
 func helpStylePrefix(style HelpTextStyle) string {
@@ -230,11 +284,15 @@ func (p *Parser) colorizeHelp(text string, role HelpTextStyle) string {
 	styled := applyHelpTextStyle(text, style)
 
 	basePrefix := helpStylePrefix(p.helpColorScheme.BaseText)
-	if basePrefix != "" && strings.HasSuffix(styled, "\x1b[0m") {
-		styled = strings.TrimSuffix(styled, "\x1b[0m") + basePrefix
+	if basePrefix != "" && strings.HasSuffix(styled, ansiReset) {
+		styled = strings.TrimSuffix(styled, ansiReset) + basePrefix
 	}
 
 	return styled
+}
+
+func writeANSIReset(w io.Writer) {
+	_, _ = io.WriteString(w, ansiReset)
 }
 
 func (p *Parser) colorizeError(err error, text string, writer io.Writer) string {

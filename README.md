@@ -965,10 +965,12 @@ Colorized output can be enabled for built-in help and parser errors.
 
 * Enable with parser flag `ColorHelp`.
 * Enable parser error coloring with `ColorErrors`.
-* Built-in schemes: `DefaultHelpColorScheme()` and
-  `HighContrastHelpColorScheme()`.
+* Built-in schemes: `DefaultHelpColorScheme()`,
+  `HighContrastHelpColorScheme()`, and `GrayHelpColorScheme()`.
 * Built-in error schemes: `DefaultErrorColorScheme()` and
   `HighContrastErrorColorScheme()`.
+* `GrayErrorColorScheme()` is an alias of `DefaultErrorColorScheme()`
+  (keeps yellow/red warning-critical contrast).
 * Use `SetHelpColorScheme(...)` for custom role colors.
 * Use `SetErrorColorScheme(...)` for custom parser error colors.
   Warnings (`ErrRequired`, `ErrCommandRequired`) and critical errors use
@@ -983,6 +985,8 @@ parser.SetErrorColorScheme(flags.DefaultErrorColorScheme())
 // For stronger contrast:
 // parser.SetHelpColorScheme(flags.HighContrastHelpColorScheme())
 // parser.SetErrorColorScheme(flags.HighContrastErrorColorScheme())
+// For subtle gray help:
+// parser.SetHelpColorScheme(flags.GrayHelpColorScheme())
 ```
 
 For non-colored logs/CI output, do not enable `ColorHelp` / `ColorErrors`.
