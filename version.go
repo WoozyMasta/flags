@@ -5,13 +5,13 @@
 package flags
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -59,6 +59,11 @@ const (
 		VersionFieldModified |
 		VersionFieldGoVersion |
 		VersionFieldTarget
+)
+
+var (
+	readBuildInfoOnce sync.Once
+	cachedVersionInfo VersionInfo
 )
 
 // VersionInfo represents build/version metadata of the running binary.
@@ -183,7 +188,7 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	info := p.VersionInfo()
 
 	prevHelpColorEnabled := p.helpColorEnabled
-	p.helpColorEnabled = DetectColorSupport(w)
+	p.helpColorEnabled = (p.Options&ColorHelp) != None && DetectColorSupport(w)
 	defer func() {
 		p.helpColorEnabled = prevHelpColorEnabled
 	}()
@@ -268,19 +273,26 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	targetLabel := p.i18nText("version.label.target", "target")
 
 	writeVersionLine := func(label string, value string) {
-		padded := fmt.Sprintf("%-9s", label+":")
-		plain := padded + " " + value
+		padded := label + ":"
+		if pad := 9 - textWidth(padded); pad > 0 {
+			padded += strings.Repeat(" ", pad)
+		}
+
 		colored := p.colorizeHelp(padded, p.helpColorScheme.VersionLabel)
 		coloredValue := p.colorizeHelp(value, p.helpColorScheme.VersionValue)
 
-		line := fmt.Sprintf("%s %s", colored, coloredValue)
+		_, _ = io.WriteString(w, colored)
+		_, _ = io.WriteString(w, " ")
+		_, _ = io.WriteString(w, coloredValue)
+
 		if padToTerminalWidth {
-			if pad := terminalColumns - textWidth(plain); pad > 0 {
-				line += strings.Repeat(" ", pad)
+			lineWidth := textWidth(padded) + 1 + textWidth(value)
+			if pad := terminalColumns - lineWidth; pad > 0 {
+				_, _ = io.WriteString(w, strings.Repeat(" ", pad))
 			}
 		}
 
-		_, _ = fmt.Fprintln(w, line)
+		_, _ = io.WriteString(w, "\n")
 	}
 
 	if (fields & VersionFieldFile) != 0 {
@@ -321,42 +333,47 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 
 // ReadVersionInfo reads build metadata of the running binary.
 func ReadVersionInfo() VersionInfo {
-	info := VersionInfo{}
+	readBuildInfoOnce.Do(func() {
+		info := VersionInfo{
+			GOOS:   runtime.GOOS,
+			GOARCH: runtime.GOARCH,
+		}
+
+		bi, ok := debug.ReadBuildInfo()
+		if ok && bi != nil {
+			info.Path = bi.Path
+			info.ModulePath = bi.Main.Path
+			info.Version = bi.Main.Version
+			info.GoVersion = bi.GoVersion
+
+			for _, s := range bi.Settings {
+				switch s.Key {
+				case "vcs.revision":
+					info.Revision = s.Value
+				case "vcs.time":
+					if t, err := time.Parse(time.RFC3339, s.Value); err == nil {
+						info.RevisionTime = t.UTC()
+					}
+				case "vcs.modified":
+					info.Modified = s.Value == "true"
+				case "GOOS":
+					info.GOOS = s.Value
+				case "GOARCH":
+					info.GOARCH = s.Value
+				}
+			}
+
+			if info.ModulePath != "" {
+				info.URL = "https://" + strings.TrimPrefix(info.ModulePath, "https://")
+			}
+		}
+
+		cachedVersionInfo = info
+	})
+
+	info := cachedVersionInfo
 	if len(os.Args) > 0 {
 		info.File = os.Args[0]
-	}
-
-	bi, ok := debug.ReadBuildInfo()
-	if !ok || bi == nil {
-		return info
-	}
-
-	info.Path = bi.Path
-	info.ModulePath = bi.Main.Path
-	info.Version = bi.Main.Version
-	info.GoVersion = bi.GoVersion
-	info.GOOS = runtime.GOOS
-	info.GOARCH = runtime.GOARCH
-
-	for _, s := range bi.Settings {
-		switch s.Key {
-		case "vcs.revision":
-			info.Revision = s.Value
-		case "vcs.time":
-			if t, err := time.Parse(time.RFC3339, s.Value); err == nil {
-				info.RevisionTime = t.UTC()
-			}
-		case "vcs.modified":
-			info.Modified = s.Value == "true"
-		case "GOOS":
-			info.GOOS = s.Value
-		case "GOARCH":
-			info.GOARCH = s.Value
-		}
-	}
-
-	if info.ModulePath != "" {
-		info.URL = "https://" + strings.TrimPrefix(info.ModulePath, "https://")
 	}
 
 	return info

@@ -45,7 +45,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	}
 
 	prevHelpColorEnabled := p.helpColorEnabled
-	p.helpColorEnabled = DetectColorSupport(writer)
+	p.helpColorEnabled = (p.Options&ColorHelp) != None && DetectColorSupport(writer)
 	defer func() {
 		p.helpColorEnabled = prevHelpColorEnabled
 	}()
