@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## [Unreleased][] - 2026-04-21
+## [v0.1.0][] - 2026-04-26
 
 ### Added
 
@@ -132,7 +132,7 @@ and this project adheres to [Semantic Versioning][].
 * Legacy standalone man-page implementation was removed
   in favor of the template-backed documentation renderer.
 
-[Unreleased]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.1...HEAD
+[v0.1.0]: https://github.com/WoozyMasta/flags/compare/legacy%2Fv1.6.1...v0.1.0
 
 ---
 
