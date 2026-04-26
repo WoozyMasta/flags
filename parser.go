@@ -74,6 +74,12 @@ type Parser struct {
 	// If empty, parser Name is used.
 	TerminalTitle string
 
+	// Display group assigned to built-in commands in help/docs.
+	builtinCommandGroup string
+
+	// Optional i18n key for builtinCommandGroup.
+	builtinCommandGroupI18nKey string
+
 	// Cached version metadata (auto-detected and/or overridden).
 	versionInfo VersionInfo
 
@@ -90,17 +96,14 @@ type Parser struct {
 	// Configured set of fields rendered by built-in version output.
 	versionFields VersionFields
 
-	// Display group assigned to built-in commands in help/docs.
-	builtinCommandGroup string
-
-	// Optional i18n key for builtinCommandGroup.
-	builtinCommandGroupI18nKey string
-
 	// Extra spaces added before command option rows in built-in help output.
 	commandOptionIndent int
 
 	// Explicit help output width. Zero means unlimited when helpWidthSet is true.
 	helpWidth int
+
+	// Built-in command options that have already been attached.
+	builtinCommandsAdded Options
 
 	// TagListDelimiter splits values for list-based struct tags such as
 	// defaults/choices/aliases.
@@ -135,9 +138,6 @@ type Parser struct {
 
 	// Set by built-in version option handler during parse.
 	versionRequested bool
-
-	// Built-in command options that have already been attached.
-	builtinCommandsAdded Options
 
 	// Set when any immediate option/group is requested during parse.
 	immediateRequested bool

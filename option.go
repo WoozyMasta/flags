@@ -25,7 +25,6 @@ const (
 // long name as well as a default value and whether an argument for this
 // flag is optional.
 type Option struct {
-
 	// The group which the option belongs to
 	group *Group
 
@@ -88,9 +87,6 @@ type Option struct {
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
 
-	// Completion hint controls fallback completion mode (file, dir, none).
-	CompletionHint completionHint
-
 	// Additional short names for the option.
 	ShortAliases []rune
 
@@ -106,6 +102,9 @@ type Option struct {
 	// option flag can be 'activated' using -<ShortName>. Either ShortName
 	// or LongName needs to be non-empty.
 	ShortName rune
+
+	// Completion hint controls fallback completion mode (file, dir, none).
+	CompletionHint completionHint
 
 	defaultLiteralInitialized bool
 

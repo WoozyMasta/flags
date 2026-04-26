@@ -23,12 +23,12 @@ type TTYInfo struct {
 type EnvironmentInfo struct {
 	OS              string
 	Shell           string
-	ShellStyle      RenderStyle
 	CompletionShell CompletionShell
+	Locale          string
 	TerminalColumns int
 	TerminalRows    int
-	Locale          string
 	TTY             TTYInfo
+	ShellStyle      RenderStyle
 }
 
 // DetectEnvironment returns a snapshot of detected runtime environment hints.
@@ -96,12 +96,12 @@ func DetectFileTTY(file *os.File) bool {
 
 // DetectFDTTY reports whether file descriptor points to a tty.
 func DetectFDTTY(fd uintptr) bool {
-	maxInt := int(^uint(0) >> 1)
-	if fd > uintptr(maxInt) {
+	intFD, ok := fdToInt(fd)
+	if !ok {
 		return false
 	}
 
-	return term.IsTerminal(int(fd))
+	return term.IsTerminal(intFD)
 }
 
 func detectNoColor() bool {
@@ -121,4 +121,13 @@ func detectForceColor() bool {
 	default:
 		return true
 	}
+}
+
+func fdToInt(fd uintptr) (int, bool) {
+	maxInt := int(^uint(0) >> 1)
+	if fd > uintptr(maxInt) {
+		return 0, false
+	}
+
+	return int(fd), true //nolint:gosec // fd is checked against max int above.
 }

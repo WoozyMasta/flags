@@ -21,17 +21,17 @@ func (p *Parser) ensureBuiltinCommands() error {
 	}
 
 	if (missing & HelpCommand) != None {
-		if err := p.addBuiltinCommand("help", "Show help", "help.builtin.command.help.desc", "", &builtinHelpCommand{parser: p}); err != nil {
+		if err := p.addBuiltinCommand("help", "Show help", "help.builtin.command.help.desc", &builtinHelpCommand{parser: p}); err != nil {
 			return err
 		}
 	}
 	if (missing & VersionCommand) != None {
-		if err := p.addBuiltinCommand("version", "Show version information", "help.builtin.command.version.desc", "", &builtinVersionCommand{parser: p}); err != nil {
+		if err := p.addBuiltinCommand("version", "Show version information", "help.builtin.command.version.desc", &builtinVersionCommand{parser: p}); err != nil {
 			return err
 		}
 	}
 	if (missing & CompletionCommand) != None {
-		if err := p.addBuiltinCommand("completion", "Generate shell completion", "help.builtin.command.completion.desc", "", &builtinCompletionCommand{parser: p}); err != nil {
+		if err := p.addBuiltinCommand("completion", "Generate shell completion", "help.builtin.command.completion.desc", &builtinCompletionCommand{parser: p}); err != nil {
 			return err
 		}
 	}
@@ -41,12 +41,12 @@ func (p *Parser) ensureBuiltinCommands() error {
 			HTML: builtinDocHTMLCommand{parser: p},
 			MD:   builtinDocMarkdownCommand{parser: p},
 		}
-		if err := p.addBuiltinCommand("docs", "Generate documentation", "help.builtin.command.docs.desc", "", docs); err != nil {
+		if err := p.addBuiltinCommand("docs", "Generate documentation", "help.builtin.command.docs.desc", docs); err != nil {
 			return err
 		}
 	}
 	if (missing & ConfigCommand) != None {
-		if err := p.addBuiltinCommand("config", "Generate configuration example", "help.builtin.command.config.desc", "", &builtinConfigCommand{parser: p}); err != nil {
+		if err := p.addBuiltinCommand("config", "Generate configuration example", "help.builtin.command.config.desc", &builtinConfigCommand{parser: p}); err != nil {
 			return err
 		}
 	}
@@ -59,12 +59,12 @@ func (p *Parser) ensureBuiltinCommands() error {
 	return nil
 }
 
-func (p *Parser) addBuiltinCommand(name string, shortDescription string, shortDescriptionI18n string, longDescription string, data any) error {
+func (p *Parser) addBuiltinCommand(name string, shortDescription string, shortDescriptionI18n string, data any) error {
 	if existing := p.Find(name); existing != nil {
 		return newErrorf(ErrDuplicatedFlag, "command `%s' conflicts with built-in command `%s'", existing.Name, name)
 	}
 
-	cmd, err := p.AddCommand(name, shortDescription, longDescription, data)
+	cmd, err := p.AddCommand(name, shortDescription, "", data)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ type builtinCommand interface {
 	isBuiltinCommand()
 }
 
-func writeBuiltinCommandOutput(path string, write func(io.Writer) error) error {
+func writeBuiltinCommandOutput(path string, write func(io.Writer) error) (err error) {
 	if path == "" {
 		return write(os.Stdout)
 	}
@@ -88,7 +88,13 @@ func writeBuiltinCommandOutput(path string, write func(io.Writer) error) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	defer func() {
+		closeErr := file.Close()
+		if err == nil && closeErr != nil {
+			err = closeErr
+		}
+	}()
 
 	return write(file)
 }
@@ -221,11 +227,9 @@ func (c *builtinCompletionCommand) Execute(_ []string) error {
 }
 
 type builtinDocsCommand struct {
-	Man builtinDocManCommand `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
-
-	HTML builtinDocHTMLCommand `command:"html" ini-group:"docs.html" description:"Generate HTML documentation" description-i18n:"help.builtin.command.docs.html.desc"`
-
-	MD builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
+	Man  builtinDocManCommand      `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
+	HTML builtinDocHTMLCommand     `command:"html" ini-group:"docs.html" description:"Generate HTML documentation" description-i18n:"help.builtin.command.docs.html.desc"`
+	MD   builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
 }
 
 func (*builtinDocsCommand) isBuiltinCommand() {}
@@ -233,12 +237,12 @@ func (*builtinDocsCommand) isBuiltinCommand() {}
 type builtinDocManCommand struct {
 	parser *Parser
 
-	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
-
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+
+	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (*builtinDocManCommand) isBuiltinCommand() {}
@@ -255,15 +259,14 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 }
 
 type builtinDocHTMLCommand struct {
-	parser *Parser
-
-	Template      string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"default;styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc"`
-	IncludeHidden bool   `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	MarkHidden    bool   `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
+	parser   *Parser
+	Template string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"default;styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (*builtinDocHTMLCommand) isBuiltinCommand() {}
@@ -285,15 +288,14 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 }
 
 type builtinDocMarkdownCommand struct {
-	parser *Parser
-
-	Template      string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"list;table;code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc"`
-	IncludeHidden bool   `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	MarkHidden    bool   `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
+	parser   *Parser
+	Template string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"list;table;code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (*builtinDocMarkdownCommand) isBuiltinCommand() {}
@@ -320,11 +322,11 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 type builtinConfigCommand struct {
 	parser *Parser
 
-	CommentWidth int `long:"comment-width" value-name:"COLUMNS" value-name-i18n:"help.builtin.command.value.columns" default:"80" description:"Maximum width for wrapped comments" description-i18n:"help.builtin.command.config.comment_width.desc"`
-
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+
+	CommentWidth int `long:"comment-width" value-name:"COLUMNS" value-name-i18n:"help.builtin.command.value.columns" default:"80" description:"Maximum width for wrapped comments" description-i18n:"help.builtin.command.config.comment_width.desc"`
 }
 
 func (*builtinConfigCommand) isBuiltinCommand() {}

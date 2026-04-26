@@ -79,8 +79,7 @@ func main() {
 		return
 	}
 
-	switch parser.Active.Name {
-	case "greet":
+	if parser.Active.Name == "greet" {
 		runGreet(localizer, &opts)
 	}
 }

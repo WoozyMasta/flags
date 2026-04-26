@@ -254,6 +254,7 @@ func completeFilesystem(match string, dirsOnly bool) []Completion {
 
 	items, _ := filepath.Glob(match + "*")
 	for _, item := range items {
+		//nolint:gosec // completion candidates come from local Glob expansion.
 		info, err := os.Stat(item)
 		if err != nil {
 			continue
