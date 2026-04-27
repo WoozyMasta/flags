@@ -717,6 +717,7 @@ func splitOptionTailLines(
 	choices []string,
 	width int,
 	forceChoiceList bool,
+	autoChoiceList bool,
 	choiceListLabel string,
 ) []optionTailLine {
 	if width < 10 {
@@ -752,7 +753,8 @@ func splitOptionTailLines(
 		choiceLineCount++
 	}
 	threshold := (len(choices) + 1) / 2 // ceil(len/2)
-	useChoiceList := forceChoiceList || (len(choices) >= 3 && choiceLineCount > threshold)
+	useChoiceList := forceChoiceList ||
+		(autoChoiceList && len(choices) >= 3 && choiceLineCount > threshold)
 	if useChoiceList {
 		for _, line := range renderChoiceListLines(choices, width, choiceListLabel) {
 			lines = append(lines, optionTailLine{Text: line, IsChoice: true})
@@ -970,11 +972,13 @@ func (p *Parser) adaptiveWriteHelpOption(
 			tailWidth := max(leftWidth-2, 10)
 
 			forceChoiceList := (p.Options & ShowChoiceListInHelp) != None
+			autoChoiceList := (p.Options & AutoShowChoiceListInHelp) != None
 			for _, line := range splitOptionTailLines(
 				valueName,
 				option.Choices,
 				tailWidth,
 				forceChoiceList,
+				autoChoiceList,
 				p.i18nText("help.meta.valid_values", "valid values"),
 			) {
 				leftLinesPlain = append(leftLinesPlain, continuationPrefix+line.Text)

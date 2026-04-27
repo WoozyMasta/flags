@@ -1022,8 +1022,8 @@ func TestHelpAdaptiveLayoutBreaksAfterNameDelimiter(t *testing.T) {
 		t.Fatalf("unexpected hyphen split inside identifier, got:\n%s", got)
 	}
 
-	if !strings.Contains(got, "valid values:") {
-		t.Fatalf("expected auto choice-list rendering marker, got:\n%s", got)
+	if strings.Contains(got, "valid values:") {
+		t.Fatalf("did not expect choice-list rendering without auto flag, got:\n%s", got)
 	}
 }
 
@@ -1058,8 +1058,8 @@ func TestHelpAdaptiveLayoutKeepsShortValueNameWithOption(t *testing.T) {
 	if strings.Contains(got, "/format:\n") {
 		t.Fatalf("did not expect break immediately after name delimiter, got:\n%s", got)
 	}
-	if !strings.Contains(got, "valid values:") {
-		t.Fatalf("expected choice list rendering marker, got:\n%s", got)
+	if strings.Contains(got, "valid values:") {
+		t.Fatalf("did not expect choice list rendering without auto flag, got:\n%s", got)
 	}
 }
 

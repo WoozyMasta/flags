@@ -302,6 +302,11 @@ const (
 	// in built-in help output.
 	ShowChoiceListInHelp
 
+	// AutoShowChoiceListInHelp enables adaptive rendering of choices as
+	// a vertical list in built-in help output when available width is tight.
+	// ShowChoiceListInHelp has priority and always forces list rendering.
+	AutoShowChoiceListInHelp
+
 	// HideEnvInHelp suppresses environment variable placeholders in built-in
 	// help output.
 	HideEnvInHelp
