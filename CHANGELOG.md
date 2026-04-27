@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.1.1] - 2026-04-27
+
+### Added
+
+* Added `AutoShowChoiceListInHelp` for width-based automatic rendering of
+  vertical `valid values` lists in built-in help.
+
+### Changed
+
+* Built-in help no longer auto-renders vertical `valid values` lists by default.
+
+[0.1.1]: https://github.com/WoozyMasta/flags/compare/v0.1.0...v0.1.1
+
 ## [0.1.0] - 2026-04-26
 
 ### Added
