@@ -121,6 +121,28 @@ const (
 	FlagTagUnquote = "unquote"
 	// FlagTagTerminator marks an option that consumes arguments until terminator token.
 	FlagTagTerminator = "terminator"
+	// FlagTagValidateExistingFile requires a path to be an existing file.
+	FlagTagValidateExistingFile = "validate-existing-file"
+	// FlagTagValidateExistingDir requires a path to be an existing directory.
+	FlagTagValidateExistingDir = "validate-existing-dir"
+	// FlagTagValidateReadable requires a path to be readable.
+	FlagTagValidateReadable = "validate-readable"
+	// FlagTagValidateWritable requires a path to be writable.
+	FlagTagValidateWritable = "validate-writable"
+	// FlagTagValidateNonEmpty requires a string value to be non-empty.
+	FlagTagValidateNonEmpty = "validate-non-empty"
+	// FlagTagValidateRegex requires a string value to match a regular expression.
+	FlagTagValidateRegex = "validate-regex"
+	// FlagTagValidateMinLen requires a string value to have at least this length.
+	FlagTagValidateMinLen = "validate-min-len"
+	// FlagTagValidateMaxLen requires a string value to have at most this length.
+	FlagTagValidateMaxLen = "validate-max-len"
+	// FlagTagValidateMin requires a numeric value to be at least this value.
+	FlagTagValidateMin = "validate-min"
+	// FlagTagValidateMax requires a numeric value to be at most this value.
+	FlagTagValidateMax = "validate-max"
+	// FlagTagValidatePathAbs requires a path value to be absolute.
+	FlagTagValidatePathAbs = "validate-path-abs"
 )
 
 const flagTagReadIniName = "_read-ini-name"
@@ -244,6 +266,28 @@ type FlagTags struct {
 	Unquote string
 	// Terminator maps to terminated-arguments tag (default: "terminator").
 	Terminator string
+	// ValidateExistingFile maps to existing file validation tag.
+	ValidateExistingFile string
+	// ValidateExistingDir maps to existing directory validation tag.
+	ValidateExistingDir string
+	// ValidateReadable maps to readable path validation tag.
+	ValidateReadable string
+	// ValidateWritable maps to writable path validation tag.
+	ValidateWritable string
+	// ValidateNonEmpty maps to non-empty string validation tag.
+	ValidateNonEmpty string
+	// ValidateRegex maps to regular expression validation tag.
+	ValidateRegex string
+	// ValidateMinLen maps to minimum string length validation tag.
+	ValidateMinLen string
+	// ValidateMaxLen maps to maximum string length validation tag.
+	ValidateMaxLen string
+	// ValidateMin maps to minimum numeric validation tag.
+	ValidateMin string
+	// ValidateMax maps to maximum numeric validation tag.
+	ValidateMax string
+	// ValidatePathAbs maps to absolute path validation tag.
+	ValidatePathAbs string
 }
 
 // NewFlagTags returns default tag names.
@@ -254,63 +298,74 @@ func NewFlagTags() FlagTags {
 // NewFlagTagsWithPrefix returns default tag names with a custom prefix.
 func NewFlagTagsWithPrefix(prefix string) FlagTags {
 	return FlagTags{
-		Short:               prefix + FlagTagShort,
-		Long:                prefix + FlagTagLong,
-		Required:            prefix + FlagTagRequired,
-		Xor:                 prefix + FlagTagXor,
-		And:                 prefix + FlagTagAnd,
-		Counter:             prefix + FlagTagCounter,
-		IO:                  prefix + FlagTagIO,
-		IOKind:              prefix + FlagTagIOKind,
-		IOStream:            prefix + FlagTagIOStream,
-		IOOpen:              prefix + FlagTagIOOpen,
-		Description:         prefix + FlagTagDescription,
-		DescriptionI18n:     prefix + FlagTagDescriptionI18n,
-		LongDescription:     prefix + FlagTagLongDescription,
-		LongDescriptionI18n: prefix + FlagTagLongDescriptionI18n,
-		NoFlag:              prefix + FlagTagNoFlag,
-		Optional:            prefix + FlagTagOptional,
-		OptionalValue:       prefix + FlagTagOptionalValue,
-		Order:               prefix + FlagTagOrder,
-		Default:             prefix + FlagTagDefault,
-		Defaults:            prefix + FlagTagDefaults,
-		DefaultMask:         prefix + FlagTagDefaultMask,
-		Env:                 prefix + FlagTagEnv,
-		AutoEnv:             prefix + FlagTagAutoEnv,
-		EnvDelim:            prefix + FlagTagEnvDelim,
-		ValueName:           prefix + FlagTagValueName,
-		ValueNameI18n:       prefix + FlagTagValueNameI18n,
-		Choice:              prefix + FlagTagChoice,
-		Choices:             prefix + FlagTagChoices,
-		Completion:          prefix + FlagTagCompletion,
-		Hidden:              prefix + FlagTagHidden,
-		Immediate:           prefix + FlagTagImmediate,
-		Base:                prefix + FlagTagBase,
-		IniName:             prefix + FlagTagIniName,
-		IniGroup:            prefix + FlagTagIniGroup,
-		NoIni:               prefix + FlagTagNoIni,
-		Group:               prefix + FlagTagGroup,
-		GroupI18n:           prefix + FlagTagGroupI18n,
-		Namespace:           prefix + FlagTagNamespace,
-		EnvNamespace:        prefix + FlagTagEnvNamespace,
-		Command:             prefix + FlagTagCommand,
-		CommandI18n:         prefix + FlagTagCommandI18n,
-		CommandGroup:        prefix + FlagTagCommandGroup,
-		SubCommandsOptional: prefix + FlagTagSubCommandsOptional,
-		Alias:               prefix + FlagTagAlias,
-		Aliases:             prefix + FlagTagAliases,
-		LongAlias:           prefix + FlagTagLongAlias,
-		LongAliases:         prefix + FlagTagLongAliases,
-		ShortAlias:          prefix + FlagTagShortAlias,
-		ShortAliases:        prefix + FlagTagShortAliases,
-		PositionalArgs:      prefix + FlagTagPositionalArgs,
-		PositionalArgName:   prefix + FlagTagPositionalArgName,
-		ArgNameI18n:         prefix + FlagTagArgNameI18n,
-		ArgDescriptionI18n:  prefix + FlagTagArgDescriptionI18n,
-		KeyValueDelimiter:   prefix + FlagTagKeyValueDelimiter,
-		PassAfterNonOption:  prefix + FlagTagPassAfterNonOption,
-		Unquote:             prefix + FlagTagUnquote,
-		Terminator:          prefix + FlagTagTerminator,
+		Short:                prefix + FlagTagShort,
+		Long:                 prefix + FlagTagLong,
+		Required:             prefix + FlagTagRequired,
+		Xor:                  prefix + FlagTagXor,
+		And:                  prefix + FlagTagAnd,
+		Counter:              prefix + FlagTagCounter,
+		IO:                   prefix + FlagTagIO,
+		IOKind:               prefix + FlagTagIOKind,
+		IOStream:             prefix + FlagTagIOStream,
+		IOOpen:               prefix + FlagTagIOOpen,
+		Description:          prefix + FlagTagDescription,
+		DescriptionI18n:      prefix + FlagTagDescriptionI18n,
+		LongDescription:      prefix + FlagTagLongDescription,
+		LongDescriptionI18n:  prefix + FlagTagLongDescriptionI18n,
+		NoFlag:               prefix + FlagTagNoFlag,
+		Optional:             prefix + FlagTagOptional,
+		OptionalValue:        prefix + FlagTagOptionalValue,
+		Order:                prefix + FlagTagOrder,
+		Default:              prefix + FlagTagDefault,
+		Defaults:             prefix + FlagTagDefaults,
+		DefaultMask:          prefix + FlagTagDefaultMask,
+		Env:                  prefix + FlagTagEnv,
+		AutoEnv:              prefix + FlagTagAutoEnv,
+		EnvDelim:             prefix + FlagTagEnvDelim,
+		ValueName:            prefix + FlagTagValueName,
+		ValueNameI18n:        prefix + FlagTagValueNameI18n,
+		Choice:               prefix + FlagTagChoice,
+		Choices:              prefix + FlagTagChoices,
+		Completion:           prefix + FlagTagCompletion,
+		Hidden:               prefix + FlagTagHidden,
+		Immediate:            prefix + FlagTagImmediate,
+		Base:                 prefix + FlagTagBase,
+		IniName:              prefix + FlagTagIniName,
+		IniGroup:             prefix + FlagTagIniGroup,
+		NoIni:                prefix + FlagTagNoIni,
+		Group:                prefix + FlagTagGroup,
+		GroupI18n:            prefix + FlagTagGroupI18n,
+		Namespace:            prefix + FlagTagNamespace,
+		EnvNamespace:         prefix + FlagTagEnvNamespace,
+		Command:              prefix + FlagTagCommand,
+		CommandI18n:          prefix + FlagTagCommandI18n,
+		CommandGroup:         prefix + FlagTagCommandGroup,
+		SubCommandsOptional:  prefix + FlagTagSubCommandsOptional,
+		Alias:                prefix + FlagTagAlias,
+		Aliases:              prefix + FlagTagAliases,
+		LongAlias:            prefix + FlagTagLongAlias,
+		LongAliases:          prefix + FlagTagLongAliases,
+		ShortAlias:           prefix + FlagTagShortAlias,
+		ShortAliases:         prefix + FlagTagShortAliases,
+		PositionalArgs:       prefix + FlagTagPositionalArgs,
+		PositionalArgName:    prefix + FlagTagPositionalArgName,
+		ArgNameI18n:          prefix + FlagTagArgNameI18n,
+		ArgDescriptionI18n:   prefix + FlagTagArgDescriptionI18n,
+		KeyValueDelimiter:    prefix + FlagTagKeyValueDelimiter,
+		PassAfterNonOption:   prefix + FlagTagPassAfterNonOption,
+		Unquote:              prefix + FlagTagUnquote,
+		Terminator:           prefix + FlagTagTerminator,
+		ValidateExistingFile: prefix + FlagTagValidateExistingFile,
+		ValidateExistingDir:  prefix + FlagTagValidateExistingDir,
+		ValidateReadable:     prefix + FlagTagValidateReadable,
+		ValidateWritable:     prefix + FlagTagValidateWritable,
+		ValidateNonEmpty:     prefix + FlagTagValidateNonEmpty,
+		ValidateRegex:        prefix + FlagTagValidateRegex,
+		ValidateMinLen:       prefix + FlagTagValidateMinLen,
+		ValidateMaxLen:       prefix + FlagTagValidateMaxLen,
+		ValidateMin:          prefix + FlagTagValidateMin,
+		ValidateMax:          prefix + FlagTagValidateMax,
+		ValidatePathAbs:      prefix + FlagTagValidatePathAbs,
 	}
 }
 
@@ -487,6 +542,39 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Terminator != "" {
 		d.Terminator = t.Terminator
+	}
+	if t.ValidateExistingFile != "" {
+		d.ValidateExistingFile = t.ValidateExistingFile
+	}
+	if t.ValidateExistingDir != "" {
+		d.ValidateExistingDir = t.ValidateExistingDir
+	}
+	if t.ValidateReadable != "" {
+		d.ValidateReadable = t.ValidateReadable
+	}
+	if t.ValidateWritable != "" {
+		d.ValidateWritable = t.ValidateWritable
+	}
+	if t.ValidateNonEmpty != "" {
+		d.ValidateNonEmpty = t.ValidateNonEmpty
+	}
+	if t.ValidateRegex != "" {
+		d.ValidateRegex = t.ValidateRegex
+	}
+	if t.ValidateMinLen != "" {
+		d.ValidateMinLen = t.ValidateMinLen
+	}
+	if t.ValidateMaxLen != "" {
+		d.ValidateMaxLen = t.ValidateMaxLen
+	}
+	if t.ValidateMin != "" {
+		d.ValidateMin = t.ValidateMin
+	}
+	if t.ValidateMax != "" {
+		d.ValidateMax = t.ValidateMax
+	}
+	if t.ValidatePathAbs != "" {
+		d.ValidatePathAbs = t.ValidatePathAbs
 	}
 
 	return d

@@ -26,6 +26,7 @@ rich help, completion, and docs out of the box.
 * [Tag Customization](#tag-customization)
 * [Positional Arguments](#positional-arguments)
 * [I/O Templates](#io-templates)
+* [Value Validators](#value-validators)
 * [Groups](#groups)
 * [Commands](#commands)
 * [Defaults](#defaults)
@@ -220,6 +221,15 @@ All struct tags are configurable:
 * `io-stream`: stream token (`stdin`, `stdout`, `stderr`)
   used as stream target/default.
 * `io-open`: output file mode (`truncate`, `append`) metadata.
+* `validate-existing-file`: path must exist and be a regular file.
+* `validate-existing-dir`: path must exist and be a directory.
+* `validate-readable`: path must be readable by the current process.
+* `validate-writable`: path or parent directory must be writable.
+* `validate-non-empty`: string value must not be empty after trimming.
+* `validate-regex`: string value must fully match the regex.
+* `validate-min-len` / `validate-max-len`: string length bounds.
+* `validate-min` / `validate-max`: numeric value bounds.
+* `validate-path-abs`: path must be absolute.
 * `completion`: completion hint (`file`, `dir`, `none`)
   when no custom completer or `choices` are set.
 * `short-alias` / `short-aliases`: additional short names.
@@ -431,6 +441,49 @@ defer out.Close()
 
 _, err = io.Copy(out, in)
 ```
+
+## Value Validators
+
+`validate-*` tags add post-parse checks for options and positional arguments.
+They run after CLI/env/default values are applied and before command execution.
+
+String validators work with `string` and `[]string`:
+
+```go
+type Options struct {
+  Input string `long:"input" validate-existing-file:"true"`
+  Name  string `long:"name" validate-non-empty:"true" validate-regex:"[a-z]+"`
+}
+```
+
+Path validators:
+
+* `validate-existing-file:"true"`: value must be an existing regular file.
+* `validate-existing-dir:"true"`: value must be an existing directory.
+* `validate-readable:"true"`: value must be readable.
+* `validate-writable:"true"`: value or parent directory must be writable.
+* `validate-path-abs:"true"`: value must be an absolute path.
+
+String content validators:
+
+* `validate-non-empty:"true"`: value must not be empty after trimming.
+* `validate-regex:"..."`: regex must match the full value.
+* `validate-min-len:"N"` / `validate-max-len:"N"`: rune length bounds.
+
+Numeric validators work with integer/unsigned/float values and slices:
+
+```go
+type Options struct {
+  Retries int       `long:"retries" validate-min:"0" validate-max:"10"`
+  Ratios  []float64 `long:"ratio" validate-min:"0.0" validate-max:"1.0"`
+}
+```
+
+Unset optional options are not validated.
+Values from CLI, env, defaults, or pre-populated non-zero fields are validated.
+Invalid tag values or validators used with incompatible field types fail
+during parser setup with `ErrInvalidTag`;
+runtime validation failures return `ErrValidation`.
 
 ## Groups
 

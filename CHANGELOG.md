@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning][].
   positional `auto`/`stream` modes support `stdin`/`stdout` fallback.
 * `CommandChain` parser option for executing active commands
   from parent to leaf while keeping leaf-only command execution as the default.
+* `validate-*` tags for string, path, and numeric post-parse validation
+  on options and positional arguments.
 
 ### Changed
 

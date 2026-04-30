@@ -113,6 +113,9 @@ const (
 
 	// ErrOptionRequirement indicates that an option relation requirement failed.
 	ErrOptionRequirement
+
+	// ErrValidation indicates that parsed value validation failed.
+	ErrValidation
 )
 
 func (e ErrorType) String() string {
@@ -153,6 +156,8 @@ func (e ErrorType) String() string {
 		return "option conflict"
 	case ErrOptionRequirement:
 		return "option requirement"
+	case ErrValidation:
+		return "validation"
 	}
 
 	return "unrecognized error type"

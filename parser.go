@@ -814,6 +814,12 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			}
 		}
 
+		if s.err == nil {
+			if validationErr := s.checkValueValidators(p); validationErr != nil {
+				s.err = validationErr
+			}
+		}
+
 		if s.err == nil && !p.shouldSkipRequiredValidation() {
 			if reqErr := s.checkRequired(p); reqErr != nil {
 				s.err = reqErr
@@ -829,13 +835,14 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 	var reterr error
 
-	if s.err != nil {
+	switch {
+	case s.err != nil:
 		reterr = s.err
-	} else if p.shouldSkipCommandExecution() {
+	case p.shouldSkipCommandExecution():
 		return s.retargs, nil
-	} else if len(s.command.commands) != 0 && !s.command.SubcommandsOptional {
+	case len(s.command.commands) != 0 && !s.command.SubcommandsOptional:
 		reterr = s.estimateCommand()
-	} else {
+	default:
 		reterr = p.executeCommands(s.command, s.retargs)
 	}
 
@@ -982,6 +989,17 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.PassAfterNonOption, FlagTagPassAfterNonOption)
 	normalizeTagAlias(c, p.flagTags.Unquote, FlagTagUnquote)
 	normalizeTagAlias(c, p.flagTags.Terminator, FlagTagTerminator)
+	normalizeTagAlias(c, p.flagTags.ValidateExistingFile, FlagTagValidateExistingFile)
+	normalizeTagAlias(c, p.flagTags.ValidateExistingDir, FlagTagValidateExistingDir)
+	normalizeTagAlias(c, p.flagTags.ValidateReadable, FlagTagValidateReadable)
+	normalizeTagAlias(c, p.flagTags.ValidateWritable, FlagTagValidateWritable)
+	normalizeTagAlias(c, p.flagTags.ValidateNonEmpty, FlagTagValidateNonEmpty)
+	normalizeTagAlias(c, p.flagTags.ValidateRegex, FlagTagValidateRegex)
+	normalizeTagAlias(c, p.flagTags.ValidateMinLen, FlagTagValidateMinLen)
+	normalizeTagAlias(c, p.flagTags.ValidateMaxLen, FlagTagValidateMaxLen)
+	normalizeTagAlias(c, p.flagTags.ValidateMin, FlagTagValidateMin)
+	normalizeTagAlias(c, p.flagTags.ValidateMax, FlagTagValidateMax)
+	normalizeTagAlias(c, p.flagTags.ValidatePathAbs, FlagTagValidatePathAbs)
 }
 
 func normalizeTagAlias(tags map[string][]string, source string, target string) {

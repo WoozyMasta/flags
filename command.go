@@ -368,6 +368,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					return true, err
 				}
 				arg.io = argIO
+				argValidation, err := parseValueValidationConfig(m, field.Name, arg.value)
+				if err != nil {
+					return true, err
+				}
+				arg.validation = argValidation
 				if rawCompletion == "" {
 					if autoHint, ok := completionHintFromIO(argIO); ok {
 						arg.completionHint = autoHint

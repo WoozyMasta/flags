@@ -11,10 +11,11 @@ import (
 
 // Arg represents a positional argument on the command line.
 type Arg struct {
-	tag   multiTag
-	value reflect.Value
-	cmd   *Command
-	io    argIOConfig
+	tag        multiTag
+	value      reflect.Value
+	cmd        *Command
+	io         argIOConfig
+	validation valueValidationConfig
 
 	// The name of the positional argument (used in the help)
 	Name string

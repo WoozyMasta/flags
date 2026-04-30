@@ -73,6 +73,7 @@ General option tags:
   - `xor`: delimiter-separated exclusive option relation groups
   - `and`: delimiter-separated all-or-none option relation groups
   - `counter`: integer counter mode; each occurrence increments by 1
+  - `validate-*`: post-parse value validators for strings, paths, and numbers
   - `description`: short help text
   - `long-description`: extended text (currently used in generated man pages)
   - `no-flag`: ignore field as command-line option
@@ -127,6 +128,18 @@ Group and command tags:
   - `io-open`: output file mode metadata (`truncate`, `append`)
   - `positional-arg-name`: placeholder label for positional help
   - `completion`: positional completion hint (`file`, `dir`, `none`)
+
+Validation tags apply to option fields and positional argument fields:
+
+  - `validate-existing-file`: path must exist and be a regular file
+  - `validate-existing-dir`: path must exist and be a directory
+  - `validate-readable`: path must be readable by the current process
+  - `validate-writable`: path or parent directory must be writable
+  - `validate-non-empty`: string must be non-empty after trimming
+  - `validate-regex`: string must fully match the regular expression
+  - `validate-min-len` / `validate-max-len`: string rune length bounds
+  - `validate-min` / `validate-max`: numeric value bounds
+  - `validate-path-abs`: path must be absolute
 
 For `positional-args`, arguments are optional by default.
 Use `required` either on the positional struct field or on individual fields.

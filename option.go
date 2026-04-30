@@ -23,8 +23,9 @@ const (
 // flag is optional.
 type Option struct {
 	// The group which the option belongs to
-	group *Group
-	io    argIOConfig
+	group      *Group
+	io         argIOConfig
+	validation valueValidationConfig
 
 	// Parsed struct tags associated with this option.
 	tag multiTag

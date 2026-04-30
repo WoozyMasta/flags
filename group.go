@@ -652,11 +652,18 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			value: realval.Field(i),
 			tag:   mtag,
 		}
+
 		optionIO, err := parseFieldIOConfig(mtag, field.Name, option.value.Type().Kind().String(), "option")
 		if err != nil {
 			return err
 		}
 		option.io = optionIO
+
+		optionValidation, err := parseValueValidationConfig(mtag, field.Name, option.value)
+		if err != nil {
+			return err
+		}
+		option.validation = optionValidation
 		if rawCompletion == "" {
 			if autoHint, ok := completionHintFromIO(optionIO); ok {
 				option.completionHint = autoHint
