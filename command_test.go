@@ -33,7 +33,7 @@ func TestCommandInline(t *testing.T) {
 	}
 
 	if p.Command.Find("cmd") != p.Active {
-		t.Errorf("Expected to find command `cmd' to be active")
+		t.Errorf("Expected to find command `cmd` to be active")
 	}
 }
 
@@ -66,13 +66,13 @@ func TestCommandInlineMulti(t *testing.T) {
 	}
 
 	if p.Command.Find("c1") == nil {
-		t.Errorf("Expected to find command `c1'")
+		t.Errorf("Expected to find command `c1`")
 	}
 
 	if c2 := p.Command.Find("c2"); c2 == nil {
-		t.Errorf("Expected to find command `c2'")
+		t.Errorf("Expected to find command `c2`")
 	} else if c2 != p.Active {
-		t.Errorf("Expected to find command `c2' to be active")
+		t.Errorf("Expected to find command `c2` to be active")
 	}
 }
 
@@ -107,7 +107,7 @@ func TestCommandFlagOrder1(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseFail(t, ErrUnknownFlag, "unknown flag `g'", &opts, "-v", "-g", "cmd")
+	assertParseFail(t, ErrUnknownFlag, "unknown flag `g`", &opts, "-v", "-g", "cmd")
 }
 
 func TestCommandFlagOrder2(t *testing.T) {
@@ -258,7 +258,7 @@ func TestCommandEstimate2(t *testing.T) {
 	p := NewParser(&opts, None)
 	_, err := p.ParseArgs([]string{"rmive"})
 
-	assertError(t, err, ErrUnknownCommand, "Unknown command `rmive', did you mean `remove'?")
+	assertError(t, err, ErrUnknownCommand, "Unknown command `rmive`, did you mean `remove`?")
 }
 
 type testCommand struct {
@@ -457,7 +457,7 @@ func TestCommandClosest(t *testing.T) {
 		} `command:"add"`
 	}{}
 
-	args := assertParseFail(t, ErrUnknownCommand, "Unknown command `addd', did you mean `add'?", &opts, "-v", "addd")
+	args := assertParseFail(t, ErrUnknownCommand, "Unknown command `addd`, did you mean `add`?", &opts, "-v", "addd")
 
 	assertStringArray(t, args, []string{"addd"})
 }
@@ -497,7 +497,7 @@ func TestCommandAdd(t *testing.T) {
 	}
 
 	if p.Command.Find("cmd") != c {
-		t.Errorf("Expected to find command `cmd'")
+		t.Errorf("Expected to find command `cmd`")
 	}
 
 	if p.Commands()[0] != c {
@@ -505,7 +505,7 @@ func TestCommandAdd(t *testing.T) {
 	}
 
 	if c.Options()[0].ShortName != 'g' {
-		t.Errorf("Expected short name `g' but got %v", c.Options()[0].ShortName)
+		t.Errorf("Expected short name `g` but got %v", c.Options()[0].ShortName)
 	}
 }
 
@@ -537,16 +537,16 @@ func TestCommandNestedInline(t *testing.T) {
 	assertString(t, opts.Command.Nested.N, "n")
 
 	if c := p.Command.Find("cmd"); c == nil {
-		t.Errorf("Expected to find command `cmd'")
+		t.Errorf("Expected to find command `cmd`")
 	} else {
 		if c != p.Active {
-			t.Errorf("Expected `cmd' to be the active parser command")
+			t.Errorf("Expected `cmd` to be the active parser command")
 		}
 
 		if nested := c.Find("nested"); nested == nil {
-			t.Errorf("Expected to find command `nested'")
+			t.Errorf("Expected to find command `nested`")
 		} else if nested != c.Active {
-			t.Errorf("Expected to find command `nested' to be the active `cmd' command")
+			t.Errorf("Expected to find command `nested` to be the active `cmd` command")
 		}
 	}
 }
@@ -560,7 +560,7 @@ func TestRequiredOnCommand(t *testing.T) {
 		} `command:"cmd"`
 	}{}
 
-	assertParseFail(t, ErrRequired, fmt.Sprintf("the required flag `%cv' was not specified", defaultShortOptDelimiter), &opts, "cmd")
+	assertParseFail(t, ErrRequired, fmt.Sprintf("the required flag `%cv` was not specified", defaultShortOptDelimiter), &opts, "cmd")
 }
 
 func TestRequiredAllOnCommand(t *testing.T) {
@@ -577,7 +577,7 @@ func TestRequiredAllOnCommand(t *testing.T) {
 		t,
 		ErrRequired,
 		fmt.Sprintf(
-			"the required flags `%smissing' and `%cv' were not specified",
+			"the required flags `%smissing` and `%cv` were not specified",
 			defaultLongOptDelimiter,
 			defaultShortOptDelimiter,
 		),
@@ -611,7 +611,7 @@ func TestAfterNonCommand(t *testing.T) {
 		} `command:"add"`
 	}{}
 
-	assertParseFail(t, ErrUnknownCommand, "Unknown command `nocmd'. Please specify one command of: add or remove", &opts, "nocmd", "remove")
+	assertParseFail(t, ErrUnknownCommand, "Unknown command `nocmd`. Please specify one command of: add or remove", &opts, "nocmd", "remove")
 }
 
 func TestSubcommandsOptional(t *testing.T) {
@@ -911,7 +911,7 @@ func TestCommandLocalPassAfterNonOptionMixCmd2(t *testing.T) {
 func TestCommandLocalPassAfterNonOptionMixCmd2UnkownFlag(t *testing.T) {
 	var opts cmdLocalPassAfterNonOptionMix
 
-	assertParseFail(t, ErrUnknownFlag, "unknown flag `x'", &opts, "cmd2", "-b", "arg1", "-a", "arg2", "-x")
+	assertParseFail(t, ErrUnknownFlag, "unknown flag `x`", &opts, "cmd2", "-b", "arg1", "-a", "arg2", "-x")
 }
 
 type cmdLocalPassAfterNonOptionNest struct {
@@ -984,7 +984,7 @@ func TestCommandBooleanTagsNoValues(t *testing.T) {
 		} `command:"cmd" pass-after-non-option:"no" subcommands-optional:"no"`
 	}{}
 
-	assertParseFail(t, ErrUnknownFlag, "unknown flag `x'", &opts, "cmd", "arg1", "-x")
+	assertParseFail(t, ErrUnknownFlag, "unknown flag `x`", &opts, "cmd", "arg1", "-x")
 }
 
 func TestCommandBooleanTagsInvalidValue(t *testing.T) {

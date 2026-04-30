@@ -17,14 +17,12 @@ import (
 )
 
 type valueValidationConfig struct {
-	regex   *regexp.Regexp
-	pattern string
-
-	minLen *int
-	maxLen *int
-	min    *validationNumber
-	max    *validationNumber
-
+	regex        *regexp.Regexp
+	minLen       *int
+	maxLen       *int
+	min          *validationNumber
+	max          *validationNumber
+	pattern      string
 	existingFile bool
 	existingDir  bool
 	readable     bool
@@ -65,7 +63,7 @@ func parseValueValidationConfig(tag multiTag, fieldName string, value reflect.Va
 		re, err := regexp.Compile(raw)
 		if err != nil {
 			return cfg, newErrorf(ErrInvalidTag,
-				"invalid regex value `%s' for tag `%s' on field `%s': %v",
+				"invalid regex value `%s` for tag `%s` on field `%s`: %v",
 				raw, FlagTagValidateRegex, fieldName, err)
 		}
 		cfg.regex = re
@@ -83,7 +81,7 @@ func parseValueValidationConfig(tag multiTag, fieldName string, value reflect.Va
 	}
 	if cfg.minLen != nil && cfg.maxLen != nil && *cfg.minLen > *cfg.maxLen {
 		return cfg, newErrorf(ErrInvalidTag,
-			"tag `%s' value %d must be <= tag `%s' value %d on field `%s'",
+			"tag `%s` value %d must be <= tag `%s` value %d on field `%s`",
 			FlagTagValidateMinLen, *cfg.minLen, FlagTagValidateMaxLen, *cfg.maxLen, fieldName)
 	}
 
@@ -99,7 +97,7 @@ func parseValueValidationConfig(tag multiTag, fieldName string, value reflect.Va
 	}
 	if cfg.min != nil && cfg.max != nil && compareValidationNumbers(valueKind, *cfg.min, *cfg.max) > 0 {
 		return cfg, newErrorf(ErrInvalidTag,
-			"tag `%s' value %s must be <= tag `%s' value %s on field `%s'",
+			"tag `%s` value %s must be <= tag `%s` value %s on field `%s`",
 			FlagTagValidateMin, tag.Get(FlagTagValidateMin),
 			FlagTagValidateMax, tag.Get(FlagTagValidateMax), fieldName)
 	}
@@ -120,7 +118,7 @@ func parseNonNegativeIntValidationTag(tag multiTag, tagName string, fieldName st
 	n, err := strconv.Atoi(raw)
 	if err != nil || n < 0 {
 		return nil, newErrorf(ErrInvalidTag,
-			"tag `%s' on field `%s' must be a non-negative integer",
+			"tag `%s` on field `%s` must be a non-negative integer",
 			tagName, fieldName)
 	}
 
@@ -167,7 +165,7 @@ func parseNumericValidationTag(
 
 	default:
 		return nil, newErrorf(ErrInvalidTag,
-			"tag `%s' requires numeric field type on field `%s'",
+			"tag `%s` requires numeric field type on field `%s`",
 			tagName, fieldName)
 	}
 
@@ -176,7 +174,7 @@ func parseNumericValidationTag(
 
 func invalidNumericValidationTag(tagName string, fieldName string, raw string, kind reflect.Kind) error {
 	return newErrorf(ErrInvalidTag,
-		"invalid numeric value `%s' for tag `%s' on field `%s' with type `%s'",
+		"invalid numeric value `%s` for tag `%s` on field `%s` with type `%s`",
 		raw, tagName, fieldName, kind)
 }
 
@@ -185,14 +183,14 @@ func validateValidationTargetType(cfg valueValidationConfig, kind reflect.Kind, 
 		cfg.nonEmpty || cfg.pathAbs || cfg.regex != nil || cfg.minLen != nil || cfg.maxLen != nil
 	if usesString && kind != reflect.String {
 		return newErrorf(ErrInvalidTag,
-			"string validation tags on field `%s' require string or []string type",
+			"string validation tags on field `%s` require string or []string type",
 			fieldName)
 	}
 
 	usesNumeric := cfg.min != nil || cfg.max != nil
 	if usesNumeric && !isNumericKind(kind) {
 		return newErrorf(ErrInvalidTag,
-			"numeric validation tags on field `%s' require numeric or numeric slice type",
+			"numeric validation tags on field `%s` require numeric or numeric slice type",
 			fieldName)
 	}
 

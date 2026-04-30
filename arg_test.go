@@ -223,5 +223,5 @@ func TestPositionalDefaultAndDefaultsConflict(t *testing.T) {
 
 	p := NewParser(&opts, None)
 	_, err := p.ParseArgs([]string{})
-	assertError(t, err, ErrInvalidTag, "field `Output' cannot mix `default' and `defaults' tags")
+	assertError(t, err, ErrInvalidTag, "field `Output` cannot mix `default` and `defaults` tags")
 }

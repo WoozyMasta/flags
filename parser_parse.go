@@ -142,7 +142,7 @@ func (p *parseState) checkRequired(parser *Parser) error {
 	names := make([]string, 0, len(required))
 
 	for _, k := range required {
-		names = append(names, "`"+k.String()+"'")
+		names = append(names, "`"+k.String()+"`")
 	}
 
 	sort.Strings(names)
@@ -362,7 +362,7 @@ func (p *parseState) estimateCommand() error {
 		c, l := closestChoice(p.retargs[0], cmdnames)
 		msg = i18nTextf(
 			"err.command.unknown",
-			"Unknown command `{command}'",
+			"Unknown command `{command}`",
 			map[string]string{"command": p.retargs[0]},
 		)
 		errtype = ErrUnknownCommand
@@ -371,7 +371,7 @@ func (p *parseState) estimateCommand() error {
 		case float32(l)/float32(len(c)) < 0.5:
 			msg = i18nTextf(
 				"err.command.did_you_mean",
-				"{base}, did you mean `{choice}'?",
+				"{base}, did you mean `{choice}`?",
 				map[string]string{
 					"base":   msg,
 					"choice": c,
@@ -460,7 +460,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 				ErrNoArgumentForBool,
 				p.i18nTextf(
 					"err.bool.no_argument",
-					"bool flag `{flag}' cannot have an argument",
+					"bool flag `{flag}` cannot have an argument",
 					map[string]string{"flag": option.String()},
 				),
 			)
@@ -476,7 +476,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 				ErrExpectedArgument,
 				p.i18nTextf(
 					"err.terminated.inline_argument",
-					"terminated option flag `{flag}' cannot use inline argument syntax",
+					"terminated option flag `{flag}` cannot use inline argument syntax",
 					map[string]string{"flag": option.String()},
 				),
 			)
@@ -502,7 +502,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 					ErrExpectedArgument,
 					p.i18nTextf(
 						"err.expected_argument.double_dash",
-						"expected argument for flag `{flag}', but got double dash `--'",
+						"expected argument for flag `{flag}`, but got double dash `--`",
 						map[string]string{"flag": option.String()},
 					),
 				)
@@ -531,7 +531,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 			ErrExpectedArgument,
 			p.i18nTextf(
 				"err.expected_argument.flag",
-				"expected argument for flag `{flag}'",
+				"expected argument for flag `{flag}`",
 				map[string]string{"flag": option.String()},
 			),
 		)
@@ -611,7 +611,7 @@ func (p *Parser) marshalError(option *Option, err error) *Error {
 		ErrMarshal,
 		p.i18nTextf(
 			"err.marshal.option",
-			"invalid argument for flag `{flag}'{expected}: {error}",
+			"invalid argument for flag `{flag}`{expected}: {error}",
 			map[string]string{
 				"flag":     option.String(),
 				"expected": expected,
@@ -644,7 +644,7 @@ func (p *Parser) parseLong(s *parseState, name string, argument string, hasArgum
 		ErrUnknownFlag,
 		p.i18nTextf(
 			"err.unknown_flag",
-			"unknown flag `{flag}'",
+			"unknown flag `{flag}`",
 			map[string]string{"flag": name},
 		),
 	)
@@ -710,7 +710,7 @@ func (p *Parser) parseShort(s *parseState, optname string, argument string, hasA
 				ErrUnknownFlag,
 				p.i18nTextf(
 					"err.unknown_flag",
-					"unknown flag `{flag}'",
+					"unknown flag `{flag}`",
 					map[string]string{"flag": shortname},
 				),
 			)
@@ -732,7 +732,7 @@ func (p *parseState) addArgs(args ...string) error {
 		if arg.io.role != "" {
 			normalized, normErr := arg.normalizeIOValue(raw)
 			if normErr != nil {
-				p.err = newErrorf(ErrMarshal, "invalid positional argument `%s': %v", arg.localizedName(), normErr)
+				p.err = newErrorf(ErrMarshal, "invalid positional argument `%s`: %v", arg.localizedName(), normErr)
 				return p.err
 			}
 			raw = normalized
@@ -765,7 +765,7 @@ func (p *parseState) applyPositionalDefaults(parser *Parser, defaultsIfEmpty boo
 					ErrMarshal,
 					parser.i18nTextf(
 						"err.marshal.argument_default",
-						"invalid default for argument `{arg}': {error}",
+						"invalid default for argument `{arg}`: {error}",
 						map[string]string{
 							"arg":   arg.localizedName(),
 							"error": err.Error(),
@@ -782,7 +782,7 @@ func (p *parseState) applyPositionalDefaults(parser *Parser, defaultsIfEmpty boo
 					ErrMarshal,
 					parser.i18nTextf(
 						"err.marshal.argument_default",
-						"invalid default for argument `{arg}': {error}",
+						"invalid default for argument `{arg}`: {error}",
 						map[string]string{
 							"arg":   arg.localizedName(),
 							"error": err.Error(),
@@ -832,7 +832,7 @@ func (p *Parser) parseNonOption(s *parseState) error {
 				ErrUnknownCommand,
 				p.i18nTextf(
 					"err.command.unknown",
-					"Unknown command `{command}'",
+					"Unknown command `{command}`",
 					map[string]string{"command": s.arg},
 				),
 			)

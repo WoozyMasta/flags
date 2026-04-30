@@ -842,7 +842,7 @@ func TestIniParseUnknownMessagesUseLocalizedBuiltins(t *testing.T) {
 		t.Fatalf("expected ErrUnknownGroup, got %v", flagsErr.Type)
 	}
 
-	expectedGroupMessage := "группа опций `missing' не найдена"
+	expectedGroupMessage := "группа опций `missing` не найдена"
 	if flagsErr.Message != expectedGroupMessage {
 		t.Fatalf("expected localized group message %q, got %q", expectedGroupMessage, flagsErr.Message)
 	}

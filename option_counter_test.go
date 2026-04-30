@@ -106,7 +106,7 @@ func TestOptionCounterRejectsNegativeValues(t *testing.T) {
 	assertParseFail(
 		t,
 		ErrMarshal,
-		"invalid argument for flag `"+string(defaultShortOptDelimiter)+"v, "+defaultLongOptDelimiter+"verbose' (expected int): counter increment must be non-negative",
+		"invalid argument for flag `"+string(defaultShortOptDelimiter)+"v, "+defaultLongOptDelimiter+"verbose` (expected int): counter increment must be non-negative",
 		&opts,
 		defaultLongOptDelimiter+"verbose", "-1",
 	)
@@ -123,6 +123,6 @@ func TestOptionCounterRejectsNonIntegerTypes(t *testing.T) {
 		t,
 		err,
 		ErrInvalidTag,
-		"counter tag `counter' requires integer option type on field `Verbose'",
+		"counter tag `counter` requires integer option type on field `Verbose`",
 	)
 }

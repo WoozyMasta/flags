@@ -13,7 +13,7 @@ func (m *marshalled) UnmarshalFlag(value string) error {
 	} else if value == "no" {
 		*m = "false"
 	} else {
-		return fmt.Errorf("`%s' is not a valid value, please specify `yes' or `no'", value)
+		return fmt.Errorf("`%s` is not a valid value, please specify `yes` or `no`", value)
 	}
 
 	return nil
@@ -42,7 +42,7 @@ func (m *textMarshalled) UnmarshalText(value []byte) error {
 	case "no":
 		*m = "false"
 	default:
-		return fmt.Errorf("`%s' is not a valid value, please specify `yes' or `no'", string(value))
+		return fmt.Errorf("`%s` is not a valid value, please specify `yes` or `no`", string(value))
 	}
 
 	return nil
@@ -127,8 +127,8 @@ func TestUnmarshalError(t *testing.T) {
 		t,
 		ErrMarshal,
 		fmt.Sprintf(
-			"invalid argument for flag `%cv' (expected flags.marshalled): "+
-				"`invalid' is not a valid value, please specify `yes' or `no'",
+			"invalid argument for flag `%cv` (expected flags.marshalled): "+
+				"`invalid` is not a valid value, please specify `yes` or `no`",
 			defaultShortOptDelimiter,
 		),
 		&opts,
@@ -146,7 +146,7 @@ func TestUnmarshalPositionalError(t *testing.T) {
 	parser := NewParser(&opts, Default&^PrintErrors)
 	_, err := parser.ParseArgs([]string{"invalid"})
 
-	msg := "`invalid' is not a valid value, please specify `yes' or `no'"
+	msg := "`invalid` is not a valid value, please specify `yes` or `no`"
 
 	if err == nil {
 		assertFatalf(t, "Expected error: %s", msg)

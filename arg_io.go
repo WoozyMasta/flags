@@ -47,7 +47,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 	if cfg.role == "" {
 		return argIOConfig{}, newErrorf(
 			ErrInvalidTag,
-			"field `%s' uses `%s' tags and must define `%s'",
+			"field `%s` uses `%s` tags and must define `%s`",
 			fieldName,
 			"io-*",
 			FlagTagIO,
@@ -56,7 +56,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 	if valueType != "string" {
 		return argIOConfig{}, newErrorf(
 			ErrInvalidTag,
-			"field `%s' with tag `%s' must be a string %s",
+			"field `%s` with tag `%s` must be a string %s",
 			fieldName,
 			FlagTagIO,
 			target,
@@ -68,7 +68,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 	default:
 		return argIOConfig{}, newErrorf(
 			ErrInvalidTag,
-			"invalid value `%s' for tag `%s' on field `%s' (expected in or out)",
+			"invalid value `%s` for tag `%s` on field `%s` (expected in or out)",
 			cfg.role,
 			FlagTagIO,
 			fieldName,
@@ -83,7 +83,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 	default:
 		return argIOConfig{}, newErrorf(
 			ErrInvalidTag,
-			"invalid value `%s' for tag `%s' on field `%s' (expected auto, stream, file, or string)",
+			"invalid value `%s` for tag `%s` on field `%s` (expected auto, stream, file, or string)",
 			cfg.kind,
 			FlagTagIOKind,
 			fieldName,
@@ -94,7 +94,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 		if cfg.role != argIORoleOut {
 			return argIOConfig{}, newErrorf(
 				ErrInvalidTag,
-				"tag `%s' on field `%s' requires `%s:\"out\"`",
+				"tag `%s` on field `%s` requires `%s:\"out\"`",
 				FlagTagIOOpen,
 				fieldName,
 				FlagTagIO,
@@ -105,7 +105,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 		default:
 			return argIOConfig{}, newErrorf(
 				ErrInvalidTag,
-				"invalid value `%s' for tag `%s' on field `%s' (expected truncate or append)",
+				"invalid value `%s` for tag `%s` on field `%s` (expected truncate or append)",
 				cfg.open,
 				FlagTagIOOpen,
 				fieldName,
@@ -121,7 +121,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 		default:
 			return argIOConfig{}, newErrorf(
 				ErrInvalidTag,
-				"invalid value `%s' for tag `%s' on field `%s' (expected stdin, stdout, or stderr)",
+				"invalid value `%s` for tag `%s` on field `%s` (expected stdin, stdout, or stderr)",
 				cfg.stream,
 				FlagTagIOStream,
 				fieldName,
@@ -130,7 +130,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 		if cfg.role == argIORoleIn && cfg.stream != argIOStreamStdin {
 			return argIOConfig{}, newErrorf(
 				ErrInvalidTag,
-				"tag `%s' on field `%s' with `%s:\"in\"` supports only stdin",
+				"tag `%s` on field `%s` with `%s:\"in\"` supports only stdin",
 				FlagTagIOStream,
 				fieldName,
 				FlagTagIO,
@@ -139,7 +139,7 @@ func parseFieldIOConfig(tag multiTag, fieldName string, valueType string, target
 		if cfg.role == argIORoleOut && cfg.stream == argIOStreamStdin {
 			return argIOConfig{}, newErrorf(
 				ErrInvalidTag,
-				"tag `%s' on field `%s' with `%s:\"out\"` supports only stdout or stderr",
+				"tag `%s` on field `%s` with `%s:\"out\"` supports only stdout or stderr",
 				FlagTagIOStream,
 				fieldName,
 				FlagTagIO,

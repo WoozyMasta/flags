@@ -44,7 +44,7 @@ func collectTagValues(
 	if len(single) > 0 && len(list) > 0 {
 		return nil, newErrorf(
 			ErrInvalidTag,
-			"field `%s' cannot mix `%s' and `%s' tags",
+			"field `%s` cannot mix `%s` and `%s` tags",
 			fieldName,
 			singleTag,
 			listTag,
@@ -55,7 +55,7 @@ func collectTagValues(
 		if len(list) > 1 {
 			return nil, newErrorf(
 				ErrInvalidTag,
-				"field `%s' uses non-repeatable `%s' tag more than once",
+				"field `%s` uses non-repeatable `%s` tag more than once",
 				fieldName,
 				listTag,
 			)
@@ -80,7 +80,7 @@ func collectDelimitedTagValues(
 	if len(values) > 1 {
 		return nil, newErrorf(
 			ErrInvalidTag,
-			"field `%s' uses non-repeatable `%s' tag more than once",
+			"field `%s` uses non-repeatable `%s` tag more than once",
 			fieldName,
 			tagName,
 		)

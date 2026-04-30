@@ -40,7 +40,7 @@ func TestGroupInline(t *testing.T) {
 	}
 
 	if p.Command.Group.Find("Grouped Options") == nil {
-		t.Errorf("Expected to find group `Grouped Options'")
+		t.Errorf("Expected to find group `Grouped Options`")
 	}
 }
 
@@ -79,7 +79,7 @@ func TestGroupAdd(t *testing.T) {
 	}
 
 	if p.Command.Group.Find("Grouped Options") != g {
-		t.Errorf("Expected to find group `Grouped Options'")
+		t.Errorf("Expected to find group `Grouped Options`")
 	}
 
 	if p.Groups()[1] != g {
@@ -87,7 +87,7 @@ func TestGroupAdd(t *testing.T) {
 	}
 
 	if g.Options()[0].ShortName != 'g' {
-		t.Errorf("Expected short name `g' but got %v", g.Options()[0].ShortName)
+		t.Errorf("Expected short name `g` but got %v", g.Options()[0].ShortName)
 	}
 
 	if g.Data() != &grp {
@@ -123,11 +123,11 @@ func TestGroupNestedInline(t *testing.T) {
 	assertString(t, opts.Group.Nested.N, "n")
 
 	if p.Command.Group.Find("Grouped Options") == nil {
-		t.Errorf("Expected to find group `Grouped Options'")
+		t.Errorf("Expected to find group `Grouped Options`")
 	}
 
 	if p.Command.Group.Find("Nested Options") == nil {
-		t.Errorf("Expected to find group `Nested Options'")
+		t.Errorf("Expected to find group `Nested Options`")
 	}
 }
 

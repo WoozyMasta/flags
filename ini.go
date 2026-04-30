@@ -139,7 +139,7 @@ func (i *IniParser) ParseFile(filename string) error {
 //  3. Compared to the option long name (if present)
 //  4. Compared to the option short name (if present)
 //
-// Sections for nested groups and commands can be addressed using a dot `.'
+// Sections for nested groups and commands can be addressed using a dot `.`.
 // namespacing notation (i.e [subcommand.Options]). Group section names are
 // matched case insensitive.
 //
@@ -751,7 +751,7 @@ func (i *IniParser) parse(ini *ini) error {
 					ErrUnknownGroup,
 					p.i18nTextf(
 						"ini.err.unknown_group",
-						"could not find option group `{group}'",
+						"could not find option group `{group}`",
 						map[string]string{"group": name},
 					),
 				)

@@ -93,19 +93,19 @@ func (x *multiTag) scan() (map[string][]string, error) {
 		}
 
 		if i >= len(v) {
-			return nil, newErrorf(ErrTag, "expected `:' after key name, but got end of tag (in `%v`)", x.value)
+			return nil, newErrorf(ErrTag, "expected `:` after key name, but got end of tag (in `%v`)", x.value)
 		}
 
 		if v[i] != ':' {
-			return nil, newErrorf(ErrTag, "expected `:' after key name, but got `%v' (in `%v`)", v[i], x.value)
+			return nil, newErrorf(ErrTag, "expected `:` after key name, but got `%v` (in `%v`)", v[i], x.value)
 		}
 
 		if i+1 >= len(v) {
-			return nil, newErrorf(ErrTag, "expected `\"' to start tag value at end of tag (in `%v`)", x.value)
+			return nil, newErrorf(ErrTag, "expected `\"` to start tag value at end of tag (in `%v`)", x.value)
 		}
 
 		if v[i+1] != '"' {
-			return nil, newErrorf(ErrTag, "expected `\"' to start tag value, but got `%v' (in `%v`)", v[i+1], x.value)
+			return nil, newErrorf(ErrTag, "expected `\"` to start tag value, but got `%v` (in `%v`)", v[i+1], x.value)
 		}
 
 		name := v[:i]
@@ -116,7 +116,7 @@ func (x *multiTag) scan() (map[string][]string, error) {
 
 		for i < len(v) && v[i] != '"' {
 			if v[i] == '\n' {
-				return nil, newErrorf(ErrTag, "unexpected newline in tag value `%v' (in `%v`)", name, x.value)
+				return nil, newErrorf(ErrTag, "unexpected newline in tag value `%v` (in `%v`)", name, x.value)
 			}
 
 			if v[i] == '\\' {
@@ -126,7 +126,7 @@ func (x *multiTag) scan() (map[string][]string, error) {
 		}
 
 		if i >= len(v) {
-			return nil, newErrorf(ErrTag, "expected end of tag value `\"' at end of tag (in `%v`)", x.value)
+			return nil, newErrorf(ErrTag, "expected end of tag value `\"` at end of tag (in `%v`)", x.value)
 		}
 
 		val, err := strconv.Unquote(v[:i+1])

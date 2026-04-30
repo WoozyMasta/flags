@@ -49,7 +49,7 @@ func TestPositionalIORejectsInvalidStreamForRole(t *testing.T) {
 	assertParseFail(
 		t,
 		ErrMarshal,
-		"invalid positional argument `Input': io `in` accepts only `stdin` or `-`",
+		"invalid positional argument `Input`: io `in` accepts only `stdin` or `-`",
 		&opts,
 		"stderr",
 	)
@@ -65,7 +65,7 @@ func TestPositionalIORejectsStreamTokenInFileMode(t *testing.T) {
 	assertParseFail(
 		t,
 		ErrMarshal,
-		"invalid positional argument `Output': io-kind `file` does not allow stream token `-`",
+		"invalid positional argument `Output`: io-kind `file` does not allow stream token `-`",
 		&opts,
 		"-",
 	)
@@ -80,7 +80,7 @@ func TestPositionalIOTagRequiresStringType(t *testing.T) {
 
 	parser := NewParser(&opts, Default&^PrintErrors)
 	_, err := parser.ParseArgs(nil)
-	assertError(t, err, ErrInvalidTag, "field `Input' with tag `io' must be a string positional argument")
+	assertError(t, err, ErrInvalidTag, "field `Input` with tag `io` must be a string positional argument")
 }
 
 func TestPositionalIOInfersFileCompletionWhenUnset(t *testing.T) {

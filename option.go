@@ -385,7 +385,7 @@ func (option *Option) SetAutoEnv(enabled bool) error {
 		option.tag.Set(FlagTagAutoEnv, prevTag)
 		return newErrorf(
 			ErrInvalidTag,
-			"auto env for flag `%s' requires a long flag name",
+			"auto env for flag `%s` requires a long flag name",
 			option.shortAndLongName(),
 		)
 	}
@@ -645,7 +645,7 @@ func (option *Option) SetTerminated(values []string) error {
 
 	if tp.Kind() != reflect.Slice {
 		return newErrorf(ErrInvalidTag,
-			"terminated flag `%s' must be a slice or slice of slices",
+			"terminated flag `%s` must be a slice or slice of slices",
 			option.shortAndLongName())
 	}
 

@@ -401,11 +401,11 @@ func TestMan(t *testing.T) {
 	var opts helpOptions
 	p := NewNamedParser("TestMan", HelpFlag)
 	p.ShortDescription = "Test manpage generation"
-	p.LongDescription = "This is a somewhat `longer' description of what this does.\nWith multiple lines."
+	p.LongDescription = "This is a somewhat `longer` description of what this does.\nWith multiple lines."
 	p.AddGroup("Application Options", "The application options", &opts)
 
 	for _, cmd := range p.Commands() {
-		cmd.LongDescription = fmt.Sprintf("Longer `%s' description", cmd.Name)
+		cmd.LongDescription = fmt.Sprintf("Longer `%s` description", cmd.Name)
 	}
 
 	var buf bytes.Buffer

@@ -423,7 +423,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			if (shortDescriptionI18n != "" || longDescriptionI18n != "") && iniGroup == "" {
 				return true, newErrorf(
 					ErrInvalidTag,
-					"command `%s' uses localized description tags and must define `%s' for a stable INI section name",
+					"command `%s` uses localized description tags and must define `%s` for a stable INI section name",
 					subcommand,
 					FlagTagIniGroup,
 				)
@@ -450,7 +450,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				if convErr != nil {
 					return true, newErrorf(
 						ErrInvalidTag,
-						"invalid integer value `%s' for tag `%s' on field `%s'",
+						"invalid integer value `%s` for tag `%s` on field `%s`",
 						rawOrder,
 						FlagTagOrder,
 						sfield.Name,

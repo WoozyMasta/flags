@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning][].
 * `ParseArgs` now re-runs duplicate flag/command validation
   only when parser metadata is dirty (after mutations/rebuild/config changes),
   reducing overhead for reused parser instances.
+* User-facing error messages now use symmetric backtick quoting
+  instead of legacy `` `value' `` quoting.
 
 ## [0.1.1] - 2026-04-27
 

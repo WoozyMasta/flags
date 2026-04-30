@@ -45,7 +45,7 @@ func (option *Option) validateLongNameLength(name string) error {
 	if utf8.RuneCountInString(name) > p.MaxLongNameLength {
 		return newErrorf(
 			ErrInvalidTag,
-			"long flag name `%s' exceeds max length %d (use SetMaxLongNameLength to override)",
+			"long flag name `%s` exceeds max length %d (use SetMaxLongNameLength to override)",
 			name,
 			p.MaxLongNameLength,
 		)
@@ -435,7 +435,7 @@ func (option *Option) isValidValue(arg string) error {
 				"%s",
 				p.i18nTextf(
 					"err.invalid_argument.option",
-					"expected argument for flag `{flag}', but got option `{option}'",
+					"expected argument for flag `{flag}`, but got option `{option}`",
 					map[string]string{
 						"flag":   option.String(),
 						"option": arg,
@@ -444,7 +444,7 @@ func (option *Option) isValidValue(arg string) error {
 			)
 		}
 
-		return fmt.Errorf("expected argument for flag `%s', but got option `%s'", option, arg)
+		return fmt.Errorf("expected argument for flag `%s`, but got option `%s`", option, arg)
 	}
 	return nil
 }
@@ -479,7 +479,7 @@ func (option *Option) validateChoice(value string) error {
 			ErrInvalidChoice,
 			p.i18nTextf(
 				"err.invalid_choice",
-				"Invalid value `{value}' for option `{option}'. Allowed values are: {allowed}",
+				"Invalid value `{value}` for option `{option}`. Allowed values are: {allowed}",
 				map[string]string{
 					"value":   value,
 					"option":  option.String(),
@@ -491,7 +491,7 @@ func (option *Option) validateChoice(value string) error {
 
 	return newErrorf(
 		ErrInvalidChoice,
-		"Invalid value `%s' for option `%s'. Allowed values are: %s",
+		"Invalid value `%s` for option `%s`. Allowed values are: %s",
 		value, option, allowed,
 	)
 }

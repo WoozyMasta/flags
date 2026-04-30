@@ -29,7 +29,7 @@ func parseCompletionHint(raw string, fieldName string) (completionHint, error) {
 	default:
 		return completionHintAuto, newErrorf(
 			ErrInvalidTag,
-			"invalid completion value `%s' for tag `%s' on field `%s' (expected file, dir, or none)",
+			"invalid completion value `%s` for tag `%s` on field `%s` (expected file, dir, or none)",
 			raw,
 			FlagTagCompletion,
 			fieldName,

@@ -375,7 +375,7 @@ func parseStructBoolTag(mtag multiTag, tagName string, fieldName string) (bool, 
 	value, set, err := parseBoolTagValue(raw)
 	if err != nil {
 		return false, false, newErrorf(ErrInvalidTag,
-			"invalid boolean value `%s' for tag `%s' on field `%s'",
+			"invalid boolean value `%s` for tag `%s` on field `%s`",
 			raw, tagName, fieldName)
 	}
 
@@ -406,7 +406,7 @@ func parseOptionShortAliases(fieldName string, aliases []string) ([]rune, error)
 		if rc != 1 {
 			return nil, newErrorf(
 				ErrShortNameTooLong,
-				"short names can only be 1 character long, not `%s' (field `%s')",
+				"short names can only be 1 character long, not `%s` (field `%s`)",
 				alias,
 				fieldName,
 			)
@@ -487,7 +487,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 
 			if maxLong > 0 && utf8.RuneCountInString(longname) > maxLong {
 				return newErrorf(ErrInvalidTag,
-					"long flag name `%s' exceeds max length %d (use SetMaxLongNameLength to override)",
+					"long flag name `%s` exceeds max length %d (use SetMaxLongNameLength to override)",
 					longname, maxLong)
 			}
 		}
@@ -502,7 +502,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 
 		if rc > 1 {
 			return newErrorf(ErrShortNameTooLong,
-				"short names can only be 1 character long, not `%s'",
+				"short names can only be 1 character long, not `%s`",
 				shortname)
 		} else if rc == 1 {
 			short, _ = utf8.DecodeRuneInString(shortname)
@@ -525,7 +525,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			parsedOrder, convErr := strconv.Atoi(rawOrder)
 			if convErr != nil {
 				return newErrorf(ErrInvalidTag,
-					"invalid integer value `%s' for tag `%s' on field `%s'",
+					"invalid integer value `%s` for tag `%s` on field `%s`",
 					rawOrder, FlagTagOrder, field.Name)
 			}
 			order = parsedOrder
@@ -577,7 +577,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 				if maxLong > 0 && utf8.RuneCountInString(alias) > maxLong {
 					return newErrorf(
 						ErrInvalidTag,
-						"long flag alias `%s' exceeds max length %d (use SetMaxLongNameLength to override)",
+						"long flag alias `%s` exceeds max length %d (use SetMaxLongNameLength to override)",
 						alias,
 						maxLong,
 					)
@@ -614,7 +614,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if envKey == "" && autoEnv {
 			if longname == "" {
 				return newErrorf(ErrInvalidTag,
-					"auto env for field `%s' requires a long flag name",
+					"auto env for field `%s` requires a long flag name",
 					field.Name)
 			}
 			envKey = autoEnvKeyFromLongName(longname)
@@ -672,7 +672,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 
 		if option.isBool() && option.Default != nil {
 			return newErrorf(ErrInvalidTag,
-				"boolean flag `%s' may not have default values, they always default to `false' and can only be turned on",
+				"boolean flag `%s` may not have default values, they always default to `false` and can only be turned on",
 				option.shortAndLongName())
 		}
 		if option.Counter {
@@ -683,7 +683,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			default:
 				return newErrorf(
 					ErrInvalidTag,
-					"counter tag `%s' requires integer option type on field `%s'",
+					"counter tag `%s` requires integer option type on field `%s`",
 					FlagTagCounter,
 					field.Name,
 				)
@@ -694,14 +694,14 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			optionType := option.value.Type()
 			if optionType.Kind() != reflect.Slice {
 				return newErrorf(ErrInvalidTag,
-					"terminated flag `%s' must be a slice or slice of slices",
+					"terminated flag `%s` must be a slice or slice of slices",
 					option.shortAndLongName())
 			}
 		}
 
 		if defaults, ok, err := dynamicOptionDefault(option.value); err != nil {
 			return newErrorf(ErrMarshal,
-				"could not get dynamic default for flag `%s': %v",
+				"could not get dynamic default for flag `%s`: %v",
 				option.shortAndLongName(),
 				err)
 		} else if ok {
@@ -740,7 +740,7 @@ func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same long name as option `%s'", option, otherOption)
+					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same long name as option `%s`", option, otherOption)
 					return
 				}
 				longNames[longName] = option
@@ -750,7 +750,7 @@ func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same long alias `%s' as option `%s'", option, alias, otherOption)
+					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same long alias `%s` as option `%s`", option, alias, otherOption)
 					return
 				}
 				longNames[alias] = option
@@ -760,7 +760,7 @@ func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same short name as option `%s'", option, otherOption)
+					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same short name as option `%s`", option, otherOption)
 					return
 				}
 				shortNames[option.ShortName] = option
@@ -770,7 +770,7 @@ func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s' uses the same short alias `%c' as option `%s'", option, alias, otherOption)
+					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same short alias `%c` as option `%s`", option, alias, otherOption)
 					return
 				}
 				shortNames[alias] = option
@@ -825,7 +825,7 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 		if (descriptionI18n != "" || longDescriptionI18n != "" || groupNameI18n != "") && iniGroup == "" {
 			return true, newErrorf(
 				ErrInvalidTag,
-				"group `%s' uses localized description tags and must define `%s' for a stable INI section name",
+				"group `%s` uses localized description tags and must define `%s` for a stable INI section name",
 				subgroup,
 				FlagTagIniGroup,
 			)

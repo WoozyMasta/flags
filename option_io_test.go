@@ -165,7 +165,7 @@ func TestOptionIOTagRequiresStringType(t *testing.T) {
 
 	parser := NewParser(&opts, Default&^PrintErrors)
 	_, err := parser.ParseArgs(nil)
-	assertError(t, err, ErrInvalidTag, "field `Input' with tag `io' must be a string option")
+	assertError(t, err, ErrInvalidTag, "field `Input` with tag `io` must be a string option")
 }
 
 func TestOptionIORejectsOpenTagForInputRole(t *testing.T) {
@@ -179,7 +179,7 @@ func TestOptionIORejectsOpenTagForInputRole(t *testing.T) {
 		t,
 		err,
 		ErrInvalidTag,
-		"tag `io-open' on field `Input' requires `io:\"out\"`",
+		"tag `io-open` on field `Input` requires `io:\"out\"`",
 	)
 }
 
@@ -194,7 +194,7 @@ func TestOptionIORejectsInvalidKindValue(t *testing.T) {
 		t,
 		err,
 		ErrInvalidTag,
-		"invalid value `wat' for tag `io-kind' on field `Input' (expected auto, stream, file, or string)",
+		"invalid value `wat` for tag `io-kind` on field `Input` (expected auto, stream, file, or string)",
 	)
 }
 
@@ -209,6 +209,6 @@ func TestOptionIORejectsInvalidStreamValue(t *testing.T) {
 		t,
 		err,
 		ErrInvalidTag,
-		"invalid value `wat' for tag `io-stream' on field `Output' (expected stdin, stdout, or stderr)",
+		"invalid value `wat` for tag `io-stream` on field `Output` (expected stdin, stdout, or stderr)",
 	)
 }

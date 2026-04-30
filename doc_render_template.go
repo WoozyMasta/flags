@@ -310,7 +310,7 @@ func manInline(s string) string {
 		b.WriteString(manQuoteLines(s[:idx]))
 
 		s = s[idx+1:]
-		idx = strings.IndexRune(s, '\'')
+		idx = strings.IndexRune(s, '`')
 
 		if idx < 0 {
 			b.WriteString(manQuoteLines(s))

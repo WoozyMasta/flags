@@ -146,7 +146,7 @@ func (p *Parser) validateDuplicateCommands() error {
 					}
 					dupErr = newErrorf(
 						ErrDuplicatedFlag,
-						"command `%s' uses the same name or alias `%s' as command `%s'",
+						"command `%s` uses the same name or alias `%s` as command `%s`",
 						cmd.Name,
 						name,
 						other.Name,
@@ -178,7 +178,7 @@ func (p *Parser) validateDuplicateEnvKeys() error {
 		if other, ok := envKeys[key]; ok {
 			dupErr = newErrorf(
 				ErrDuplicatedFlag,
-				"option `%s' uses the same env key `%s' as option `%s'",
+				"option `%s` uses the same env key `%s` as option `%s`",
 				option,
 				key,
 				other,

@@ -108,7 +108,7 @@ func TestDefaults(t *testing.T) {
 		{
 			msg:         "non-zero value arguments, expecting overwritten arguments",
 			args:        []string{"-3=true"},
-			expectedErr: "bool flag `" + makeShortName("3") + "' cannot have an argument",
+			expectedErr: "bool flag `" + makeShortName("3") + "` cannot have an argument",
 		},
 		{
 			msg: "zero value arguments, expecting overwritten arguments",
@@ -176,16 +176,16 @@ func TestNoDefaultsForBools(t *testing.T) {
 		assertParseFail(
 			t,
 			ErrInvalidTag,
-			"boolean flag `/d' may not have default values, they always default "+
-				"to `false' and can only be turned on",
+			"boolean flag `/d` may not have default values, they always default "+
+				"to `false` and can only be turned on",
 			&opts,
 		)
 	} else {
 		assertParseFail(
 			t,
 			ErrInvalidTag,
-			"boolean flag `-d' may not have default values, they always default "+
-				"to `false' and can only be turned on",
+			"boolean flag `-d` may not have default values, they always default "+
+				"to `false` and can only be turned on",
 			&opts,
 		)
 	}
@@ -883,21 +883,21 @@ func TestOptionAsArgument(t *testing.T) {
 			args:        []string{"--string-slice", "foobar", "--string-slice", "-o"},
 			expectError: true,
 			errType:     ErrExpectedArgument,
-			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice', but got option `-o'",
+			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice`, but got option `-o`",
 		},
 		{
 			// long option must not be accepted as argument
 			args:        []string{"--string-slice", "foobar", "--string-slice", "--other-option"},
 			expectError: true,
 			errType:     ErrExpectedArgument,
-			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice', but got option `--other-option'",
+			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice`, but got option `--other-option`",
 		},
 		{
 			// long option must not be accepted as argument
 			args:        []string{"--string-slice", "--"},
 			expectError: true,
 			errType:     ErrExpectedArgument,
-			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice', but got double dash `--'",
+			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice`, but got double dash `--`",
 		},
 		{
 			// quoted and appended option should be accepted as argument (even if it looks like an option)
@@ -912,14 +912,14 @@ func TestOptionAsArgument(t *testing.T) {
 			args:        []string{"--string-slice", "-3.14"},
 			expectError: true,
 			errType:     ErrExpectedArgument,
-			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice', but got option `-3.14'",
+			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice`, but got option `-3.14`",
 		},
 		{
 			// Do not accept arguments which start with '-' if the next character is not a digit
 			args:        []string{"--string-slice", "-character"},
 			expectError: true,
 			errType:     ErrExpectedArgument,
-			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice', but got option `-character'",
+			errMsg:      "expected argument for flag `" + defaultLongOptDelimiter + "string-slice`, but got option `-character`",
 		},
 		{
 			args: []string{"-o", "-", "-"},
@@ -1225,8 +1225,8 @@ func TestChoices(t *testing.T) {
 	assertParseFail(
 		t,
 		ErrInvalidChoice,
-		"Invalid value `invalid' for option `"+
-			defaultLongOptDelimiter+"choose'. Allowed values are: v1 or v2",
+		"Invalid value `invalid` for option `"+
+			defaultLongOptDelimiter+"choose`. Allowed values are: v1 or v2",
 		&opts,
 		"--choose",
 		"invalid",

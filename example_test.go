@@ -76,7 +76,7 @@ func Example() {
 		"remaining2",
 	}
 
-	// Parse flags from `args'. Note that here we use flags.ParseArgs for
+	// Parse flags from `args`. Note that here we use flags.ParseArgs for
 	// the sake of making a working example. Normally, you would simply use
 	// flags.Parse(&opts) which uses os.Args
 	_, err := ParseArgs(&opts, args)

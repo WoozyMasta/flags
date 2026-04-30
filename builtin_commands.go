@@ -205,11 +205,11 @@ func setActivePath(root *Command, path []string) error {
 		next := current.Find(name)
 		if next == nil {
 			parser := root.parser()
-			msg := "Unknown command `" + name + "'"
+			msg := "Unknown command `" + name + "`"
 			if parser != nil {
 				msg = parser.i18nTextf(
 					"err.command.unknown",
-					"Unknown command `{command}'",
+					"Unknown command `{command}`",
 					map[string]string{"command": name},
 				)
 			}
@@ -310,7 +310,7 @@ func (p *Parser) ensureBuiltinCommands() error {
 
 func (p *Parser) addBuiltinCommand(name string, shortDescription string, shortDescriptionI18n string, data any) error {
 	if existing := p.Find(name); existing != nil {
-		return newErrorf(ErrDuplicatedFlag, "command `%s' conflicts with built-in command `%s'", existing.Name, name)
+		return newErrorf(ErrDuplicatedFlag, "command `%s` conflicts with built-in command `%s`", existing.Name, name)
 	}
 
 	cmd, err := p.AddCommand(name, shortDescription, "", data)
