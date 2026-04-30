@@ -312,7 +312,8 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 				if descriptionI18n == "" {
 					descriptionI18n = m.Get(FlagTagDescriptionI18n)
 				}
-				completionHint, err := parseCompletionHint(m.Get(FlagTagCompletion), field.Name)
+				rawCompletion := m.Get(FlagTagCompletion)
+				completionHint, err := parseCompletionHint(rawCompletion, field.Name)
 				if err != nil {
 					return true, err
 				}
@@ -360,6 +361,16 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					value: realval.Field(i),
 					tag:   m,
 					cmd:   c,
+				}
+				argIO, err := parseFieldIOConfig(m, field.Name, arg.value.Type().Kind().String(), "positional argument")
+				if err != nil {
+					return true, err
+				}
+				arg.io = argIO
+				if rawCompletion == "" {
+					if autoHint, ok := completionHintFromIO(argIO); ok {
+						arg.completionHint = autoHint
+					}
 				}
 
 				c.args = append(c.args, arg)

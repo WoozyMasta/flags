@@ -19,6 +19,14 @@ const (
 	FlagTagAnd = "and"
 	// FlagTagCounter enables counter mode for integer flags.
 	FlagTagCounter = "counter"
+	// FlagTagIO marks positional argument I/O role (in|out).
+	FlagTagIO = "io"
+	// FlagTagIOKind configures positional I/O kind (auto|stream|file|string).
+	FlagTagIOKind = "io-kind"
+	// FlagTagIOStream configures default/target stream (stdin|stdout|stderr).
+	FlagTagIOStream = "io-stream"
+	// FlagTagIOOpen configures output file open mode (truncate|append).
+	FlagTagIOOpen = "io-open"
 	// FlagTagDescription provides short help text.
 	FlagTagDescription = "description"
 	// FlagTagDescriptionI18n provides i18n key for description text.
@@ -134,6 +142,14 @@ type FlagTags struct {
 	And string
 	// Counter maps to counter mode tag for integer flags.
 	Counter string
+	// IO maps to positional I/O role tag.
+	IO string
+	// IOKind maps to positional I/O kind tag.
+	IOKind string
+	// IOStream maps to positional stream selector tag.
+	IOStream string
+	// IOOpen maps to positional output file open mode tag.
+	IOOpen string
 	// Description maps to short help text tag (default: "description").
 	Description string
 	// DescriptionI18n maps to i18n key for short help text (default: "description-i18n").
@@ -244,6 +260,10 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Xor:                 prefix + FlagTagXor,
 		And:                 prefix + FlagTagAnd,
 		Counter:             prefix + FlagTagCounter,
+		IO:                  prefix + FlagTagIO,
+		IOKind:              prefix + FlagTagIOKind,
+		IOStream:            prefix + FlagTagIOStream,
+		IOOpen:              prefix + FlagTagIOOpen,
 		Description:         prefix + FlagTagDescription,
 		DescriptionI18n:     prefix + FlagTagDescriptionI18n,
 		LongDescription:     prefix + FlagTagLongDescription,
@@ -314,6 +334,18 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Counter != "" {
 		d.Counter = t.Counter
+	}
+	if t.IO != "" {
+		d.IO = t.IO
+	}
+	if t.IOKind != "" {
+		d.IOKind = t.IOKind
+	}
+	if t.IOStream != "" {
+		d.IOStream = t.IOStream
+	}
+	if t.IOOpen != "" {
+		d.IOOpen = t.IOOpen
 	}
 	if t.Description != "" {
 		d.Description = t.Description

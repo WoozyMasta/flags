@@ -25,6 +25,7 @@ rich help, completion, and docs out of the box.
 * [Struct Tags Reference](#struct-tags-reference)
 * [Tag Customization](#tag-customization)
 * [Positional Arguments](#positional-arguments)
+* [I/O Templates](#io-templates)
 * [Groups](#groups)
 * [Commands](#commands)
 * [Defaults](#defaults)
@@ -214,8 +215,13 @@ All struct tags are configurable:
   set); with `required` on any member, the empty group is not allowed.
 * `counter`: integer counter mode; each occurrence increments by `1`
   (or by an explicit numeric value).
-* `completion`: completion hint (`file`, `dir`, `none`) when no custom
-  completer or `choices` are set.
+* `io`: I/O role for string values (`in`, `out`).
+* `io-kind`: I/O kind (`auto`, `stream`, `file`, `string`).
+* `io-stream`: stream token (`stdin`, `stdout`, `stderr`)
+  used as stream target/default.
+* `io-open`: output file mode (`truncate`, `append`) metadata.
+* `completion`: completion hint (`file`, `dir`, `none`)
+  when no custom completer or `choices` are set.
 * `short-alias` / `short-aliases`: additional short names.
 * `long-alias` / `long-aliases`: additional long names.
 * `default-mask`: hides real default in help/docs (for secrets/tokens).
@@ -271,6 +277,12 @@ All struct tags are configurable:
 * `positional-args`: marks nested struct as positional argument container.
 * `required`: for positional args you can use `yes/no`, `1` (required), `N`
   (at least `N` values for `[]T`) or `N-M` (from `N` to `M` values for `[]T`).
+* `io`: positional I/O role (`in`, `out`).
+* `io-kind`: positional I/O source/sink kind (`auto`, `stream`, `file`,
+  `string`).
+* `io-stream`: stream token (`stdin`, `stdout`, `stderr`) used as stream
+  target/default.
+* `io-open`: output file mode (`truncate`, `append`) metadata.
 * `positional-arg-name`: custom display name for usage/help placeholders.
 * `arg-name-i18n`: i18n key for positional display name text.
 * `description`: help/docs description for the positional argument.
@@ -328,6 +340,96 @@ type Options struct {
     Output string
   } `positional-args:"yes" required:"yes"`
 }
+```
+
+## I/O Templates
+
+Use `io-*` tags when value meaning is source/sink oriented
+for either options or positional arguments.
+
+Tags:
+
+* `io:"in|out"`: role.
+* `io-kind:"auto|stream|file|string"`: accepted value kind.
+* `io-stream:"stdin|stdout|stderr"`: stream token and `-` mapping target.
+* `io-open:"truncate|append"`: output file mode metadata.
+
+Rules:
+
+* Positional args with `io-kind:"auto|stream"`
+  fallback to `stdin`/`stdout` when omitted.
+* Options do not auto-fallback when omitted;
+  normalization applies only when option value is provided.
+* `io-kind:"file"` and `io-kind:"auto"` imply `completion:"file"`
+  when `completion` is not set explicitly.
+
+Positional template:
+
+```go
+type Options struct {
+  IO struct {
+    Input  string `io:"in" io-kind:"auto"`
+    Output string `io:"out" io-kind:"auto"`
+  } `positional-args:"yes"`
+}
+```
+
+Behavior for the positional example above:
+
+* no args: `Input=stdin`, `Output=stdout`
+* `- -`: `Input=stdin`, `Output=stdout`
+* `input.txt output.txt`: file paths
+
+Option template:
+
+```go
+type Options struct {
+  Input  string `long:"input" io:"in" io-kind:"auto"`
+  Output string `long:"output" io:"out" io-kind:"auto" io-stream:"stderr"`
+}
+```
+
+Practical example (`stdin -> file`, `-` supported):
+
+```go
+type Options struct {
+  IO struct {
+    Input  string `io:"in" io-kind:"auto"`
+    Output string `io:"out" io-kind:"auto"`
+  } `positional-args:"yes"`
+}
+
+type nopWriteCloser struct{ io.Writer }
+
+func (nopWriteCloser) Close() error { return nil }
+
+func openInput(v string) (io.ReadCloser, error) {
+  if v == "stdin" {
+    return io.NopCloser(os.Stdin), nil
+  }
+  return os.Open(v)
+}
+
+func openOutput(v string) (io.WriteCloser, error) {
+  if v == "stdout" {
+    return nopWriteCloser{os.Stdout}, nil
+  }
+  if v == "stderr" {
+    return nopWriteCloser{os.Stderr}, nil
+  }
+  return os.Create(v)
+}
+
+// after parser.Parse():
+in, err := openInput(opts.IO.Input)
+if err != nil { return err }
+defer in.Close()
+
+out, err := openOutput(opts.IO.Output)
+if err != nil { return err }
+defer out.Close()
+
+_, err = io.Copy(out, in)
 ```
 
 ## Groups

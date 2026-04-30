@@ -559,7 +559,8 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			return err
 		}
 
-		completionHint, err := parseCompletionHint(mtag.Get(FlagTagCompletion), field.Name)
+		rawCompletion := mtag.Get(FlagTagCompletion)
+		completionHint, err := parseCompletionHint(rawCompletion, field.Name)
 		if err != nil {
 			return err
 		}
@@ -650,6 +651,16 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			field: field,
 			value: realval.Field(i),
 			tag:   mtag,
+		}
+		optionIO, err := parseFieldIOConfig(mtag, field.Name, option.value.Type().Kind().String(), "option")
+		if err != nil {
+			return err
+		}
+		option.io = optionIO
+		if rawCompletion == "" {
+			if autoHint, ok := completionHintFromIO(optionIO); ok {
+				option.completionHint = autoHint
+			}
 		}
 
 		if option.isBool() && option.Default != nil {

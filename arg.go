@@ -14,6 +14,7 @@ type Arg struct {
 	tag   multiTag
 	value reflect.Value
 	cmd   *Command
+	io    argIOConfig
 
 	// The name of the positional argument (used in the help)
 	Name string

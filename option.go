@@ -6,6 +6,7 @@ package flags
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"unicode/utf8"
@@ -23,6 +24,7 @@ const (
 type Option struct {
 	// The group which the option belongs to
 	group *Group
+	io    argIOConfig
 
 	// Parsed struct tags associated with this option.
 	tag multiTag
@@ -580,6 +582,13 @@ func (option *Option) Set(value *string) error {
 	option.clearReferenceBeforeSet = false
 
 	if value != nil {
+		if option.io.role != "" {
+			normalized, err := normalizeIOValue(option.io, *value)
+			if err != nil {
+				return err
+			}
+			value = &normalized
+		}
 		if err := option.validateChoice(*value); err != nil {
 			return err
 		}
@@ -603,7 +612,7 @@ func (option *Option) applyCounterDelta(delta uint64) error {
 	switch kind {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		current := option.value.Int()
-		if delta > uint64(^uint64(0)>>1) {
+		if delta > uint64(math.MaxInt64) {
 			return ErrCounterIncrementTooLarge
 		}
 		next := current + int64(delta)

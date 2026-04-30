@@ -121,12 +121,21 @@ Group and command tags:
   - `alias`: extra command name (repeatable)
   - `aliases`: delimiter-separated command aliases (non-repeatable)
   - `positional-args`: map trailing positional arguments into struct fields
+  - `io`: string I/O role (`in`, `out`) for options/positionals
+  - `io-kind`: string I/O kind (`auto`, `stream`, `file`, `string`)
+  - `io-stream`: stream token (`stdin`, `stdout`, `stderr`)
+  - `io-open`: output file mode metadata (`truncate`, `append`)
   - `positional-arg-name`: placeholder label for positional help
   - `completion`: positional completion hint (`file`, `dir`, `none`)
 
 For `positional-args`, arguments are optional by default.
 Use `required` either on the positional struct field or on individual fields.
 For a trailing slice field, `required:"N"` means at least `N` values.
+For positional args, `io:"in"`/`io:"out"` with `io-kind:"auto"` or
+`io-kind:"stream"` defaults omitted values to `stdin`/`stdout`.
+For options, no implicit fallback is applied when the flag is omitted.
+When `completion` is not set, `io-kind:"file"` and `io-kind:"auto"` imply
+file completion hints.
 
 # Error Handling
 

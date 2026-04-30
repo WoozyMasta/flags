@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning][].
 * `xor` and `and` options for mutually exclusive and dependent flags.
 * `counter` option for integer occurrence counting,
   including repeated short flags and explicit numeric increments.
+* `io-*` tags (`io`, `io-kind`, `io-stream`, `io-open`)
+  for string option/positional input/output templates with validation;
+  positional `auto`/`stream` modes support `stdin`/`stdout` fallback.
 
 ## [0.1.1] - 2026-04-27
 

@@ -427,7 +427,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 		if !hasArgument && canarg && !s.eof() {
 			next := s.args[0]
 			if option.isValidValue(next) == nil {
-				if !(p.Options&PassDoubleDash != 0 && next == "--") {
+				if p.Options&PassDoubleDash == 0 || next != "--" {
 					argument = s.pop()
 					hasArgument = true
 				}
@@ -728,8 +728,17 @@ func (p *Parser) parseShort(s *parseState, optname string, argument string, hasA
 func (p *parseState) addArgs(args ...string) error {
 	for len(p.positional) > 0 && len(args) > 0 {
 		arg := p.positional[0]
+		raw := args[0]
+		if arg.io.role != "" {
+			normalized, normErr := arg.normalizeIOValue(raw)
+			if normErr != nil {
+				p.err = newErrorf(ErrMarshal, "invalid positional argument `%s': %v", arg.localizedName(), normErr)
+				return p.err
+			}
+			raw = normalized
+		}
 
-		if err := convert(args[0], arg.value, arg.tag); err != nil {
+		if err := convert(raw, arg.value, arg.tag); err != nil {
 			p.err = err
 			return err
 		}
@@ -749,23 +758,43 @@ func (p *parseState) applyPositionalDefaults(parser *Parser, defaultsIfEmpty boo
 	for len(p.positional) > 0 {
 		arg := p.positional[0]
 
-		if len(arg.Default) == 0 {
-			break
+		applied := false
+		if len(arg.Default) > 0 {
+			if err := arg.applyDefault(defaultsIfEmpty); err != nil {
+				p.err = newError(
+					ErrMarshal,
+					parser.i18nTextf(
+						"err.marshal.argument_default",
+						"invalid default for argument `{arg}': {error}",
+						map[string]string{
+							"arg":   arg.localizedName(),
+							"error": err.Error(),
+						},
+					),
+				)
+				return p.err
+			}
+			applied = true
+		} else {
+			ok, err := arg.applyIOFallback()
+			if err != nil {
+				p.err = newError(
+					ErrMarshal,
+					parser.i18nTextf(
+						"err.marshal.argument_default",
+						"invalid default for argument `{arg}': {error}",
+						map[string]string{
+							"arg":   arg.localizedName(),
+							"error": err.Error(),
+						},
+					),
+				)
+				return p.err
+			}
+			applied = ok
 		}
-
-		if err := arg.applyDefault(defaultsIfEmpty); err != nil {
-			p.err = newError(
-				ErrMarshal,
-				parser.i18nTextf(
-					"err.marshal.argument_default",
-					"invalid default for argument `{arg}': {error}",
-					map[string]string{
-						"arg":   arg.localizedName(),
-						"error": err.Error(),
-					},
-				),
-			)
-			return p.err
+		if !applied {
+			break
 		}
 
 		p.positional = p.positional[1:]
