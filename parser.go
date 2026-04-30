@@ -349,6 +349,10 @@ const (
 	// help and doc output when no explicit render style is set.
 	DetectShellEnvStyle
 
+	// CommandChain executes every active command implementing Commander from
+	// parent to leaf. Without this option only the last active command runs.
+	CommandChain
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
@@ -831,14 +835,8 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		return s.retargs, nil
 	} else if len(s.command.commands) != 0 && !s.command.SubcommandsOptional {
 		reterr = s.estimateCommand()
-	} else if cmd, ok := s.command.data.(Commander); ok {
-		if p.CommandHandler != nil {
-			reterr = p.CommandHandler(cmd, s.retargs)
-		} else {
-			reterr = cmd.Execute(s.retargs)
-		}
-	} else if p.CommandHandler != nil {
-		reterr = p.CommandHandler(nil, s.retargs)
+	} else {
+		reterr = p.executeCommands(s.command, s.retargs)
 	}
 
 	if reterr != nil {
@@ -854,6 +852,74 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	}
 
 	return s.retargs, nil
+}
+
+func (p *Parser) executeCommands(command *Command, args []string) error {
+	if (p.Options & CommandChain) != None {
+		return p.executeCommandChain(command, args)
+	}
+
+	if cmd, ok := command.data.(Commander); ok {
+		return p.executeCommand(cmd, args)
+	}
+
+	if p.CommandHandler != nil {
+		return p.CommandHandler(nil, args)
+	}
+
+	return nil
+}
+
+func (p *Parser) executeCommandChain(command *Command, args []string) error {
+	executed := false
+
+	for _, active := range activeCommandPath(command) {
+		cmd, ok := active.data.(Commander)
+		if !ok {
+			continue
+		}
+
+		executed = true
+
+		if err := p.executeCommand(cmd, args); err != nil {
+			return err
+		}
+	}
+
+	if !executed && p.CommandHandler != nil {
+		return p.CommandHandler(nil, args)
+	}
+
+	return nil
+}
+
+func (p *Parser) executeCommand(command Commander, args []string) error {
+	if p.CommandHandler != nil {
+		return p.CommandHandler(command, args)
+	}
+
+	return command.Execute(args)
+}
+
+func activeCommandPath(command *Command) []*Command {
+	var reversed []*Command
+
+	for command != nil {
+		reversed = append(reversed, command)
+
+		parent, ok := command.parent.(*Command)
+		if !ok {
+			break
+		}
+
+		command = parent
+	}
+
+	for i, j := 0, len(reversed)-1; i < j; i, j = i+1, j-1 {
+		reversed[i], reversed[j] = reversed[j], reversed[i]
+	}
+
+	return reversed
 }
 
 func (p *Parser) normalizeStructTag(mtag *multiTag) {

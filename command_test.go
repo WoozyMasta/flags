@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -295,6 +296,154 @@ func TestCommandExecute(t *testing.T) {
 	}
 
 	assertStringArray(t, opts.Command.EArgs, []string{"a", "b"})
+}
+
+type chainCommand struct {
+	calls *[]string
+	err   error
+	name  string
+}
+
+func (c *chainCommand) Execute(args []string) error {
+	if c.calls != nil {
+		*c.calls = append(*c.calls, c.name)
+	}
+
+	return c.err
+}
+
+func TestCommandExecuteDefaultOnlyRunsLeaf(t *testing.T) {
+	var calls []string
+
+	root := &chainCommand{name: "root", calls: &calls}
+	parent := &chainCommand{name: "parent", calls: &calls}
+	leaf := &chainCommand{name: "leaf", calls: &calls}
+
+	parser := NewNamedParser("app", Default&^PrintErrors)
+	parser.Command.data = root
+
+	parentCommand, err := parser.AddCommand("parent", "", "", parent)
+	if err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parentCommand.AddCommand("leaf", "", "", leaf); err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parser.ParseArgs([]string{"parent", "leaf"}); err != nil {
+		t.Fatalf("Unexpected parse error: %v", err)
+	}
+
+	assertStringArray(t, calls, []string{"leaf"})
+}
+
+func TestCommandChainExecuteRunsParentToLeaf(t *testing.T) {
+	var calls []string
+
+	root := &chainCommand{name: "root", calls: &calls}
+	parent := &chainCommand{name: "parent", calls: &calls}
+	leaf := &chainCommand{name: "leaf", calls: &calls}
+
+	parser := NewNamedParser("app", Default&^PrintErrors|CommandChain)
+	parser.Command.data = root
+
+	parentCommand, err := parser.AddCommand("parent", "", "", parent)
+	if err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parentCommand.AddCommand("leaf", "", "", leaf); err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parser.ParseArgs([]string{"parent", "leaf", "arg"}); err != nil {
+		t.Fatalf("Unexpected parse error: %v", err)
+	}
+
+	assertStringArray(t, calls, []string{"root", "parent", "leaf"})
+}
+
+func TestCommandChainExecuteLeafOnly(t *testing.T) {
+	var calls []string
+
+	leaf := &chainCommand{name: "leaf", calls: &calls}
+
+	parser := NewNamedParser("app", Default&^PrintErrors|CommandChain)
+
+	if _, err := parser.AddCommand("leaf", "", "", leaf); err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parser.ParseArgs([]string{"leaf"}); err != nil {
+		t.Fatalf("Unexpected parse error: %v", err)
+	}
+
+	assertStringArray(t, calls, []string{"leaf"})
+}
+
+func TestCommandChainExecuteStopsOnError(t *testing.T) {
+	var calls []string
+	expected := errors.New("parent failed")
+
+	root := &chainCommand{name: "root", calls: &calls}
+	parent := &chainCommand{name: "parent", calls: &calls, err: expected}
+	leaf := &chainCommand{name: "leaf", calls: &calls}
+
+	parser := NewNamedParser("app", Default&^PrintErrors|CommandChain)
+	parser.Command.data = root
+
+	parentCommand, err := parser.AddCommand("parent", "", "", parent)
+	if err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parentCommand.AddCommand("leaf", "", "", leaf); err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	_, err = parser.ParseArgs([]string{"parent", "leaf"})
+	if !errors.Is(err, expected) {
+		t.Fatalf("Expected %v, got %v", expected, err)
+	}
+
+	assertStringArray(t, calls, []string{"root", "parent"})
+}
+
+func TestCommandChainHandlerRunsParentToLeaf(t *testing.T) {
+	var calls []string
+
+	root := &chainCommand{name: "root"}
+	parent := &chainCommand{name: "parent"}
+	leaf := &chainCommand{name: "leaf"}
+	names := map[Commander]string{
+		root:   "root",
+		parent: "parent",
+		leaf:   "leaf",
+	}
+
+	parser := NewNamedParser("app", Default&^PrintErrors|CommandChain)
+	parser.Command.data = root
+	parser.CommandHandler = func(command Commander, args []string) error {
+		calls = append(calls, names[command])
+		assertStringArray(t, args, []string{"arg"})
+		return nil
+	}
+
+	parentCommand, err := parser.AddCommand("parent", "", "", parent)
+	if err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parentCommand.AddCommand("leaf", "", "", leaf); err != nil {
+		t.Fatalf("Unexpected command error: %v", err)
+	}
+
+	if _, err := parser.ParseArgs([]string{"parent", "leaf", "arg"}); err != nil {
+		t.Fatalf("Unexpected parse error: %v", err)
+	}
+
+	assertStringArray(t, calls, []string{"root", "parent", "leaf"})
 }
 
 func TestCommandClosest(t *testing.T) {

@@ -501,6 +501,53 @@ app docs man ./app.1
 app config --comment-width 88 ./config.ini
 ```
 
+### Command Execute Chain
+
+By default only the selected leaf command executes.
+Enable `CommandChain` when parent commands should run
+before the selected leaf command:
+
+```go
+type Options struct {
+  Project ProjectCmd `command:"project"`
+}
+
+type ProjectCmd struct {
+  Build BuildCmd `command:"build"`
+}
+
+type BuildCmd struct{}
+
+func (c *ProjectCmd) Execute(args []string) error {
+  // Prepare shared project state.
+  return nil
+}
+
+func (c *BuildCmd) Execute(args []string) error {
+  // Build runs after ProjectCmd.Execute.
+  return nil
+}
+
+func main() {
+  var opts Options
+  parser := flags.NewParser(&opts, flags.Default|flags.CommandChain)
+  _, err := parser.Parse()
+  if err != nil {
+    os.Exit(1)
+  }
+}
+```
+
+For `app project build`, execution order is:
+
+1. `ProjectCmd.Execute(args)`
+1. `BuildCmd.Execute(args)`
+
+Only commands in the active path are executed.
+If any `Execute` returns an error,
+the chain stops and `Parse` returns that error.
+`CommandHandler`, when set, receives each command in the same order.
+
 ## Defaults
 
 Prefer `defaults:"..."` for new code.

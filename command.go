@@ -68,13 +68,14 @@ type Command struct {
 }
 
 // Commander is an interface which can be implemented by any command added in
-// the options. When implemented, the Execute method will be called for the last
-// specified (sub)command providing the remaining command line arguments.
+// the options. When implemented, the Execute method will be called for the
+// selected command providing the remaining command line arguments.
+// When parser option CommandChain is enabled, Execute is called for every
+// active command implementing Commander from parent to leaf.
 type Commander interface {
-	// Execute will be called for the last active (sub)command. The
-	// args argument contains the remaining command line arguments. The
-	// error that Execute returns will be eventually passed out of the
-	// Parse method of the Parser.
+	// Execute will be called for the selected command. The args argument
+	// contains the remaining command line arguments. The error that Execute
+	// returns will be eventually passed out of the Parse method of the Parser.
 	Execute(args []string) error
 }
 

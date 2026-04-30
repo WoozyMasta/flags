@@ -181,6 +181,10 @@ Commands split CLI behavior into explicit actions (similar to `git add`,
 If the selected command implements [Commander], its `Execute` method runs
 after parsing with the remaining arguments.
 
+By default only the selected leaf command executes. Enable [CommandChain] to
+execute every active command implementing [Commander] from parent to leaf. If a
+command returns an error, the chain stops and [Parser.Parse] returns that error.
+
 Built-in command entry points are opt-in through parser option bits:
 [HelpCommand], [VersionCommand], [CompletionCommand], [DocsCommand],
 and [ConfigCommand]. [HelpCommands] enables the full set. Built-in commands

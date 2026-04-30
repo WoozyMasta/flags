@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning][].
 * `io-*` tags (`io`, `io-kind`, `io-stream`, `io-open`)
   for string option/positional input/output templates with validation;
   positional `auto`/`stream` modes support `stdin`/`stdout` fallback.
+* `CommandChain` parser option for executing active commands
+  from parent to leaf while keeping leaf-only command execution as the default.
 
 ### Changed
 
