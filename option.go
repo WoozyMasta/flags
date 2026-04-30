@@ -83,6 +83,12 @@ type Option struct {
 	// If non empty, only a certain set of values is allowed for an option.
 	Choices []string
 
+	// Relation groups where only one option can be used.
+	XorGroups []string
+
+	// Relation groups where all options must be used together.
+	AndGroups []string
+
 	// Additional short names for the option.
 	ShortAliases []rune
 
@@ -390,6 +396,16 @@ func (option *Option) SetAutoEnv(enabled bool) error {
 // SetChoices replaces allowed option values.
 func (option *Option) SetChoices(values ...string) {
 	option.Choices = append(option.Choices[:0], values...)
+}
+
+// SetXorGroups replaces mutually exclusive relation groups for this option.
+func (option *Option) SetXorGroups(groups ...string) {
+	option.XorGroups = append(option.XorGroups[:0], groups...)
+}
+
+// SetAndGroups replaces all-or-none relation groups for this option.
+func (option *Option) SetAndGroups(groups ...string) {
+	option.AndGroups = append(option.AndGroups[:0], groups...)
 }
 
 // SetOptional configures optional argument behavior and fallback value(s).

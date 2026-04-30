@@ -13,6 +13,10 @@ const (
 	FlagTagLong = "long"
 	// FlagTagRequired marks option or positional argument as required.
 	FlagTagRequired = "required"
+	// FlagTagXor declares mutually exclusive option relation groups.
+	FlagTagXor = "xor"
+	// FlagTagAnd declares option relation groups that must be used together.
+	FlagTagAnd = "and"
 	// FlagTagDescription provides short help text.
 	FlagTagDescription = "description"
 	// FlagTagDescriptionI18n provides i18n key for description text.
@@ -122,6 +126,10 @@ type FlagTags struct {
 	Long string
 	// Required maps to required marker tag (default: "required").
 	Required string
+	// Xor maps to mutually exclusive option relation groups tag.
+	Xor string
+	// And maps to option relation groups that must be used together tag.
+	And string
 	// Description maps to short help text tag (default: "description").
 	Description string
 	// DescriptionI18n maps to i18n key for short help text (default: "description-i18n").
@@ -229,6 +237,8 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Short:               prefix + FlagTagShort,
 		Long:                prefix + FlagTagLong,
 		Required:            prefix + FlagTagRequired,
+		Xor:                 prefix + FlagTagXor,
+		And:                 prefix + FlagTagAnd,
 		Description:         prefix + FlagTagDescription,
 		DescriptionI18n:     prefix + FlagTagDescriptionI18n,
 		LongDescription:     prefix + FlagTagLongDescription,
@@ -290,6 +300,12 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.Required != "" {
 		d.Required = t.Required
+	}
+	if t.Xor != "" {
+		d.Xor = t.Xor
+	}
+	if t.And != "" {
+		d.And = t.And
 	}
 	if t.Description != "" {
 		d.Description = t.Description

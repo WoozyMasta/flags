@@ -208,6 +208,10 @@ All struct tags are configurable:
 * `value-name-i18n`: i18n key for value placeholder text.
 * `default` / `defaults`: default value(s) for missing option input.
 * `choice` / `choices`: allowed value whitelist.
+* `xor`: mutually exclusive option group (`A` or `B`, but not both); with
+  `required` on any member, exactly one option in the group must be set.
+* `and`: all-or-none option group (if `A` is set, all group members must be
+  set); with `required` on any member, the empty group is not allowed.
 * `completion`: completion hint (`file`, `dir`, `none`) when no custom
   completer or `choices` are set.
 * `short-alias` / `short-aliases`: additional short names.

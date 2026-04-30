@@ -545,6 +545,16 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err != nil {
 			return err
 		}
+
+		xorGroups, err := collectDelimitedTagValues(mtag, FlagTagXor, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+		andGroups, err := collectDelimitedTagValues(mtag, FlagTagAnd, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+
 		completionHint, err := parseCompletionHint(mtag.Get(FlagTagCompletion), field.Name)
 		if err != nil {
 			return err
@@ -622,6 +632,8 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			ValueNameI18nKey:   valueNameI18n,
 			DefaultMask:        defaultMask,
 			Choices:            choices,
+			XorGroups:          xorGroups,
+			AndGroups:          andGroups,
 			completionHint:     completionHint,
 			Hidden:             hidden,
 			Immediate:          immediate,

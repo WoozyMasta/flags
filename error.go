@@ -95,6 +95,12 @@ const (
 
 	// ErrInvalidTag indicates an invalid tag or invalid use of an existing tag
 	ErrInvalidTag
+
+	// ErrOptionConflict indicates that mutually exclusive options were used together.
+	ErrOptionConflict
+
+	// ErrOptionRequirement indicates that an option relation requirement failed.
+	ErrOptionRequirement
 )
 
 func (e ErrorType) String() string {
@@ -131,6 +137,10 @@ func (e ErrorType) String() string {
 		return "invalid choice"
 	case ErrInvalidTag:
 		return "invalid tag"
+	case ErrOptionConflict:
+		return "option conflict"
+	case ErrOptionRequirement:
+		return "option requirement"
 	}
 
 	return "unrecognized error type"

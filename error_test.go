@@ -26,6 +26,8 @@ func TestErrorTypeStringAndError(t *testing.T) {
 		{ErrUnknownCommand, "unknown command"},
 		{ErrInvalidChoice, "invalid choice"},
 		{ErrInvalidTag, "invalid tag"},
+		{ErrOptionConflict, "option conflict"},
+		{ErrOptionRequirement, "option requirement"},
 		{ErrorType(999), "unrecognized error type"},
 	}
 

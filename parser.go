@@ -808,6 +808,12 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 				s.err = reqErr
 			}
 		}
+
+		if s.err == nil && !p.shouldSkipRequiredValidation() {
+			if relationErr := s.checkOptionRelations(p); relationErr != nil {
+				s.err = relationErr
+			}
+		}
 	}
 
 	var reterr error
@@ -849,6 +855,8 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.Short, FlagTagShort)
 	normalizeTagAlias(c, p.flagTags.Long, FlagTagLong)
 	normalizeTagAlias(c, p.flagTags.Required, FlagTagRequired)
+	normalizeTagAlias(c, p.flagTags.Xor, FlagTagXor)
+	normalizeTagAlias(c, p.flagTags.And, FlagTagAnd)
 	normalizeTagAlias(c, p.flagTags.Description, FlagTagDescription)
 	normalizeTagAlias(c, p.flagTags.DescriptionI18n, FlagTagDescriptionI18n)
 	normalizeTagAlias(c, p.flagTags.LongDescription, FlagTagLongDescription)

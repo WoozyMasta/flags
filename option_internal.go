@@ -153,6 +153,10 @@ func (option *Option) isTerminated() bool {
 	return option.Terminator != ""
 }
 
+func (option *Option) hasRelationGroups() bool {
+	return len(option.XorGroups) > 0 || len(option.AndGroups) > 0
+}
+
 func (option *Option) emptyValue() reflect.Value {
 	tp := option.value.Type()
 

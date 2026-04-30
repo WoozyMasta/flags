@@ -14,11 +14,17 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `xor` and `and` options for mutually exclusive and dependent flags.
+
 ## [0.1.1] - 2026-04-27
 
 ### Added
 
-* Added `AutoShowChoiceListInHelp` for width-based automatic rendering of
+* `AutoShowChoiceListInHelp` for width-based automatic rendering of
   vertical `valid values` lists in built-in help.
 
 ### Changed

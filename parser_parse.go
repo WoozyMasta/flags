@@ -58,7 +58,7 @@ func (p *parseState) checkRequired(parser *Parser) error {
 					missingRequired = false
 				}
 
-				if missingRequired && option.Required {
+				if missingRequired && option.Required && !option.hasRelationGroups() {
 					required = append(required, option)
 				}
 			}
@@ -168,6 +168,172 @@ func (p *parseState) checkRequired(parser *Parser) error {
 
 	p.err = newError(ErrRequired, msg)
 	return p.err
+}
+
+func (p *parseState) checkOptionRelations(parser *Parser) error {
+	for c := parser.Command; c != nil; c = c.Active {
+		if err := p.checkCommandOptionRelations(parser, c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *parseState) checkCommandOptionRelations(parser *Parser, command *Command) error {
+	xorGroups := make(map[string][]*Option)
+	andGroups := make(map[string][]*Option)
+
+	command.eachGroup(func(g *Group) {
+		for _, option := range g.options {
+			for _, group := range option.XorGroups {
+				if group != "" {
+					xorGroups[group] = append(xorGroups[group], option)
+				}
+			}
+			for _, group := range option.AndGroups {
+				if group != "" {
+					andGroups[group] = append(andGroups[group], option)
+				}
+			}
+		}
+	})
+
+	if err := p.checkXorOptionRelations(parser, xorGroups); err != nil {
+		return err
+	}
+
+	return p.checkAndOptionRelations(parser, andGroups)
+}
+
+func (p *parseState) checkXorOptionRelations(parser *Parser, groups map[string][]*Option) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		options := groups[name]
+		set := setOptions(parser, options)
+
+		switch {
+		case len(set) > 1:
+			msg := parser.i18nTextf(
+				"err.option_conflict.xor",
+				"flags {flags} are mutually exclusive",
+				map[string]string{"flags": optionList(parser, set)},
+			)
+			p.err = newError(ErrOptionConflict, msg)
+			return p.err
+		case len(set) == 0 && relationRequired(options):
+			msg := parser.i18nTextf(
+				"err.option_requirement.xor",
+				"one of flags {flags} must be specified",
+				map[string]string{"flags": optionDisjunction(parser, options)},
+			)
+			p.err = newError(ErrOptionRequirement, msg)
+			return p.err
+		}
+	}
+
+	return nil
+}
+
+func (p *parseState) checkAndOptionRelations(parser *Parser, groups map[string][]*Option) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		options := groups[name]
+		set := setOptions(parser, options)
+
+		if len(set) == len(options) {
+			continue
+		}
+
+		if len(set) == 0 && !relationRequired(options) {
+			continue
+		}
+
+		msg := parser.i18nTextf(
+			"err.option_requirement.and",
+			"flags {flags} must be specified together",
+			map[string]string{"flags": optionList(parser, options)},
+		)
+		p.err = newError(ErrOptionRequirement, msg)
+		return p.err
+	}
+
+	return nil
+}
+
+func relationRequired(options []*Option) bool {
+	for _, option := range options {
+		if option.Required {
+			return true
+		}
+	}
+
+	return false
+}
+
+func setOptions(parser *Parser, options []*Option) []*Option {
+	out := make([]*Option, 0, len(options))
+
+	for _, option := range options {
+		if optionSatisfied(parser, option) {
+			out = append(out, option)
+		}
+	}
+
+	return out
+}
+
+func optionSatisfied(parser *Parser, option *Option) bool {
+	if option.isSet {
+		return true
+	}
+
+	return (parser.Options&RequiredFromValues) != None && !option.isEmpty()
+}
+
+func sortedKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func optionList(parser *Parser, options []*Option) string {
+	return joinedOptionList(parser, options, "err.list.conjunction", "{items} and {last}")
+}
+
+func optionDisjunction(parser *Parser, options []*Option) string {
+	return joinedOptionList(parser, options, "err.list.disjunction", "{items} or {last}")
+}
+
+func joinedOptionList(parser *Parser, options []*Option, key string, fallback string) string {
+	names := make([]string, 0, len(options))
+
+	for _, option := range options {
+		names = append(names, option.String())
+	}
+
+	sort.Strings(names)
+
+	if len(names) == 0 {
+		return ""
+	}
+	if len(names) == 1 {
+		return names[0]
+	}
+
+	return parser.i18nTextf(
+		key,
+		fallback,
+		map[string]string{
+			"items": strings.Join(names[:len(names)-1], ", "),
+			"last":  names[len(names)-1],
+		},
+	)
 }
 
 func (p *parseState) estimateCommand() error {

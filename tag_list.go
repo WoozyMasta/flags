@@ -65,3 +65,45 @@ func collectTagValues(
 
 	return single, nil
 }
+
+func collectDelimitedTagValues(
+	mtag multiTag,
+	tagName string,
+	fieldName string,
+	delimiter rune,
+) ([]string, error) {
+	values := mtag.GetMany(tagName)
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	if len(values) > 1 {
+		return nil, newErrorf(
+			ErrInvalidTag,
+			"field `%s' uses non-repeatable `%s' tag more than once",
+			fieldName,
+			tagName,
+		)
+	}
+
+	return uniqueTagListValues(splitTagListValues(values, delimiter)), nil
+}
+
+func uniqueTagListValues(values []string) []string {
+	if len(values) < 2 {
+		return values
+	}
+
+	seen := make(map[string]struct{}, len(values))
+	out := make([]string, 0, len(values))
+
+	for _, value := range values {
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		out = append(out, value)
+	}
+
+	return out
+}

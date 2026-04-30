@@ -70,6 +70,8 @@ General option tags:
   - `short`: single-character short option name
   - `long`: long option name
   - `required`: marks option as required; parser returns [ErrRequired] when missing
+  - `xor`: delimiter-separated exclusive option relation groups
+  - `and`: delimiter-separated all-or-none option relation groups
   - `description`: short help text
   - `long-description`: extended text (currently used in generated man pages)
   - `no-flag`: ignore field as command-line option
