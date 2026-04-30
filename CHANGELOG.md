@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning][].
   for string option/positional input/output templates with validation;
   positional `auto`/`stream` modes support `stdin`/`stdout` fallback.
 
+### Changed
+
+* `ParseArgs` now re-runs duplicate flag/command validation
+  only when parser metadata is dirty (after mutations/rebuild/config changes),
+  reducing overhead for reused parser instances.
+
 ## [0.1.1] - 2026-04-27
 
 ### Added

@@ -28,7 +28,12 @@ func (p *Parser) Validate() error {
 		return err
 	}
 
-	return p.validateDuplicateFlags()
+	if err := p.validateDuplicateFlags(); err != nil {
+		return err
+	}
+
+	p.validationDirty = false
+	return nil
 }
 
 // Rebuild rescans groups and commands using current tag mapping options.

@@ -130,6 +130,9 @@ type Parser struct {
 	// Indicates that post-scan configurators should be applied before parse.
 	configDirty bool
 
+	// Indicates that duplicate metadata validation must be re-run.
+	validationDirty bool
+
 	// Prevents recursive configurator execution.
 	configuring bool
 
@@ -444,6 +447,7 @@ func NewNamedParser(appname string, options Options) *Parser {
 		builtinCommandGroup:        "Help Commands",
 		builtinCommandGroupI18nKey: "help.command_group.help_commands",
 		configDirty:                true,
+		validationDirty:            true,
 	}
 
 	p.parent = p
@@ -644,11 +648,14 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		return nil, p.printError(err)
 	}
 
-	if err := p.validateDuplicateFlags(); err != nil {
-		return nil, p.printError(err)
-	}
-	if err := p.validateDuplicateCommands(); err != nil {
-		return nil, p.printError(err)
+	if p.validationDirty {
+		if err := p.validateDuplicateFlags(); err != nil {
+			return nil, p.printError(err)
+		}
+		if err := p.validateDuplicateCommands(); err != nil {
+			return nil, p.printError(err)
+		}
+		p.validationDirty = false
 	}
 
 	p.eachOption(func(_ *Command, _ *Group, option *Option) {
@@ -929,6 +936,7 @@ func normalizeTagAlias(tags map[string][]string, source string, target string) {
 func (p *Parser) invalidateLookupCache() {
 	p.lookupGeneration++
 	p.configDirty = true
+	p.validationDirty = true
 }
 
 type groupSpec struct {
