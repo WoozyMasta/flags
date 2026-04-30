@@ -423,6 +423,36 @@ func (p *parseState) estimateCommand() error {
 }
 
 func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg bool, argument string, hasArgument bool) (err error) {
+	if option.Counter {
+		if !hasArgument && canarg && !s.eof() {
+			next := s.args[0]
+			if option.isValidValue(next) == nil {
+				if !(p.Options&PassDoubleDash != 0 && next == "--") {
+					argument = s.pop()
+					hasArgument = true
+				}
+			}
+		}
+
+		delta := uint64(1)
+		if hasArgument {
+			delta, err = parseCounterDelta(argument, option)
+			if err != nil {
+				return p.marshalError(option, err)
+			}
+		}
+
+		if err = option.applyCounterDelta(delta); err != nil {
+			return p.marshalError(option, err)
+		}
+
+		if option.IsImmediate() {
+			p.immediateRequested = true
+		}
+
+		return nil
+	}
+
 	switch {
 	case !option.canArgument():
 		if hasArgument && (p.Options&AllowBoolValues) == None {
@@ -518,6 +548,30 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 	return err
 }
 
+func parseCounterDelta(raw string, option *Option) (uint64, error) {
+	switch option.value.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		parsed, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		if parsed < 0 {
+			return 0, ErrCounterNonNegative
+		}
+		return uint64(parsed), nil
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		parsed, err := strconv.ParseUint(raw, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return parsed, nil
+
+	default:
+		return 0, ErrCounterInvalidType
+	}
+}
+
 func (p *Parser) collectTerminatedArgs(s *parseState, option *Option) ([]string, error) {
 	args := make([]string, 0, 4)
 
@@ -606,11 +660,28 @@ func (p *Parser) splitShortConcatArg(s *parseState, optname string) (string, *st
 	first := string(c)
 
 	if option := s.lookup.shortNames[first]; option != nil && option.canArgument() {
+		if option.Counter && isCounterShortCluster(optname, c) {
+			return optname, nil
+		}
 		arg := optname[n:]
 		return first, &arg
 	}
 
 	return optname, nil
+}
+
+func isCounterShortCluster(optname string, first rune) bool {
+	if utf8.RuneCountInString(optname) <= 1 {
+		return false
+	}
+
+	for _, c := range optname {
+		if c != first {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (p *Parser) parseShort(s *parseState, optname string, argument string, hasArgument bool) error {

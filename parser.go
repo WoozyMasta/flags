@@ -857,6 +857,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.Required, FlagTagRequired)
 	normalizeTagAlias(c, p.flagTags.Xor, FlagTagXor)
 	normalizeTagAlias(c, p.flagTags.And, FlagTagAnd)
+	normalizeTagAlias(c, p.flagTags.Counter, FlagTagCounter)
 	normalizeTagAlias(c, p.flagTags.Description, FlagTagDescription)
 	normalizeTagAlias(c, p.flagTags.DescriptionI18n, FlagTagDescriptionI18n)
 	normalizeTagAlias(c, p.flagTags.LongDescription, FlagTagLongDescription)

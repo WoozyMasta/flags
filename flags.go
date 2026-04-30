@@ -72,6 +72,7 @@ General option tags:
   - `required`: marks option as required; parser returns [ErrRequired] when missing
   - `xor`: delimiter-separated exclusive option relation groups
   - `and`: delimiter-separated all-or-none option relation groups
+  - `counter`: integer counter mode; each occurrence increments by 1
   - `description`: short help text
   - `long-description`: extended text (currently used in generated man pages)
   - `no-flag`: ignore field as command-line option

@@ -540,6 +540,10 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err != nil {
 			return err
 		}
+		counter, _, err := parseStructBoolTag(mtag, FlagTagCounter, field.Name)
+		if err != nil {
+			return err
+		}
 
 		choices, err := collectTagValues(mtag, FlagTagChoice, FlagTagChoices, field.Name, delimiter)
 		if err != nil {
@@ -628,6 +632,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			OptionalArgument:   optional,
 			OptionalValue:      optionalValue,
 			Required:           required,
+			Counter:            counter,
 			ValueName:          valueName,
 			ValueNameI18nKey:   valueNameI18n,
 			DefaultMask:        defaultMask,
@@ -651,6 +656,20 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			return newErrorf(ErrInvalidTag,
 				"boolean flag `%s' may not have default values, they always default to `false' and can only be turned on",
 				option.shortAndLongName())
+		}
+		if option.Counter {
+			switch option.value.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				// valid
+			default:
+				return newErrorf(
+					ErrInvalidTag,
+					"counter tag `%s' requires integer option type on field `%s'",
+					FlagTagCounter,
+					field.Name,
+				)
+			}
 		}
 
 		if option.isTerminated() {

@@ -121,6 +121,11 @@ type Option struct {
 	// error.
 	Required bool
 
+	// If true, the option acts as a counter:
+	// each flag occurrence increments by 1,
+	// and explicit numeric values increment by that amount.
+	Counter bool
+
 	// If true, the option is not displayed in the help or man page
 	Hidden bool
 
@@ -587,6 +592,39 @@ func (option *Option) Set(value *string) error {
 	}
 
 	return convert("", option.value, option.tag)
+}
+
+func (option *Option) applyCounterDelta(delta uint64) error {
+	kind := option.value.Kind()
+	option.isSet = true
+	option.preventDefault = true
+	option.clearReferenceBeforeSet = false
+
+	switch kind {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		current := option.value.Int()
+		if delta > uint64(^uint64(0)>>1) {
+			return ErrCounterIncrementTooLarge
+		}
+		next := current + int64(delta)
+		if option.value.OverflowInt(next) || next < current {
+			return ErrCounterOverflow
+		}
+		option.value.SetInt(next)
+		return nil
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		current := option.value.Uint()
+		next := current + delta
+		if option.value.OverflowUint(next) || next < current {
+			return ErrCounterOverflow
+		}
+		option.value.SetUint(next)
+		return nil
+
+	default:
+		return ErrCounterInvalidType
+	}
 }
 
 // SetTerminated sets all values collected for a terminated option.

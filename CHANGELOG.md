@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning][].
 ### Added
 
 * `xor` and `and` options for mutually exclusive and dependent flags.
+* `counter` option for integer occurrence counting,
+  including repeated short flags and explicit numeric increments.
 
 ## [0.1.1] - 2026-04-27
 

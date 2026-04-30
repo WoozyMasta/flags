@@ -17,6 +17,8 @@ const (
 	FlagTagXor = "xor"
 	// FlagTagAnd declares option relation groups that must be used together.
 	FlagTagAnd = "and"
+	// FlagTagCounter enables counter mode for integer flags.
+	FlagTagCounter = "counter"
 	// FlagTagDescription provides short help text.
 	FlagTagDescription = "description"
 	// FlagTagDescriptionI18n provides i18n key for description text.
@@ -130,6 +132,8 @@ type FlagTags struct {
 	Xor string
 	// And maps to option relation groups that must be used together tag.
 	And string
+	// Counter maps to counter mode tag for integer flags.
+	Counter string
 	// Description maps to short help text tag (default: "description").
 	Description string
 	// DescriptionI18n maps to i18n key for short help text (default: "description-i18n").
@@ -239,6 +243,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Required:            prefix + FlagTagRequired,
 		Xor:                 prefix + FlagTagXor,
 		And:                 prefix + FlagTagAnd,
+		Counter:             prefix + FlagTagCounter,
 		Description:         prefix + FlagTagDescription,
 		DescriptionI18n:     prefix + FlagTagDescriptionI18n,
 		LongDescription:     prefix + FlagTagLongDescription,
@@ -306,6 +311,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.And != "" {
 		d.And = t.And
+	}
+	if t.Counter != "" {
+		d.Counter = t.Counter
 	}
 	if t.Description != "" {
 		d.Description = t.Description

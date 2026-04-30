@@ -36,6 +36,18 @@ var (
 
 	// ErrSetConsoleTitleFailed indicates an unknown SetConsoleTitleW failure.
 	ErrSetConsoleTitleFailed = errors.New("SetConsoleTitleW failed")
+
+	// ErrCounterNonNegative indicates that counter increment cannot be negative.
+	ErrCounterNonNegative = errors.New("counter increment must be non-negative")
+
+	// ErrCounterOverflow indicates counter arithmetic overflow.
+	ErrCounterOverflow = errors.New("counter overflow")
+
+	// ErrCounterIncrementTooLarge indicates counter increment is too large.
+	ErrCounterIncrementTooLarge = errors.New("counter increment is too large")
+
+	// ErrCounterInvalidType indicates invalid type for counter option.
+	ErrCounterInvalidType = errors.New("counter option must use integer type")
 )
 
 // ErrorType represents the type of error.

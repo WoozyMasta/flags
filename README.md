@@ -212,6 +212,8 @@ All struct tags are configurable:
   `required` on any member, exactly one option in the group must be set.
 * `and`: all-or-none option group (if `A` is set, all group members must be
   set); with `required` on any member, the empty group is not allowed.
+* `counter`: integer counter mode; each occurrence increments by `1`
+  (or by an explicit numeric value).
 * `completion`: completion hint (`file`, `dir`, `none`) when no custom
   completer or `choices` are set.
 * `short-alias` / `short-aliases`: additional short names.
