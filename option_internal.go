@@ -340,6 +340,46 @@ func (option *Option) isEmpty() bool {
 	}
 }
 
+func (option *Option) isRepeatableValue() bool {
+	return isRepeatableOptionValue(option.value)
+}
+
+func isRepeatableOptionValue(value reflect.Value) bool {
+	tp := value.Type()
+
+	for tp.Kind() == reflect.Ptr {
+		tp = tp.Elem()
+	}
+
+	switch tp.Kind() {
+	case reflect.Map, reflect.Slice:
+		return true
+	default:
+		return false
+	}
+}
+
+func (option *Option) requiredValueCount() int {
+	value := option.value
+
+	for {
+		switch value.Kind() {
+		case reflect.Interface, reflect.Ptr:
+			if value.IsNil() {
+				return 0
+			}
+			value = value.Elem()
+		case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+			return value.Len()
+		default:
+			if value.IsZero() {
+				return 0
+			}
+			return 1
+		}
+	}
+}
+
 func (option *Option) call(value *string) error {
 	var retval []reflect.Value
 

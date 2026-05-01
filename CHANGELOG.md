@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning][].
   from parent to leaf while keeping leaf-only command execution as the default.
 * `validate-*` tags for string, path, and numeric post-parse validation
   on options and positional arguments.
+* Numeric `required` ranges for repeatable options,
+  allowing slice and map flags to require value counts.
 
 ### Changed
 

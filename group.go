@@ -382,6 +382,75 @@ func parseStructBoolTag(mtag multiTag, tagName string, fieldName string) (bool, 
 	return value, set, nil
 }
 
+func parseOptionRequiredTag(mtag multiTag, fieldName string, value reflect.Value) (bool, int, int, bool, error) {
+	raw := strings.TrimSpace(mtag.Get(FlagTagRequired))
+	if raw == "" {
+		return false, -1, -1, false, nil
+	}
+
+	required, _, err := parseBoolTagValue(raw)
+	if err == nil {
+		return required, -1, -1, false, nil
+	}
+	if !looksLikeRequiredRange(raw) {
+		return false, -1, -1, false, newErrorf(ErrInvalidTag,
+			"invalid boolean value `%s` for tag `%s` on field `%s`",
+			raw, FlagTagRequired, fieldName)
+	}
+	if !isRepeatableOptionValue(value) {
+		return false, -1, -1, false, newErrorf(ErrInvalidTag,
+			"numeric required ranges are only supported for slice or map options on field `%s`",
+			fieldName)
+	}
+
+	requiredMin, requiredMax, err := parseRequiredRangeValue(raw)
+	if err != nil {
+		return false, -1, -1, false, newErrorf(ErrInvalidTag,
+			"invalid required range `%s` on field `%s`: %v",
+			raw, fieldName, err)
+	}
+
+	return requiredMin > 0, requiredMin, requiredMax, true, nil
+}
+
+func looksLikeRequiredRange(raw string) bool {
+	if strings.Contains(raw, "-") {
+		return true
+	}
+
+	_, err := strconv.ParseInt(raw, 10, 32)
+	return err == nil
+}
+
+func parseRequiredRangeValue(raw string) (int, int, error) {
+	parts := strings.SplitN(raw, "-", 2)
+	requiredMax := -1
+
+	if parts[0] == "" {
+		return 0, -1, fmt.Errorf("missing minimum")
+	}
+
+	requiredMin64, err := strconv.ParseInt(parts[0], 10, 32)
+	if err != nil {
+		return 0, -1, fmt.Errorf("invalid minimum %q", parts[0])
+	}
+
+	if len(parts) > 1 && parts[1] != "" {
+		requiredMax64, err := strconv.ParseInt(parts[1], 10, 32)
+		if err != nil {
+			return 0, -1, fmt.Errorf("invalid maximum %q", parts[1])
+		}
+		requiredMax = int(requiredMax64)
+	}
+
+	requiredMin := int(requiredMin64)
+	if err := validateRequiredRange(requiredMin, requiredMax); err != nil {
+		return 0, -1, err
+	}
+
+	return requiredMin, requiredMax, nil
+}
+
 func autoEnvKeyFromLongName(longName string) string {
 	upper := strings.ToUpper(longName)
 
@@ -536,7 +605,11 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			return err
 		}
 
-		required, _, err := parseStructBoolTag(mtag, FlagTagRequired, field.Name)
+		required, requiredValueMin, requiredValueMax, requiredValueRange, err := parseOptionRequiredTag(
+			mtag,
+			field.Name,
+			realval.Field(i),
+		)
 		if err != nil {
 			return err
 		}
@@ -633,6 +706,9 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			OptionalArgument:   optional,
 			OptionalValue:      optionalValue,
 			Required:           required,
+			requiredValueMin:   requiredValueMin,
+			requiredValueMax:   requiredValueMax,
+			requiredValueRange: requiredValueRange,
 			Counter:            counter,
 			ValueName:          valueName,
 			ValueNameI18nKey:   valueNameI18n,

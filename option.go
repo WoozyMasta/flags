@@ -124,6 +124,15 @@ type Option struct {
 	// error.
 	Required bool
 
+	// The minimal number of required values for repeatable options.
+	requiredValueMin int
+
+	// The maximum number of allowed values for repeatable options.
+	requiredValueMax int
+
+	// Whether requiredValueMin/requiredValueMax were configured.
+	requiredValueRange bool
+
 	// If true, the option acts as a counter:
 	// each flag occurrence increments by 1,
 	// and explicit numeric values increment by that amount.
@@ -167,6 +176,29 @@ func (option *Option) SetDescriptionI18nKey(key string) {
 // SetRequired enables or disables required option validation.
 func (option *Option) SetRequired(required bool) {
 	option.Required = required
+	option.requiredValueMin = -1
+	option.requiredValueMax = -1
+	option.requiredValueRange = false
+}
+
+// SetRequiredRange sets required value bounds for repeatable options.
+// Use requiredMax = -1 for "at least requiredMin".
+func (option *Option) SetRequiredRange(requiredMin int, requiredMax int) error {
+	if err := validateRequiredRange(requiredMin, requiredMax); err != nil {
+		return err
+	}
+	if !option.isRepeatableValue() {
+		return newErrorf(ErrInvalidTag,
+			"required ranges are only supported for repeatable option `%s`",
+			option.String())
+	}
+
+	option.Required = requiredMin > 0
+	option.requiredValueMin = requiredMin
+	option.requiredValueMax = requiredMax
+	option.requiredValueRange = true
+
+	return nil
 }
 
 // SetHidden controls whether option is shown in help/completion/docs.

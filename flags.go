@@ -69,7 +69,7 @@ General option tags:
 
   - `short`: single-character short option name
   - `long`: long option name
-  - `required`: marks option as required; parser returns [ErrRequired] when missing
+  - `required`: marks option as required; repeatable options support count ranges
   - `xor`: delimiter-separated exclusive option relation groups
   - `and`: delimiter-separated all-or-none option relation groups
   - `counter`: integer counter mode; each occurrence increments by 1
@@ -143,7 +143,10 @@ Validation tags apply to option fields and positional argument fields:
 
 For `positional-args`, arguments are optional by default.
 Use `required` either on the positional struct field or on individual fields.
-For a trailing slice field, `required:"N"` means at least `N` values.
+Numeric `required` forms are supported for trailing positional slices
+and repeatable option fields.
+`required:"N"` means at least `N` values,
+and `required:"N-M"` means from `N` to `M` values.
 For positional args, `io:"in"`/`io:"out"` with `io-kind:"auto"` or
 `io-kind:"stream"` defaults omitted values to `stdin`/`stdout`.
 For options, no implicit fallback is applied when the flag is omitted.

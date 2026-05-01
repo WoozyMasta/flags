@@ -60,6 +60,15 @@ func (p *parseState) checkRequired(parser *Parser) error {
 
 				if missingRequired && option.Required && !option.hasRelationGroups() {
 					required = append(required, option)
+					continue
+				}
+
+				if !option.hasRelationGroups() && option.requiredValueRange {
+					count := option.requiredValueCount()
+					if count < option.requiredValueMin ||
+						(option.requiredValueMax != -1 && count > option.requiredValueMax) {
+						required = append(required, option)
+					}
 				}
 			}
 		})
@@ -142,7 +151,7 @@ func (p *parseState) checkRequired(parser *Parser) error {
 	names := make([]string, 0, len(required))
 
 	for _, k := range required {
-		names = append(names, "`"+k.String()+"`")
+		names = append(names, "`"+optionRequiredName(k)+"`")
 	}
 
 	sort.Strings(names)
@@ -168,6 +177,40 @@ func (p *parseState) checkRequired(parser *Parser) error {
 
 	p.err = newError(ErrRequired, msg)
 	return p.err
+}
+
+func optionRequiredName(option *Option) string {
+	if !option.requiredValueRange {
+		return option.String()
+	}
+
+	count := option.requiredValueCount()
+	name := option.String()
+
+	if count < option.requiredValueMin {
+		values := "value"
+		got := ""
+
+		if option.requiredValueMin > 1 {
+			values = "values"
+			got = ", but got only " + strconv.Itoa(count)
+		}
+
+		return name + " (at least " + strconv.Itoa(option.requiredValueMin) + " " + values + got + ")"
+	}
+
+	if option.requiredValueMax == 0 {
+		return name + " (zero values)"
+	}
+
+	values := "value"
+	got := ""
+	if option.requiredValueMax > 1 {
+		values = "values"
+		got = ", but got " + strconv.Itoa(count)
+	}
+
+	return name + " (at most " + strconv.Itoa(option.requiredValueMax) + " " + values + got + ")"
 }
 
 func (p *parseState) checkOptionRelations(parser *Parser) error {

@@ -82,14 +82,8 @@ func (a *Arg) SetRequired(required bool) {
 // SetRequiredRange sets positional required bounds.
 // Use requiredMax = -1 for "at least requiredMin".
 func (a *Arg) SetRequiredRange(requiredMin int, requiredMax int) error {
-	if requiredMin < 0 {
-		return newErrorf(ErrInvalidTag, "required min must be >= 0, got %d", requiredMin)
-	}
-	if requiredMax < -1 {
-		return newErrorf(ErrInvalidTag, "required max must be >= -1, got %d", requiredMax)
-	}
-	if requiredMax != -1 && requiredMax < requiredMin {
-		return newErrorf(ErrInvalidTag, "required max %d must be >= min %d", requiredMax, requiredMin)
+	if err := validateRequiredRange(requiredMin, requiredMax); err != nil {
+		return err
 	}
 
 	a.Required = requiredMin
@@ -141,6 +135,20 @@ func (a *Arg) applyDefault(defaultsIfEmpty bool) error {
 		if err := convert(d, a.value, a.tag); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func validateRequiredRange(requiredMin int, requiredMax int) error {
+	if requiredMin < 0 {
+		return newErrorf(ErrInvalidTag, "required min must be >= 0, got %d", requiredMin)
+	}
+	if requiredMax < -1 {
+		return newErrorf(ErrInvalidTag, "required max must be >= -1, got %d", requiredMax)
+	}
+	if requiredMax != -1 && requiredMax < requiredMin {
+		return newErrorf(ErrInvalidTag, "required max %d must be >= min %d", requiredMax, requiredMin)
 	}
 
 	return nil
