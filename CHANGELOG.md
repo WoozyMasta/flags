@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.2.0] - 2026-05-01
 
 ### Added
 
@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning][].
   reducing overhead for reused parser instances.
 * User-facing error messages now use symmetric backtick quoting
   instead of legacy `` `value' `` quoting.
+
+[0.2.0]: https://github.com/WoozyMasta/flags/compare/v0.1.1...v0.2.0
 
 ## [0.1.1] - 2026-04-27
 
