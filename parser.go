@@ -385,6 +385,18 @@ type parseState struct {
 	positional []*Arg
 }
 
+// CommandDescriptions contains short and long user-facing command descriptions.
+type CommandDescriptions struct {
+	Short string
+	Long  string
+}
+
+// CommandDescriptionI18nKeys contains localization keys for command descriptions.
+type CommandDescriptionI18nKeys struct {
+	Short string
+	Long  string
+}
+
 // Parse is a convenience function to parse command line options with default
 // settings. The provided data is a pointer to a struct representing the
 // default option group (named "Application Options"). For more control, use
@@ -567,6 +579,68 @@ func (p *Parser) SetOptionSort(mode OptionSortMode) {
 // SetCommandSort configures command order mode for help/docs presentation.
 func (p *Parser) SetCommandSort(mode CommandSortMode) {
 	p.commandSort = mode
+}
+
+// SetCommandShortDescriptions updates short descriptions for multiple commands.
+// Missing command names are ignored.
+func (p *Parser) SetCommandShortDescriptions(descriptions map[string]string) {
+	for commandName, description := range descriptions {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.SetShortDescription(description)
+		}
+	}
+}
+
+// SetCommandLongDescriptions updates long descriptions for multiple commands.
+// Missing command names are ignored.
+func (p *Parser) SetCommandLongDescriptions(descriptions map[string]string) {
+	for commandName, description := range descriptions {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.SetLongDescription(description)
+		}
+	}
+}
+
+// SetCommandDescriptions updates short and long descriptions for multiple commands.
+// Missing command names are ignored.
+func (p *Parser) SetCommandDescriptions(descriptions map[string]CommandDescriptions) {
+	for commandName, description := range descriptions {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.SetShortDescription(description.Short)
+			cmd.SetLongDescription(description.Long)
+		}
+	}
+}
+
+// SetCommandShortDescriptionI18nKeys updates short description i18n keys
+// for multiple commands. Missing command names are ignored.
+func (p *Parser) SetCommandShortDescriptionI18nKeys(keys map[string]string) {
+	for commandName, key := range keys {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.SetShortDescriptionI18nKey(key)
+		}
+	}
+}
+
+// SetCommandLongDescriptionI18nKeys updates long description i18n keys
+// for multiple commands. Missing command names are ignored.
+func (p *Parser) SetCommandLongDescriptionI18nKeys(keys map[string]string) {
+	for commandName, key := range keys {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.SetLongDescriptionI18nKey(key)
+		}
+	}
+}
+
+// SetCommandDescriptionI18nKeys updates short and long description i18n keys
+// for multiple commands. Missing command names are ignored.
+func (p *Parser) SetCommandDescriptionI18nKeys(keys map[string]CommandDescriptionI18nKeys) {
+	for commandName, key := range keys {
+		if cmd := p.Find(commandName); cmd != nil {
+			cmd.SetShortDescriptionI18nKey(key.Short)
+			cmd.SetLongDescriptionI18nKey(key.Long)
+		}
+	}
 }
 
 // SetOptionTypeOrder customizes type rank used by OptionSortByType.

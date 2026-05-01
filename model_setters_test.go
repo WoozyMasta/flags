@@ -128,3 +128,95 @@ func TestArgSettersDefaultAndRequiredRange(t *testing.T) {
 		t.Fatalf("expected invalid required range error")
 	}
 }
+
+func TestParserSetCommandDescriptions(t *testing.T) {
+	var opts struct {
+		Run   struct{} `command:"run" description:"Run"`
+		Build struct{} `command:"build" description:"Build"`
+	}
+
+	p := NewParser(&opts, None)
+	p.SetCommandShortDescriptions(map[string]string{
+		"run":     "Execute workload",
+		"missing": "ignored",
+	})
+	p.SetCommandLongDescriptions(map[string]string{
+		"run": "Run long",
+	})
+	p.SetCommandDescriptions(map[string]CommandDescriptions{
+		"build": {
+			Short: "Compile artifacts",
+			Long:  "Build long",
+		},
+	})
+
+	run := p.Find("run")
+	if run == nil {
+		t.Fatalf("expected run command")
+	}
+	if run.ShortDescription != "Execute workload" {
+		t.Fatalf("unexpected run short description: %q", run.ShortDescription)
+	}
+	if run.LongDescription != "Run long" {
+		t.Fatalf("unexpected run long description: %q", run.LongDescription)
+	}
+
+	build := p.Find("build")
+	if build == nil {
+		t.Fatalf("expected build command")
+	}
+	if build.ShortDescription != "Compile artifacts" {
+		t.Fatalf("unexpected build short description: %q", build.ShortDescription)
+	}
+	if build.LongDescription != "Build long" {
+		t.Fatalf("unexpected build long description: %q", build.LongDescription)
+	}
+}
+
+func TestParserSetCommandDescriptionI18nKeys(t *testing.T) {
+	var opts struct {
+		Run struct{} `command:"run" description:"Run command" long-description:"Run long"`
+	}
+
+	p := NewParser(&opts, None)
+	p.SetCommandShortDescriptionI18nKeys(map[string]string{
+		"run": "app.command.run.short",
+	})
+	p.SetCommandLongDescriptionI18nKeys(map[string]string{
+		"run": "app.command.run.long",
+	})
+	p.SetCommandDescriptionI18nKeys(map[string]CommandDescriptionI18nKeys{
+		"run": {
+			Short: "app.command.run.short.override",
+			Long:  "app.command.run.long.override",
+		},
+	})
+
+	p.SetI18n(I18nConfig{
+		Locale: "ru",
+		UserCatalog: mapCatalog{
+			"ru": {
+				"app.command.run.short.override": "Выполнить",
+				"app.command.run.long.override":  "Подробное описание команды",
+			},
+		},
+	})
+
+	run := p.Find("run")
+	if run == nil {
+		t.Fatalf("expected run command")
+	}
+
+	if run.ShortDescriptionI18nKey != "app.command.run.short.override" {
+		t.Fatalf("unexpected short i18n key: %q", run.ShortDescriptionI18nKey)
+	}
+	if run.LongDescriptionI18nKey != "app.command.run.long.override" {
+		t.Fatalf("unexpected long i18n key: %q", run.LongDescriptionI18nKey)
+	}
+	if run.localizedShortDescription() != "Выполнить" {
+		t.Fatalf("unexpected localized short description: %q", run.localizedShortDescription())
+	}
+	if run.localizedLongDescription() != "Подробное описание команды" {
+		t.Fatalf("unexpected localized long description: %q", run.localizedLongDescription())
+	}
+}

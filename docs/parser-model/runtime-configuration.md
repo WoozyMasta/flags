@@ -168,6 +168,10 @@ Common examples:
 * `SetMaxLongNameLength` for long option name limits.
 * `SetOptionSort` for option render order.
 * `SetCommandSort` for command render order.
+* command metadata batch setters:
+  `SetCommandShortDescriptions`, `SetCommandLongDescriptions`,
+  `SetCommandDescriptions`, `SetCommandShortDescriptionI18nKeys`,
+  `SetCommandLongDescriptionI18nKeys` and `SetCommandDescriptionI18nKeys`.
 * `SetOptionTypeOrder` for type-based option sorting.
 * `SetBuiltinCommandGroup` for built-in command display grouping.
 * `SetCommandOptionIndent` for command option indentation in help.

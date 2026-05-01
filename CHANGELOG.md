@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* Parser-level batch setters for command descriptions and their i18n keys:
+  `SetCommandShortDescriptions`, `SetCommandLongDescriptions`,
+  `SetCommandDescriptions`, `SetCommandShortDescriptionI18nKeys`,
+  `SetCommandLongDescriptionI18nKeys` and `SetCommandDescriptionI18nKeys`.
+
 ## [0.2.0] - 2026-05-01
 
 ### Added
