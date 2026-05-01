@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning][].
   on options and positional arguments.
 * Numeric `required` ranges for repeatable options,
   allowing slice and map flags to require value counts.
+* Documentation site structure with focused topic pages
+  and broader public API coverage.
 
 ### Changed
 

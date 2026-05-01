@@ -1,0 +1,108 @@
+site_name: flags
+site_description: Reflection-powered command-line parser for Go.
+site_url: https://woozymasta.github.io/flags/
+repo_name: WoozyMasta/flags
+repo_url: https://github.com/WoozyMasta/flags
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 WoozyMasta
+extra:
+  generator: false
+
+theme:
+  name: material
+  language: en
+  logo: assets/logo.svg
+  favicon: assets/icon.svg
+  features:
+    - content.code.copy
+    - content.tabs.link
+    - toc.integrate
+    - navigation.top
+    - navigation.indexes
+    - navigation.path
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.expand
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: JetBrains Mono
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - Start:
+      - Getting Started: start/getting-started.md
+      - Examples: start/examples.md
+      - Cookbook: start/cookbook.md
+  - Parser Model:
+      - API Model: parser-model/api-model.md
+      - Parser Options: parser-model/parser-options.md
+      - Parsing Rules: parser-model/parsing-rules.md
+      - Error Handling: parser-model/error-handling.md
+      - Handlers and Integration Points: parser-model/handlers.md
+      - Runtime Configuration: parser-model/runtime-configuration.md
+      - Performance: parser-model/performance.md
+  - CLI Structure:
+      - Struct Tags: cli-structure/struct-tags.md
+      - Options: cli-structure/options.md
+      - Groups: cli-structure/groups.md
+      - Commands: cli-structure/commands.md
+      - Positional Arguments: cli-structure/positional-arguments.md
+      - I/O Templates: cli-structure/io-templates.md
+      - Value Validators: cli-structure/validators.md
+      - Custom Values: cli-structure/custom-values.md
+  - Configuration:
+      - Defaults and Configuration: configuration/defaults-and-configuration.md
+      - Environment: configuration/environment.md
+      - INI Configuration: configuration/ini.md
+      - Visibility and Secrets: configuration/visibility-and-secrets.md
+  - Output:
+      - Help, Completion, and Docs: output/help-completion-docs.md
+      - Completion: output/completion.md
+      - Documentation Templates: output/doc-templates.md
+      - Version Metadata: output/version.md
+      - Localization: output/localization.md
+      - Windows and POSIX: output/windows-and-posix.md
+  - Maintenance:
+      - Testing: maintenance/testing.md
+      - Compatibility: maintenance/compatibility.md
+      - Migration Notes: maintenance/migration.md

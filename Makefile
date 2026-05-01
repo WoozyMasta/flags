@@ -169,3 +169,7 @@ docs-render-check:
 	SOURCE_DATE_EPOCH=$(DOC_SOURCE_DATE_EPOCH) UPDATE_DOC_EXAMPLES=1 \
 	$(GO) test -tags forceposix -run TestWriteDocBuiltinTemplatesGolden ./...
 	git diff --exit-code -- examples/doc-rendered
+
+mkdocs-run:
+	docker run --rm -it -p 8000:8000 -v "${PWD}:/docs" \
+  docker.io/squidfunk/mkdocs-material serve --dev-addr=0.0.0.0:8000
