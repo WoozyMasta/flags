@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="600"
+   height="600"
+   viewBox="0 0 600 600"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.73041665"
+     inkscape:cx="666.74274"
+     inkscape:cy="270.39362"
+     inkscape:window-width="2560"
+     inkscape:window-height="1387"
+     inkscape:window-x="-8"
+     inkscape:window-y="22"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3" />
+  <title
+     id="title">flags logo</title>
+  <desc
+     id="desc">A clean monospaced logo for the flags CLI library with a square icon and wordmark.</desc>
+  <rect
+     x="38.709656"
+     y="38.709656"
+     width="522.58069"
+     height="522.58069"
+     rx="29.366421"
+     fill="#0b1020"
+     stroke="#1F2937"
+     stroke-width="17.4193"
+     id="rect1"
+     style="fill:#0c1420;fill-opacity:1;stroke:#002b47;stroke-opacity:1"
+     inkscape:label="icon" />
+  <g
+     id="g1"
+     transform="matrix(1.8166274,0,0,1.8166274,-225.09139,-314.45499)">
+    <text
+       style="font-weight:500;font-size:56.9098px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Medium';fill:#00add8;stroke-width:1.58083"
+       transform="scale(1.116711,0.89548684)"
+       x="155.37605"
+       y="503.44629"
+       id="text33">g</text>
+    <text
+       style="font-weight:500;font-size:56.9098px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Medium';fill:#00add8;stroke-width:1.58083"
+       transform="scale(1.116711,0.89548684)"
+       x="189.52196"
+       y="503.44629"
+       id="text32">o</text>
+    <text
+       style="font-weight:500;font-size:56.9098px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Medium';fill:#00add8;stroke-width:1.58083"
+       transform="scale(1.116711,0.89548684)"
+       x="257.81375"
+       y="503.44629"
+       id="text31">c</text>
+    <text
+       style="font-weight:500;font-size:56.9098px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Medium';fill:#00add8;stroke-width:1.58083"
+       transform="scale(1.116711,0.89548684)"
+       x="291.95966"
+       y="503.44629"
+       id="text30">l</text>
+    <text
+       style="font-weight:500;font-size:56.9098px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Medium';fill:#00add8;stroke-width:1.58083"
+       transform="scale(1.116711,0.89548684)"
+       x="326.10556"
+       y="503.44629"
+       id="text29">i</text>
+  </g>
+  <metadata
+     id="metadata4">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>flags logo</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="g4">
+    <text
+       style="font-weight:bold;font-size:390.524px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Bold';opacity:0.8;fill:#ebf2f8;stroke-width:6.86216"
+       transform="scale(0.91021296,1.098644)"
+       x="81.805649"
+       y="379.39191"
+       id="text4">-</text>
+    <text
+       style="font-weight:bold;font-size:390.524px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono, Bold';opacity:0.8;fill:#ebf2f8;stroke-width:6.86216"
+       transform="scale(0.91021296,1.098644)"
+       x="316.12019"
+       y="379.39191"
+       id="text3">F</text>
+  </g>
+</svg>
