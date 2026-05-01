@@ -62,11 +62,11 @@ formatting, completion, and dynamic defaults.
 
 ## Practical Rules
 
-Keep public option and command names stable.
-Use `ErrorType` instead of matching error text.
-Use explicit render styles for generated docs and golden tests.
-Use validators for local value rules,
-and application code for cross-field or domain validation.
+* Keep public option and command names stable.
+* Use `ErrorType` instead of matching error text.
+* Use explicit render styles for generated docs and golden tests.
+* Use validators for local value rules,
+  and application code for cross-field or domain validation.
 
 [Commands]: cli-structure/commands.md
 [Compatibility]: maintenance/compatibility.md
