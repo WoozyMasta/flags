@@ -427,7 +427,7 @@ func parseRequiredRangeValue(raw string) (int, int, error) {
 	requiredMax := -1
 
 	if parts[0] == "" {
-		return 0, -1, fmt.Errorf("missing minimum")
+		return 0, -1, ErrRequiredRangeMissingMinimum
 	}
 
 	requiredMin64, err := strconv.ParseInt(parts[0], 10, 32)
@@ -529,7 +529,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			if err := g.scanStruct(fld, &field, handler); err != nil {
 				return err
 			}
-		} else if kind == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
+		} else if kind == reflect.Pointer && field.Type.Elem().Kind() == reflect.Struct {
 			flagCountBefore := len(g.options) + len(g.groups)
 
 			if fld.IsNil() {
@@ -879,7 +879,7 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 	if len(subgroup) != 0 {
 		var ptrval reflect.Value
 
-		if realval.Kind() == reflect.Ptr {
+		if realval.Kind() == reflect.Pointer {
 			ptrval = realval
 
 			if ptrval.IsNil() {
@@ -943,7 +943,7 @@ func (g *Group) scanType(handler scanHandler) error {
 	// Get all the public fields in the data struct
 	ptrval := reflect.ValueOf(g.data)
 
-	if ptrval.Type().Kind() != reflect.Ptr {
+	if ptrval.Type().Kind() != reflect.Pointer {
 		panic(ErrNotPointerToStruct)
 	}
 

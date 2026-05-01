@@ -398,7 +398,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 		if len(subcommand) != 0 {
 			var ptrval reflect.Value
 
-			if realval.Kind() == reflect.Ptr {
+			if realval.Kind() == reflect.Pointer {
 				ptrval = realval
 
 				if ptrval.IsNil() {
@@ -538,8 +538,8 @@ func (c *Command) optionScopeCommands() []*Command {
 	}
 
 	out := make([]*Command, 0, len(reversed))
-	for idx := len(reversed) - 1; idx >= 0; idx-- {
-		out = append(out, reversed[idx])
+	for _, v := range slices.Backward(reversed) {
+		out = append(out, v)
 	}
 
 	return out
@@ -626,8 +626,8 @@ func (c *Command) makeLookup() lookup {
 		}
 	}
 
-	for i := len(parents) - 1; i >= 0; i-- {
-		parents[i].fillLookup(&ret, true)
+	for _, v := range slices.Backward(parents) {
+		v.fillLookup(&ret, true)
 	}
 
 	c.fillLookup(&ret, false)

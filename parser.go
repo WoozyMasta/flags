@@ -1131,7 +1131,7 @@ func sameCommandData(a any, b any) bool {
 	}
 
 	switch av.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.Slice, reflect.UnsafePointer:
 		return av.Pointer() == bv.Pointer()
 	default:
 		if av.Type().Comparable() {

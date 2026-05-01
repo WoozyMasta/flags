@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"text/template"
 )
@@ -407,10 +408,10 @@ func normalizeMarkdownRender(in string) string {
 
 			prev := ""
 			prevRaw := ""
-			for j := len(out) - 1; j >= 0; j-- {
-				if strings.TrimSpace(out[j]) != "" {
-					prevRaw = out[j]
-					prev = strings.TrimSpace(out[j])
+			for _, v := range slices.Backward(out) {
+				if strings.TrimSpace(v) != "" {
+					prevRaw = v
+					prev = strings.TrimSpace(v)
 					break
 				}
 			}

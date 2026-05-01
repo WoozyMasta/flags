@@ -48,6 +48,9 @@ var (
 
 	// ErrCounterInvalidType indicates invalid type for counter option.
 	ErrCounterInvalidType = errors.New("counter option must use integer type")
+
+	// ErrRequiredRangeMissingMinimum indicates a required range without minimum.
+	ErrRequiredRangeMissingMinimum = errors.New("missing minimum")
 )
 
 // ErrorType represents the type of error.

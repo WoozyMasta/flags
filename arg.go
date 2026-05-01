@@ -113,7 +113,7 @@ func (a *Arg) isEmpty() bool {
 	switch a.value.Kind() {
 	case reflect.String, reflect.Slice, reflect.Map:
 		return a.value.Len() == 0
-	case reflect.Ptr, reflect.Interface, reflect.Func:
+	case reflect.Pointer, reflect.Interface, reflect.Func:
 		return a.value.IsNil()
 	default:
 		return a.value.IsZero()

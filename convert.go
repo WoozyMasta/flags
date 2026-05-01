@@ -74,7 +74,7 @@ func convertMarshal(val reflect.Value) (bool, string, error) {
 		}
 	}
 
-	if val.IsValid() && val.Kind() != reflect.Ptr && val.CanAddr() {
+	if val.IsValid() && val.Kind() != reflect.Pointer && val.CanAddr() {
 		return convertMarshal(val.Addr())
 	}
 
@@ -175,7 +175,7 @@ func convertToString(val reflect.Value, options multiTag) (string, error) {
 		ret += retSb135.String()
 
 		return ret + "}", nil
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return convertToString(reflect.Indirect(val), options)
 	case reflect.Interface:
 		if !val.IsNil() {
@@ -211,7 +211,7 @@ func convertUnmarshal(val string, retval reflect.Value) (bool, error) {
 		}
 	}
 
-	if retval.Type().Kind() != reflect.Ptr && retval.CanAddr() {
+	if retval.Type().Kind() != reflect.Pointer && retval.CanAddr() {
 		return convertUnmarshal(val, retval.Addr())
 	}
 
@@ -337,7 +337,7 @@ func convert(val string, retval reflect.Value, options multiTag) error {
 		}
 
 		retval.SetMapIndex(reflect.Indirect(keyval), reflect.Indirect(valueval))
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if retval.IsNil() {
 			retval.Set(reflect.New(retval.Type().Elem()))
 		}

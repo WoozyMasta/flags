@@ -59,7 +59,7 @@ func (p *Parser) applyConfigurators() error {
 		}
 
 		v := reflect.ValueOf(data)
-		if v.IsValid() && v.Kind() == reflect.Ptr && !v.IsNil() {
+		if v.IsValid() && v.Kind() == reflect.Pointer && !v.IsNil() {
 			ptr := v.Pointer()
 			if _, ok := seen[ptr]; ok {
 				return nil

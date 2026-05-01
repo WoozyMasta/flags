@@ -298,7 +298,7 @@ func (option *Option) isBool() bool {
 
 	for {
 		switch tp.Kind() {
-		case reflect.Slice, reflect.Ptr:
+		case reflect.Slice, reflect.Pointer:
 			tp = tp.Elem()
 		case reflect.Bool:
 			return true
@@ -315,7 +315,7 @@ func (option *Option) isSignedNumber() bool {
 
 	for {
 		switch tp.Kind() {
-		case reflect.Slice, reflect.Ptr:
+		case reflect.Slice, reflect.Pointer:
 			tp = tp.Elem()
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float32, reflect.Float64:
 			return true
@@ -333,7 +333,7 @@ func (option *Option) isEmpty() bool {
 	switch option.value.Kind() {
 	case reflect.String, reflect.Slice, reflect.Map:
 		return option.value.Len() == 0
-	case reflect.Ptr, reflect.Interface, reflect.Func:
+	case reflect.Pointer, reflect.Interface, reflect.Func:
 		return option.value.IsNil()
 	default:
 		return option.value.IsZero()
@@ -347,7 +347,7 @@ func (option *Option) isRepeatableValue() bool {
 func isRepeatableOptionValue(value reflect.Value) bool {
 	tp := value.Type()
 
-	for tp.Kind() == reflect.Ptr {
+	for tp.Kind() == reflect.Pointer {
 		tp = tp.Elem()
 	}
 
@@ -364,7 +364,7 @@ func (option *Option) requiredValueCount() int {
 
 	for {
 		switch value.Kind() {
-		case reflect.Interface, reflect.Ptr:
+		case reflect.Interface, reflect.Pointer:
 			if value.IsNil() {
 				return 0
 			}
@@ -417,7 +417,7 @@ func (option *Option) updateDefaultLiteral() {
 		var showdef bool
 
 		switch option.field.Type.Kind() {
-		case reflect.Func, reflect.Ptr:
+		case reflect.Func, reflect.Pointer:
 			showdef = !option.value.IsNil()
 		case reflect.Slice, reflect.String, reflect.Array:
 			showdef = option.value.Len() > 0

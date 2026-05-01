@@ -129,7 +129,7 @@ func optionSortName(opt *Option) string {
 func optionTypeClass(opt *Option) OptionTypeClass {
 	tp := opt.value.Type()
 
-	for tp.Kind() == reflect.Ptr {
+	for tp.Kind() == reflect.Pointer {
 		tp = tp.Elem()
 	}
 
