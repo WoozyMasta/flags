@@ -10,62 +10,68 @@ Includes options, groups and commands.
 .SS Application Options
 Main options
 .TP
-\fB\fB\-v\fR, \fB\-\-verbose\fR\fP
+\fB\-v\fR, \fB\-\-verbose\fR
 Enable verbose output
 .TP
-\fB\fB\-\-config\fR <default: \fIconfig.yaml\fR> (\fIrequired\fR)\fP
+\fB\-\-config\fR <default: \fIconfig.yaml\fR> (\fIrequired\fR)
 Path to config
 \fBEnvironment\fP: MY_APP_APP_CONFIG
 .TP
-\fB\fB\-\-mode\fR <default: \fIfast\fR>\fP
+\fB\-\-mode\fR <default: \fIfast\fR>
 Execution mode
 \fBChoices\fP: fast, safe
 .TP
-\fB\fB\-\-tag\fR <default: \fIapi\fR>\fP
+\fB\-\-tag\fR <default: \fIapi\fR>
 Tag filter
 .TP
-\fB\fB\-\-header\fR <default: \fIx-env:dev\fR>\fP
+\fB\-\-header\fR <default: \fIx-env:dev\fR>
 HTTP headers
 \fBdelimiter\fP: :
 .TP
-\fB\fB\-\-level\fR [\fI=info\fR]\fP
+\fB\-\-level\fR [\fI=info\fR]
 Log level
 \fBOptional value\fP: info
 .SS Database Options
 .TP
-\fB\fB\-\-db.host\fR <default: \fI127.0.0.1\fR>\fP
+\fB\-\-db.host\fR <default: \fI127.0.0.1\fR>
 Database host
 \fBEnvironment\fP: MY_APP_DB_HOST
 .TP
-\fB\fB\-\-db.port\fR <default: \fI5432\fR>\fP
+\fB\-\-db.port\fR <default: \fI5432\fR>
 Database port
 \fBEnvironment\fP: MY_APP_DB_PORT
+.SH ARGUMENTS
+.TP
+\fBinput\fP
+Input resource
 .SH COMMANDS
-
 .SS run
 Run command
-
+.PP
 Execute deployment workflow.
-
+.PP
 \fBUsage\fP: golden-doc [OPTIONS] run [run-OPTIONS]
 .SS Run command
 Execute deployment workflow.
 .TP
-\fB\fB\-\-force\fR\fP
+\fB\-\-force\fR
 Force execution
 .TP
-\fB\fB\-\-plan\fR\fP
+\fB\-\-plan\fR
 Show execution plan only
-
+.SS Arguments
+.TP
+\fBtarget\fP
+Deployment target
 
 .SS status
 Show status
-
+.PP
 Read and print current status.
-
+.PP
 \fBUsage\fP: golden-doc [OPTIONS] status [status-OPTIONS]
 .SS Show status
 Read and print current status.
 .TP
-\fB\fB\-\-json\fR\fP
+\fB\-\-json\fR
 JSON output
