@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.3.0] - 2026-05-02
 
 ### Added
 
@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning][].
   preserves multiline descriptions, and improves styled TOC/spacing;
   markdown uses heading-based TOC anchors and keeps a single trailing newline;
   env keys are no longer rendered as synthetic default values.
+
+[0.3.0]: https://github.com/WoozyMasta/flags/compare/v0.2.0...v0.3.0
 
 ## [0.2.0] - 2026-05-01
 
