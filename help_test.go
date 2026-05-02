@@ -781,13 +781,13 @@ Help Options:
   TestHelpDefaults [OPTIONS]
 
 Application Options:
-      --with-default=              With default (default: default-value)
-      --without-default=           Without default
-      --with-programmatic-default= With programmatic default
-                                   (default: default-value)
+      --with-default=               With default (default: default-value)
+      --without-default=            Without default
+      --with-programmatic-default=  With programmatic default
+                                    (default: default-value)
 
 Help Options:
-  -h, --help                       Show this help message
+  -h, --help                        Show this help message
 `
 	}
 
