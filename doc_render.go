@@ -26,6 +26,7 @@ type docRenderOptions struct {
 	templateData    map[string]any
 	builtinTemplate string
 	templateText    string
+	programName     string
 	includeHidden   bool
 	markHidden      bool
 }
@@ -61,6 +62,15 @@ func WithTemplateBytes(data []byte) DocOption {
 func WithTemplateData(data map[string]any) DocOption {
 	return func(o *docRenderOptions) error {
 		o.templateData = data
+		return nil
+	}
+}
+
+// WithProgramName overrides program/binary name in the generated doc model.
+// It affects all templates/formats through Doc.Name and usage lines.
+func WithProgramName(name string) DocOption {
+	return func(o *docRenderOptions) error {
+		o.programName = name
 		return nil
 	}
 }

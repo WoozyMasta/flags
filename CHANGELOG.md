@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning][].
   `SetCommandShortDescriptions`, `SetCommandLongDescriptions`,
   `SetCommandDescriptions`, `SetCommandShortDescriptionI18nKeys`,
   `SetCommandLongDescriptionI18nKeys` and `SetCommandDescriptionI18nKeys`.
+* Built-in `docs man|html|md` commands now support `--program-name`
+  to override binary/program name used in generated templates.
 
 ## [0.2.0] - 2026-05-01
 

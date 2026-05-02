@@ -60,12 +60,18 @@ type builtinDocsCommand struct {
 	MD   builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
 }
 
+type builtinDocProgramNameOption struct {
+	ProgramName string `long:"program-name" value-name:"NAME" description:"Override program name used in generated documentation templates"`
+}
+
 type builtinDocManCommand struct {
 	parser *Parser
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+
+	builtinDocProgramNameOption
 
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
@@ -74,6 +80,7 @@ type builtinDocManCommand struct {
 func (c *builtinDocManCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithBuiltinTemplate(DocTemplateManDefault),
+		WithProgramName(c.ProgramName),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
@@ -89,6 +96,7 @@ type builtinDocHTMLCommand struct {
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+	builtinDocProgramNameOption
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
@@ -101,6 +109,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 
 	opts := []DocOption{
 		WithBuiltinTemplate(templateName),
+		WithProgramName(c.ProgramName),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
@@ -116,6 +125,7 @@ type builtinDocMarkdownCommand struct {
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+	builtinDocProgramNameOption
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
@@ -131,6 +141,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 
 	opts := []DocOption{
 		WithBuiltinTemplate(templateName),
+		WithProgramName(c.ProgramName),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}

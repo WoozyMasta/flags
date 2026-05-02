@@ -394,6 +394,48 @@ func TestBuiltinDocsCommandWritesFile(t *testing.T) {
 	}
 }
 
+func TestBuiltinDocsCommandProgramNameOverrideMarkdown(t *testing.T) {
+	p := NewNamedParser("app.exe", DocsCommand)
+	out := filepath.Join(t.TempDir(), "docs.md")
+
+	if _, err := p.ParseArgs([]string{"docs", "md", "--program-name", "app", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	text := string(got)
+	if !strings.Contains(text, "# app") {
+		t.Fatalf("expected overridden program name in markdown docs, got:\n%s", text)
+	}
+	if strings.Contains(text, "app.exe") {
+		t.Fatalf("did not expect original binary name in markdown docs, got:\n%s", text)
+	}
+}
+
+func TestBuiltinDocsCommandProgramNameOverrideMan(t *testing.T) {
+	p := NewNamedParser("app.exe", DocsCommand)
+	out := filepath.Join(t.TempDir(), "docs.1")
+
+	if _, err := p.ParseArgs([]string{"docs", "man", "--program-name", "app", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	text := string(got)
+	if !strings.Contains(text, ".TH app 1 ") {
+		t.Fatalf("expected overridden program name in man docs, got:\n%s", text)
+	}
+	if strings.Contains(text, "app.exe") {
+		t.Fatalf("did not expect original binary name in man docs, got:\n%s", text)
+	}
+}
+
 func TestBuiltinConfigCommandWritesFile(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"Config value"`

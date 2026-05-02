@@ -96,9 +96,13 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 	if usage == "" {
 		usage = "[OPTIONS]"
 	}
+	programName := p.Name
+	if cfg.programName != "" {
+		programName = cfg.programName
+	}
 
 	model := docParser{
-		Name:             p.Name,
+		Name:             programName,
 		ShortDescription: p.localizedShortDescription(),
 		LongDescription:  p.localizedLongDescription(),
 		GeneratedAt:      docNow(),
@@ -108,7 +112,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 	}
 
 	for _, cmd := range docCommands(p.Command, cfg.includeHidden) {
-		model.Commands = append(model.Commands, buildDocCommand("", p.Name+" "+usage, cmd, cfg.includeHidden, format))
+		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, cmd, cfg.includeHidden, format))
 	}
 	model.CommandGroups = buildDocCommandGroups(model.Commands)
 
