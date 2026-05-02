@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning][].
   to override binary/program name used in generated templates.
 * Built-in `docs html|md` commands now support `--toc` to include
   table-of-contents blocks with section and command anchors.
+* Built-in `docs man|html|md` commands now support `--trim-descriptions`
+  to force description whitespace trimming in rendered documentation.
 
 ### Changed
 

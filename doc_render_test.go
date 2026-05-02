@@ -391,6 +391,32 @@ func TestWriteDocTemplateHelpers(t *testing.T) {
 	}
 }
 
+func TestWriteDocTrimDescriptionsOption(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"  line one  \n  line two  "`
+	}
+
+	p := NewNamedParser("trim-doc", KeepDescriptionWhitespace)
+	p.LongDescription = "  root line one  \n  root line two  "
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(
+		&out,
+		DocFormatMarkdown,
+		WithTemplateString("{{ .Doc.LongDescription }}|{{ (index (index .Doc.Groups 0).Options 0).Description }}"),
+		WithTrimDescriptions(true),
+	); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	if got := out.String(); got != "root line one\nroot line two|line one\nline two\n" {
+		t.Fatalf("unexpected trimmed description output: %q", got)
+	}
+}
+
 func TestWriteDocManDefault(t *testing.T) {
 	var opts struct {
 		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`

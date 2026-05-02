@@ -23,13 +23,14 @@ const (
 )
 
 type docRenderOptions struct {
-	templateData    map[string]any
-	builtinTemplate string
-	templateText    string
-	programName     string
-	toc             bool
-	includeHidden   bool
-	markHidden      bool
+	templateData     map[string]any
+	builtinTemplate  string
+	templateText     string
+	programName      string
+	toc              bool
+	trimDescriptions bool
+	includeHidden    bool
+	markHidden       bool
 }
 
 // DocOption configures WriteDoc behavior.
@@ -80,6 +81,16 @@ func WithProgramName(name string) DocOption {
 func WithTOC(enabled bool) DocOption {
 	return func(o *docRenderOptions) error {
 		o.toc = enabled
+		return nil
+	}
+}
+
+// WithTrimDescriptions forces description trimming in doc model rendering.
+// When enabled, leading/trailing spaces are trimmed per line for
+// parser/command/group/option/argument descriptions.
+func WithTrimDescriptions(enabled bool) DocOption {
+	return func(o *docRenderOptions) error {
+		o.trimDescriptions = enabled
 		return nil
 	}
 }
