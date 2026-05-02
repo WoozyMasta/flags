@@ -13,34 +13,34 @@
     <pre>golden-doc [OPTIONS]</pre>
   </section>
   <section>
-    <h2>Description</h2>
-    <p>Long description for golden tests.
+    <h2 id="description">Description</h2>
+    <p style="white-space: pre-wrap;">Long description for golden tests.
 Includes options, groups and commands.</p>
   </section>
   <section>
-    <h2>Options</h2>
+    <h2 id="options">Options</h2>
     <h3>Application Options</h3>
     <ul>
-      <li><code>-v</code>, <code>--verbose</code> - Enable verbose output
+      <li><code>-v</code>, <code>--verbose</code> - <span style="white-space: pre-wrap;">Enable verbose output</span>
       </li>
-      <li><code>--config</code> (default: config.yaml) (required) - Path to config
+      <li><code>--config</code> (default: config.yaml) (required) - <span style="white-space: pre-wrap;">Path to config</span>
         <ul>
           <li>environment: <code>MY_APP_APP_CONFIG</code></li>
         </ul>
       </li>
-      <li><code>--mode</code> (default: fast) - Execution mode
+      <li><code>--mode</code> (default: fast) - <span style="white-space: pre-wrap;">Execution mode</span>
         <ul>
           <li>choices: <code>fast, safe</code></li>
         </ul>
       </li>
-      <li><code>--tag</code> (default: api) - Tag filter
+      <li><code>--tag</code> (default: api) - <span style="white-space: pre-wrap;">Tag filter</span>
       </li>
-      <li><code>--header</code> (default: x-env:dev) - HTTP headers
+      <li><code>--header</code> (default: x-env:dev) - <span style="white-space: pre-wrap;">HTTP headers</span>
         <ul>
           <li>delimiter: <code>:</code></li>
         </ul>
       </li>
-      <li><code>--level [=info]</code> - Log level
+      <li><code>--level [=info]</code> - <span style="white-space: pre-wrap;">Log level</span>
         <ul>
           <li>optional value: <code>info</code></li>
         </ul>
@@ -48,12 +48,12 @@ Includes options, groups and commands.</p>
     </ul>
     <h3>Database Options</h3>
     <ul>
-      <li><code>--db.host</code> (default: 127.0.0.1) - Database host
+      <li><code>--db.host</code> (default: 127.0.0.1) - <span style="white-space: pre-wrap;">Database host</span>
         <ul>
           <li>environment: <code>MY_APP_DB_HOST</code></li>
         </ul>
       </li>
-      <li><code>--db.port</code> (default: 5432) - Database port
+      <li><code>--db.port</code> (default: 5432) - <span style="white-space: pre-wrap;">Database port</span>
         <ul>
           <li>environment: <code>MY_APP_DB_PORT</code></li>
         </ul>
@@ -61,17 +61,41 @@ Includes options, groups and commands.</p>
     </ul>
   </section>
   <section>
-    <h2>Commands</h2>
+    <h2 id="commands">Commands</h2>
+
     <article>
-      <h3>run</h3>
-      <p>Run command</p>
+      <h3 id="command-run">run</h3>
+      <p style="white-space: pre-wrap;">Run command</p>
+      <p style="white-space: pre-wrap;">Execute deployment workflow.</p>
       <p><strong>Usage:</strong> <code>golden-doc [OPTIONS] run [run-OPTIONS]</code></p>
+      <h4>Run command</h4>
+      <ul>
+        <li><code>--force</code> - <span style="white-space: pre-wrap;">Force execution</span>
+        </li>
+        <li><code>--plan</code> - <span style="white-space: pre-wrap;">Show execution plan only</span>
+        </li>
+      </ul>
+      <h4>Arguments</h4>
+      <ul>
+        <li><code>target</code> - <span style="white-space: pre-wrap;">Deployment target</span></li>
+      </ul>
     </article>
+
+
     <article>
-      <h3>status</h3>
-      <p>Show status</p>
+      <h3 id="command-status">status</h3>
+      <p style="white-space: pre-wrap;">Show status</p>
+      <p style="white-space: pre-wrap;">Read and print current status.</p>
       <p><strong>Usage:</strong> <code>golden-doc [OPTIONS] status [status-OPTIONS]</code></p>
+      <h4>Show status</h4>
+      <ul>
+        <li><code>--json</code> - <span style="white-space: pre-wrap;">JSON output</span>
+        </li>
+      </ul>
     </article>
+
   </section>
+
+
 </body>
 </html>

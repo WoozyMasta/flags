@@ -27,6 +27,7 @@ type docRenderOptions struct {
 	builtinTemplate string
 	templateText    string
 	programName     string
+	toc             bool
 	includeHidden   bool
 	markHidden      bool
 }
@@ -71,6 +72,14 @@ func WithTemplateData(data map[string]any) DocOption {
 func WithProgramName(name string) DocOption {
 	return func(o *docRenderOptions) error {
 		o.programName = name
+		return nil
+	}
+}
+
+// WithTOC enables table-of-contents rendering for templates supporting it.
+func WithTOC(enabled bool) DocOption {
+	return func(o *docRenderOptions) error {
+		o.toc = enabled
 		return nil
 	}
 }

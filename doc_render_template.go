@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"slices"
 	"strings"
 	"text/template"
@@ -17,6 +18,7 @@ type docTemplateContext struct {
 	Data       map[string]any
 	Doc        docParser
 	MarkHidden bool
+	ShowTOC    bool
 }
 
 func (p *Parser) writeDocMarkdown(w io.Writer, cfg docRenderOptions) error {
@@ -90,6 +92,7 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 		Doc:        p.buildDocModel(cfg),
 		Data:       data,
 		MarkHidden: cfg.markHidden,
+		ShowTOC:    cfg.toc,
 	}
 
 	return tpl.Execute(w, ctx)
@@ -279,7 +282,50 @@ func docTemplateFuncs(parser *Parser, markHidden bool, format optionRenderFormat
 			}
 			return false
 		},
+
+		"tocCommandEntries": buildDocTOCCommandEntries,
+
+		"tocCommandAnchor": func(name string) string {
+			return "command-" + slugifyTOC(name)
+		},
+
+		"tocHeadingAnchor": slugifyTOC,
 	}
+}
+
+type docTOCEntry struct {
+	Name   string
+	Anchor string
+}
+
+func buildDocTOCCommandEntries(commands []docCommand) []docTOCEntry {
+	ret := make([]docTOCEntry, 0)
+	var walk func([]docCommand)
+	walk = func(list []docCommand) {
+		for _, command := range list {
+			ret = append(ret, docTOCEntry{
+				Name:   command.Name,
+				Anchor: "command-" + slugifyTOC(command.Name),
+			})
+			walk(command.Commands)
+		}
+	}
+
+	walk(commands)
+	return ret
+}
+
+var tocSlugRe = regexp.MustCompile(`[^a-z0-9]+`)
+
+func slugifyTOC(value string) string {
+	s := strings.ToLower(strings.TrimSpace(value))
+	s = tocSlugRe.ReplaceAllString(s, "-")
+	s = strings.Trim(s, "-")
+	if s == "" {
+		return "section"
+	}
+
+	return s
 }
 
 func manQuoteLines(s string) string {
@@ -433,5 +479,11 @@ func normalizeMarkdownRender(in string) string {
 	for strings.Contains(result, "\n\n\n") {
 		result = strings.ReplaceAll(result, "\n\n\n", "\n\n")
 	}
-	return result
+
+	result = strings.TrimRight(result, "\n")
+	if result == "" {
+		return ""
+	}
+
+	return result + "\n"
 }

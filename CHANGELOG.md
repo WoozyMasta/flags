@@ -24,6 +24,16 @@ and this project adheres to [Semantic Versioning][].
   `SetCommandLongDescriptionI18nKeys` and `SetCommandDescriptionI18nKeys`.
 * Built-in `docs man|html|md` commands now support `--program-name`
   to override binary/program name used in generated templates.
+* Built-in `docs html|md` commands now support `--toc` to include
+  table-of-contents blocks with section and command anchors.
+
+### Changed
+
+* Built-in doc templates were refined:
+  HTML now renders full nested command details (matching markdown),
+  preserves multiline descriptions, and improves styled TOC/spacing;
+  markdown uses heading-based TOC anchors and keeps a single trailing newline;
+  env keys are no longer rendered as synthetic default values.
 
 ## [0.2.0] - 2026-05-01
 

@@ -436,6 +436,70 @@ func TestBuiltinDocsCommandProgramNameOverrideMan(t *testing.T) {
 	}
 }
 
+func TestBuiltinDocsCommandTOCMarkdown(t *testing.T) {
+	p := NewNamedParser("app.exe", HelpCommands)
+	out := filepath.Join(t.TempDir(), "docs.md")
+
+	if _, err := p.ParseArgs([]string{"docs", "md", "--toc", "--program-name", "app", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	text := string(got)
+	for _, want := range []string{
+		"## Table of Contents",
+		"[COMMANDS](#commands)",
+		"[help](#help)",
+		"[version](#version)",
+		"[completion](#completion)",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected markdown toc entry %q, got:\n%s", want, text)
+		}
+	}
+	for _, unwanted := range []string{"(#name)", "(#synopsis)"} {
+		if strings.Contains(text, unwanted) {
+			t.Fatalf("did not expect %q in toc, got:\n%s", unwanted, text)
+		}
+	}
+}
+
+func TestBuiltinDocsCommandTOCHTML(t *testing.T) {
+	p := NewNamedParser("app.exe", HelpCommands)
+	out := filepath.Join(t.TempDir(), "docs.html")
+
+	if _, err := p.ParseArgs([]string{"docs", "html", "--toc", "--program-name", "app", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	text := string(got)
+	for _, want := range []string{
+		"<h2>Table of Contents</h2>",
+		"href=\"#commands\">COMMANDS</a>",
+		"href=\"#command-help\">help</a>",
+		"href=\"#command-version\">version</a>",
+		"href=\"#command-completion\">completion</a>",
+		"id=\"command-docs-html\">docs html</h3>",
+		"template TEMPLATE",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected html toc entry %q, got:\n%s", want, text)
+		}
+	}
+	for _, unwanted := range []string{"href=\"#name\"", "href=\"#synopsis\""} {
+		if strings.Contains(text, unwanted) {
+			t.Fatalf("did not expect %q in toc, got:\n%s", unwanted, text)
+		}
+	}
+}
+
 func TestBuiltinConfigCommandWritesFile(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"Config value"`

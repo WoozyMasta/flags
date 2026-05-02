@@ -248,8 +248,6 @@ func buildDocOption(opt *Option, format optionRenderFormat) docOption {
 
 	if len(opt.Default) > 0 {
 		doc.Default = strings.Join(opt.Default, ", ")
-	} else if doc.Env != "" {
-		doc.Default = format.envPrefix + doc.Env + format.envSuffix
 	}
 
 	doc.Signature = optionSignature(opt, format)

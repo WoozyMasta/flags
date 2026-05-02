@@ -13,16 +13,40 @@
     <pre>{{ quoteHTML .Doc.Name }} {{ quoteHTML .Doc.Usage }}</pre>
   </section>
 
+{{- if .ShowTOC }}
+  <section>
+    <h2>Table of Contents</h2>
+    <ul>
+{{- if .Doc.LongDescription }}
+      <li><a href="#description">DESCRIPTION</a></li>
+{{- end }}
+{{- if .Doc.Groups }}
+      <li><a href="#options">OPTIONS</a></li>
+{{- end }}
+{{- if .Doc.Commands }}
+      <li>
+        <a href="#commands">COMMANDS</a>
+        <ul>
+{{- range tocCommandEntries .Doc.Commands }}
+          <li><a href="#{{ .Anchor }}">{{ quoteHTML .Name }}</a></li>
+{{- end }}
+        </ul>
+      </li>
+{{- end }}
+    </ul>
+  </section>
+{{- end }}
+
 {{- if .Doc.LongDescription }}
   <section>
-    <h2>{{ i18n "doc.tmpl.html.section.description" }}</h2>
-    <p>{{ quoteHTML .Doc.LongDescription }}</p>
+    <h2 id="description">{{ i18n "doc.tmpl.html.section.description" }}</h2>
+    <p style="white-space: pre-wrap;">{{ quoteHTML .Doc.LongDescription }}</p>
   </section>
 {{- end }}
 
 {{- if .Doc.Groups }}
   <section>
-    <h2>{{ i18n "doc.tmpl.html.section.options" }}</h2>
+    <h2 id="options">{{ i18n "doc.tmpl.html.section.options" }}</h2>
 {{- range .Doc.Groups }}
 {{- if .ShortDescription }}
     <h3>{{ quoteHTML .ShortDescription }}</h3>
@@ -35,7 +59,7 @@
 {{- if gt $idx 0 }}, {{ end -}}<code>{{ quoteHTML $f }}</code>
 {{- end -}}
 {{ defaultValue .Default }}{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}
-{{- if .Description }} - {{ quoteHTML .Description }}{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
+{{- if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
         <ul>
 {{- if .Env }}
@@ -79,40 +103,113 @@
 
 {{- if .Doc.Commands }}
   <section>
-    <h2>{{ i18n "doc.tmpl.html.section.commands" }}</h2>
+    <h2 id="commands">{{ i18n "doc.tmpl.html.section.commands" }}</h2>
 {{- if hasNamedCommandGroups .Doc.CommandGroups }}
 {{- range .Doc.CommandGroups }}
 {{- if .Name }}
     <h3>{{ quoteHTML .Name }}</h3>
 {{- end }}
 {{- range .Commands }}
-    <article>
-      <h3>{{ quoteHTML .Name }}</h3>
-      <p>{{ quoteHTML .ShortDescription }}</p>
-{{- if .UsageLine }}
-      <p><strong>{{ i18n "doc.tmpl.html.label.usage" }}:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
-{{- end }}
-{{- if .Aliases }}
-      <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
-{{- end }}
-    </article>
+{{ template "command" . }}
 {{- end }}
 {{- end }}
 {{- else }}
 {{- range .Doc.Commands }}
+{{ template "command" . }}
+{{- end }}
+{{- end }}
+  </section>
+{{- end }}
+
+{{ define "command" }}
     <article>
-      <h3>{{ quoteHTML .Name }}</h3>
-      <p>{{ quoteHTML .ShortDescription }}</p>
+      <h3 id="{{ tocCommandAnchor .Name }}">{{ quoteHTML .Name }}</h3>
+      <p style="white-space: pre-wrap;">{{ quoteHTML .ShortDescription }}</p>
+{{- if .LongDescription }}
+      <p style="white-space: pre-wrap;">{{ quoteHTML .LongDescription }}</p>
+{{- end }}
 {{- if .UsageLine }}
       <p><strong>{{ i18n "doc.tmpl.html.label.usage" }}:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
 {{- end }}
 {{- if .Aliases }}
       <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>
 {{- end }}
+
+{{- range .Groups }}
+{{- if .ShortDescription }}
+      <h4>{{ quoteHTML .ShortDescription }}</h4>
+{{- end }}
+      <ul>
+{{- range .Options }}
+        <li>
+{{- $forms := optionForms . -}}
+{{- range $idx, $f := $forms -}}
+{{- if gt $idx 0 }}, {{ end -}}<code>{{ quoteHTML $f }}</code>
+{{- end -}}
+{{ defaultValue .Default }}{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}
+{{- if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
+{{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
+          <ul>
+{{- if .Env }}
+            <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>
+{{- end }}
+{{- if .Choices }}
+            <li>{{ i18n "doc.tmpl.html.meta.choices" }}: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>
+{{- end }}
+{{- if .Optional }}
+            <li>{{ i18n "doc.tmpl.html.meta.optional_value" }}: <code>{{ quoteHTML .OptionalVal }}</code></li>
+{{- end }}
+{{- if .IniName }}
+            <li>{{ i18n "doc.tmpl.html.meta.ini_name" }}: <code>{{ quoteHTML .IniName }}</code></li>
+{{- end }}
+{{- if .KeyValueDelim }}
+            <li>{{ i18n "doc.tmpl.html.meta.key_value_delimiter" }}: <code>{{ quoteHTML .KeyValueDelim }}</code></li>
+{{- end }}
+{{- if .Terminator }}
+            <li>{{ i18n "doc.tmpl.html.meta.terminator" }}: <code>{{ quoteHTML .Terminator }}</code></li>
+{{- end }}
+{{- if .DefaultMask }}
+            <li>{{ i18n "doc.tmpl.html.meta.default_mask" }}: <code>{{ quoteHTML .DefaultMask }}</code></li>
+{{- end }}
+{{- if .Base }}
+            <li>{{ i18n "doc.tmpl.html.meta.base" }}: <code>{{ quoteHTML .Base }}</code></li>
+{{- end }}
+{{- if .UnquoteTag }}
+            <li>{{ i18n "doc.tmpl.html.meta.unquote" }}: <code>{{ quoteHTML .UnquoteTag }}</code></li>
+{{- end }}
+{{- if ne .Order 0 }}
+            <li>{{ i18n "doc.tmpl.html.meta.order" }}: <code>{{ .Order }}</code></li>
+{{- end }}
+          </ul>
+{{- end }}
+        </li>
+{{- end }}
+      </ul>
+{{- end }}
+
+{{- if .Args }}
+      <h4>{{ i18n "doc.tmpl.html.section.arguments" "Arguments" }}</h4>
+      <ul>
+{{- range .Args }}
+        <li><code>{{ quoteHTML .Name }}</code>{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}{{ if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ end }}</li>
+{{- end }}
+      </ul>
+{{- end }}
     </article>
+{{- if hasNamedCommandGroups .CommandGroups }}
+{{- range .CommandGroups }}
+{{- if .Name }}
+    <h4>{{ quoteHTML .Name }}</h4>
+{{- end }}
+{{- range .Commands }}
+{{ template "command" . }}
 {{- end }}
 {{- end }}
-  </section>
+{{- else }}
+{{- range .Commands }}
+{{ template "command" . }}
 {{- end }}
+{{- end }}
+{{ end }}
 </body>
 </html>

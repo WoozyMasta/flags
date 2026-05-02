@@ -78,6 +78,11 @@
     h1 { font-size: 1.6rem; }
     h2 { font-size: 1.2rem; }
     h3 { font-size: 1.05rem; color: var(--accent); }
+    h2:not(:first-child),
+    h3:not(:first-child),
+    h4:not(:first-child) {
+      margin-top: 16px;
+    }
 
     .muted { color: var(--muted); }
 
@@ -87,6 +92,12 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 16px;
+    }
+
+    article + article {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
     }
 
     code, pre {
@@ -141,6 +152,38 @@
       color: var(--warn);
       border-color: color-mix(in srgb, var(--warn) 50%, var(--border));
     }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      text-underline-offset: 2px;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:visited {
+      color: color-mix(in srgb, var(--accent) 75%, var(--text));
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    .toc ul {
+      margin-top: 8px;
+    }
+
+    .toc ul ul {
+      margin-top: 6px;
+    }
+
+    .pre-wrap {
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -151,71 +194,101 @@
       <pre>golden-doc [OPTIONS]</pre>
     </header>
     <section>
-      <h2>Description</h2>
-      <p>Long description for golden tests.
+      <h2 id="description">Description</h2>
+      <p class="pre-wrap">Long description for golden tests.
 Includes options, groups and commands.</p>
     </section>
     <section>
-      <h2>Options</h2>
+      <h2 id="options">Options</h2>
       <h3>Application Options</h3>
       <ul>
-        <li><code>-v</code>, <code>--verbose</code> - Enable verbose output
+        <li><code>-v</code>, <code>--verbose</code> - <span class="pre-wrap">Enable verbose output</span>
           <div class="meta">
           </div>
         </li>
-        <li><code>--config</code> (default: config.yaml) - Path to config
+        <li><code>--config</code> (default: config.yaml) - <span class="pre-wrap">Path to config</span>
           <div class="meta">
             <span class="chip required">required</span>
-            <span class="chip">environment MY_APP_APP_CONFIG</span>
+            <span>environment</span> <span class="chip">MY_APP_APP_CONFIG</span>
           </div>
         </li>
-        <li><code>--mode</code> (default: fast) - Execution mode
+        <li><code>--mode</code> (default: fast) - <span class="pre-wrap">Execution mode</span>
           <div class="meta">
-            <span class="chip">choices fast, safe</span>
+            <span>choices</span> <span class="chip">fast, safe</span>
           </div>
         </li>
-        <li><code>--tag</code> (default: api) - Tag filter
+        <li><code>--tag</code> (default: api) - <span class="pre-wrap">Tag filter</span>
           <div class="meta">
           </div>
         </li>
-        <li><code>--header</code> (default: x-env:dev) - HTTP headers
+        <li><code>--header</code> (default: x-env:dev) - <span class="pre-wrap">HTTP headers</span>
           <div class="meta">
-            <span class="chip">kv :</span>
+            <span>kv</span> <span class="chip">:</span>
           </div>
         </li>
-        <li><code>--level [=info]</code> - Log level
+        <li><code>--level [=info]</code> - <span class="pre-wrap">Log level</span>
           <div class="meta">
-            <span class="chip">optional info</span>
+            <span>optional</span> <span class="chip">info</span>
           </div>
         </li>
       </ul>
       <h3>Database Options</h3>
       <ul>
-        <li><code>--db.host</code> (default: 127.0.0.1) - Database host
+        <li><code>--db.host</code> (default: 127.0.0.1) - <span class="pre-wrap">Database host</span>
           <div class="meta">
-            <span class="chip">environment MY_APP_DB_HOST</span>
+            <span>environment</span> <span class="chip">MY_APP_DB_HOST</span>
           </div>
         </li>
-        <li><code>--db.port</code> (default: 5432) - Database port
+        <li><code>--db.port</code> (default: 5432) - <span class="pre-wrap">Database port</span>
           <div class="meta">
-            <span class="chip">environment MY_APP_DB_PORT</span>
+            <span>environment</span> <span class="chip">MY_APP_DB_PORT</span>
           </div>
         </li>
       </ul>
     </section>
     <section>
-      <h2>Commands</h2>
+      <h2 id="commands">Commands</h2>
+
       <article>
-        <h3>run</h3>
-        <p>Run command</p>
+        <h3 id="command-run">run</h3>
+        <p class="pre-wrap">Run command</p>
+        <p class="pre-wrap">Execute deployment workflow.</p>
         <p><strong>Usage:</strong> <code>golden-doc [OPTIONS] run [run-OPTIONS]</code></p>
+        <h4>Run command</h4>
+        <ul>
+          <li><code>--force</code> - <span class="pre-wrap">Force execution</span>
+            <div class="meta">
+            </div>
+          </li>
+          <li><code>--plan</code> - <span class="pre-wrap">Show execution plan only</span>
+            <div class="meta">
+            </div>
+          </li>
+        </ul>
+        <h4>Arguments</h4>
+        <ul>
+          <li><code>target</code> - <span class="pre-wrap">Deployment target</span></li>
+        </ul>
       </article>
+
+
       <article>
-        <h3>status</h3>
-        <p>Show status</p>
+        <h3 id="command-status">status</h3>
+        <p class="pre-wrap">Show status</p>
+        <p class="pre-wrap">Read and print current status.</p>
         <p><strong>Usage:</strong> <code>golden-doc [OPTIONS] status [status-OPTIONS]</code></p>
+        <h4>Show status</h4>
+        <ul>
+          <li><code>--json</code> - <span class="pre-wrap">JSON output</span>
+            <div class="meta">
+            </div>
+          </li>
+        </ul>
       </article>
+
     </section>
   </main>
+
+
 </body>
 </html>

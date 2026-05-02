@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD036 -->
 # golden-doc
 
 ## NAME

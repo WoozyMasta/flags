@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD036 -->
 # {{ .Doc.Name }}
 
 ## {{ i18n "doc.tmpl.markdown.section.name" }}
@@ -7,6 +8,16 @@
 ## {{ i18n "doc.tmpl.markdown.section.synopsis" }}
 
 {{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
+
+{{ if .ShowTOC }}
+## Table of Contents
+
+{{ if .Doc.LongDescription }}- [DESCRIPTION](#description)
+{{ end }}{{ if .Doc.Groups }}- [OPTIONS](#options)
+{{ end }}{{ if .Doc.Commands }}- [COMMANDS](#commands)
+{{ range tocCommandEntries .Doc.Commands }}  - [{{ .Name }}](#{{ tocHeadingAnchor .Name }})
+{{ end }}{{ end }}
+{{ end }}
 
 {{ if .Doc.LongDescription }}
 ## {{ i18n "doc.tmpl.markdown.section.description" }}

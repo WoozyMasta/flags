@@ -423,14 +423,6 @@ func TestMan(t *testing.T) {
 		tt = time.Unix(sde, 0)
 	}
 
-	var envDefaultName string
-
-	if runtime.GOOS == "windows" {
-		envDefaultName = "%ENV_DEFAULT%"
-	} else {
-		envDefaultName = "$ENV_DEFAULT"
-	}
-
 	expectedHeader := fmt.Sprintf(`.TH TestMan 1 "%s"`, tt.Format("2 January 2006"))
 	for _, needle := range []string{
 		expectedHeader,
@@ -444,7 +436,9 @@ func TestMan(t *testing.T) {
 		`.SH OPTIONS`,
 		`.SS Application Options`,
 		`The application options`,
-		`\fB\fB\-\-env-default2\fR <default: \fI` + envDefaultName + `\fR>\fP`,
+		`\fB\-\-env-default2\fR`,
+		`\fBEnvironment\fP: ENV_DEFAULT`,
+		`.SH ARGUMENTS`,
 		`.SH COMMANDS`,
 		`.SS command`,
 		`\fBAliases\fP: cm, cmd`,

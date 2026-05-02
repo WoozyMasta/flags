@@ -1,6 +1,10 @@
 .TH {{ quoteMan .Doc.Name }} 1 "{{ .Doc.GeneratedAt.Format "2 January 2006" }}"
 .SH {{ quoteMan (i18n "doc.tmpl.man.section.name") }}
+{{- if .Doc.ShortDescription }}
 {{ quoteMan .Doc.Name }} \- {{ manInline .Doc.ShortDescription }}
+{{- else }}
+{{ quoteMan .Doc.Name }}
+{{- end }}
 .SH {{ quoteMan (i18n "doc.tmpl.man.section.synopsis") }}
 \fB{{ quoteMan .Doc.Name }}\fP {{ quoteMan .Doc.Usage }}
 {{- if .Doc.LongDescription }}
@@ -20,7 +24,7 @@
 {{- end }}
 {{- range .Options }}
 .TP
-\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <{{ i18n "doc.tmpl.man.label.default_lower" }}: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}\fP
+\fB{{- if .Short }}\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, \fB{{ end }}\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <{{ i18n "doc.tmpl.man.label.default_lower" }}: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}
 {{- if .Description }}
 {{ manInline .Description }}
 {{- if hiddenMark .Hidden }} \fB({{ i18n "doc.tmpl.man.hidden" }})\fP{{ end }}
@@ -57,6 +61,16 @@
 {{- if ne .Order 0 }}
 \fB{{ i18n "doc.tmpl.man.label.order" }}\fP: {{ .Order }}
 {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if .Doc.Args }}
+.SH {{ quoteMan (i18n "doc.tmpl.markdown.section.arguments" "ARGUMENTS") }}
+{{- range .Doc.Args }}
+.TP
+\fB{{ quoteMan .Name }}\fP{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}
+{{- if .Description }}
+{{ manInline .Description }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -69,29 +83,30 @@
 \fB{{ quoteMan .Name }}\fP
 {{- end }}
 {{- range .Commands }}
-{{ template "command" . }}
+{{- template "command" . -}}
 {{- end }}
 {{- end }}
 {{- else }}
 {{- range .Doc.Commands }}
-{{ template "command" . }}
+{{- template "command" . -}}
 {{- end }}
 {{- end }}
 {{- end }}
-
 {{ define "command" }}
 .SS {{ quoteMan .Name }}
+{{- if .ShortDescription }}
 {{ manInline .ShortDescription }}
+{{- end }}
 {{- if .LongDescription }}
-
+.PP
 {{ manInline .LongDescription }}
 {{- end }}
 {{- if .UsageLine }}
-
+.PP
 \fB{{ i18n "doc.tmpl.man.label.usage" }}\fP: {{ quoteMan .UsageLine }}
 {{- end }}
 {{- if .Aliases }}
-
+.PP
 \fB{{ i18n "doc.tmpl.man.label.aliases" }}\fP: {{ quoteMan (join .Aliases ", ") }}
 {{- end }}
 {{- range .Groups }}
@@ -104,7 +119,7 @@
 {{- end }}
 {{- range .Options }}
 .TP
-\fB{{- if .Short }}\fB\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, {{ end }}\fB\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <{{ i18n "doc.tmpl.man.label.default_lower" }}: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}\fP
+\fB{{- if .Short }}\-{{ quoteMan .Short }}\fR{{- end }}{{- if .Long }}{{ if .Short }}, \fB{{ end }}\-\-{{ quoteMan .Long }}\fR{{- end }}{{- if .Optional }} [\fI{{ quoteMan .ValueName }}={{ quoteMan .OptionalVal }}\fR]{{- else if .ValueName }} \fI{{ quoteMan .ValueName }}\fR{{- end }}{{- if .Default }} <{{ i18n "doc.tmpl.man.label.default_lower" }}: \fI{{ quoteMan .Default }}\fR>{{- end }}{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}
 {{- if .Description }}
 {{ manInline .Description }}
 {{- if hiddenMark .Hidden }} \fB({{ i18n "doc.tmpl.man.hidden" }})\fP{{ end }}
@@ -143,6 +158,16 @@
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if .Args }}
+.SS {{ quoteMan (i18n "doc.tmpl.markdown.section.arguments_title" "Arguments") }}
+{{- range .Args }}
+.TP
+\fB{{ quoteMan .Name }}\fP{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}
+{{- if .Description }}
+{{ manInline .Description }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- if hasNamedCommandGroups .CommandGroups }}
 {{- range .CommandGroups }}
 {{- if .Name }}
@@ -150,12 +175,12 @@
 \fB{{ quoteMan .Name }}\fP
 {{- end }}
 {{- range .Commands }}
-{{ template "command" . }}
+{{- template "command" . -}}
 {{- end }}
 {{- end }}
 {{- else }}
 {{- range .Commands }}
-{{ template "command" . }}
+{{- template "command" . -}}
 {{- end }}
 {{- end }}
 {{ end }}

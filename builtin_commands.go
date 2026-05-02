@@ -97,6 +97,8 @@ type builtinDocHTMLCommand struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
+	TOC bool `long:"toc" description:"Include table of contents in output"`
+
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
@@ -110,6 +112,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
+		WithTOC(c.TOC),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
@@ -126,6 +129,8 @@ type builtinDocMarkdownCommand struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
+	TOC bool `long:"toc" description:"Include table of contents in output"`
+
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
 	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
@@ -142,6 +147,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
+		WithTOC(c.TOC),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}

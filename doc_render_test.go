@@ -284,8 +284,8 @@ func TestWriteDocMarkdownBuiltinTableSkipsEmptyColumns(t *testing.T) {
 	}
 
 	got := out.String()
-	if !strings.Contains(got, "|Option|Description|Default|Environment|Required|") {
-		t.Fatalf("expected default/env columns for group with env-derived default, got:\n%s", got)
+	if !strings.Contains(got, "|Option|Description|Environment|Required|") {
+		t.Fatalf("expected env column without synthetic default, got:\n%s", got)
 	}
 	if !strings.Contains(got, "|Option|Description|Required|") {
 		t.Fatalf("expected compact table for group with empty default/env columns, got:\n%s", got)
@@ -342,7 +342,7 @@ func TestWriteDocCustomTemplate(t *testing.T) {
 		t.Fatalf("unexpected write doc error: %v", err)
 	}
 
-	if got := out.String(); got != "custom-doc|custom" {
+	if got := out.String(); got != "custom-doc|custom\n" {
 		t.Fatalf("unexpected custom template output: %q", got)
 	}
 }
@@ -380,7 +380,7 @@ func TestWriteDocTemplateHelpers(t *testing.T) {
 
 	got := out.String()
 	for _, needle := range []string{
-		"req|bool|collection|env=APP_LIST|default|",
+		"req|bool|collection|env=APP_LIST|no-default|",
 		"|a b c d e|",
 		"  x\n  y",
 		"|a b c d e\nf g h i j",

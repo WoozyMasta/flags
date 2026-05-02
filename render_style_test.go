@@ -167,7 +167,7 @@ func TestDocRenderStyleSetters(t *testing.T) {
 	}
 
 	gotWinDoc := winDoc.String()
-	if !strings.Contains(gotWinDoc, "/value") || !strings.Contains(gotWinDoc, "%APP_VALUE%") {
+	if !strings.Contains(gotWinDoc, "/value") || !strings.Contains(gotWinDoc, "Environment: `APP_VALUE`") {
 		t.Fatalf("expected windows-style markers in rendered doc, got:\n%s", gotWinDoc)
 	}
 
@@ -180,7 +180,7 @@ func TestDocRenderStyleSetters(t *testing.T) {
 	}
 
 	gotPOSIXDoc := posixDoc.String()
-	if !strings.Contains(gotPOSIXDoc, "--value") || !strings.Contains(gotPOSIXDoc, "$APP_VALUE") {
+	if !strings.Contains(gotPOSIXDoc, "--value") || !strings.Contains(gotPOSIXDoc, "Environment: `APP_VALUE`") {
 		t.Fatalf("expected posix-style markers in rendered doc, got:\n%s", gotPOSIXDoc)
 	}
 }
