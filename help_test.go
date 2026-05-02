@@ -486,8 +486,8 @@ func TestHelpCommand(t *testing.T) {
   TestHelpCommand [OPTIONS] command
 
 Help Options:
-  /?          Show this help message
-  /h, /help   Show this help message
+  /?         Show this help message
+  /h, /help  Show this help message
 `
 		} else {
 			expected = `Usage:
@@ -553,7 +553,8 @@ func TestSetHelpWidthControlsWrapping(t *testing.T) {
 	var out bytes.Buffer
 	p.WriteHelp(&out)
 
-	if !strings.Contains(out.String(), "\n             delta epsilon zeta") {
+	if !strings.Contains(out.String(), "\ndelta epsilon zeta") &&
+		!strings.Contains(out.String(), "\n           delta epsilon zeta") {
 		t.Fatalf("expected narrow help width to wrap description, got:\n%s", out.String())
 	}
 }
@@ -576,7 +577,7 @@ func TestSetHelpWidthZeroDisablesWrapping(t *testing.T) {
 	p.WriteHelp(&out)
 	got := out.String()
 
-	if !strings.Contains(got, "/value:    alpha beta gamma delta epsilon zeta eta theta") {
+	if !strings.Contains(got, "/value:  alpha beta gamma delta epsilon zeta eta theta") {
 		t.Fatalf("expected unlimited help width to keep description on one line, got:\n%s", got)
 	}
 }
@@ -663,6 +664,16 @@ func helpLineContaining(t *testing.T, help string, needle string) string {
 	return ""
 }
 
+func assertHelpLinesFitWidth(t *testing.T, help string, width int) {
+	t.Helper()
+
+	for _, line := range strings.Split(help, "\n") {
+		if got := textWidth(line); got > width {
+			t.Fatalf("expected help line width <= %d, got %d:\n%s\n\nfull help:\n%s", width, got, line, help)
+		}
+	}
+}
+
 func TestHiddenCommandNoBuiltinHelp(t *testing.T) {
 	oldEnv := EnvSnapshot()
 	defer oldEnv.Restore()
@@ -729,7 +740,7 @@ func TestHiddenCommandNoBuiltinHelp(t *testing.T) {
 Long hidden command description
 
 [hidden command arguments]
-  <positional-foo>:     positional foo
+  <positional-foo>:  positional foo
 `
 		} else {
 			expected = `Usage:
@@ -738,7 +749,7 @@ Long hidden command description
 Long hidden command description
 
 [hidden command arguments]
-  <positional-foo>:     positional foo
+  <positional-foo>:  positional foo
 `
 		}
 		h := &bytes.Buffer{}
@@ -947,8 +958,10 @@ func TestHelpAdaptiveLayoutKeepsDescriptionWidth(t *testing.T) {
 		t.Fatalf("expected option to be registered")
 	}
 
+	if err := p.SetHelpWidth(100); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 100
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1001,8 +1014,10 @@ func TestHelpAdaptiveLayoutBreaksAfterNameDelimiter(t *testing.T) {
 		t.Fatalf("expected option to be registered")
 	}
 
+	if err := p.SetHelpWidth(100); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 100
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1041,8 +1056,10 @@ func TestHelpAdaptiveLayoutKeepsShortValueNameWithOption(t *testing.T) {
 		t.Fatalf("expected option to be registered")
 	}
 
+	if err := p.SetHelpWidth(30); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 30
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1050,11 +1067,11 @@ func TestHelpAdaptiveLayoutKeepsShortValueNameWithOption(t *testing.T) {
 	_ = w.Flush()
 
 	got := out.String()
-	if !strings.Contains(got, "/format:ФОРМАТ") {
-		t.Fatalf("expected value name to stay with short option form, got:\n%s", got)
-	}
 	if strings.Contains(got, "/format:\n") {
 		t.Fatalf("did not expect break immediately after name delimiter, got:\n%s", got)
+	}
+	if !strings.Contains(got, "\n    ФОРМАТ") {
+		t.Fatalf("expected value name to wrap inside the left column, got:\n%s", got)
 	}
 	if strings.Contains(got, "valid values:") {
 		t.Fatalf("did not expect choice list rendering without auto flag, got:\n%s", got)
@@ -1073,8 +1090,10 @@ func TestHelpShortInlineChoicesShiftGlobalDescriptionColumn(t *testing.T) {
 		t.Fatalf("unexpected add group error: %v", err)
 	}
 
+	if err := p.SetHelpWidth(80); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 80
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1106,8 +1125,10 @@ func TestHelpShowChoiceListInHelpForcesList(t *testing.T) {
 		t.Fatalf("expected option to be registered")
 	}
 
+	if err := p.SetHelpWidth(80); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 80
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1138,8 +1159,10 @@ func TestHelpAdaptiveChoicesUseCompactPipeWrap(t *testing.T) {
 		t.Fatalf("expected option to be registered")
 	}
 
+	if err := p.SetHelpWidth(48); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 48
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1170,8 +1193,10 @@ func TestHelpAdaptiveChoicesNoSplitWhenBelowHalfTerminalWidth(t *testing.T) {
 		t.Fatalf("expected option to be registered")
 	}
 
+	if err := p.SetHelpWidth(220); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
 	info := p.getAlignmentInfo()
-	info.terminalColumns = 220
 
 	var out bytes.Buffer
 	w := bufio.NewWriter(&out)
@@ -1225,8 +1250,10 @@ func TestHelpAdaptiveChoicesWidthMatrix(t *testing.T) {
 			t.Fatalf("expected option to be registered")
 		}
 
+		if err := p.SetHelpWidth(width); err != nil {
+			t.Fatalf("unexpected set help width error: %v", err)
+		}
 		info := p.getAlignmentInfo()
-		info.terminalColumns = width
 
 		var out bytes.Buffer
 		w := bufio.NewWriter(&out)
@@ -1247,8 +1274,148 @@ func TestHelpAdaptiveChoicesWidthMatrix(t *testing.T) {
 	}
 
 	gotNarrow := makeOutput(34, true)
-	if !strings.Contains(gotNarrow, "[decl|name-asc") {
-		t.Fatalf("expected packed choices in narrow mode before list fallback, got:\n%s", gotNarrow)
+	if !strings.Contains(gotNarrow, "valid values:") || !strings.Contains(gotNarrow, "> decl") {
+		t.Fatalf("expected auto list fallback in very narrow mode, got:\n%s", gotNarrow)
+	}
+}
+
+func TestHelpKeepsStrictDescriptionColumnForChoices(t *testing.T) {
+	var opts struct {
+		Template string `short:"t" long:"template" choice:"list" choice:"table" choice:"html" description:"Built-in documentation template style"`
+		Wrap     int    `short:"w" long:"wrap" description:"Wrap width for plain text fields"`
+	}
+
+	p := NewNamedParser("strict-columns", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if _, err := p.AddGroup("Markdown Render", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	if err := p.SetHelpWidth(120); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
+	info := p.getAlignmentInfo()
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, p.FindOptionByLongName("template"), info, true, p.optionRenderFormat())
+	p.writeHelpOption(w, p.FindOptionByLongName("wrap"), info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	assertHelpDescriptionColumn(
+		t,
+		got,
+		"-t, --template",
+		"Built-in documentation template style",
+		"-w, --wrap",
+		"Wrap width for plain text fields",
+	)
+}
+
+func TestHelpNarrowWidthMovesChoicesOutOfDescriptionBudget(t *testing.T) {
+	var opts struct {
+		Template string `short:"t" long:"template" choice:"list" choice:"table" choice:"html" description:"Built-in documentation template style"`
+		Wrap     int    `short:"w" long:"wrap" description:"Wrap width for plain text fields"`
+	}
+
+	p := NewNamedParser("narrow-columns", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if err := p.SetHelpWidth(56); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
+	if _, err := p.AddGroup("Markdown Render", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+	got := out.String()
+	assertHelpLinesFitWidth(t, got, 56)
+
+	templateLine := helpLineContaining(t, got, "-t, --template=")
+	if strings.Contains(templateLine, "[list|table|html]") {
+		t.Fatalf("expected choices to move to a wrapped left-column line, got:\n%s", got)
+	}
+	if !strings.Contains(got, "\n    [list|table|html]") {
+		t.Fatalf("expected wrapped compact choices in left column, got:\n%s", got)
+	}
+
+	descIdx := strings.Index(templateLine, "Built-in")
+	if descIdx < 0 {
+		t.Fatalf("expected description on template row, got:\n%s", got)
+	}
+	if descCol := textWidth(templateLine[:descIdx]); descCol > 28 {
+		t.Fatalf("expected description to start in left half at width 56, got column %d:\n%s", descCol, got)
+	}
+}
+
+func TestHelpWideWidthKeepsChoicesInline(t *testing.T) {
+	var opts struct {
+		Template string `short:"t" long:"template" choice:"list" choice:"table" choice:"html" description:"Built-in documentation template style"`
+		Format   string `short:"e" long:"example-format" choice:"json" choice:"yaml" description:"Append policy example block to markdown output"`
+	}
+
+	p := NewNamedParser("wide-columns", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if err := p.SetHelpWidth(225); err != nil {
+		t.Fatalf("unexpected set help width error: %v", err)
+	}
+	if _, err := p.AddGroup("Markdown Render", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+	got := out.String()
+	assertHelpLinesFitWidth(t, got, 225)
+
+	for _, needle := range []string{
+		"-t, --template=[list|table|html]",
+		"-e, --example-format=[json|yaml]",
+	} {
+		line := helpLineContaining(t, got, needle)
+		if strings.HasSuffix(strings.TrimSpace(line), needle) {
+			t.Fatalf("expected description on wide inline choice row, got:\n%s", got)
+		}
+	}
+}
+
+func TestHelpAdaptiveLayoutFitsConfiguredWidths(t *testing.T) {
+	var opts struct {
+		Template string `short:"t" long:"template" choice:"list" choice:"table" choice:"html" description:"Built-in documentation template style"`
+		Format   string `short:"f" long:"example-format" choice:"json" choice:"yaml" description:"Append policy example block"`
+		TOC      string `short:"o" long:"toc" choice:"auto" choice:"always" choice:"off" description:"TOC mode for markdown output"`
+		Wrap     int    `short:"w" long:"wrap" description:"Wrap width for plain text fields"`
+	}
+
+	for _, width := range []int{34, 48, 80, 120, 197, 220} {
+		t.Run(fmt.Sprintf("width_%d", width), func(t *testing.T) {
+			p := NewNamedParser("doc", None)
+			p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+			if err := p.SetHelpWidth(width); err != nil {
+				t.Fatalf("unexpected set help width error: %v", err)
+			}
+			if _, err := p.AddGroup("Markdown Render", "", &opts); err != nil {
+				t.Fatalf("unexpected add group error: %v", err)
+			}
+
+			var out bytes.Buffer
+			p.WriteHelp(&out)
+			assertHelpLinesFitWidth(t, out.String(), width)
+
+			if width >= 120 {
+				got := out.String()
+				assertHelpDescriptionColumn(
+					t,
+					got,
+					"-t, --template",
+					"Built-in documentation template style",
+					"-w, --wrap",
+					"Wrap width for plain text fields",
+				)
+			}
+		})
 	}
 }
 

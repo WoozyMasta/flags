@@ -351,10 +351,8 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 }
 
 type alignmentInfo struct {
-	maxLongLen      int
+	maxLeftLen      int
 	terminalColumns int
-	hasShort        bool
-	hasValueName    bool
 	reserveShort    bool
 	unlimitedWidth  bool
 	indent          int
@@ -363,44 +361,34 @@ type alignmentInfo struct {
 const (
 	paddingBeforeOption                 = 2
 	distanceBetweenOptionAndDescription = 2
+	minHelpLeftWidth                    = 8
+	minHelpDescriptionWidth             = 10
 )
 
 func (a *alignmentInfo) descriptionStart() int {
-	ret := a.maxLongLen + distanceBetweenOptionAndDescription
-
-	if a.hasShort {
-		ret += 2
-	}
-
-	if a.maxLongLen > 0 {
-		ret += 4
-	}
-
-	if a.hasValueName {
-		ret += 3
-	}
-
-	return ret
+	return a.maxLeftLen + distanceBetweenOptionAndDescription
 }
 
 func (a *alignmentInfo) optionDescriptionStart() int {
-	descstart := a.descriptionStart() + paddingBeforeOption
+	descstart := a.descriptionStart()
 
 	if a.unlimitedWidth {
 		return descstart
 	}
 
-	if a.maxLongLen <= a.terminalColumns/2 {
+	if a.terminalColumns <= 0 {
+		a.terminalColumns = defaultTermSize
+	}
+
+	minDescStart := paddingBeforeOption + minHelpLeftWidth + distanceBetweenOptionAndDescription
+	maxLeftHalf := max(a.terminalColumns/2, minDescStart)
+	maxDescStart := max(a.terminalColumns-minHelpDescriptionWidth, minDescStart)
+	maxAllowed := min(maxLeftHalf, maxDescStart)
+	if descstart <= maxAllowed {
 		return descstart
 	}
 
-	maxDescStart := min(max(a.terminalColumns/2, paddingBeforeOption+12), a.terminalColumns-10)
-
-	if descstart > maxDescStart {
-		descstart = maxDescStart
-	}
-
-	return descstart
+	return maxAllowed
 }
 
 func (a *alignmentInfo) updateLen(name string, indent int) {
@@ -408,16 +396,14 @@ func (a *alignmentInfo) updateLen(name string, indent int) {
 
 	l += indent
 
-	if l > a.maxLongLen {
-		a.maxLongLen = l
+	if l > a.maxLeftLen {
+		a.maxLeftLen = l
 	}
 }
 
 func (p *Parser) getAlignmentInfo() alignmentInfo {
 	ret := alignmentInfo{
-		maxLongLen:      0,
-		hasShort:        false,
-		hasValueName:    false,
+		maxLeftLen:      0,
 		reserveShort:    false,
 		terminalColumns: p.helpColumns(),
 	}
@@ -426,6 +412,22 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 		ret.unlimitedWidth = true
 	}
 
+	p.eachActiveGroup(func(_ *Command, grp *Group) {
+		if !grp.showInHelp() {
+			return
+		}
+		for _, info := range grp.options {
+			if !info.showInHelp() {
+				continue
+			}
+
+			if info.ShortName != 0 {
+				ret.reserveShort = true
+			}
+		}
+	})
+
+	format := p.optionRenderFormat()
 	var prevcmd *Command
 
 	p.eachActiveGroup(func(c *Command, grp *Group) {
@@ -436,7 +438,11 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 
 		if c != prevcmd {
 			for _, arg := range c.args {
-				ret.updateLen(arg.localizedName(), indent)
+				argLeft := strings.Repeat(" ", paddingBeforeOption) + arg.localizedName()
+				if arg.localizedDescription() != "" {
+					argLeft += ":"
+				}
+				ret.updateLen(argLeft, 0)
 			}
 			prevcmd = c
 		}
@@ -448,22 +454,13 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 				continue
 			}
 
-			if info.ShortName != 0 {
-				ret.hasShort = true
-				ret.reserveShort = true
+			prefix := paddingBeforeOption + indent
+			if info.ShortName == 0 && ret.reserveShort {
+				prefix += 4
 			}
 
-			valueName := info.localizedValueName()
-			if len(valueName) > 0 {
-				ret.hasValueName = true
-			}
-
-			l := info.LongNameWithNamespace() + valueName
-			if choiceToken, ok := inlineChoicesAlignmentToken(valueName, info.Choices, ret.terminalColumns); ok {
-				l += choiceToken
-			}
-
-			ret.updateLen(l, indent)
+			leftRaw, _, _, _ := p.buildHelpOptionLeft(info, format, prefix)
+			ret.updateLen(leftRaw, 0)
 		}
 	})
 
@@ -483,21 +480,6 @@ func (p *Parser) helpColumns() int {
 	}
 
 	return width
-}
-
-func inlineChoicesAlignmentToken(valueName string, choices []string, terminalColumns int) (string, bool) {
-	if valueName == "" || len(choices) == 0 {
-		return "", false
-	}
-
-	compact := "[" + strings.Join(choices, "|") + "]"
-	width := textWidth(compact)
-
-	if terminalColumns <= 0 {
-		terminalColumns = 80
-	}
-
-	return compact, width <= terminalColumns/6
 }
 
 func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
@@ -619,17 +601,12 @@ func optionIsRepeatable(option *Option) bool {
 	return kind == reflect.Slice || kind == reflect.Map
 }
 
-func renderChoiceToken(option *Option, leftWidth int, prefixLen int) string {
+func renderChoiceToken(option *Option) string {
 	if len(option.Choices) == 0 {
 		return ""
 	}
 
-	compact := "[" + strings.Join(option.Choices, "|") + "]"
-	if prefixLen+textWidth(compact) <= leftWidth {
-		return compact
-	}
-
-	return "[" + strings.Join(option.Choices, " | ") + "]"
+	return renderChoiceInline(option.Choices)
 }
 
 type optionTailLine struct {
@@ -660,13 +637,11 @@ type helpLeftLine struct {
 }
 
 type helpOptionLayout struct {
-	LeftPrefix      int
-	DescStart       int
-	LeftWidth       int
-	GlobalLeftLimit int
-	LayoutLeftWidth int
-	DescWidth       int
-	ShouldSplit     bool
+	LeftPrefix  int
+	DescStart   int
+	LeftWidth   int
+	DescWidth   int
+	ShouldSplit bool
 }
 
 func renderChoicePipeLines(choices []string, width int) []string {
@@ -839,15 +814,15 @@ func splitAdaptiveLeftBody(
 	leftBody string,
 	leftPrefix int,
 	leftWidth int,
-	layoutLeftWidth int,
 	forceChoiceList bool,
 	autoChoiceList bool,
 	choiceListLabel string,
 ) []helpLeftLine {
 	indentPrefix := strings.Repeat(" ", leftPrefix)
 	lines := make([]helpLeftLine, 0, 6)
+	wrapWidth := max(leftWidth, minHelpLeftWidth)
 	appendWrapped := func(text string, kind helpLeftLineKind) {
-		for line := range strings.SplitSeq(wrapTextNoHyphen(text, layoutLeftWidth), "\n") {
+		for line := range strings.SplitSeq(wrapTextNoHyphen(text, wrapWidth), "\n") {
 			lines = append(lines, helpLeftLine{Text: indentPrefix + line, Kind: kind})
 		}
 	}
@@ -876,7 +851,7 @@ func splitAdaptiveLeftBody(
 	appendWrapped(head, helpLeftLineDefault)
 
 	continuationPrefix := strings.Repeat(" ", leftPrefix+2)
-	tailWidth := max(layoutLeftWidth-2, 10)
+	tailWidth := max(leftWidth-2, minHelpLeftWidth)
 	for _, line := range splitOptionTailLines(
 		valueName,
 		option.Choices,
@@ -911,25 +886,23 @@ func (p *Parser) buildHelpOptionLayout(
 	}
 
 	layout.DescStart = info.optionDescriptionStart()
-	layout.LeftWidth = layout.DescStart - layout.LeftPrefix
-	if layout.LeftWidth < 10 {
-		return layout, "", "", "", "", ""
-	}
+	layout.LeftWidth = max(
+		layout.DescStart-layout.LeftPrefix-distanceBetweenOptionAndDescription,
+		minHelpLeftWidth,
+	)
 
-	layout.GlobalLeftLimit = max(info.terminalColumns/2-layout.LeftPrefix, 10)
-	layout.LayoutLeftWidth = max(layout.LeftWidth, layout.GlobalLeftLimit)
-	layout.DescWidth = info.terminalColumns - layout.DescStart
+	layout.DescWidth = max(info.terminalColumns-layout.DescStart, minHelpDescriptionWidth)
 
 	leftRaw, shortToken, longToken, choicesToken := p.buildHelpOptionLeft(
 		option,
 		format,
-		layout.LayoutLeftWidth,
 		layout.LeftPrefix,
 	)
 
 	indentPrefix := strings.Repeat(" ", layout.LeftPrefix)
 	leftBody := strings.TrimPrefix(leftRaw, indentPrefix)
-	layout.ShouldSplit = forceSplit || textWidth(leftBody) > layout.GlobalLeftLimit
+	leftLen := textWidth(leftBody)
+	layout.ShouldSplit = forceSplit || leftLen > layout.LeftWidth
 
 	return layout, leftRaw, leftBody, shortToken, longToken, choicesToken
 }
@@ -951,7 +924,6 @@ func (p *Parser) renderHelpOptionLeftLines(
 		leftBody,
 		layout.LeftPrefix,
 		layout.LeftWidth,
-		layout.LayoutLeftWidth,
 		forceChoiceList,
 		autoChoiceList,
 		p.i18nText("help.meta.valid_values", "valid values"),
@@ -961,17 +933,7 @@ func (p *Parser) renderHelpOptionLeftLines(
 	leftLinesPlain := make([]string, len(leftLinesMeta))
 	for i, lineMeta := range leftLinesMeta {
 		leftLinesPlain[i] = lineMeta.Text
-		colored := lineMeta.Text
-		if shortToken != "" {
-			colored = strings.Replace(colored, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
-		}
-		if longToken != "" {
-			coloredLong := format.longDelimiter + longToken
-			colored = strings.Replace(colored, coloredLong, p.colorizeHelp(coloredLong, p.helpColorScheme.OptionLong), 1)
-		}
-		if choicesToken != "" {
-			colored = strings.Replace(colored, choicesToken, p.colorizeHelp(choicesToken, p.helpColorScheme.OptionChoices), 1)
-		}
+		colored := p.colorizeHelpOptionLeftLine(lineMeta.Text, option, format, shortToken, longToken, choicesToken)
 		switch lineMeta.Kind {
 		case helpLeftLineChoice:
 			colored = p.colorizeHelp(colored, p.helpColorScheme.OptionChoices)
@@ -983,6 +945,34 @@ func (p *Parser) renderHelpOptionLeftLines(
 	}
 
 	return leftLines, leftLinesPlain
+}
+
+func (p *Parser) colorizeHelpOptionLeftLine(
+	line string,
+	option *Option,
+	format optionRenderFormat,
+	shortToken string,
+	longToken string,
+	choicesToken string,
+) string {
+	if shortToken != "" {
+		line = strings.Replace(line, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
+	}
+	if longToken != "" {
+		coloredLong := format.longDelimiter + longToken
+		line = strings.Replace(line, coloredLong, p.colorizeHelp(coloredLong, p.helpColorScheme.OptionLong), 1)
+	}
+	if choicesToken != "" {
+		line = strings.Replace(line, choicesToken, p.colorizeHelp(choicesToken, p.helpColorScheme.OptionChoices), 1)
+	}
+	if option.canArgument() {
+		valueName := option.localizedValueName()
+		if valueName != "" {
+			line = strings.Replace(line, valueName, p.colorizeHelp(valueName, p.helpColorScheme.OptionValueName), 1)
+		}
+	}
+
+	return line
 }
 
 func (p *Parser) renderHelpOptionRows(
@@ -1031,7 +1021,7 @@ func (p *Parser) renderHelpOptionRows(
 
 		_, _ = writer.WriteString(leftLine)
 		if i < len(wrappedDescLines) {
-			pad := max(layout.DescStart-textWidth(leftPlain), 1)
+			pad := max(layout.DescStart-textWidth(leftPlain), distanceBetweenOptionAndDescription)
 			_, _ = writer.WriteString(strings.Repeat(" ", pad))
 			_, _ = writer.WriteString(wrappedDescLines[i])
 		}
@@ -1039,7 +1029,7 @@ func (p *Parser) renderHelpOptionRows(
 	}
 }
 
-func (p *Parser) buildHelpOptionLeft(option *Option, format optionRenderFormat, leftWidth int, prefix int) (string, string, string, string) {
+func (p *Parser) buildHelpOptionLeft(option *Option, format optionRenderFormat, prefix int) (string, string, string, string) {
 	left := &bytes.Buffer{}
 	shortToken := ""
 	longToken := ""
@@ -1071,7 +1061,7 @@ func (p *Parser) buildHelpOptionLeft(option *Option, format optionRenderFormat, 
 			left.WriteString(valueName)
 		}
 
-		choicesToken = renderChoiceToken(option, leftWidth, textWidth(left.String()))
+		choicesToken = renderChoiceToken(option)
 		if choicesToken != "" {
 			left.WriteString(choicesToken)
 		}
@@ -1185,33 +1175,38 @@ func (p *Parser) colorizeOptionPunctuation(text string, format optionRenderForma
 	return text
 }
 
-func (p *Parser) adaptiveWriteHelpOption(
+func (p *Parser) writeLaidOutHelpOption(
 	writer *bufio.Writer,
 	option *Option,
 	info alignmentInfo,
 	trimDescriptions bool,
 	format optionRenderFormat,
 	forceSplit bool,
-) bool {
-	layout, _, leftBody, shortToken, longToken, choicesToken := p.buildHelpOptionLayout(
+) {
+	layout, leftRaw, leftBody, shortToken, longToken, choicesToken := p.buildHelpOptionLayout(
 		option,
 		info,
 		format,
 		forceSplit,
 	)
-	if layout.LeftWidth < 10 || !layout.ShouldSplit {
-		return false
+	var leftLines []string
+	var leftLinesPlain []string
+	if layout.ShouldSplit {
+		leftLines, leftLinesPlain = p.renderHelpOptionLeftLines(
+			option,
+			format,
+			layout,
+			leftBody,
+			shortToken,
+			longToken,
+			choicesToken,
+		)
+	} else {
+		leftLinesPlain = []string{leftRaw}
+		leftLine := p.colorizeHelpOptionLeftLine(leftRaw, option, format, shortToken, longToken, choicesToken)
+		leftLines = []string{p.colorizeOptionPunctuation(leftLine, format)}
 	}
 
-	leftLines, leftLinesPlain := p.renderHelpOptionLeftLines(
-		option,
-		format,
-		layout,
-		leftBody,
-		shortToken,
-		longToken,
-		choicesToken,
-	)
 	descLines, defaultFrag, envFrag, repeatableFrag := p.buildHelpOptionDescription(
 		option,
 		format,
@@ -1228,8 +1223,6 @@ func (p *Parser) adaptiveWriteHelpOption(
 		envFrag,
 		repeatableFrag,
 	)
-
-	return true
 }
 
 func (p *Parser) writeHelpOption(
@@ -1239,15 +1232,6 @@ func (p *Parser) writeHelpOption(
 	trimDescriptions bool,
 	format optionRenderFormat,
 ) {
-	var line strings.Builder
-	shortToken := ""
-	longToken := ""
-	choicesToken := ""
-
-	prefix := paddingBeforeOption
-
-	prefix += info.indent
-
 	if option.Hidden {
 		return
 	}
@@ -1255,95 +1239,7 @@ func (p *Parser) writeHelpOption(
 	forceChoiceListSplit := (p.Options&ShowChoiceListInHelp) != None &&
 		len(option.Choices) > 0 &&
 		option.canArgument()
-	if p.adaptiveWriteHelpOption(writer, option, info, trimDescriptions, format, forceChoiceListSplit) {
-		return
-	}
-
-	line.Grow(64)
-	line.WriteString(strings.Repeat(" ", prefix))
-
-	if option.ShortName != 0 {
-		line.WriteRune(format.shortDelimiter)
-		line.WriteRune(option.ShortName)
-		shortToken = string(format.shortDelimiter) + string(option.ShortName)
-	} else if info.reserveShort {
-		line.WriteString("  ")
-	}
-
-	descstart := info.optionDescriptionStart()
-
-	if len(option.LongName) > 0 {
-		if option.ShortName != 0 {
-			line.WriteString(", ")
-		} else if info.reserveShort {
-			line.WriteString("  ")
-		}
-
-		line.WriteString(format.longDelimiter)
-		longToken = option.LongNameWithNamespace()
-		line.WriteString(longToken)
-	}
-
-	if option.canArgument() {
-		line.WriteRune(format.nameDelimiter)
-
-		valueName := option.localizedValueName()
-		if len(valueName) > 0 {
-			line.WriteString(valueName)
-		}
-
-		if len(option.Choices) > 0 {
-			choicesToken = "[" + strings.Join(option.Choices, "|") + "]"
-			line.WriteString(choicesToken)
-		}
-	}
-
-	written := textWidth(line.String())
-	lineText := line.String()
-	if shortToken != "" {
-		lineText = strings.Replace(lineText, shortToken, p.colorizeHelp(shortToken, p.helpColorScheme.OptionShort), 1)
-	}
-	if longToken != "" {
-		coloredLong := format.longDelimiter + longToken
-		lineText = strings.Replace(lineText, coloredLong, p.colorizeHelp(coloredLong, p.helpColorScheme.OptionLong), 1)
-	}
-	if choicesToken != "" {
-		lineText = strings.Replace(lineText, choicesToken, p.colorizeHelp(choicesToken, p.helpColorScheme.OptionChoices), 1)
-	}
-	if option.canArgument() {
-		valueName := option.localizedValueName()
-		if valueName != "" {
-			lineText = strings.Replace(lineText, valueName, p.colorizeHelp(valueName, p.helpColorScheme.OptionValueName), 1)
-		}
-	}
-	lineText = p.colorizeOptionPunctuation(lineText, format)
-	_, _ = writer.WriteString(lineText)
-
-	if option.localizedDescription() != "" {
-		dw := max(descstart-written, 1)
-		_, _ = writer.WriteString(strings.Repeat(" ", dw))
-		descWidth := info.terminalColumns - descstart
-		descLines, defaultFrag, envFrag, repeatableFrag := p.buildHelpOptionDescription(option, format, descWidth)
-		desc := wrapText(strings.Join(descLines, "\n"),
-			descWidth,
-			strings.Repeat(" ", descstart),
-			trimDescriptions)
-
-		if defaultFrag != "" {
-			desc = strings.Replace(desc, defaultFrag, p.colorizeHelp(defaultFrag, p.helpColorScheme.OptionDefault), 1)
-		}
-		if envFrag != "" {
-			desc = strings.Replace(desc, envFrag, p.colorizeHelp(envFrag, p.helpColorScheme.OptionEnv), 1)
-		}
-		if repeatableFrag != "" {
-			desc = strings.Replace(desc, repeatableFrag, p.colorizeHelp(repeatableFrag, p.helpColorScheme.OptionChoices), 1)
-		}
-
-		desc = p.colorizeHelp(desc, p.helpColorScheme.OptionDesc)
-		_, _ = writer.WriteString(desc)
-	}
-
-	_, _ = writer.WriteString("\n")
+	p.writeLaidOutHelpOption(writer, option, info, trimDescriptions, format, forceChoiceListSplit)
 }
 
 func (p *Parser) writeHelpArgument(

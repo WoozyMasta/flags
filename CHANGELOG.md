@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.3.2] - 2026-05-02
+
+### Changed
+
+* Reworked built-in help option layout to reserve at least half of the
+  configured width for descriptions across narrow and wide terminals, with one
+  renderer for inline and wrapped option rows.
+
+### Fixed
+
+* Help option descriptions no longer drift into flag/choice columns when
+  compact choice lists are rendered inline or wrapped.
+
+[0.3.2]: https://github.com/WoozyMasta/flags/compare/v0.3.1...v0.3.2
+
 ## [0.3.1] - 2026-05-02
 
 ### Changed

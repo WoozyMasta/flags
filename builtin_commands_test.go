@@ -100,6 +100,7 @@ func TestBuiltinCommandHelpTextIsLocalized(t *testing.T) {
 	if stderr != "" {
 		t.Fatalf("expected empty stderr for localized built-in command help, got %q", stderr)
 	}
+	normalizedStdout := strings.Join(strings.Fields(stdout), " ")
 	for _, want := range []string{
 		"ШАБЛОН",
 		"Шаблон Markdown-документации",
@@ -107,7 +108,7 @@ func TestBuiltinCommandHelpTextIsLocalized(t *testing.T) {
 		"Помечать скрытые сущности в документации",
 		"Путь к выходному файлу",
 	} {
-		if !strings.Contains(stdout, want) {
+		if !strings.Contains(normalizedStdout, want) {
 			t.Fatalf("expected built-in command help to contain %q, got:\n%s", want, stdout)
 		}
 	}
