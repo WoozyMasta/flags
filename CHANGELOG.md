@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.3.1] - 2026-05-02
+
+### Changed
+
+* Refined adaptive help rendering for option choices:
+  uses deterministic modes (`inline`, packed by `|`, forced/auto list fallback)
+  and global layout-driven split decisions to
+  avoid aggressive wrapping on wide terminals.
+* Refactored help option rendering pipeline into explicit layout/left/row
+  stages for maintainability and predictable formatting behavior.
+
+### Fixed
+
+* Choice lists in built-in help no longer degrade into
+  one-item-per-line wrapping in common wide-terminal scenarios.
+* Localized built-in help test coverage now relies on explicit
+ `ShowChoiceListInHelp` for stable `valid values` label expectations.
+
+[0.3.1]: https://github.com/WoozyMasta/flags/compare/v0.3.0...v0.3.1
+
 ## [0.3.0] - 2026-05-02
 
 ### Added

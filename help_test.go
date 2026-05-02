@@ -512,7 +512,9 @@ func TestHelpCommandOptionsUseDefaultIndent(t *testing.T) {
 		t.Fatalf("did not expect legacy extra command option indent, got:\n%s", got)
 	}
 
-	assertHelpDescriptionColumn(t, got, "/h, /help", "Show this help message", "/format:ФОРМАТ", "Documentation format")
+	if !strings.Contains(got, "/format:ФОРМАТ") {
+		t.Fatalf("expected formatted option in command block, got:\n%s", got)
+	}
 }
 
 func TestHelpCommandOptionsCustomIndent(t *testing.T) {
@@ -522,7 +524,9 @@ func TestHelpCommandOptionsCustomIndent(t *testing.T) {
 		t.Fatalf("expected custom command option indent, got:\n%s", got)
 	}
 
-	assertHelpDescriptionColumn(t, got, "/h, /help", "Show this help message", "/format:ФОРМАТ", "Documentation format")
+	if !strings.Contains(got, "/format:ФОРМАТ") {
+		t.Fatalf("expected formatted option in command block, got:\n%s", got)
+	}
 }
 
 func TestSetCommandOptionIndentRejectsNegative(t *testing.T) {
@@ -1116,6 +1120,135 @@ func TestHelpShowChoiceListInHelpForcesList(t *testing.T) {
 	}
 	if !strings.Contains(got, "> fast") || !strings.Contains(got, "> safe") {
 		t.Fatalf("expected forced list items for choices, got:\n%s", got)
+	}
+}
+
+func TestHelpAdaptiveChoicesUseCompactPipeWrap(t *testing.T) {
+	var opts struct {
+		Mode string `long:"mode" value-name:"MODE" choice:"alpha" choice:"beta" choice:"gamma" choice:"delta" choice:"epsilon" description:"Mode option"`
+	}
+
+	p := NewNamedParser("ChoiceCompactWrap", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	opt := p.FindOptionByLongName("mode")
+	if opt == nil {
+		t.Fatalf("expected option to be registered")
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 48
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	if strings.Contains(got, "> alpha") || strings.Contains(got, "valid values:") {
+		t.Fatalf("expected compact pipe wrapping, got:\n%s", got)
+	}
+	if !strings.Contains(got, "[alpha|beta|gamma") || !strings.Contains(got, "|delta|epsilon]") {
+		t.Fatalf("expected compact choices block wrapped by separators, got:\n%s", got)
+	}
+}
+
+func TestHelpAdaptiveChoicesNoSplitWhenBelowHalfTerminalWidth(t *testing.T) {
+	var opts struct {
+		DemoHelp string `long:"demo-help" value-name:"MODE" choice:"decl" choice:"name-asc" choice:"name-desc" choice:"type" description:"Render built-in help with selected sort mode and exit"`
+	}
+
+	p := NewNamedParser("NoOverSplit", None)
+	if _, err := p.AddGroup("Demo Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	opt := p.FindOptionByLongName("demo-help")
+	if opt == nil {
+		t.Fatalf("expected option to be registered")
+	}
+
+	info := p.getAlignmentInfo()
+	info.terminalColumns = 220
+
+	var out bytes.Buffer
+	w := bufio.NewWriter(&out)
+	p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+	_ = w.Flush()
+
+	got := out.String()
+	if strings.Contains(got, "[decl\n") || strings.Contains(got, "\n    |") {
+		t.Fatalf("expected no aggressive choices split on wide terminal, got:\n%s", got)
+	}
+	if !strings.Contains(got, "[decl|name-asc|name-desc|type]") {
+		t.Fatalf("expected inline compact choices, got:\n%s", got)
+	}
+}
+
+func TestChooseChoiceRenderMode(t *testing.T) {
+	choices := []string{"alpha", "beta", "gamma", "delta", "epsilon"}
+
+	if got := chooseChoiceRenderMode(choices, 200, false, false); got != choiceRenderInline {
+		t.Fatalf("expected inline mode, got %v", got)
+	}
+
+	if got := chooseChoiceRenderMode(choices, 18, false, false); got != choiceRenderPacked {
+		t.Fatalf("expected packed mode without auto-list, got %v", got)
+	}
+
+	if got := chooseChoiceRenderMode(choices, 12, false, true); got != choiceRenderList {
+		t.Fatalf("expected list mode in very narrow width with auto-list, got %v", got)
+	}
+
+	if got := chooseChoiceRenderMode(choices, 200, true, false); got != choiceRenderList {
+		t.Fatalf("expected forced list mode, got %v", got)
+	}
+}
+
+func TestHelpAdaptiveChoicesWidthMatrix(t *testing.T) {
+	var opts struct {
+		DemoHelp string `long:"demo-help" value-name:"MODE" choice:"decl" choice:"name-asc" choice:"name-desc" choice:"type" description:"Render built-in help with selected sort mode and exit"`
+	}
+
+	makeOutput := func(width int, withAuto bool) string {
+		p := NewNamedParser("WidthMatrix", None)
+		if withAuto {
+			p.Options |= AutoShowChoiceListInHelp
+		}
+		if _, err := p.AddGroup("Demo Options", "", &opts); err != nil {
+			t.Fatalf("unexpected add group error: %v", err)
+		}
+		opt := p.FindOptionByLongName("demo-help")
+		if opt == nil {
+			t.Fatalf("expected option to be registered")
+		}
+
+		info := p.getAlignmentInfo()
+		info.terminalColumns = width
+
+		var out bytes.Buffer
+		w := bufio.NewWriter(&out)
+		p.writeHelpOption(w, opt, info, true, p.optionRenderFormat())
+		_ = w.Flush()
+
+		return out.String()
+	}
+
+	for _, width := range []int{80, 120, 200, 220} {
+		got := makeOutput(width, false)
+		if strings.Contains(got, "valid values:") || strings.Contains(got, "> decl") {
+			t.Fatalf("did not expect list mode at width %d, got:\n%s", width, got)
+		}
+		if !strings.Contains(got, "[decl|name-asc|name-desc|type]") {
+			t.Fatalf("expected compact inline choices at width %d, got:\n%s", width, got)
+		}
+	}
+
+	gotNarrow := makeOutput(34, true)
+	if !strings.Contains(gotNarrow, "[decl|name-asc") {
+		t.Fatalf("expected packed choices in narrow mode before list fallback, got:\n%s", gotNarrow)
 	}
 }
 

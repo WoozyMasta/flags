@@ -530,7 +530,7 @@ func TestBuiltinHelpGroupAndDescriptionsAreLocalized(t *testing.T) {
 		Locale string `short:"l" long:"locale" choices:"en;ru;eo" description:"Override locale"`
 	}
 
-	parser := NewNamedParser("i18n-demo", Default|VersionFlag|AutoShowChoiceListInHelp)
+	parser := NewNamedParser("i18n-demo", Default|VersionFlag|ShowChoiceListInHelp)
 	group, err := parser.AddGroup("Application Options", "", &opts)
 	if err != nil {
 		t.Fatalf("add group error: %v", err)
