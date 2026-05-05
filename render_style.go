@@ -194,6 +194,14 @@ func (p *Parser) resolveFlagRenderStyle() RenderStyle {
 	return p.resolveRenderStyle(style, true)
 }
 
+func (p *Parser) resolveEnvRenderStyle() RenderStyle {
+	style := p.helpEnvStyle
+	if style == RenderStyleAuto && (p.Options&DetectShellEnvStyle) != None {
+		style = RenderStyleShell
+	}
+	return p.resolveRenderStyle(style, false)
+}
+
 func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyle {
 	switch style {
 	case RenderStylePOSIX, RenderStyleWindows:
@@ -215,7 +223,7 @@ func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyl
 }
 
 func (p *Parser) optionRenderFormat() optionRenderFormat {
-	return p.optionRenderFormatForStyles(p.helpFlagStyle, p.helpEnvStyle)
+	return p.optionRenderFormatForStyles(p.resolveFlagRenderStyle(), p.resolveEnvRenderStyle())
 }
 
 func (p *Parser) optionRenderFormatForStyles(flagStyle RenderStyle, envStyle RenderStyle) optionRenderFormat {
