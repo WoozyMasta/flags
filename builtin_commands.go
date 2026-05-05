@@ -172,6 +172,31 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 	})
 }
 
+// SetBuiltinCommandHidden controls visibility of an enabled built-in command in
+// help, completion, and generated documentation.
+func (p *Parser) SetBuiltinCommandHidden(name string, hidden bool) error {
+	if p == nil {
+		return nil
+	}
+
+	if err := p.EnsureBuiltinCommands(); err != nil {
+		return err
+	}
+
+	cmd := p.Find(name)
+	if cmd == nil || !isBuiltinCommandData(cmd.Data()) {
+		return newErrorf(ErrUnknownCommand, "unknown built-in command `%s`", name)
+	}
+
+	cmd.SetHidden(hidden)
+	return nil
+}
+
+func isBuiltinCommandData(data any) bool {
+	_, ok := data.(builtinCommand)
+	return ok
+}
+
 func appendBuiltinDocRenderStyleOption(opts []DocOption, style string) []DocOption {
 	switch style {
 	case "posix":

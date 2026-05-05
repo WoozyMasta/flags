@@ -174,6 +174,7 @@ Common examples:
   `SetCommandLongDescriptionI18nKeys` and `SetCommandDescriptionI18nKeys`.
 * `SetOptionTypeOrder` for type-based option sorting.
 * `SetBuiltinCommandGroup` for built-in command display grouping.
+* `SetBuiltinCommandHidden` for built-in command visibility.
 * `SetCommandOptionIndent` for command option indentation in help.
 * `SetHelpFlagRenderStyle` for flag token rendering.
 * `SetHelpEnvRenderStyle` for environment placeholder rendering.

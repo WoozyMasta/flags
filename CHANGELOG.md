@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning][].
 * `WithDocRenderStyle` and built-in `docs man|html|md --style`
   for explicit POSIX, Windows, shell-detected, or automatic documentation
   rendering independent of the host platform.
+* `Parser.SetBuiltinCommandHidden` for hiding enabled built-in commands from
+  help, completion, and generated documentation while keeping them parseable.
 
 ## [0.3.2] - 2026-05-02
 

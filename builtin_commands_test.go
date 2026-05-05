@@ -127,6 +127,59 @@ func TestBuiltinCommandGroupCanBeCleared(t *testing.T) {
 	}
 }
 
+func TestBuiltinCommandCanBeHiddenByName(t *testing.T) {
+	p := NewNamedParser("builtin-hidden", HelpCommands)
+
+	if err := p.SetBuiltinCommandHidden("docs", true); err != nil {
+		t.Fatalf("unexpected set built-in command hidden error: %v", err)
+	}
+
+	var help strings.Builder
+	p.WriteHelp(&help)
+
+	if strings.Contains(help.String(), "docs") {
+		t.Fatalf("did not expect hidden docs command in help, got:\n%s", help.String())
+	}
+
+	out := filepath.Join(t.TempDir(), "docs.md")
+	if _, err := p.ParseArgs([]string{"docs", "md", out}); err != nil {
+		t.Fatalf("expected hidden docs command to remain parseable: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	if !strings.Contains(string(got), "# builtin-hidden") {
+		t.Fatalf("expected docs output from hidden built-in command, got:\n%s", string(got))
+	}
+}
+
+func TestBuiltinCommandHiddenRejectsDisabledOrUserCommand(t *testing.T) {
+	var opts struct {
+		Docs struct{} `command:"docs" description:"User docs command"`
+	}
+
+	p := NewNamedParser("builtin-hidden-disabled", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	err := p.SetBuiltinCommandHidden("docs", true)
+	if err == nil {
+		t.Fatalf("expected error for disabled built-in command")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrUnknownCommand {
+		t.Fatalf("expected ErrUnknownCommand, got %v", err)
+	}
+
+	if cmd := p.Find("docs"); cmd == nil || cmd.Hidden {
+		t.Fatalf("did not expect user docs command to be hidden, got %#v", cmd)
+	}
+}
+
 func TestBuiltinCommandNameConflict(t *testing.T) {
 	var opts struct {
 		Help struct{} `command:"help"`
