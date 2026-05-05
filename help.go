@@ -49,6 +49,9 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	defer func() {
 		p.helpColorEnabled = prevHelpColorEnabled
 	}()
+	if p.helpColorEnabled {
+		writer = colorOutputWriter(writer)
+	}
 
 	// Keep WriteHelp behavior consistent with ParseArgs:
 	// when builtin help/version flags are enabled, ensure

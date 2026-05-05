@@ -111,6 +111,10 @@ Colors are still gated by runtime color detection.
 `FORCE_COLOR` enables color for supported writers.
 When neither is set, tty detection decides.
 
+On Windows, console writers are adapted through `go-colorable`
+so ANSI help, version, and parser error colors work
+in legacy consoles as well as modern terminals.
+
 ## Hidden Metadata
 
 `hidden` removes options, groups, and commands from normal help,

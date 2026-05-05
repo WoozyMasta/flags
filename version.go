@@ -192,6 +192,9 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	defer func() {
 		p.helpColorEnabled = prevHelpColorEnabled
 	}()
+	if p.helpColorEnabled {
+		w = colorOutputWriter(w)
+	}
 
 	basePrefix := ""
 	padToTerminalWidth := false

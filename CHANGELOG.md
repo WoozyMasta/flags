@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning][].
   rendering independent of the host platform.
 * `Parser.SetBuiltinCommandHidden` for hiding enabled built-in commands from
   help, completion, and generated documentation while keeping them parseable.
+* Windows color output now uses `github.com/mattn/go-colorable`
+  for ANSI color support in legacy Windows consoles.
 
 ## [0.3.2] - 2026-05-02
 
