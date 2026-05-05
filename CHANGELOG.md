@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.3.3] - 2026-05-02
 
 ### Added
 
@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning][].
   help, completion, and generated documentation while keeping them parseable.
 * Windows color output now uses `github.com/mattn/go-colorable`
   for ANSI color support in legacy Windows consoles.
+
+[0.3.3]: https://github.com/WoozyMasta/flags/compare/v0.3.2...v0.3.3
 
 ## [0.3.2] - 2026-05-02
 
