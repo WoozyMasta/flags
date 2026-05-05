@@ -43,7 +43,7 @@
 {{ if .Required }}  * {{ i18n "doc.tmpl.markdown.label.required" }}: `{{ i18n "doc.tmpl.markdown.value.yes" }}`
 {{ end }}{{ if .Optional }}  * {{ i18n "doc.tmpl.markdown.label.optional_value" }}: {{ code .OptionalVal }}
 {{ end }}{{ if .Default }}  * {{ i18n "doc.tmpl.markdown.label.defaults" }}: {{ code .Default }}
-{{ end }}{{ if .Env }}  * {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .Env }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
+{{ end }}{{ if .Env }}  * {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
 {{ end }}{{ if .Choices }}  * {{ i18n "doc.tmpl.markdown.label.choices" }}: {{ code (join .Choices ", ") }}
 {{ end }}{{ if .ValueName }}  * {{ i18n "doc.tmpl.markdown.label.value_name" }}: {{ code .ValueName }}
 {{ end }}{{ if .Terminator }}  * {{ i18n "doc.tmpl.markdown.label.terminator" }}: {{ code .Terminator }}
@@ -120,7 +120,7 @@
 {{ if .Required }}  * {{ i18n "doc.tmpl.markdown.label.required" }}: `{{ i18n "doc.tmpl.markdown.value.yes" }}`
 {{ end }}{{ if .Optional }}  * {{ i18n "doc.tmpl.markdown.label.optional_value" }}: {{ code .OptionalVal }}
 {{ end }}{{ if .Default }}  * {{ i18n "doc.tmpl.markdown.label.defaults" }}: {{ code .Default }}
-{{ end }}{{ if .Env }}  * {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .Env }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
+{{ end }}{{ if .Env }}  * {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
 {{ end }}{{ if .Choices }}  * {{ i18n "doc.tmpl.markdown.label.choices" }}: {{ code (join .Choices ", ") }}
 {{ end }}{{ if .ValueName }}  * {{ i18n "doc.tmpl.markdown.label.value_name" }}: {{ code .ValueName }}
 {{ end }}{{ if .Terminator }}  * {{ i18n "doc.tmpl.markdown.label.terminator" }}: {{ code .Terminator }}

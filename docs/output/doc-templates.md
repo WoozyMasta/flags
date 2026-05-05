@@ -194,6 +194,17 @@ parser.SetHelpFlagRenderStyle(flags.RenderStylePOSIX)
 parser.SetHelpEnvRenderStyle(flags.RenderStylePOSIX)
 ```
 
+For a single render call, pass `WithDocRenderStyle`:
+
+```go
+err := parser.WriteDoc(
+  w,
+  flags.DocFormatMarkdown,
+  flags.WithBuiltinTemplate(flags.DocTemplateMarkdownList),
+  flags.WithDocRenderStyle(flags.RenderStylePOSIX),
+)
+```
+
 Shell detection is useful for runtime help,
 but generated repository files should usually use explicit styles.
 

@@ -167,7 +167,7 @@ func TestDocRenderStyleSetters(t *testing.T) {
 	}
 
 	gotWinDoc := winDoc.String()
-	if !strings.Contains(gotWinDoc, "/value") || !strings.Contains(gotWinDoc, "Environment: `APP_VALUE`") {
+	if !strings.Contains(gotWinDoc, "/value") || !strings.Contains(gotWinDoc, "Environment: `%APP_VALUE%`") {
 		t.Fatalf("expected windows-style markers in rendered doc, got:\n%s", gotWinDoc)
 	}
 
@@ -180,7 +180,49 @@ func TestDocRenderStyleSetters(t *testing.T) {
 	}
 
 	gotPOSIXDoc := posixDoc.String()
-	if !strings.Contains(gotPOSIXDoc, "--value") || !strings.Contains(gotPOSIXDoc, "Environment: `APP_VALUE`") {
+	if !strings.Contains(gotPOSIXDoc, "--value") || !strings.Contains(gotPOSIXDoc, "Environment: `$APP_VALUE`") {
 		t.Fatalf("expected posix-style markers in rendered doc, got:\n%s", gotPOSIXDoc)
+	}
+}
+
+func TestDocRenderStyleOptionOverridesParserStyleForSingleWrite(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" env:"APP_VALUE" description:"Value option"`
+	}
+
+	p := NewNamedParser("render-doc-style-option", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	p.SetHelpEnvRenderStyle(RenderStyleWindows)
+
+	var posixDoc bytes.Buffer
+	if err := p.WriteDoc(
+		&posixDoc,
+		DocFormatMarkdown,
+		WithBuiltinTemplate(DocTemplateMarkdownList),
+		WithDocRenderStyle(RenderStylePOSIX),
+	); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	gotPOSIX := posixDoc.String()
+	if !strings.Contains(gotPOSIX, "--value") || !strings.Contains(gotPOSIX, "Environment: `$APP_VALUE`") {
+		t.Fatalf("expected posix-style override in rendered doc, got:\n%s", gotPOSIX)
+	}
+	if strings.Contains(gotPOSIX, "/value") || strings.Contains(gotPOSIX, "%APP_VALUE%") {
+		t.Fatalf("did not expect parser windows style in overridden doc, got:\n%s", gotPOSIX)
+	}
+
+	var windowsDoc bytes.Buffer
+	if err := p.WriteDoc(&windowsDoc, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	gotWindows := windowsDoc.String()
+	if !strings.Contains(gotWindows, "/value") || !strings.Contains(gotWindows, "Environment: `%APP_VALUE%`") {
+		t.Fatalf("expected original parser style to remain unchanged, got:\n%s", gotWindows)
 	}
 }

@@ -27,10 +27,12 @@ type docRenderOptions struct {
 	builtinTemplate  string
 	templateText     string
 	programName      string
+	renderStyle      RenderStyle
 	toc              bool
 	trimDescriptions bool
 	includeHidden    bool
 	markHidden       bool
+	hasRenderStyle   bool
 }
 
 // DocOption configures WriteDoc behavior.
@@ -73,6 +75,16 @@ func WithTemplateData(data map[string]any) DocOption {
 func WithProgramName(name string) DocOption {
 	return func(o *docRenderOptions) error {
 		o.programName = name
+		return nil
+	}
+}
+
+// WithDocRenderStyle configures how flag tokens and environment placeholders
+// are rendered in generated documentation for this WriteDoc call.
+func WithDocRenderStyle(style RenderStyle) DocOption {
+	return func(o *docRenderOptions) error {
+		o.renderStyle = style
+		o.hasRenderStyle = true
 		return nil
 	}
 }

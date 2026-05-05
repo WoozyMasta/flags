@@ -56,6 +56,8 @@ func TestWriteDocBuiltinTemplatesGolden(t *testing.T) {
 	p.ShortDescription = "Golden doc parser"
 	p.LongDescription = "Long description for golden tests.\nIncludes options, groups and commands."
 	p.SetEnvPrefix("MY_APP")
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	p.SetHelpEnvRenderStyle(RenderStylePOSIX)
 
 	if _, err := p.AddGroup("Application Options", "Main options", &opts); err != nil {
 		t.Fatalf("unexpected add group error: %v", err)

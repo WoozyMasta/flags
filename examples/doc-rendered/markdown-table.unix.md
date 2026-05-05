@@ -21,7 +21,7 @@ Includes options, groups and commands.
 |Option|Description|Default|Environment|Required|
 |---|---|---|---|---|
 |`-v`, `--verbose`|Enable verbose output|||no|
-|`--config`|Path to config|config.yaml|MY_APP_APP_CONFIG|yes|
+|`--config`|Path to config|config.yaml|$MY_APP_APP_CONFIG|yes|
 |`--mode`|Execution mode; choices: `fast, safe`|fast||no|
 |`--tag`|Tag filter|api||no|
 |`--header`|HTTP headers|x-env:dev|; kv delim: `:`|no|
@@ -31,8 +31,8 @@ Includes options, groups and commands.
 
 |Option|Description|Default|Environment|Required|
 |---|---|---|---|---|
-|`--db.host`|Database host|127.0.0.1|MY_APP_DB_HOST|no|
-|`--db.port`|Database port|5432|MY_APP_DB_PORT|no|
+|`--db.host`|Database host|127.0.0.1|$MY_APP_DB_HOST|no|
+|`--db.port`|Database port|5432|$MY_APP_DB_PORT|no|
 
 ## COMMANDS
 

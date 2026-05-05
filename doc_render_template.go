@@ -83,7 +83,12 @@ func (p *Parser) writeDocHTML(w io.Writer, cfg docRenderOptions) error {
 }
 
 func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[string]any, cfg docRenderOptions) error {
-	tpl, err := template.New("doc").Funcs(docTemplateFuncs(p, cfg.markHidden, p.optionRenderFormat())).Parse(templateText)
+	format := p.optionRenderFormat()
+	if cfg.hasRenderStyle {
+		format = p.optionRenderFormatForStyles(cfg.renderStyle, cfg.renderStyle)
+	}
+
+	tpl, err := template.New("doc").Funcs(docTemplateFuncs(p, cfg.markHidden, format)).Parse(templateText)
 	if err != nil {
 		return err
 	}

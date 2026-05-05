@@ -65,6 +65,23 @@ parser.SetHelpFlagRenderStyle(flags.RenderStylePOSIX)
 parser.SetHelpEnvRenderStyle(flags.RenderStylePOSIX)
 ```
 
+Or set the style for one documentation render call:
+
+```go
+err := parser.WriteDoc(
+  w,
+  flags.DocFormatMarkdown,
+  flags.WithDocRenderStyle(flags.RenderStylePOSIX),
+)
+```
+
+The built-in documentation command accepts the same override:
+
+```bash
+app docs md --style posix docs.md
+app docs html --style windows docs.html
+```
+
 Use detection for interactive runtime help:
 
 ```go

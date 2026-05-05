@@ -64,6 +64,10 @@ type builtinDocProgramNameOption struct {
 	ProgramName string `long:"program-name" value-name:"NAME" description:"Override program name used in generated documentation templates"`
 }
 
+type builtinDocRenderStyleOption struct {
+	Style string `long:"style" value-name:"STYLE" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation"`
+}
+
 type builtinDocManCommand struct {
 	parser *Parser
 
@@ -72,6 +76,7 @@ type builtinDocManCommand struct {
 	} `positional-args:"yes"`
 
 	builtinDocProgramNameOption
+	builtinDocRenderStyleOption
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output"`
 
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
@@ -86,6 +91,7 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
+	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
 		return c.parser.WriteDoc(w, DocFormatMan, opts...)
 	})
@@ -99,6 +105,7 @@ type builtinDocHTMLCommand struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
+	builtinDocRenderStyleOption
 	TOC              bool `long:"toc" description:"Include table of contents in output"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output"`
 
@@ -120,6 +127,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
+	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
 		return c.parser.WriteDoc(w, DocFormatHTML, opts...)
 	})
@@ -133,6 +141,7 @@ type builtinDocMarkdownCommand struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
+	builtinDocRenderStyleOption
 	TOC              bool `long:"toc" description:"Include table of contents in output"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output"`
 
@@ -157,9 +166,25 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
+	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
 		return c.parser.WriteDoc(w, DocFormatMarkdown, opts...)
 	})
+}
+
+func appendBuiltinDocRenderStyleOption(opts []DocOption, style string) []DocOption {
+	switch style {
+	case "posix":
+		return append(opts, WithDocRenderStyle(RenderStylePOSIX))
+	case "windows":
+		return append(opts, WithDocRenderStyle(RenderStyleWindows))
+	case "shell":
+		return append(opts, WithDocRenderStyle(RenderStyleShell))
+	case "auto":
+		return append(opts, WithDocRenderStyle(RenderStyleAuto))
+	default:
+		return opts
+	}
 }
 
 type builtinConfigCommand struct {

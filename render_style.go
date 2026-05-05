@@ -194,14 +194,6 @@ func (p *Parser) resolveFlagRenderStyle() RenderStyle {
 	return p.resolveRenderStyle(style, true)
 }
 
-func (p *Parser) resolveEnvRenderStyle() RenderStyle {
-	style := p.helpEnvStyle
-	if style == RenderStyleAuto && (p.Options&DetectShellEnvStyle) != None {
-		style = RenderStyleShell
-	}
-	return p.resolveRenderStyle(style, false)
-}
-
 func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyle {
 	switch style {
 	case RenderStylePOSIX, RenderStyleWindows:
@@ -223,8 +215,19 @@ func (p *Parser) resolveRenderStyle(style RenderStyle, forFlags bool) RenderStyl
 }
 
 func (p *Parser) optionRenderFormat() optionRenderFormat {
-	flagsStyle := p.resolveFlagRenderStyle()
-	envStyle := p.resolveEnvRenderStyle()
+	return p.optionRenderFormatForStyles(p.helpFlagStyle, p.helpEnvStyle)
+}
+
+func (p *Parser) optionRenderFormatForStyles(flagStyle RenderStyle, envStyle RenderStyle) optionRenderFormat {
+	if flagStyle == RenderStyleAuto && (p.Options&DetectShellFlagStyle) != None {
+		flagStyle = RenderStyleShell
+	}
+	if envStyle == RenderStyleAuto && (p.Options&DetectShellEnvStyle) != None {
+		envStyle = RenderStyleShell
+	}
+
+	flagsStyle := p.resolveRenderStyle(flagStyle, true)
+	resolvedEnvStyle := p.resolveRenderStyle(envStyle, false)
 
 	format := optionRenderFormat{
 		shortDelimiter: defaultShortOptDelimiter,
@@ -243,7 +246,7 @@ func (p *Parser) optionRenderFormat() optionRenderFormat {
 		format.nameDelimiter = '='
 	}
 
-	if envStyle == RenderStyleWindows {
+	if resolvedEnvStyle == RenderStyleWindows {
 		format.envPrefix = "%"
 		format.envSuffix = "%"
 	}

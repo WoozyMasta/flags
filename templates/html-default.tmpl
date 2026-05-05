@@ -63,7 +63,7 @@
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
         <ul>
 {{- if .Env }}
-          <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>
+          <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .EnvSignature }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>
 {{- end }}
 {{- if .Choices }}
           <li>{{ i18n "doc.tmpl.html.meta.choices" }}: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>
@@ -151,7 +151,7 @@
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
           <ul>
 {{- if .Env }}
-            <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .Env }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>
+            <li>{{ i18n "doc.tmpl.html.meta.env" }}: <code>{{ quoteHTML .EnvSignature }}</code>{{ if .EnvDelim }} ({{ i18n "doc.tmpl.html.meta.delimiter" }} <code>{{ quoteHTML .EnvDelim }}</code>){{ end }}</li>
 {{- end }}
 {{- if .Choices }}
             <li>{{ i18n "doc.tmpl.html.meta.choices" }}: <code>{{ quoteHTML (join .Choices ", ") }}</code></li>

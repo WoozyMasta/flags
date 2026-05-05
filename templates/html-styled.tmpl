@@ -251,7 +251,7 @@
             <span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>
 {{- end }}
 {{- if .Env }}
-            <span>{{ i18n "doc.tmpl.html.meta.env" }}</span> <span class="chip">{{ quoteHTML .Env }}</span>
+            <span>{{ i18n "doc.tmpl.html.meta.env" }}</span> <span class="chip">{{ quoteHTML .EnvSignature }}</span>
 {{- end }}
 {{- if .Choices }}
             <span>{{ i18n "doc.tmpl.html.meta.choices" }}</span> <span class="chip">{{ quoteHTML (join .Choices ", ") }}</span>
@@ -335,7 +335,7 @@
               <span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>
 {{- end }}
 {{- if .Env }}
-              <span>{{ i18n "doc.tmpl.html.meta.env" }}</span> <span class="chip">{{ quoteHTML .Env }}</span>
+              <span>{{ i18n "doc.tmpl.html.meta.env" }}</span> <span class="chip">{{ quoteHTML .EnvSignature }}</span>
 {{- end }}
 {{- if .Choices }}
               <span>{{ i18n "doc.tmpl.html.meta.choices" }}</span> <span class="chip">{{ quoteHTML (join .Choices ", ") }}</span>

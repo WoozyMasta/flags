@@ -395,6 +395,36 @@ func TestBuiltinDocsCommandWritesFile(t *testing.T) {
 	}
 }
 
+func TestBuiltinDocsCommandStyleOverride(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" env:"APP_VALUE" description:"Value option"`
+	}
+
+	p := NewNamedParser("builtin-docs-style", DocsCommand)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	p.SetHelpFlagRenderStyle(RenderStyleWindows)
+	p.SetHelpEnvRenderStyle(RenderStyleWindows)
+	out := filepath.Join(t.TempDir(), "docs.md")
+
+	if _, err := p.ParseArgs([]string{"docs", "md", "--style", "posix", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	text := string(got)
+	if !strings.Contains(text, "--value") || !strings.Contains(text, "Environment: `$APP_VALUE`") {
+		t.Fatalf("expected posix documentation style, got:\n%s", text)
+	}
+	if strings.Contains(text, "/value") || strings.Contains(text, "%APP_VALUE%") {
+		t.Fatalf("did not expect parser windows style in generated docs, got:\n%s", text)
+	}
+}
+
 func TestBuiltinDocsCommandProgramNameOverrideMarkdown(t *testing.T) {
 	p := NewNamedParser("app.exe", DocsCommand)
 	out := filepath.Join(t.TempDir(), "docs.md")

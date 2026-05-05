@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `WithDocRenderStyle` and built-in `docs man|html|md --style`
+  for explicit POSIX, Windows, shell-detected, or automatic documentation
+  rendering independent of the host platform.
+
 ## [0.3.2] - 2026-05-02
 
 ### Changed

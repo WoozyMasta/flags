@@ -72,6 +72,7 @@ type docOption struct {
 	Description   string
 	Signature     string
 	EnvDelim      string
+	EnvSignature  string
 	IniName       string
 	DefaultMask   string
 	KeyValueDelim string
@@ -92,6 +93,9 @@ type docOption struct {
 
 func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 	format := p.optionRenderFormat()
+	if cfg.hasRenderStyle {
+		format = p.optionRenderFormatForStyles(cfg.renderStyle, cfg.renderStyle)
+	}
 	usage := p.Usage
 	if usage == "" {
 		usage = "[OPTIONS]"
@@ -246,6 +250,7 @@ func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions boo
 
 	if env := opt.EnvKeyWithNamespace(); env != "" {
 		doc.Env = env
+		doc.EnvSignature = format.envPrefix + env + format.envSuffix
 	}
 
 	if len(opt.Default) > 0 {

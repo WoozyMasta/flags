@@ -20,7 +20,7 @@ Includes options, groups and commands.
 
 ```text
 -v, --verbose - Enable verbose output
---config [default: config.yaml] [environment: MY_APP_APP_CONFIG] [required] - Path to config
+--config [default: config.yaml] [environment: $MY_APP_APP_CONFIG] [required] - Path to config
 --mode [default: fast] [choices: fast, safe] - Execution mode
 --tag [default: api] - Tag filter
 --header [default: x-env:dev] [delimiter: :] - HTTP headers
@@ -30,8 +30,8 @@ Includes options, groups and commands.
 ### Database Options
 
 ```text
---db.host [default: 127.0.0.1] [environment: MY_APP_DB_HOST] - Database host
---db.port [default: 5432] [environment: MY_APP_DB_PORT] - Database port
+--db.host [default: 127.0.0.1] [environment: $MY_APP_DB_HOST] - Database host
+--db.port [default: 5432] [environment: $MY_APP_DB_PORT] - Database port
 ```
 
 ## COMMANDS

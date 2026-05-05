@@ -26,7 +26,7 @@ Main options
   Path to config
   * Required: `yes`
   * Defaults: `config.yaml`
-  * Environment: `MY_APP_APP_CONFIG`
+  * Environment: `$MY_APP_APP_CONFIG`
 * `--mode` -
   Execution mode
   * Defaults: `fast`
@@ -50,11 +50,11 @@ Main options
 * `--db.host` -
   Database host
   * Defaults: `127.0.0.1`
-  * Environment: `MY_APP_DB_HOST`
+  * Environment: `$MY_APP_DB_HOST`
 * `--db.port` -
   Database port
   * Defaults: `5432`
-  * Environment: `MY_APP_DB_PORT`
+  * Environment: `$MY_APP_DB_PORT`
 
 ### Internal *(hidden group)*
 

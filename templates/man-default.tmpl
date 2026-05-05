@@ -35,7 +35,7 @@
 \fB{{ i18n "doc.tmpl.man.label.choices" }}\fP: {{ quoteMan (join .Choices ", ") }}
 {{- end }}
 {{- if .Env }}
-\fB{{ i18n "doc.tmpl.man.label.environment" }}\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.man.label.delimiter" }} {{ quoteMan .EnvDelim }}){{ end }}
+\fB{{ i18n "doc.tmpl.man.label.environment" }}\fP: {{ quoteMan .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.man.label.delimiter" }} {{ quoteMan .EnvDelim }}){{ end }}
 {{- end }}
 {{- if .Optional }}
 \fB{{ i18n "doc.tmpl.man.label.optional_value" }}\fP: {{ quoteMan .OptionalVal }}
@@ -130,7 +130,7 @@
 \fB{{ i18n "doc.tmpl.man.label.choices" }}\fP: {{ quoteMan (join .Choices ", ") }}
 {{- end }}
 {{- if .Env }}
-\fB{{ i18n "doc.tmpl.man.label.environment" }}\fP: {{ quoteMan .Env }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.man.label.delimiter" }} {{ quoteMan .EnvDelim }}){{ end }}
+\fB{{ i18n "doc.tmpl.man.label.environment" }}\fP: {{ quoteMan .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.man.label.delimiter" }} {{ quoteMan .EnvDelim }}){{ end }}
 {{- end }}
 {{- if .Optional }}
 \fB{{ i18n "doc.tmpl.man.label.optional_value" }}\fP: {{ quoteMan .OptionalVal }}

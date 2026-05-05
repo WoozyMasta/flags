@@ -402,6 +402,7 @@ func TestMan(t *testing.T) {
 	p := NewNamedParser("TestMan", HelpFlag)
 	p.ShortDescription = "Test manpage generation"
 	p.LongDescription = "This is a somewhat `longer` description of what this does.\nWith multiple lines."
+	p.SetHelpEnvRenderStyle(RenderStylePOSIX)
 	p.AddGroup("Application Options", "The application options", &opts)
 
 	for _, cmd := range p.Commands() {
@@ -437,7 +438,7 @@ func TestMan(t *testing.T) {
 		`.SS Application Options`,
 		`The application options`,
 		`\fB\-\-env-default2\fR`,
-		`\fBEnvironment\fP: ENV_DEFAULT`,
+		`\fBEnvironment\fP: $ENV_DEFAULT`,
 		`.SH ARGUMENTS`,
 		`.SH COMMANDS`,
 		`.SS command`,
