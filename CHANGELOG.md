@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.4.0] - 2026-05-06
 
 ### Added
 
@@ -37,7 +37,9 @@ and this project adheres to [Semantic Versioning][].
 * Markdown list templates now keep continuation indentation on every wrapped
   option description line.
 
-## [0.3.3] - 2026-05-02
+[0.4.0]: https://github.com/WoozyMasta/flags/compare/v0.3.3...v0.4.0
+
+## [0.3.3] - 2026-05-06
 
 ### Added
 
