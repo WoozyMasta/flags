@@ -26,9 +26,8 @@ const (
 // flag is optional.
 type Option struct {
 	// The group which the option belongs to
-	group      *Group
-	io         argIOConfig
-	validation valueValidationConfig
+	group *Group
+	io    argIOConfig
 
 	// Parsed struct tags associated with this option.
 	tag multiTag
@@ -65,10 +64,6 @@ type Option struct {
 	// passwords.
 	DefaultMask string
 
-	// If true, values for this option are redacted in rendered output and
-	// parser errors.
-	Secret bool
-
 	// Cached default literal shown in help/man output.
 	defaultLiteral string
 
@@ -76,6 +71,8 @@ type Option struct {
 	// reached (or until end-of-input). This supports find -exec style argument
 	// blocks. Only slice and slice-of-slices options are valid with terminator.
 	Terminator string
+
+	validation valueValidationConfig
 
 	// Additional long names for the option (without namespace prefix in tags).
 	LongAliases []string
@@ -110,10 +107,20 @@ type Option struct {
 	// and zero keeps them in the normal sort mode.
 	Order int
 
+	// The minimal number of required values for repeatable options.
+	requiredValueMin int
+
+	// The maximum number of allowed values for repeatable options.
+	requiredValueMax int
+
 	// The short name of the option (a single character). If not 0, the
 	// option flag can be 'activated' using -<ShortName>. Either ShortName
 	// or LongName needs to be non-empty.
 	ShortName rune
+
+	// If true, values for this option are redacted in rendered output and
+	// parser errors.
+	Secret bool
 
 	// completionHint controls fallback completion mode (file, dir, none).
 	completionHint completionHint
@@ -130,12 +137,6 @@ type Option struct {
 	// option is not specified, the parser will generate an ErrRequired type
 	// error.
 	Required bool
-
-	// The minimal number of required values for repeatable options.
-	requiredValueMin int
-
-	// The maximum number of allowed values for repeatable options.
-	requiredValueMax int
 
 	// Whether requiredValueMin/requiredValueMax were configured.
 	requiredValueRange bool

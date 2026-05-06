@@ -15,6 +15,17 @@ import (
 	"github.com/woozymasta/flags"
 )
 
+const advancedHelpHeader = "Advanced CLI example"
+
+const advancedHelpBanner = `
+██████ ▄▄ ▄▄  ▄▄▄  ▄▄   ▄▄ ▄▄▄▄  ▄▄    ▄▄▄▄▄   ▄████▄ █████▄ █████▄
+██▄▄   ▀█▄█▀ ██▀██ ██▀▄▀██ ██▄█▀ ██    ██▄▄    ██▄▄██ ██▄▄█▀ ██▄▄█▀
+██▄▄▄▄ ██ ██ ██▀██ ██   ██ ██    ██▄▄▄ ██▄▄▄   ██  ██ ██     ██
+
+`
+
+const advancedHelpFooter = "Project: https://github.com/woozymasta/flags"
+
 type DynamicToken string
 
 func (d *DynamicToken) Default() ([]string, error) {
@@ -113,6 +124,9 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 			flags.DetectShellEnvStyle,
 	)
 	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block"
+	p.SetHelpHeader(advancedHelpHeader)
+	p.SetBanner(advancedHelpBanner)
+	p.SetHelpFooter(advancedHelpFooter)
 	// EnvPrefix composes with env-namespace/auto-env tags, keeping all derived
 	// environment variables under one application prefix.
 	p.SetEnvPrefix("DEMO_APP")
@@ -196,6 +210,9 @@ func applyHelpColorMode(p *flags.Parser, mode string) error {
 			ArgumentName:         flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, Bold: true},
 			ArgumentDesc:         flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
 			GroupHeader:          flags.HelpTextStyle{UseFG: true, FG: flags.ColorRed, Bold: true, Underline: true},
+			HelpHeader:           flags.HelpTextStyle{UseFG: true, FG: flags.ColorGreen, Bold: true},
+			Banner:               flags.HelpTextStyle{UseFG: true, FG: flags.ColorBlue, Bold: true},
+			HelpFooter:           flags.HelpTextStyle{UseFG: true, FG: flags.ColorBrightBlack},
 		})
 	default:
 		return fmt.Errorf("unknown help color mode %q", mode)

@@ -69,7 +69,14 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			_, _ = wr.WriteString(basePrefix)
 		}
 	}
+
 	aligninfo := p.getAlignmentInfo()
+	rawBlockReset := p.writeHelpRawBlock(wr, p.helpHeader, p.helpColorScheme.HelpHeader, aligninfo.terminalColumns)
+	rawBlockReset = p.writeHelpRawBlock(wr, p.banner, p.helpColorScheme.Banner, aligninfo.terminalColumns) || rawBlockReset
+	if rawBlockReset && basePrefix != "" {
+		_, _ = wr.WriteString(basePrefix)
+	}
+
 	format := p.optionRenderFormat()
 	trimDescriptions := (p.Options & KeepDescriptionWhitespace) == None
 
@@ -350,7 +357,89 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		writeANSIReset(wr)
 	}
 
+	if p.helpFooter != "" {
+		_, _ = fmt.Fprintln(wr)
+	}
+	p.writeHelpRawBlock(wr, p.helpFooter, p.helpColorScheme.HelpFooter, aligninfo.terminalColumns)
+
 	_ = wr.Flush()
+}
+
+// WriteBanner writes the configured banner text to writer as a raw block.
+func (p *Parser) WriteBanner(writer io.Writer) {
+	if writer == nil || p.banner == "" {
+		return
+	}
+
+	prevHelpColorEnabled := p.helpColorEnabled
+	p.helpColorEnabled = (p.Options&ColorHelp) != None && DetectColorSupport(writer)
+	defer func() {
+		p.helpColorEnabled = prevHelpColorEnabled
+	}()
+	if p.helpColorEnabled {
+		writer = colorOutputWriter(writer)
+	}
+
+	wr := bufio.NewWriter(writer)
+	p.writeHelpRawBlock(wr, p.banner, p.helpColorScheme.Banner, p.helpColumns())
+	_ = wr.Flush()
+}
+
+func (p *Parser) writeHelpRawBlock(wr *bufio.Writer, text string, role HelpTextStyle, columns int) bool {
+	if text == "" {
+		return false
+	}
+
+	style, prefix := p.helpRawBlockStyle(role)
+	if prefix != "" {
+		p.writeColoredHelpRawBlock(wr, text, style, prefix, columns)
+		return true
+	}
+
+	_, _ = wr.WriteString(text)
+	if !strings.HasSuffix(text, "\n") {
+		_, _ = wr.WriteString("\n")
+	}
+
+	return false
+}
+
+func (p *Parser) writeColoredHelpRawBlock(wr *bufio.Writer, text string, style HelpTextStyle, prefix string, columns int) {
+	lines := strings.SplitAfter(text, "\n")
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		body := strings.TrimSuffix(line, "\n")
+		hasNewline := len(body) != len(line)
+
+		_, _ = wr.WriteString(prefix)
+		_, _ = wr.WriteString(body)
+		if style.UseBG && columns > 0 && columns != unlimitedHelpWidth {
+			if pad := columns - textWidth(body); pad > 0 {
+				_, _ = wr.WriteString(strings.Repeat(" ", pad))
+			}
+		}
+		writeANSIReset(wr)
+
+		if hasNewline {
+			_, _ = wr.WriteString("\n")
+		}
+	}
+
+	if !strings.HasSuffix(text, "\n") {
+		_, _ = wr.WriteString("\n")
+	}
+}
+
+func (p *Parser) helpRawBlockStyle(role HelpTextStyle) (HelpTextStyle, string) {
+	if (p.Options&ColorHelp) == None || !p.helpColorEnabled {
+		return HelpTextStyle{}, ""
+	}
+
+	style := mergeHelpStyle(p.helpColorScheme.BaseText, role)
+	return style, helpStylePrefix(style)
 }
 
 type alignmentInfo struct {

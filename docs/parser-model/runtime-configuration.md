@@ -178,6 +178,8 @@ Common examples:
 * `SetCommandOptionIndent` for command option indentation in help.
 * `SetHelpFlagRenderStyle` for flag token rendering.
 * `SetHelpEnvRenderStyle` for environment placeholder rendering.
+* `SetHelpHeader`, `SetBanner`, and `SetHelpFooter`
+  for raw text blocks around built-in help output.
 * `SetHelpColorScheme` and `SetErrorColorScheme` for ANSI color roles.
 * `SetI18n` and `SetI18nFallbackLocales` for localization.
 * version setters such as `SetVersionInfo`, `SetVersion`,

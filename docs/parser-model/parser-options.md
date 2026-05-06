@@ -139,6 +139,8 @@ Built-in help schemes are `DefaultHelpColorScheme`,
 `HighContrastHelpColorScheme`, and `GrayHelpColorScheme`.
 Built-in error schemes are `DefaultErrorColorScheme`,
 `HighContrastErrorColorScheme`, and `GrayErrorColorScheme`.
+`HelpColorScheme` also includes roles for raw help header,
+banner, and footer blocks.
 
 Custom schemes are built from `HelpTextStyle` and `ANSIColor`.
 

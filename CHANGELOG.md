@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+* `SetHelpHeader`, `SetBanner`, `SetHelpFooter`, and `WriteBanner`
+  for raw text blocks around built-in help output.
 * `secret:"true"` and `Option.SetSecret` redact sensitive option values in
   built-in help, docs, INI output, completion choices, and parser errors.
 * `WithDocWrapWidth` and built-in `docs md --wrap-width` for controlling

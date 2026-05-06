@@ -32,6 +32,28 @@ With `PrintErrors`, help is printed automatically when parsing returns
 Treat `ErrHelp` as successful control flow.
 Do not print the returned help error again when `PrintErrors` is enabled.
 
+## Help Raw Blocks
+
+`SetHelpHeader`, `SetBanner`, and `SetHelpFooter`
+add raw text blocks around built-in help output.
+
+```go
+parser.SetHelpHeader("internal CLI\n")
+parser.SetBanner("  ____\n /app/\n")
+parser.SetHelpFooter("For support, contact ops@example.com\n")
+```
+
+Help output renders them in this order:
+
+1. help header
+1. banner
+1. generated help
+1. help footer
+
+Raw blocks are not trimmed, wrapped, or reformatted.
+If a non-empty block does not end with a newline, help rendering adds one.
+`WriteBanner` writes only the configured banner to a caller-provided writer.
+
 ## Completion
 
 Completion scripts are generated from the same command tree,

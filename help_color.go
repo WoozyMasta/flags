@@ -64,6 +64,9 @@ type HelpTextStyle struct {
 // HelpColorScheme configures help color roles.
 type HelpColorScheme struct {
 	BaseText                HelpTextStyle
+	Banner                  HelpTextStyle
+	HelpHeader              HelpTextStyle
+	HelpFooter              HelpTextStyle
 	LongDescription         HelpTextStyle
 	VersionLabel            HelpTextStyle
 	VersionValue            HelpTextStyle
@@ -99,6 +102,9 @@ type ErrorColorScheme struct {
 func DefaultHelpColorScheme() HelpColorScheme {
 	return HelpColorScheme{
 		BaseText:                HelpTextStyle{},
+		Banner:                  HelpTextStyle{UseFG: true, FG: ColorBrightWhite, Bold: true},
+		HelpHeader:              HelpTextStyle{},
+		HelpFooter:              HelpTextStyle{},
 		LongDescription:         HelpTextStyle{},
 		VersionLabel:            HelpTextStyle{UseFG: true, FG: ColorBrightBlack},
 		VersionValue:            HelpTextStyle{},
@@ -129,6 +135,9 @@ func DefaultHelpColorScheme() HelpColorScheme {
 func HighContrastHelpColorScheme() HelpColorScheme {
 	return HelpColorScheme{
 		BaseText:                HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
+		Banner:                  HelpTextStyle{UseFG: true, FG: ColorBrightWhite, Bold: true},
+		HelpHeader:              HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
+		HelpFooter:              HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		LongDescription:         HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
 		VersionLabel:            HelpTextStyle{UseFG: true, FG: ColorBrightCyan, Bold: true},
 		VersionValue:            HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
@@ -162,6 +171,9 @@ func GrayHelpColorScheme() HelpColorScheme {
 	gray := HelpTextStyle{UseFG: true, FG: ColorBrightBlack}
 
 	scheme.LongDescription = gray
+	scheme.Banner = gray
+	scheme.HelpHeader = HelpTextStyle{}
+	scheme.HelpFooter = HelpTextStyle{}
 	scheme.OptionShort = gray
 	scheme.OptionLong = gray
 	scheme.OptionValueName = gray

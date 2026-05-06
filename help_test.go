@@ -1526,6 +1526,108 @@ func TestHelpDefaultMask(t *testing.T) {
 	}
 }
 
+func TestHelpRawHeaderBannerFooter(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"Value"`
+	}
+
+	p := NewNamedParser("raw-help", None)
+	p.SetHelpHeader("  HEADER\nline 2\n")
+	p.SetBanner("  /\\_/\\\\\n ( o.o )")
+	p.SetHelpFooter("  FOOTER  ")
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelp(&out)
+	got := out.String()
+
+	for _, want := range []string{
+		"  HEADER\nline 2\n",
+		"  /\\_/\\\\\n ( o.o )\n",
+		"  FOOTER  \n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected raw block %q in help output, got:\n%s", want, got)
+		}
+	}
+
+	headerIdx := strings.Index(got, "  HEADER")
+	bannerIdx := strings.Index(got, "  /\\_/\\\\")
+	usageIdx := strings.Index(got, "Usage:")
+	footerIdx := strings.Index(got, "  FOOTER")
+	if headerIdx < 0 || bannerIdx < 0 || usageIdx < 0 || footerIdx < 0 {
+		t.Fatalf("expected all help sections, got:\n%s", got)
+	}
+	if !(headerIdx < bannerIdx && bannerIdx < usageIdx && usageIdx < footerIdx) {
+		t.Fatalf("unexpected help raw block order, got:\n%s", got)
+	}
+	if !strings.Contains(got, "\n\n  FOOTER  \n") {
+		t.Fatalf("expected blank line before help footer, got:\n%s", got)
+	}
+}
+
+func TestWriteBannerWritesRawBanner(t *testing.T) {
+	p := NewNamedParser("banner", None)
+	p.SetBanner("  BANNER  ")
+
+	var out bytes.Buffer
+	p.WriteBanner(&out)
+
+	if got, want := out.String(), "  BANNER  \n"; got != want {
+		t.Fatalf("unexpected banner output: got %q, want %q", got, want)
+	}
+}
+
+func TestHelpRawBlockColorResets(t *testing.T) {
+	p := NewNamedParser("raw-color", ColorHelp)
+	p.helpColorEnabled = true
+	p.SetHelpColorScheme(HelpColorScheme{
+		BaseText:   HelpTextStyle{UseFG: true, FG: ColorBrightWhite},
+		HelpHeader: HelpTextStyle{UseFG: true, FG: ColorRed, Bold: true},
+	})
+
+	var out bytes.Buffer
+	wr := bufio.NewWriter(&out)
+	p.writeHelpRawBlock(wr, "HEADER", p.helpColorScheme.HelpHeader, 10)
+	if err := wr.Flush(); err != nil {
+		t.Fatalf("unexpected flush error: %v", err)
+	}
+
+	got := out.String()
+	want := helpStylePrefix(mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.HelpHeader)) + "HEADER" + ansiReset + "\n"
+	if got != want {
+		t.Fatalf("unexpected raw block color output: got %q, want %q", got, want)
+	}
+
+	if strings.HasSuffix(got, helpStylePrefix(p.helpColorScheme.BaseText)) {
+		t.Fatalf("expected raw block to reset without restoring base color, got %q", got)
+	}
+}
+
+func TestHelpRawBlockPadsBackgroundAndResetsBeforeNewline(t *testing.T) {
+	p := NewNamedParser("raw-bg", ColorHelp)
+	p.helpColorEnabled = true
+	p.SetHelpColorScheme(HelpColorScheme{
+		BaseText: HelpTextStyle{UseFG: true, FG: ColorBrightBlack, UseBG: true, BG: ColorBrightWhite},
+		Banner:   HelpTextStyle{UseFG: true, FG: ColorBlue, Bold: true},
+	})
+
+	var out bytes.Buffer
+	wr := bufio.NewWriter(&out)
+	p.writeHelpRawBlock(wr, "AB\nC", p.helpColorScheme.Banner, 4)
+	if err := wr.Flush(); err != nil {
+		t.Fatalf("unexpected flush error: %v", err)
+	}
+
+	prefix := helpStylePrefix(mergeHelpStyle(p.helpColorScheme.BaseText, p.helpColorScheme.Banner))
+	want := prefix + "AB  " + ansiReset + "\n" + prefix + "C   " + ansiReset + "\n"
+	if got := out.String(); got != want {
+		t.Fatalf("unexpected padded raw block output: got %q, want %q", got, want)
+	}
+}
+
 func TestHelpPositionalDefault(t *testing.T) {
 	var opts struct {
 		Args struct {

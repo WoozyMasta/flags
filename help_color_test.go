@@ -12,6 +12,7 @@ func TestGrayHelpColorScheme(t *testing.T) {
 
 	for _, role := range []HelpTextStyle{
 		s.LongDescription,
+		s.Banner,
 		s.OptionShort,
 		s.OptionLong,
 		s.OptionValueName,
@@ -35,6 +36,8 @@ func TestGrayHelpColorScheme(t *testing.T) {
 		want HelpTextStyle
 	}{
 		{name: "BaseText", got: s.BaseText, want: base.BaseText},
+		{name: "HelpHeader", got: s.HelpHeader, want: HelpTextStyle{}},
+		{name: "HelpFooter", got: s.HelpFooter, want: HelpTextStyle{}},
 		{name: "SubcommandOptionsHeader", got: s.SubcommandOptionsHeader, want: HelpTextStyle{}},
 		{name: "OptionDesc", got: s.OptionDesc, want: base.OptionDesc},
 		{name: "UsageHeader", got: s.UsageHeader, want: HelpTextStyle{}},

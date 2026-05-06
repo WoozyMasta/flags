@@ -74,6 +74,11 @@ type Parser struct {
 	// Optional i18n key for builtinCommandGroup.
 	builtinCommandGroupI18nKey string
 
+	// Raw text blocks rendered around built-in help output.
+	helpHeader string
+	banner     string
+	helpFooter string
+
 	// Cached version metadata (auto-detected and/or overridden).
 	versionInfo VersionInfo
 
@@ -489,6 +494,23 @@ func (p *Parser) SetFlagTags(tags FlagTags) error {
 // "MY_APP_PORT", and grouped keys become "MY_APP_<GROUP>_<KEY>".
 func (p *Parser) SetEnvPrefix(prefix string) {
 	p.EnvPrefix = prefix
+}
+
+// SetBanner configures raw banner text rendered after the help header and
+// before normal built-in help output.
+func (p *Parser) SetBanner(text string) {
+	p.banner = text
+}
+
+// SetHelpHeader configures raw text rendered before the banner and normal
+// built-in help output.
+func (p *Parser) SetHelpHeader(text string) {
+	p.helpHeader = text
+}
+
+// SetHelpFooter configures raw text rendered after normal built-in help output.
+func (p *Parser) SetHelpFooter(text string) {
+	p.helpFooter = text
 }
 
 // SetHelpColorScheme configures color roles used by built-in help rendering.
