@@ -55,10 +55,6 @@ func (l ServiceLabel) MarshalText() ([]byte, error) {
 }
 
 type AdvancedOptions struct {
-	// A positional-args struct keeps required positional values close to the
-	// option model while still giving them their own help metadata.
-	Positional AdvancedPositionalArgs `positional-args:"yes" required:"yes"`
-
 	Alpha            string                 `long:"alpha" description:"Example string flag for sort demo" default:"a"`
 	Profile          string                 `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
 	Region           string                 `long:"region" description:"Cloud region" env:"APP_REGION" default:"eu-west-1"`
@@ -71,19 +67,14 @@ type AdvancedOptions struct {
 	SecretKey        string                 `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
 	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;gray;light" default:"none" description:"Color scheme for built-in help output"`
 	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
+	Deploy           AdvancedDeployCommand  `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
 	Verbose          []bool                 `short:"V" long:"verbose" description:"Increase verbosity level" order:"100"`
 	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
 	Exec             []string               `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
 	Network          AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
 	Count            int                    `long:"count" description:"Example number flag for sort demo" default:"7"`
 	Delay            time.Duration          `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
-	Deploy           AdvancedDeployCommand  `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact" pass-after-non-option:"yes"`
 	Zeta             bool                   `long:"zeta" description:"Example bool flag for sort demo"`
-}
-
-type AdvancedPositionalArgs struct {
-	Target   string `positional-arg-name:"target" description:"Target service name or host"`
-	Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
 }
 
 type AdvancedNetworkOptions struct {
@@ -105,8 +96,17 @@ type AdvancedDemoOptions struct {
 }
 
 type AdvancedDeployCommand struct {
+	// A command-local positional-args struct keeps deploy operands close to
+	// the command that consumes them.
+	Positional AdvancedDeployPositionalArgs `positional-args:"yes" required:"yes"`
+
 	Force bool `long:"force" description:"Force deployment"`
 	Plan  bool `long:"plan" description:"Show execution plan only"`
+}
+
+type AdvancedDeployPositionalArgs struct {
+	Target   string `positional-arg-name:"target" description:"Target service name or host"`
+	Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {
