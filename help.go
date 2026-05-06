@@ -605,11 +605,12 @@ func optionIsRepeatable(option *Option) bool {
 }
 
 func renderChoiceToken(option *Option) string {
-	if len(option.Choices) == 0 {
+	choices := option.displayChoices()
+	if len(choices) == 0 {
 		return ""
 	}
 
-	return renderChoiceInline(option.Choices)
+	return renderChoiceInline(choices)
 }
 
 type optionTailLine struct {
@@ -857,7 +858,7 @@ func splitAdaptiveLeftBody(
 	tailWidth := max(leftWidth-2, minHelpLeftWidth)
 	for _, line := range splitOptionTailLines(
 		valueName,
-		option.Choices,
+		option.displayChoices(),
 		tailWidth,
 		forceChoiceList,
 		autoChoiceList,
@@ -1084,9 +1085,9 @@ func (p *Parser) buildHelpOptionDescription(
 	}
 
 	def := ""
-	if len(option.DefaultMask) != 0 {
-		if option.DefaultMask != "-" {
-			def = option.DefaultMask
+	if mask := option.displayDefaultMask(); len(mask) != 0 {
+		if mask != "-" {
+			def = mask
 		}
 	} else {
 		if !option.defaultLiteralInitialized {
@@ -1240,7 +1241,7 @@ func (p *Parser) writeHelpOption(
 	}
 
 	forceChoiceListSplit := (p.Options&ShowChoiceListInHelp) != None &&
-		len(option.Choices) > 0 &&
+		len(option.displayChoices()) > 0 &&
 		option.canArgument()
 	p.writeLaidOutHelpOption(writer, option, info, trimDescriptions, format, forceChoiceListSplit)
 }

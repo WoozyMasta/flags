@@ -336,6 +336,7 @@ func writeOptionValue(
 
 		for idx := 0; idx < val.Len(); idx++ {
 			v, _ := convertToString(val.Index(idx), option.tag)
+			v = option.redactValue(v)
 			writeOption(writer, optionName, elemKind, "", v, commentOption, option.iniQuote)
 		}
 
@@ -364,11 +365,13 @@ func writeOptionValue(
 
 		for _, k := range keys {
 			v, _ := convertToString(val.MapIndex(kkmap[k]), option.tag)
+			v = option.redactValue(v)
 			writeOption(writer, optionName, elemKind, k, v, commentOption, option.iniQuote)
 		}
 
 	default:
 		v, _ := convertToString(val, option.tag)
+		v = option.redactValue(v)
 		writeOption(writer, optionName, kind, "", v, commentOption, option.iniQuote)
 	}
 }
@@ -425,7 +428,7 @@ func buildIniExampleComment(option *Option) string {
 			choicesLabel = parser.i18nText("ini.example.choices", choicesLabel)
 		}
 
-		lines = append(lines, fmt.Sprintf("%s: %s.", choicesLabel, strings.Join(option.Choices, ", ")))
+		lines = append(lines, fmt.Sprintf("%s: %s.", choicesLabel, strings.Join(option.displayChoices(), ", ")))
 	}
 
 	details := make([]string, 0, 2)

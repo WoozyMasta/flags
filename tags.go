@@ -49,6 +49,8 @@ const (
 	FlagTagDefaults = "defaults"
 	// FlagTagDefaultMask customizes how default is shown in generated help.
 	FlagTagDefaultMask = "default-mask"
+	// FlagTagSecret marks option values as sensitive in rendered output.
+	FlagTagSecret = "secret"
 	// FlagTagEnv maps option default to an environment variable key.
 	FlagTagEnv = "env"
 	// FlagTagAutoEnv enables deriving env key from long flag name.
@@ -194,6 +196,8 @@ type FlagTags struct {
 	Defaults string
 	// DefaultMask maps to help default-mask tag (default: "default-mask").
 	DefaultMask string
+	// Secret maps to sensitive value policy tag (default: "secret").
+	Secret string
 	// Env maps to environment variable key tag (default: "env").
 	Env string
 	// AutoEnv maps to env auto-derivation toggle tag (default: "auto-env").
@@ -319,6 +323,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Default:              prefix + FlagTagDefault,
 		Defaults:             prefix + FlagTagDefaults,
 		DefaultMask:          prefix + FlagTagDefaultMask,
+		Secret:               prefix + FlagTagSecret,
 		Env:                  prefix + FlagTagEnv,
 		AutoEnv:              prefix + FlagTagAutoEnv,
 		EnvDelim:             prefix + FlagTagEnvDelim,
@@ -434,6 +439,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.DefaultMask != "" {
 		d.DefaultMask = t.DefaultMask
+	}
+	if t.Secret != "" {
+		d.Secret = t.Secret
 	}
 	if t.Env != "" {
 		d.Env = t.Env

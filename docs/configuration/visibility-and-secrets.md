@@ -40,6 +40,26 @@ Use `default-mask:"-"` when the default should not be rendered at all.
 Masking affects display.
 It does not remove the actual value from memory or from application logs.
 
+## Secret Values
+
+`secret:"true"` marks an option value as sensitive.
+
+```go
+type Options struct {
+  Token string `long:"token" env:"APP_TOKEN" secret:"true"`
+}
+```
+
+Secret options keep their real values in the target struct,
+but built-in rendering replaces displayed values with `***`.
+This applies to defaults, optional fallback values, choices,
+INI output, generated docs, completion choices,
+and parser errors that would otherwise echo an input value.
+
+The option name and environment variable name remain visible.
+Use `HideEnvInHelp` or custom templates when those names
+should not appear in public output.
+
 ## Environment Placeholders
 
 `HideEnvInHelp` suppresses environment variable placeholders in built-in help.
@@ -95,4 +115,5 @@ Avoid command-line secret flags when possible,
 because shell history and process listings can expose them.
 
 If a secret must be a CLI option, mask defaults,
-hide env placeholders if needed, and be careful with logs and error messages.
+mark the option with `secret:"true"`, hide env placeholders if needed,
+and be careful with application logs.

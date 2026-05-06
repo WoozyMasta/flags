@@ -282,7 +282,7 @@ func (p *parseState) checkCommandValueValidators(parser *Parser, command *Comman
 			if shouldSkipOptionValidation(option) {
 				continue
 			}
-			err = validateReflectValue(parser, option.validation, option.value, option.String())
+			err = validateReflectValue(parser, option.validation, option.value, option.String(), option.Secret)
 			if err != nil {
 				return
 			}
@@ -296,7 +296,7 @@ func (p *parseState) checkCommandValueValidators(parser *Parser, command *Comman
 		if arg.isEmpty() {
 			continue
 		}
-		if err := validateReflectValue(parser, arg.validation, arg.value, arg.localizedName()); err != nil {
+		if err := validateReflectValue(parser, arg.validation, arg.value, arg.localizedName(), false); err != nil {
 			return err
 		}
 	}
@@ -322,6 +322,7 @@ func validateReflectValue(
 	cfg valueValidationConfig,
 	value reflect.Value,
 	name string,
+	redact bool,
 ) error {
 	if !cfg.hasRules() {
 		return nil
@@ -329,14 +330,14 @@ func validateReflectValue(
 
 	if value.Kind() == reflect.Slice {
 		for i := 0; i < value.Len(); i++ {
-			if err := validateSingleValue(parser, cfg, value.Index(i), name); err != nil {
+			if err := validateSingleValue(parser, cfg, value.Index(i), name, redact); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
 
-	return validateSingleValue(parser, cfg, value, name)
+	return validateSingleValue(parser, cfg, value, name, redact)
 }
 
 func (cfg valueValidationConfig) hasRules() bool {
@@ -350,69 +351,71 @@ func validateSingleValue(
 	cfg valueValidationConfig,
 	value reflect.Value,
 	name string,
+	redact bool,
 ) error {
 	switch value.Kind() {
 	case reflect.String:
-		return validateStringValue(parser, cfg, name, value.String())
+		return validateStringValue(parser, cfg, name, value.String(), redact)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return validateSignedValue(parser, cfg, name, value.Int())
+		return validateSignedValue(parser, cfg, name, value.Int(), redact)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return validateUnsignedValue(parser, cfg, name, value.Uint())
+		return validateUnsignedValue(parser, cfg, name, value.Uint(), redact)
 	case reflect.Float32, reflect.Float64:
-		return validateFloatValue(parser, cfg, name, value.Float())
+		return validateFloatValue(parser, cfg, name, value.Float(), redact)
 	default:
 		return nil
 	}
 }
 
-func validateStringValue(parser *Parser, cfg valueValidationConfig, name string, value string) error {
+func validateStringValue(parser *Parser, cfg valueValidationConfig, name string, value string, redact bool) error {
+	displayValue := validationDisplayValue(value, redact)
 	if cfg.nonEmpty && strings.TrimSpace(value) == "" {
 		return validationError(parser, "err.validation.non_empty",
-			"value `{value}` for `{name}` must not be empty", name, value)
+			"value `{value}` for `{name}` must not be empty", name, displayValue)
 	}
 	if cfg.regex != nil && !regexpMatchesFullValue(cfg.regex, value) {
 		return validationErrorWithVars(parser, "err.validation.regex",
 			"value `{value}` for `{name}` does not match pattern `{pattern}`",
 			map[string]string{
 				"name":    name,
-				"value":   value,
+				"value":   displayValue,
 				"pattern": cfg.pattern,
 			})
 	}
 	if cfg.minLen != nil && utf8.RuneCountInString(value) < *cfg.minLen {
 		return validationError(parser, "err.validation.min_len",
-			"value `{value}` for `{name}` is shorter than required length", name, value)
+			"value `{value}` for `{name}` is shorter than required length", name, displayValue)
 	}
 	if cfg.maxLen != nil && utf8.RuneCountInString(value) > *cfg.maxLen {
 		return validationError(parser, "err.validation.max_len",
-			"value `{value}` for `{name}` is longer than allowed length", name, value)
+			"value `{value}` for `{name}` is longer than allowed length", name, displayValue)
 	}
 	if cfg.pathAbs && !filepath.IsAbs(value) {
 		return validationError(parser, "err.validation.path_abs",
-			"path `{value}` for `{name}` must be absolute", name, value)
+			"path `{value}` for `{name}` must be absolute", name, displayValue)
 	}
 	if cfg.existingFile {
 		if err := validateExistingFile(value); err != nil {
 			return validationError(parser, "err.validation.existing_file",
-				"path `{value}` for `{name}` must be an existing file", name, value)
+				"path `{value}` for `{name}` must be an existing file", name, displayValue)
 		}
 	}
 	if cfg.existingDir {
 		if err := validateExistingDir(value); err != nil {
 			return validationError(parser, "err.validation.existing_dir",
-				"path `{value}` for `{name}` must be an existing directory", name, value)
+				"path `{value}` for `{name}` must be an existing directory", name, displayValue)
 		}
 	}
 	if cfg.readable {
 		if err := validateReadable(value); err != nil {
 			return validationError(parser, "err.validation.readable",
-				"path `{value}` for `{name}` must be readable", name, value)
+				"path `{value}` for `{name}` must be readable", name, displayValue)
 		}
 	}
 	if cfg.writable {
 		if err := validateWritable(value); err != nil {
 			return validationError(parser, "err.validation.writable",
-				"path `{value}` for `{name}` must be writable", name, value)
+				"path `{value}` for `{name}` must be writable", name, displayValue)
 		}
 	}
 
@@ -499,47 +502,58 @@ func validateDirWritable(dir string) error {
 	return removeErr
 }
 
-func validateSignedValue(parser *Parser, cfg valueValidationConfig, name string, value int64) error {
+func validateSignedValue(parser *Parser, cfg valueValidationConfig, name string, value int64, redact bool) error {
+	displayValue := validationDisplayValue(strconv.FormatInt(value, 10), redact)
 	if cfg.min != nil && value < cfg.min.signed {
 		return validationError(parser, "err.validation.min",
-			"value `{value}` for `{name}` is lower than allowed minimum", name, strconv.FormatInt(value, 10))
+			"value `{value}` for `{name}` is lower than allowed minimum", name, displayValue)
 	}
 	if cfg.max != nil && value > cfg.max.signed {
 		return validationError(parser, "err.validation.max",
-			"value `{value}` for `{name}` is greater than allowed maximum", name, strconv.FormatInt(value, 10))
+			"value `{value}` for `{name}` is greater than allowed maximum", name, displayValue)
 	}
 
 	return nil
 }
 
-func validateUnsignedValue(parser *Parser, cfg valueValidationConfig, name string, value uint64) error {
+func validateUnsignedValue(parser *Parser, cfg valueValidationConfig, name string, value uint64, redact bool) error {
+	displayValue := validationDisplayValue(strconv.FormatUint(value, 10), redact)
 	if cfg.min != nil && value < cfg.min.unsigned {
 		return validationError(parser, "err.validation.min",
-			"value `{value}` for `{name}` is lower than allowed minimum", name, strconv.FormatUint(value, 10))
+			"value `{value}` for `{name}` is lower than allowed minimum", name, displayValue)
 	}
 	if cfg.max != nil && value > cfg.max.unsigned {
 		return validationError(parser, "err.validation.max",
-			"value `{value}` for `{name}` is greater than allowed maximum", name, strconv.FormatUint(value, 10))
+			"value `{value}` for `{name}` is greater than allowed maximum", name, displayValue)
 	}
 
 	return nil
 }
 
-func validateFloatValue(parser *Parser, cfg valueValidationConfig, name string, value float64) error {
+func validateFloatValue(parser *Parser, cfg valueValidationConfig, name string, value float64, redact bool) error {
+	displayValue := validationDisplayValue(strconv.FormatFloat(value, 'g', -1, 64), redact)
 	if math.IsNaN(value) {
 		return validationError(parser, "err.validation.number",
-			"value `{value}` for `{name}` must be a valid number", name, strconv.FormatFloat(value, 'g', -1, 64))
+			"value `{value}` for `{name}` must be a valid number", name, displayValue)
 	}
 	if cfg.min != nil && value < cfg.min.floating {
 		return validationError(parser, "err.validation.min",
-			"value `{value}` for `{name}` is lower than allowed minimum", name, strconv.FormatFloat(value, 'g', -1, 64))
+			"value `{value}` for `{name}` is lower than allowed minimum", name, displayValue)
 	}
 	if cfg.max != nil && value > cfg.max.floating {
 		return validationError(parser, "err.validation.max",
-			"value `{value}` for `{name}` is greater than allowed maximum", name, strconv.FormatFloat(value, 'g', -1, 64))
+			"value `{value}` for `{name}` is greater than allowed maximum", name, displayValue)
 	}
 
 	return nil
+}
+
+func validationDisplayValue(value string, redact bool) string {
+	if redact && value != "" {
+		return secretValueMask
+	}
+
+	return value
 }
 
 func validationError(

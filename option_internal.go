@@ -410,6 +410,18 @@ func (option *Option) call(value *string) error {
 }
 
 func (option *Option) updateDefaultLiteral() {
+	if option.Secret {
+		switch {
+		case len(option.Default) > 0:
+			option.defaultLiteral = secretValueMask
+		case option.canArgument() && !option.isEmpty():
+			option.defaultLiteral = secretValueMask
+		default:
+			option.defaultLiteral = ""
+		}
+		return
+	}
+
 	defs := option.Default
 	def := ""
 
@@ -494,12 +506,14 @@ func (option *Option) validateChoice(value string) error {
 		return nil
 	}
 
-	allowed := option.Choices[0]
+	displayedValue := option.redactValue(value)
+	choices := option.displayChoices()
+	allowed := choices[0]
 	p := option.parser()
 
-	if len(option.Choices) > 1 {
-		items := strings.Join(option.Choices[0:len(option.Choices)-1], ", ")
-		last := option.Choices[len(option.Choices)-1]
+	if len(choices) > 1 {
+		items := strings.Join(choices[0:len(choices)-1], ", ")
+		last := choices[len(choices)-1]
 		if p != nil {
 			allowed = p.i18nTextf(
 				"err.list.disjunction",
@@ -521,7 +535,7 @@ func (option *Option) validateChoice(value string) error {
 				"err.invalid_choice",
 				"Invalid value `{value}` for option `{option}`. Allowed values are: {allowed}",
 				map[string]string{
-					"value":   value,
+					"value":   displayedValue,
 					"option":  option.String(),
 					"allowed": allowed,
 				},
@@ -532,6 +546,6 @@ func (option *Option) validateChoice(value string) error {
 	return newErrorf(
 		ErrInvalidChoice,
 		"Invalid value `%s` for option `%s`. Allowed values are: %s",
-		value, option, allowed,
+		displayedValue, option, allowed,
 	)
 }

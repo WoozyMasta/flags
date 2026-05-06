@@ -402,7 +402,7 @@ func (c *completion) completeValue(opt *Option, arg *Arg, value reflect.Value, p
 		}
 	}
 
-	if ret == nil && opt != nil && len(opt.Choices) > 0 {
+	if ret == nil && opt != nil && len(opt.Choices) > 0 && !opt.Secret {
 		return completeChoices(opt.Choices, prefix, match)
 	}
 	if ret == nil {

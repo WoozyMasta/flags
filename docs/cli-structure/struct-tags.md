@@ -118,8 +118,14 @@ Do not mix `default` and `defaults` on the same field unless the intended
 combined order is obvious to readers.
 
 `default-mask` changes how the default is displayed in help and docs.
-Use it for secrets and tokens.
+Use it when the display text should differ from the actual default.
 A mask of `-` hides the default display completely.
+
+`secret:"true"` marks option values as sensitive.
+The parser keeps the real value in the target struct,
+but built-in help, docs, INI output, completion choices,
+and parser errors render sensitive values as `***`.
+Names such as the flag, env key, and INI key remain visible.
 
 `env` declares an environment variable used as a fallback source.
 The environment value is applied before required validation.

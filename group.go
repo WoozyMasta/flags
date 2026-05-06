@@ -589,6 +589,10 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		valueName := mtag.Get(FlagTagValueName)
 		valueNameI18n := mtag.Get(FlagTagValueNameI18n)
 		defaultMask := mtag.Get(FlagTagDefaultMask)
+		secret, _, err := parseStructBoolTag(mtag, FlagTagSecret, field.Name)
+		if err != nil {
+			return err
+		}
 		order := 0
 		if rawOrder := mtag.Get(FlagTagOrder); rawOrder != "" {
 			parsedOrder, convErr := strconv.Atoi(rawOrder)
@@ -713,6 +717,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			ValueName:          valueName,
 			ValueNameI18nKey:   valueNameI18n,
 			DefaultMask:        defaultMask,
+			Secret:             secret,
 			Choices:            choices,
 			XorGroups:          xorGroups,
 			AndGroups:          andGroups,

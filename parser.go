@@ -1027,6 +1027,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.Default, FlagTagDefault)
 	normalizeTagAlias(c, p.flagTags.Defaults, FlagTagDefaults)
 	normalizeTagAlias(c, p.flagTags.DefaultMask, FlagTagDefaultMask)
+	normalizeTagAlias(c, p.flagTags.Secret, FlagTagSecret)
 	normalizeTagAlias(c, p.flagTags.Env, FlagTagEnv)
 	normalizeTagAlias(c, p.flagTags.AutoEnv, FlagTagAutoEnv)
 	normalizeTagAlias(c, p.flagTags.EnvDelim, FlagTagEnvDelim)

@@ -133,8 +133,9 @@ err := parser.WriteDoc(
 ```
 
 Hidden metadata is not a security boundary.
-Use it to keep public help readable,
-not to protect secrets.
+Use it to keep public help readable, not to protect secrets.  
+Use `secret:"true"` for options whose values must be redacted in built-in
+output.
 
 [Completion]: completion.md
 [Documentation Templates]: doc-templates.md

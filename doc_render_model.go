@@ -89,6 +89,7 @@ type docOption struct {
 	NoFlag        bool
 	Optional      bool
 	Required      bool
+	Secret        bool
 }
 
 func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
@@ -223,21 +224,22 @@ func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions boo
 		Required:      opt.Required,
 		Description:   docDescriptionText(opt.localizedDescription(), trimDescriptions),
 		TypeClass:     optionTypeClass(opt),
-		Choices:       append([]string(nil), opt.Choices...),
-		DefaultRaw:    append([]string(nil), opt.Default...),
+		Choices:       opt.displayChoices(),
+		DefaultRaw:    opt.displayValues(opt.Default),
 		EnvDelim:      opt.EnvDefaultDelim,
 		IniName:       opt.tag.Get(FlagTagIniName),
-		DefaultMask:   opt.DefaultMask,
+		DefaultMask:   opt.displayDefaultMask(),
 		KeyValueDelim: opt.tag.Get(FlagTagKeyValueDelimiter),
 		Terminator:    opt.Terminator,
 		Base:          opt.tag.Get(FlagTagBase),
 		AutoEnvTag:    opt.tag.Get(FlagTagAutoEnv),
 		UnquoteTag:    opt.tag.Get(FlagTagUnquote),
-		Tags:          copyDocTags(opt.tag.cached()),
+		Tags:          copyDocOptionTags(opt),
 		Order:         opt.Order,
 		Hidden:        opt.Hidden,
 		NoIni:         parseDocBoolTag(opt.tag.Get(FlagTagNoIni)),
 		NoFlag:        parseDocBoolTag(opt.tag.Get(FlagTagNoFlag)),
+		Secret:        opt.Secret,
 	}
 
 	if opt.ShortName != 0 {
@@ -245,7 +247,7 @@ func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions boo
 	}
 
 	if len(opt.OptionalValue) > 0 {
-		doc.OptionalVal = strings.Join(opt.OptionalValue, ", ")
+		doc.OptionalVal = opt.displayValueList(opt.OptionalValue)
 	}
 
 	if env := opt.EnvKeyWithNamespace(); env != "" {
@@ -254,7 +256,7 @@ func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions boo
 	}
 
 	if len(opt.Default) > 0 {
-		doc.Default = strings.Join(opt.Default, ", ")
+		doc.Default = opt.displayValueList(opt.Default)
 	}
 
 	doc.Signature = optionSignature(opt, format)
@@ -329,6 +331,28 @@ func copyDocTags(in map[string][]string) map[string][]string {
 	return out
 }
 
+func copyDocOptionTags(opt *Option) map[string][]string {
+	tags := copyDocTags(opt.tag.cached())
+	if !opt.Secret || len(tags) == 0 {
+		return tags
+	}
+
+	for _, key := range []string{
+		FlagTagDefault,
+		FlagTagDefaults,
+		FlagTagDefaultMask,
+		FlagTagOptionalValue,
+		FlagTagChoice,
+		FlagTagChoices,
+	} {
+		if len(tags[key]) > 0 {
+			tags[key] = []string{secretValueMask}
+		}
+	}
+
+	return tags
+}
+
 func docCommands(c *Command, includeHidden bool) []*Command {
 	if includeHidden {
 		ret := make([]*Command, len(c.commands))
@@ -368,7 +392,11 @@ func optionSignature(opt *Option, format optionRenderFormat) string {
 	valueName := opt.localizedValueName()
 	if len(valueName) != 0 || opt.OptionalArgument {
 		if opt.OptionalArgument {
-			fmt.Fprintf(&b, " [%s=%s]", valueName, strings.Join(quoteV(opt.OptionalValue), ", "))
+			optionalText := strings.Join(quoteV(opt.OptionalValue), ", ")
+			if opt.Secret {
+				optionalText = secretValueMask
+			}
+			fmt.Fprintf(&b, " [%s=%s]", valueName, optionalText)
 		} else {
 			fmt.Fprintf(&b, " %s", valueName)
 		}

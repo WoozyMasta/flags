@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Added
 
+* `secret:"true"` and `Option.SetSecret` redact sensitive option values in
+  built-in help, docs, INI output, completion choices, and parser errors.
 * `WithDocWrapWidth` and built-in `docs md --wrap-width` for controlling
   markdown documentation wrapping width.
 * Built-in documentation templates now include generated-output comments;

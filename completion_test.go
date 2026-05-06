@@ -502,6 +502,18 @@ func TestCompletionHintChoicesOverrideNone(t *testing.T) {
 	}
 }
 
+func TestCompletionSkipsSecretChoices(t *testing.T) {
+	var opts struct {
+		Token string `long:"token" choices:"secret-a;secret-b" secret:"true"`
+	}
+	p := NewParser(&opts, None)
+	items := completionItemsForArgs(t, p, []string{"--token=secret"})
+
+	if len(items) != 0 {
+		t.Fatalf("expected no secret completion items, got %#v", items)
+	}
+}
+
 func TestCompletionHintPositionalDir(t *testing.T) {
 	tempDir := t.TempDir()
 	dir := filepath.Join(tempDir, "target-dir")

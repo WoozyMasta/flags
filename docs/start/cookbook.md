@@ -47,12 +47,12 @@ Use this when deployment-specific values should come from environment.
 
 ```go
 type Options struct {
-  Token string `long:"token" env:"APP_TOKEN" required:"true" default-mask:"***"`
+  Token string `long:"token" env:"APP_TOKEN" required:"true" secret:"true"`
 }
 ```
 
 The user can pass `--token`, or the process can provide `APP_TOKEN`.
-The displayed default is masked.
+Rendered help, docs, INI output, and parser errors show secret values as `***`.
 
 Use this for secrets and deployment configuration.
 Avoid logging the parsed value.

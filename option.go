@@ -9,8 +9,11 @@ import (
 	"math"
 	"reflect"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 )
+
+const secretValueMask = "***"
 
 const (
 	optionInterfaceUnknown int8 = iota
@@ -61,6 +64,10 @@ type Option struct {
 	// is useful for hiding sensitive information in the help, such as
 	// passwords.
 	DefaultMask string
+
+	// If true, values for this option are redacted in rendered output and
+	// parser errors.
+	Secret bool
 
 	// Cached default literal shown in help/man output.
 	defaultLiteral string
@@ -345,6 +352,20 @@ func (option *Option) SetDefaultMask(mask string) {
 	option.DefaultMask = mask
 }
 
+// SetSecret controls whether option values are redacted in rendered output and
+// parser errors.
+func (option *Option) SetSecret(secret bool) {
+	option.Secret = secret
+	option.tag.Set(FlagTagSecret, strconv.FormatBool(secret))
+	option.defaultLiteralInitialized = false
+}
+
+// IsSecret reports whether option values are redacted in rendered output and
+// parser errors.
+func (option *Option) IsSecret() bool {
+	return option.Secret
+}
+
 // SetValueNameI18nKey sets i18n key used to localize option value placeholder.
 func (option *Option) SetValueNameI18nKey(key string) {
 	option.ValueNameI18nKey = key
@@ -583,6 +604,41 @@ func (option *Option) String() string {
 // Value returns the option value as an interface{}.
 func (option *Option) Value() any {
 	return option.value.Interface()
+}
+
+func (option *Option) redactValue(value string) string {
+	if option.Secret && value != "" {
+		return secretValueMask
+	}
+
+	return value
+}
+
+func (option *Option) displayValues(values []string) []string {
+	if !option.Secret {
+		return append([]string(nil), values...)
+	}
+	if len(values) == 0 {
+		return nil
+	}
+
+	return []string{secretValueMask}
+}
+
+func (option *Option) displayValueList(values []string) string {
+	return strings.Join(option.displayValues(values), ", ")
+}
+
+func (option *Option) displayDefaultMask() string {
+	if option.Secret && option.DefaultMask != "" {
+		return secretValueMask
+	}
+
+	return option.DefaultMask
+}
+
+func (option *Option) displayChoices() []string {
+	return option.displayValues(option.Choices)
 }
 
 // Field returns the reflect struct field of the option.

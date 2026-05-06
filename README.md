@@ -129,7 +129,7 @@ Small tools often use tag defaults and environment variables:
 ```go
 type Options struct {
   Port  int    `long:"port" default:"8080" env:"APP_PORT"`
-  Token string `long:"token" env:"APP_TOKEN" required:"true" default-mask:"***"`
+  Token string `long:"token" env:"APP_TOKEN" required:"true" secret:"true"`
 }
 ```
 

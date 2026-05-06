@@ -628,7 +628,7 @@ func (p *Parser) collectTerminatedArgs(s *parseState, option *Option) ([]string,
 		if option.tag.Get(FlagTagUnquote) != "false" {
 			unquoted, err := unquoteIfPossible(arg)
 			if err != nil {
-				return nil, err
+				return nil, p.marshalError(option, err)
 			}
 			arg = unquoted
 		}
@@ -650,6 +650,11 @@ func (p *Parser) marshalError(option *Option, err error) *Error {
 		)
 	}
 
+	errorText := err.Error()
+	if option.Secret {
+		errorText = secretValueMask
+	}
+
 	return newError(
 		ErrMarshal,
 		p.i18nTextf(
@@ -658,7 +663,7 @@ func (p *Parser) marshalError(option *Option, err error) *Error {
 			map[string]string{
 				"flag":     option.String(),
 				"expected": expected,
-				"error":    err.Error(),
+				"error":    errorText,
 			},
 		),
 	)
