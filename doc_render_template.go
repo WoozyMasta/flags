@@ -21,6 +21,8 @@ type docTemplateContext struct {
 	ShowTOC    bool
 }
 
+const defaultDocMarkdownWrapWidth = 80
+
 func (p *Parser) writeDocMarkdown(w io.Writer, cfg docRenderOptions) error {
 	templateText := cfg.templateText
 	if templateText == "" {
@@ -88,7 +90,7 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 		format = p.optionRenderFormatForStyles(cfg.renderStyle, cfg.renderStyle)
 	}
 
-	tpl, err := template.New("doc").Funcs(docTemplateFuncs(p, cfg.markHidden, format)).Parse(templateText)
+	tpl, err := template.New("doc").Funcs(docTemplateFuncs(p, cfg, format)).Parse(templateText)
 	if err != nil {
 		return err
 	}
@@ -103,7 +105,31 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 	return tpl.Execute(w, ctx)
 }
 
-func docTemplateFuncs(parser *Parser, markHidden bool, format optionRenderFormat) template.FuncMap {
+func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderFormat) template.FuncMap {
+	markHidden := cfg.markHidden
+	markdownWidth := defaultDocMarkdownWrapWidth
+	if cfg.hasWrapWidth {
+		markdownWidth = cfg.wrapWidth
+	}
+	indent := func(s string, spaces int) string {
+		if s == "" {
+			return ""
+		}
+		pad := strings.Repeat(" ", spaces)
+		lines := strings.Split(s, "\n")
+		for i := range lines {
+			lines[i] = pad + lines[i]
+		}
+		return strings.Join(lines, "\n")
+	}
+	markdownWrapWidth := func(width []int) int {
+		maxWidth := markdownWidth
+		if len(width) > 0 && width[0] >= 0 {
+			maxWidth = width[0]
+		}
+		return maxWidth
+	}
+
 	return template.FuncMap{
 		"i18n": func(key string, fallback ...string) string {
 			resolvedFallback := ""
@@ -197,24 +223,26 @@ func docTemplateFuncs(parser *Parser, markHidden bool, format optionRenderFormat
 		},
 
 		"markdownWrap": func(s string, width ...int) string {
-			maxWidth := 76
-			if len(width) > 0 && width[0] > 0 {
-				maxWidth = width[0]
-			}
+			maxWidth := markdownWrapWidth(width)
 			return wrapMarkdownText(s, maxWidth)
 		},
 
-		"indent": func(s string, spaces int) string {
-			if s == "" {
-				return ""
+		"markdownWrapIndent": func(s string, spaces int, width ...int) string {
+			if spaces < 0 {
+				spaces = 0
 			}
-			pad := strings.Repeat(" ", spaces)
-			lines := strings.Split(s, "\n")
-			for i := range lines {
-				lines[i] = pad + lines[i]
+			maxWidth := markdownWrapWidth(width)
+			contentWidth := maxWidth
+			if contentWidth > 0 {
+				contentWidth -= spaces
+				if contentWidth < 1 {
+					contentWidth = 1
+				}
 			}
-			return strings.Join(lines, "\n")
+			return indent(wrapMarkdownText(s, contentWidth), spaces)
 		},
+
+		"indent": indent,
 
 		"defaultValue": func(v string) string {
 			if v == "" {
@@ -412,6 +440,11 @@ func wrapMarkdownText(s string, width int) string {
 			strings.HasPrefix(trimmed, "\t") ||
 			strings.HasPrefix(compact, "|") {
 			out = append(out, trimmed)
+			continue
+		}
+
+		if width <= 0 {
+			out = append(out, compact)
 			continue
 		}
 

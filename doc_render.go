@@ -5,6 +5,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -27,12 +28,14 @@ type docRenderOptions struct {
 	builtinTemplate  string
 	templateText     string
 	programName      string
+	wrapWidth        int
 	renderStyle      RenderStyle
 	toc              bool
 	trimDescriptions bool
 	includeHidden    bool
 	markHidden       bool
 	hasRenderStyle   bool
+	hasWrapWidth     bool
 }
 
 // DocOption configures WriteDoc behavior.
@@ -85,6 +88,19 @@ func WithDocRenderStyle(style RenderStyle) DocOption {
 	return func(o *docRenderOptions) error {
 		o.renderStyle = style
 		o.hasRenderStyle = true
+		return nil
+	}
+}
+
+// WithDocWrapWidth configures markdown text wrapping width for one WriteDoc
+// call. A width of zero disables wrapping.
+func WithDocWrapWidth(width int) DocOption {
+	return func(o *docRenderOptions) error {
+		if width < 0 {
+			return errors.New("doc wrap width must be non-negative")
+		}
+		o.wrapWidth = width
+		o.hasWrapWidth = true
 		return nil
 	}
 }

@@ -88,6 +88,17 @@ repository URLs, build IDs, generated-file notices, or site metadata.
 Use `WithIncludeHidden` and `WithMarkHidden` for internal documentation.
 Hidden entities are excluded unless `WithIncludeHidden(true)` is set.
 
+Use `WithDocWrapWidth` to control markdown text wrapping for one render call.
+A width of zero disables wrapping:
+
+```go
+err := parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatMarkdown,
+  flags.WithDocWrapWidth(100),
+)
+```
+
 ## Custom Template Text
 
 Use a template string:
@@ -172,7 +183,8 @@ Built-in helpers cover common rendering needs:
 * `optionForms` renders short and long option forms for one option.
 * `codeJoin`, `code`, `codeFenceOpen`, and `codeFenceClose`
   render markdown-friendly code fragments.
-* `join`, `wrap`, `markdownWrap`, and `indent` format text blocks.
+* `join`, `wrap`, `markdownWrap`, `markdownWrapIndent`, and `indent`
+  format text blocks.
 * `quoteMarkdown`, `quoteMan`, `manInline`, and `quoteHTML`
   escape text for the target output format.
 * `defaultValue` formats a displayed default value.

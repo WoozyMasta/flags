@@ -14,6 +14,25 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `WithDocWrapWidth` and built-in `docs md --wrap-width` for controlling
+  markdown documentation wrapping width.
+* Built-in documentation templates now include generated-output comments;
+  HTML output also includes a `generator` meta tag.
+
+### Changed
+
+* Generated markdown documentation now disables markdownlint `MD033` and
+  `MD034` by default for HTML markers and bare URLs emitted from CLI metadata.
+
+### Fixed
+
+* Markdown list templates now keep continuation indentation on every wrapped
+  option description line.
+
 ## [0.3.3] - 2026-05-02
 
 ### Added

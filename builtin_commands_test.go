@@ -448,6 +448,31 @@ func TestBuiltinDocsCommandWritesFile(t *testing.T) {
 	}
 }
 
+func TestBuiltinDocsCommandMarkdownWrapWidth(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"alpha beta gamma delta epsilon zeta eta theta"`
+	}
+
+	p := NewNamedParser("builtin-docs-wrap", DocsCommand)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	out := filepath.Join(t.TempDir(), "docs.md")
+
+	if _, err := p.ParseArgs([]string{"docs", "md", "--style", "posix", "--wrap-width", "32", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	want := "* `--value` -\n  alpha beta gamma delta epsilon\n  zeta eta theta"
+	if !strings.Contains(string(got), want) {
+		t.Fatalf("expected wrapped markdown documentation, got:\n%s", string(got))
+	}
+}
+
 func TestBuiltinDocsCommandStyleOverride(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" env:"APP_VALUE" description:"Value option"`

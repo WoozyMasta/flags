@@ -142,6 +142,8 @@ type builtinDocMarkdownCommand struct {
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping"`
+
 	TOC              bool `long:"toc" description:"Include table of contents in output"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output"`
 
@@ -163,6 +165,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 		WithProgramName(c.ProgramName),
 		WithTOC(c.TOC),
 		WithTrimDescriptions(c.TrimDescriptions),
+		WithDocWrapWidth(c.WrapWidth),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 	}
