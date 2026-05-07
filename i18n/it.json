@@ -118,6 +118,7 @@
   "err.command.unknown": "Comando sconosciuto `{command}`",
   "err.expected_argument.double_dash": "argomento previsto per il flag `{flag}`, ma trovato doppio trattino `--`",
   "err.expected_argument.flag": "argomento previsto per il flag `{flag}`",
+  "err.flag.did_you_mean": "{base}, volevi dire `{choice}`?",
   "err.invalid_argument.option": "argomento previsto per il flag `{flag}`, ma trovata opzione `{option}`",
   "err.invalid_choice": "Valore non valido `{value}` per l`opzione `{option}`. Valori consentiti: {allowed}",
   "err.list.conjunction": "{items} e {last}",

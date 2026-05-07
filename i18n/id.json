@@ -118,6 +118,7 @@
   "err.command.unknown": "Perintah tidak dikenal `{command}`",
   "err.expected_argument.double_dash": "expected argument for flag `{flag}`, but got double dash `--`",
   "err.expected_argument.flag": "expected argument for flag `{flag}`",
+  "err.flag.did_you_mean": "{base}, did you mean `{choice}`?",
   "err.invalid_argument.option": "expected argument for flag `{flag}`, but got option `{option}`",
   "err.invalid_choice": "Nilai `{value}` tidak valid untuk opsi `{option}`. Nilai yang diizinkan: {allowed}",
   "err.list.conjunction": "{items} dan {last}",

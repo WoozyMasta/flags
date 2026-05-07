@@ -118,6 +118,7 @@
   "err.command.unknown": "不明なコマンド `{command}`",
   "err.expected_argument.double_dash": "フラグ `{flag}` には引数が必要ですが、二重ハイフン `--` が指定されました",
   "err.expected_argument.flag": "フラグ `{flag}` には引数が必要です",
+  "err.flag.did_you_mean": "{base}。`{choice}` のことですか？",
   "err.invalid_argument.option": "フラグ `{flag}` には引数が必要ですが、オプション `{option}` が指定されました",
   "err.invalid_choice": "オプション `{option}` の値 `{value}` は無効です。許可される値: {allowed}",
   "err.list.conjunction": "{items} と {last}",

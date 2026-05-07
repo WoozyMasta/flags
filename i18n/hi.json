@@ -118,6 +118,7 @@
   "err.command.unknown": "अज्ञात कमांड `{command}`",
   "err.expected_argument.double_dash": "फ्लैग `{flag}` के लिए तर्क अपेक्षित था, लेकिन `--` मिला",
   "err.expected_argument.flag": "फ्लैग `{flag}` के लिए तर्क अपेक्षित था",
+  "err.flag.did_you_mean": "{base}, क्या आपका मतलब `{choice}` था?",
   "err.invalid_argument.option": "फ्लैग `{flag}` के लिए तर्क अपेक्षित था, लेकिन विकल्प `{option}` मिला",
   "err.invalid_choice": "विकल्प `{option}` के लिए अमान्य मान `{value}`. अनुमत मान: {allowed}",
   "err.list.conjunction": "{items} और {last}",

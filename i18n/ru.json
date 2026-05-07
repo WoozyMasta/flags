@@ -118,6 +118,7 @@
   "err.command.unknown": "Неизвестная команда `{command}`",
   "err.expected_argument.double_dash": "ожидался аргумент для флага `{flag}`, но получен двойной дефис `--`",
   "err.expected_argument.flag": "ожидался аргумент для флага `{flag}`",
+  "err.flag.did_you_mean": "{base}, вы имели в виду `{choice}`?",
   "err.invalid_argument.option": "ожидался аргумент для флага `{flag}`, но получена опция `{option}`",
   "err.invalid_choice": "Недопустимое значение `{value}` для опции `{option}`. Допустимые значения: {allowed}",
   "err.list.conjunction": "{items} и {last}",

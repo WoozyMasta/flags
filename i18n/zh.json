@@ -118,6 +118,7 @@
   "err.command.unknown": "未知命令 `{command}`",
   "err.expected_argument.double_dash": "期望为标志 `{flag}` 提供参数，但得到了双短横线 `--`",
   "err.expected_argument.flag": "期望为标志 `{flag}` 提供参数",
+  "err.flag.did_you_mean": "{base}，你是指 `{choice}` 吗？",
   "err.invalid_argument.option": "期望为标志 `{flag}` 提供参数，但得到了选项 `{option}`",
   "err.invalid_choice": "选项 `{option}` 的值 `{value}` 无效。允许值：{allowed}",
   "err.list.conjunction": "{items} 和 {last}",

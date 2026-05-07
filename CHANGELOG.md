@@ -24,6 +24,15 @@ and this project adheres to [Semantic Versioning][].
 * `deprecated` struct tag and `SetDeprecated`/`IsDeprecated` methods
   on `Option` and `Command` mark CLI entities as deprecated
   with a short replacement hint.
+* "Did you mean" suggestions for unknown long flags using the existing
+  Levenshtein distance mechanism, respecting the active flag render style.
+
+### Changed
+
+* Levenshtein distance now operates on Unicode code points (runes)
+  instead of raw bytes, fixing incorrect results
+  and potential false suggestions for non-ASCII input
+  such as wrong-layout keyboard typos.
 
 ## [0.4.0] - 2026-05-06
 

@@ -118,6 +118,7 @@
   "err.command.unknown": "Lệnh không xác định `{command}`",
   "err.expected_argument.double_dash": "cần đối số cho cờ `{flag}`, nhưng nhận được dấu gạch đôi `--`",
   "err.expected_argument.flag": "cần đối số cho cờ `{flag}`",
+  "err.flag.did_you_mean": "{base}, ý bạn là `{choice}`?",
   "err.invalid_argument.option": "cần đối số cho cờ `{flag}`, nhưng nhận được tùy chọn `{option}`",
   "err.invalid_choice": "Giá trị `{value}` không hợp lệ cho tùy chọn `{option}`. Giá trị cho phép: {allowed}",
   "err.list.conjunction": "{items} và {last}",

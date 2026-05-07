@@ -118,6 +118,7 @@
   "err.command.unknown": "Bilinmeyen komut `{command}`",
   "err.expected_argument.double_dash": "expected argument for flag `{flag}`, but got double dash `--`",
   "err.expected_argument.flag": "expected argument for flag `{flag}`",
+  "err.flag.did_you_mean": "{base}, did you mean `{choice}`?",
   "err.invalid_argument.option": "expected argument for flag `{flag}`, but got option `{option}`",
   "err.invalid_choice": "`{option}` seçeneği için geçersiz değer `{value}`. İzin verilen değerler: {allowed}",
   "err.list.conjunction": "{items} ve {last}",

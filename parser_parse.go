@@ -704,14 +704,32 @@ func (p *Parser) parseLong(s *parseState, name string, argument string, hasArgum
 		return p.parseOption(s, name, option, canarg, argument, hasArgument)
 	}
 
-	return newError(
-		ErrUnknownFlag,
-		p.i18nTextf(
-			"err.unknown_flag",
-			"unknown flag `{flag}`",
-			map[string]string{"flag": name},
-		),
+	msg := p.i18nTextf(
+		"err.unknown_flag",
+		"unknown flag `{flag}`",
+		map[string]string{"flag": name},
 	)
+
+	if len(s.lookup.longNames) > 0 {
+		names := make([]string, 0, len(s.lookup.longNames))
+		for n := range s.lookup.longNames {
+			names = append(names, n)
+		}
+		c, l := closestChoice(name, names)
+		if len(c) > 0 && l > 0 && l < utf8.RuneCountInString(name) && float32(l)/float32(utf8.RuneCountInString(c)) < 0.5 {
+			rf := p.optionRenderFormat()
+			msg = p.i18nTextf(
+				"err.flag.did_you_mean",
+				"{base}, did you mean `{choice}`?",
+				map[string]string{
+					"base":   msg,
+					"choice": rf.longDelimiter + c,
+				},
+			)
+		}
+	}
+
+	return newError(ErrUnknownFlag, msg)
 }
 
 func (p *Parser) splitShortConcatArg(s *parseState, optname string) (string, *string) {

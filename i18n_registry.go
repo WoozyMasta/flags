@@ -124,6 +124,7 @@ var builtinI18nMessages = []i18nMessageSpec{
 	{Key: "err.command.unknown", Source: "Unknown command `{command}`"},
 	{Key: "err.expected_argument.double_dash", Source: "expected argument for flag `{flag}`, but got double dash `--`"},
 	{Key: "err.expected_argument.flag", Source: "expected argument for flag `{flag}`"},
+	{Key: "err.flag.did_you_mean", Source: "{base}, did you mean `{choice}`?"},
 	{Key: "err.invalid_argument.option", Source: "expected argument for flag `{flag}`, but got option `{option}`"},
 	{Key: "err.invalid_choice", Source: "Invalid value `{value}` for option `{option}`. Allowed values are: {allowed}"},
 	{Key: "err.list.conjunction", Source: "{items} and {last}"},

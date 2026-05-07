@@ -118,6 +118,7 @@
   "err.command.unknown": "Commande inconnue `{command}`",
   "err.expected_argument.double_dash": "argument attendu pour le drapeau `{flag}`, mais double tiret `--` reçu",
   "err.expected_argument.flag": "argument attendu pour le drapeau `{flag}`",
+  "err.flag.did_you_mean": "{base}, vouliez-vous dire `{choice}` ?",
   "err.invalid_argument.option": "argument attendu pour le drapeau `{flag}`, mais option `{option}` reçue",
   "err.invalid_choice": "Valeur invalide `{value}` pour l`option `{option}`. Valeurs autorisées : {allowed}",
   "err.list.conjunction": "{items} et {last}",

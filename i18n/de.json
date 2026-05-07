@@ -118,6 +118,7 @@
   "err.command.unknown": "Unbekannter Befehl `{command}`",
   "err.expected_argument.double_dash": "Argument für Flag `{flag}` erwartet, aber Doppelstrich `--` erhalten",
   "err.expected_argument.flag": "Argument für Flag `{flag}` erwartet",
+  "err.flag.did_you_mean": "{base}, meinten Sie `{choice}`?",
   "err.invalid_argument.option": "Argument für Flag `{flag}` erwartet, aber Option `{option}` erhalten",
   "err.invalid_choice": "Ungültiger Wert `{value}` für Option `{option}`. Erlaubte Werte: {allowed}",
   "err.list.conjunction": "{items} und {last}",

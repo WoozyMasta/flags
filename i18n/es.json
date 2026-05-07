@@ -118,6 +118,7 @@
   "err.command.unknown": "Comando desconocido `{command}`",
   "err.expected_argument.double_dash": "se esperaba un argumento para la bandera `{flag}`, pero se recibió doble guion `--`",
   "err.expected_argument.flag": "se esperaba un argumento para la bandera `{flag}`",
+  "err.flag.did_you_mean": "{base}, ¿quisiste decir `{choice}`?",
   "err.invalid_argument.option": "se esperaba un argumento para la bandera `{flag}`, pero se recibió la opción `{option}`",
   "err.invalid_choice": "Valor inválido `{value}` para la opción `{option}`. Valores permitidos: {allowed}",
   "err.list.conjunction": "{items} y {last}",

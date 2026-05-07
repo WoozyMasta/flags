@@ -118,6 +118,7 @@
   "err.command.unknown": "Белгісіз команда `{command}`",
   "err.expected_argument.double_dash": "`{flag}` жалаушасына аргумент күтілді, бірақ `--` алынды",
   "err.expected_argument.flag": "`{flag}` жалаушасына аргумент күтілді",
+  "err.flag.did_you_mean": "{base}, `{choice}` дегенді меңзедіңіз бе?",
   "err.invalid_argument.option": "`{flag}` жалаушасына аргумент күтілді, бірақ `{option}` опциясы алынды",
   "err.invalid_choice": "`{option}` опциясы үшін `{value}` мәні жарамсыз. Рұқсат етілген мәндер: {allowed}",
   "err.list.conjunction": "{items} және {last}",

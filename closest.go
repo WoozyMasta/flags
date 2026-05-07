@@ -5,26 +5,32 @@
 package flags
 
 func levenshtein(s string, t string) int {
-	if len(s) == 0 {
-		return len(t)
+	sr := []rune(s)
+	tr := []rune(t)
+
+	ls := len(sr)
+	lt := len(tr)
+
+	if ls == 0 {
+		return lt
 	}
 
-	if len(t) == 0 {
-		return len(s)
+	if lt == 0 {
+		return ls
 	}
 
-	dists := make([][]int, len(s)+1)
+	dists := make([][]int, ls+1)
 	for i := range dists {
-		dists[i] = make([]int, len(t)+1)
+		dists[i] = make([]int, lt+1)
 		dists[i][0] = i
 	}
 
-	for j := range t {
+	for j := 1; j <= lt; j++ {
 		dists[0][j] = j
 	}
 
-	for i, sc := range s {
-		for j, tc := range t {
+	for i, sc := range sr {
+		for j, tc := range tr {
 			if sc == tc {
 				dists[i+1][j+1] = dists[i][j]
 			} else {
@@ -39,7 +45,7 @@ func levenshtein(s string, t string) int {
 		}
 	}
 
-	return dists[len(s)][len(t)]
+	return dists[ls][lt]
 }
 
 func closestChoice(cmd string, choices []string) (string, int) {

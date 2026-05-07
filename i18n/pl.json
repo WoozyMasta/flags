@@ -118,6 +118,7 @@
   "err.command.unknown": "Nieznane polecenie `{command}`",
   "err.expected_argument.double_dash": "oczekiwano argumentu dla flagi `{flag}`, ale otrzymano podwójny myślnik `--`",
   "err.expected_argument.flag": "oczekiwano argumentu dla flagi `{flag}`",
+  "err.flag.did_you_mean": "{base}, czy chodziło o `{choice}`?",
   "err.invalid_argument.option": "oczekiwano argumentu dla flagi `{flag}`, ale otrzymano opcję `{option}`",
   "err.invalid_choice": "Nieprawidłowa wartość `{value}` dla opcji `{option}`. Dozwolone wartości: {allowed}",
   "err.list.conjunction": "{items} i {last}",

@@ -118,6 +118,7 @@
   "err.command.unknown": "Невідома команда `{command}`",
   "err.expected_argument.double_dash": "очікувався аргумент для прапорця `{flag}`, але отримано подвійне тире `--`",
   "err.expected_argument.flag": "очікувався аргумент для прапорця `{flag}`",
+  "err.flag.did_you_mean": "{base}, можливо ви мали на увазі `{choice}`?",
   "err.invalid_argument.option": "очікувався аргумент для прапорця `{flag}`, але отримано опцію `{option}`",
   "err.invalid_choice": "Неприпустиме значення `{value}` для опції `{option}`. Дозволені значення: {allowed}",
   "err.list.conjunction": "{items} і {last}",
