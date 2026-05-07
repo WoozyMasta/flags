@@ -23,10 +23,10 @@ TARGETS ?= \
 	fmt fmt-check lint lint-fix align align-fix tidy tidy-check download vulncheck \
 	tools tools-ci tool-golangci-lint tool-betteralign tool-govulncheck tool-benchstat \
 	markdownlint markdownlint-fix \
-	release-notes crosscompile docs-render docs-render-check
+	release-notes crosscompile docs-render docs-render-check examples-check
 
-check: verify vulncheck tidy fmt vet lint-fix align-fix test docs-render markdownlint-fix
-ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test docs-render-check
+check: verify vulncheck tidy fmt vet lint-fix align-fix test docs-render examples-check markdownlint-fix
+ci: download tools-ci verify vulncheck tidy-check fmt-check vet lint align test docs-render-check examples-check
 
 fmt:
 	gofmt -w .
@@ -100,7 +100,7 @@ vulncheck:
 	$(VULNCHECK) ./...
 
 markdownlint:
-	@if command -v $(MARKDOWNLINT) >/dev/null 2>&1; then \
+	@if command -v $(MARKDOWNLINT) &>/dev/null; then \
 		$(MARKDOWNLINT) check; \
 	else \
 		echo "WARN: $(MARKDOWNLINT) not found; skipping markdown lint."; \
@@ -108,7 +108,7 @@ markdownlint:
 	fi
 
 markdownlint-fix:
-	@if command -v $(MARKDOWNLINT) >/dev/null 2>&1; then \
+	@if command -v $(MARKDOWNLINT) &>/dev/null; then \
 		$(MARKDOWNLINT) check --fix; \
 	else \
 		echo "WARN: $(MARKDOWNLINT) not found; skipping markdown lint."; \
@@ -169,6 +169,15 @@ docs-render-check:
 	SOURCE_DATE_EPOCH=$(DOC_SOURCE_DATE_EPOCH) UPDATE_DOC_EXAMPLES=1 \
 	$(GO) test -tags forceposix -run TestWriteDocBuiltinTemplatesGolden ./...
 	git diff --exit-code -- examples/doc-rendered
+
+examples-check:
+	$(GO) run ./examples/basic/ --help >/dev/null
+	$(GO) run ./examples/advanced/ --help >/dev/null
+	$(GO) run ./examples/advanced/ version >/dev/null
+	$(GO) run ./examples/advanced/ docs json >/dev/null
+	$(GO) run ./examples/custom-flag-tags/ --help >/dev/null
+	$(GO) run ./examples/i18n/ --help >/dev/null
+	$(GO) run ./examples/i18n/ greet >/dev/null
 
 mkdocs-run:
 	docker run --rm -it -p 8000:8000 -v "${PWD}:/docs" \
