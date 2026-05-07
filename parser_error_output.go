@@ -21,7 +21,17 @@ func (p *Parser) showBuiltinHelp() error {
 func (p *Parser) showBuiltinVersion() error {
 	var b bytes.Buffer
 
-	p.WriteVersion(&b, p.versionFields)
+	if p.versionShort {
+		info := p.VersionInfo()
+		version := info.Version
+		if version == "" {
+			version = p.i18nText("version.value.unknown", "unknown")
+		}
+		_, _ = fmt.Fprintln(&b, version)
+	} else {
+		p.WriteVersion(&b, p.versionFields)
+	}
+
 	return newError(ErrVersion, b.String())
 }
 

@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `VersionFieldLicense` field mask and `SetVersionLicense` render the optional
+  license identifier in version output.
+* `version --short` flag on the built-in `version` command prints only the bare
+  version string; `version --commit` prints only the bare commit SHA.
+* `SetVersionShort(bool)` on `Parser` makes the built-in `--version`/`-v` flag
+  behave like `version --short` — printing only the version string
+  instead of the full metadata block.
+
+### Fixed
+
+* Built-in command struct fields no longer inherit the parser's auto-env
+  namespace prefix.
+
 ## [0.5.0] - 2026-05-07
 
 ### Added

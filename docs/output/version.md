@@ -32,6 +32,30 @@ parser := flags.NewParser(&opts, flags.Default|flags.HelpCommands)
 The command form is useful when `-v` is already used by the application,
 or when helper commands are part of the public CLI design.
 
+## Short Version Output
+
+The built-in `version` command supports two short-output flags:
+
+* `version --short` prints only the bare version string.
+* `version --commit` prints only the bare commit SHA.
+
+Both are useful in scripts where only a single value is needed:
+
+```sh
+TAG=$(myapp version --short)
+SHA=$(myapp version --commit)
+```
+
+To make the built-in `--version`/`-v` flag print only the version string
+(equivalent to `version --short`), call `SetVersionShort`:
+
+```go
+parser.SetVersionShort(true)
+```
+
+This is convenient for simple tools where the flag form is preferred
+over the command form.
+
 ## Version Fields
 
 `VersionFieldsCore` is the compact default.
@@ -46,7 +70,8 @@ parser.SetVersionFields(flags.VersionFieldVersion | flags.VersionFieldCommit)
 ```
 
 Available field bits include file, version, commit, build time, repository URL,
-package path, module path, modified marker, Go version, and target platform.
+package path, module path, modified marker, Go version, target platform,
+and an optional license identifier.
 
 Exact field bits are:
 
@@ -60,6 +85,16 @@ Exact field bits are:
 * `VersionFieldModified`
 * `VersionFieldGoVersion`
 * `VersionFieldTarget`
+* `VersionFieldLicense`
+
+`VersionFieldLicense` is included in `VersionFieldsAll` but not in
+`VersionFieldsCore`.
+It is only rendered when a non-empty license string has been set
+via `SetVersionLicense`.
+
+```go
+parser.SetVersionLicense("Apache-2.0")
+```
 
 ## Metadata Source
 

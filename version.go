@@ -39,6 +39,9 @@ const (
 	VersionFieldGoVersion
 	// VersionFieldTarget is build target in GOOS/GOARCH form.
 	VersionFieldTarget
+	// VersionFieldLicense is the application license identifier.
+	// Not auto-detected; set via SetVersionLicense.
+	VersionFieldLicense
 )
 
 const (
@@ -58,7 +61,8 @@ const (
 		VersionFieldModule |
 		VersionFieldModified |
 		VersionFieldGoVersion |
-		VersionFieldTarget
+		VersionFieldTarget |
+		VersionFieldLicense
 )
 
 var (
@@ -88,6 +92,9 @@ type VersionInfo struct {
 	GOOS string
 	// GOARCH is build target architecture.
 	GOARCH string
+	// License is the application license identifier (e.g. "MIT", "Apache-2.0").
+	// Not auto-detected; set via SetVersionLicense.
+	License string
 	// Modified reports whether source tree was dirty at build time.
 	Modified bool
 }
@@ -128,6 +135,9 @@ func (p *Parser) VersionInfo() VersionInfo {
 	}
 	if p.versionInfo.Modified {
 		base.Modified = true
+	}
+	if p.versionInfo.License != "" {
+		base.License = p.versionInfo.License
 	}
 
 	if base.File == "" && len(os.Args) > 0 {
@@ -174,6 +184,17 @@ func (p *Parser) SetVersionTarget(goos string, goarch string) {
 // SetVersionFields configures fields rendered by built-in version output.
 func (p *Parser) SetVersionFields(fields VersionFields) {
 	p.versionFields = fields
+}
+
+// SetVersionLicense sets the application license identifier shown in version output.
+func (p *Parser) SetVersionLicense(license string) {
+	p.versionInfo.License = license
+}
+
+// SetVersionShort configures the built-in --version/-v flag to print only the
+// bare version string (equivalent to running the version --short command).
+func (p *Parser) SetVersionShort(short bool) {
+	p.versionShort = short
 }
 
 // WriteVersion writes version/build metadata in human-readable format.
@@ -274,6 +295,7 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	modifiedLabel := p.i18nText("version.label.modified", "modified")
 	goLabel := p.i18nText("version.label.go", "go")
 	targetLabel := p.i18nText("version.label.target", "target")
+	licenseLabel := p.i18nText("version.label.license", "license")
 
 	writeVersionLine := func(label string, value string) {
 		padded := label + ":"
@@ -327,6 +349,9 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	}
 	if (fields & VersionFieldTarget) != 0 {
 		writeVersionLine(targetLabel, target)
+	}
+	if (fields&VersionFieldLicense) != 0 && info.License != "" {
+		writeVersionLine(licenseLabel, info.License)
 	}
 
 	if (p.Options&ColorHelp) != None && p.helpColorEnabled {

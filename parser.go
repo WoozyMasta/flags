@@ -147,6 +147,9 @@ type Parser struct {
 	// Set by built-in version option handler during parse.
 	versionRequested bool
 
+	// When true, --version/-v prints only the bare version string (like version --short).
+	versionShort bool
+
 	// Set when any immediate option/group is requested during parse.
 	immediateRequested bool
 }
