@@ -889,10 +889,37 @@ func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[
 }
 
 func duplicateAllowedForBuiltinOptions(a *Option, b *Option) bool {
-	return a != nil && b != nil &&
-		a.group != nil && b.group != nil &&
-		a.group.isBuiltinHelp && b.group.isBuiltinHelp &&
-		a.DescriptionI18nKey == b.DescriptionI18nKey
+	if a == nil || b == nil || a.group == nil || b.group == nil {
+		return false
+	}
+	if a.group.isBuiltinHelp && b.group.isBuiltinHelp && a.DescriptionI18nKey == b.DescriptionI18nKey {
+		return true
+	}
+
+	return isOptionInBuiltinCommand(a) || isOptionInBuiltinCommand(b)
+}
+
+func isOptionInBuiltinCommand(opt *Option) bool {
+	if opt == nil || opt.group == nil {
+		return false
+	}
+
+	parent := opt.group.parent
+	for parent != nil {
+		switch v := parent.(type) {
+		case *Command:
+			if isBuiltinCommandData(v.Data()) {
+				return true
+			}
+			parent = v.parent
+		case *Group:
+			parent = v.parent
+		default:
+			return false
+		}
+	}
+
+	return false
 }
 
 func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.StructField) (bool, error) {

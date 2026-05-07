@@ -44,6 +44,11 @@ and this project adheres to [Semantic Versioning][].
 * Error messages that reference flag names now use the active render style
   (`--flag` vs `/flag`) instead of the platform default,
   so bash users on Windows see POSIX-style names in all error output.
+* Built-in command options (e.g. `docs html --style`) no longer trigger a
+  false `ErrDuplicatedFlag` conflict when a user-defined option at a parent
+  scope has the same long name.
+  Options belonging to library-controlled built-in commands are now exempt
+  from cross-scope duplicate validation.
 
 ## [0.4.0] - 2026-05-06
 
