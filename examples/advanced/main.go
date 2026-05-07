@@ -55,26 +55,28 @@ func (l ServiceLabel) MarshalText() ([]byte, error) {
 }
 
 type AdvancedOptions struct {
-	Alpha            string                 `long:"alpha" description:"Example string flag for sort demo" default:"a"`
-	Profile          string                 `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
-	Region           string                 `long:"region" description:"Cloud region" env:"APP_REGION" default:"eu-west-1"`
-	Token            DynamicToken           `long:"token" description:"Dynamic default token"`
-	Strategy         string                 `long:"deployment-strategy-with-very-long-name" value-name:"STRATEGY_PROFILE_NAME" description:"Deployment strategy selector with long value" default:"rolling-update-with-pre-drain-and-post-verify"`
-	FormatPolicy     string                 `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" description:"Output format negotiation policy for generated artifacts" choices:"prefer-human-readable-markdown-with-inline-metadata;prefer-machine-readable-json-with-stable-field-order;prefer-manpage-compatible-plain-text-with-unicode-disabled" default:"prefer-machine-readable-json-with-stable-field-order"`
-	TemplateStrategy string                 `long:"profile-template-selection-strategy-for-runtime-environments" value-name:"PROFILE_TEMPLATE_SELECTION_STRATEGY_NAME" description:"Profile template selection strategy for runtime environments" optional:"yes" optional-value:"prefer-latest-template-compatible-with-runtime-features" choices:"prefer-latest-template-compatible-with-runtime-features;prefer-template-locked-to-application-major-version;prefer-template-selected-by-explicit-environment-marker"`
-	ManualEnvOnly    string                 `long:"manual-env-only" description:"Explicit opt-out from global auto env" auto-env:"false" default:"local" order:"-40"`
-	ReleaseID        string                 `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
-	SecretKey        string                 `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
-	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;gray;light" default:"none" description:"Color scheme for built-in help output"`
-	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
-	Deploy           AdvancedDeployCommand  `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
-	Verbose          []bool                 `short:"V" long:"verbose" description:"Increase verbosity level" order:"100"`
-	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
-	Exec             []string               `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
-	Network          AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
-	Count            int                    `long:"count" description:"Example number flag for sort demo" default:"7"`
-	Delay            time.Duration          `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
-	Zeta             bool                   `long:"zeta" description:"Example bool flag for sort demo"`
+	Alpha            string                  `long:"alpha" description:"Example string flag for sort demo" default:"a"`
+	Profile          string                  `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
+	Region           string                  `long:"region" description:"Cloud region" env:"APP_REGION" default:"eu-west-1"`
+	Zone             string                  `long:"zone" description:"Cloud zone" deprecated:"use --region with a zone suffix, e.g. eu-west-1a"`
+	Token            DynamicToken            `long:"token" description:"Dynamic default token"`
+	Strategy         string                  `long:"deployment-strategy-with-very-long-name" value-name:"STRATEGY_PROFILE_NAME" description:"Deployment strategy selector with long value" default:"rolling-update-with-pre-drain-and-post-verify"`
+	FormatPolicy     string                  `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" description:"Output format negotiation policy for generated artifacts" choices:"prefer-human-readable-markdown-with-inline-metadata;prefer-machine-readable-json-with-stable-field-order;prefer-manpage-compatible-plain-text-with-unicode-disabled" default:"prefer-machine-readable-json-with-stable-field-order"`
+	TemplateStrategy string                  `long:"profile-template-selection-strategy-for-runtime-environments" value-name:"PROFILE_TEMPLATE_SELECTION_STRATEGY_NAME" description:"Profile template selection strategy for runtime environments" optional:"yes" optional-value:"prefer-latest-template-compatible-with-runtime-features" choices:"prefer-latest-template-compatible-with-runtime-features;prefer-template-locked-to-application-major-version;prefer-template-selected-by-explicit-environment-marker"`
+	ManualEnvOnly    string                  `long:"manual-env-only" description:"Explicit opt-out from global auto env" auto-env:"false" default:"local" order:"-40"`
+	ReleaseID        string                  `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
+	SecretKey        string                  `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
+	HelpColor        string                  `long:"help-color" choices:"none;default;contrast;gray;light" default:"none" description:"Color scheme for built-in help output"`
+	Demo             AdvancedDemoOptions     `group:"Demo Options" immediate:"true"`
+	Deploy           AdvancedDeployCommand   `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
+	Publish          AdvancedPublishCommand  `command:"publish" deprecated:"use deploy instead" description:"Publish artifact to registry"`
+	Verbose          []bool                  `short:"V" long:"verbose" description:"Increase verbosity level" order:"100"`
+	Labels           []ServiceLabel          `long:"label" description:"Service labels"`
+	Exec             []string                `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
+	Network          AdvancedNetworkOptions  `group:"Network Options" namespace:"net" env-namespace:"NET"`
+	Count            int                     `long:"count" description:"Example number flag for sort demo" default:"7"`
+	Delay            time.Duration           `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
+	Zeta             bool                    `long:"zeta" description:"Example bool flag for sort demo"`
 }
 
 type AdvancedNetworkOptions struct {
@@ -107,6 +109,15 @@ type AdvancedDeployCommand struct {
 type AdvancedDeployPositionalArgs struct {
 	Target   string `positional-arg-name:"target" description:"Target service name or host"`
 	Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
+}
+
+type AdvancedPublishCommand struct {
+	Positional struct {
+		Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
+	} `positional-args:"yes"`
+
+	Registry string `long:"registry" description:"Target registry URL"`
+	Tag      string `long:"tag" description:"Image tag" default:"latest"`
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {

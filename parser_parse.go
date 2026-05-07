@@ -5,6 +5,9 @@
 package flags
 
 import (
+	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"sort"
 	"strconv"
@@ -466,6 +469,19 @@ func (p *parseState) estimateCommand() error {
 }
 
 func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg bool, argument string, hasArgument bool) (err error) {
+	if option.Deprecated != "" && !option.isSet && (p.Options&SilenceDeprecationWarnings) == None {
+		rf := p.optionRenderFormat()
+		var flagName string
+		if option.LongName != "" {
+			flagName = rf.longDelimiter + option.LongNameWithNamespace()
+		} else if option.ShortName != 0 {
+			flagName = string(rf.shortDelimiter) + string(option.ShortName)
+		} else {
+			flagName = option.String()
+		}
+		p.printDeprecationWarning("flag", flagName, option.Deprecated)
+	}
+
 	if option.Counter {
 		if !hasArgument && canarg && !s.eof() {
 			next := s.args[0]
@@ -867,6 +883,10 @@ func (p *Parser) parseNonOption(s *parseState) error {
 			s.command.Active = cmd
 			cmd.fillParseState(s)
 
+			if cmd.Deprecated != "" && (p.Options&SilenceDeprecationWarnings) == None {
+				p.printDeprecationWarning("command", cmd.Name, cmd.Deprecated)
+			}
+
 			return nil
 		} else if !s.command.SubcommandsOptional {
 			if len(s.positional) > 0 {
@@ -892,4 +912,29 @@ func (p *Parser) parseNonOption(s *parseState) error {
 	}
 
 	return s.addArgs(s.arg)
+}
+
+func (p *Parser) printDeprecationWarning(kind, name, msg string) {
+	var text string
+
+	if kind == "command" {
+		text = p.i18nTextf(
+			"warn.deprecated.command",
+			"warning: command `{command}` is deprecated: {reason}",
+			map[string]string{"command": name, "reason": msg},
+		)
+	} else {
+		text = p.i18nTextf(
+			"warn.deprecated.flag",
+			"warning: flag `{flag}` is deprecated: {reason}",
+			map[string]string{"flag": name, "reason": msg},
+		)
+	}
+
+	w := io.Writer(os.Stderr)
+	if (p.Options & PrintErrorsOnStdout) != None {
+		w = os.Stdout
+	}
+
+	_, _ = fmt.Fprintln(w, text)
 }

@@ -29,8 +29,12 @@
 {{- if .Description }}
 {{ manInline .Description }}
 {{- if hiddenMark .Hidden }} \fB({{ i18n "doc.tmpl.man.hidden" }})\fP{{ end }}
+{{- if .Deprecated }} \fB({{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }})\fP{{ end }}
 {{- else if hiddenMark .Hidden }}
 \fB({{ i18n "doc.tmpl.man.hidden" }})\fP
+{{- if .Deprecated }} \fB({{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }})\fP{{ end }}
+{{- else if .Deprecated }}
+\fB({{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }})\fP
 {{- end }}
 {{- if .Choices }}
 \fB{{ i18n "doc.tmpl.man.label.choices" }}\fP: {{ quoteMan (join .Choices ", ") }}
@@ -95,6 +99,11 @@
 {{- end }}
 {{ define "command" }}
 .SS {{ quoteMan .Name }}
+{{- if .Deprecated }}
+.RS
+\fB{{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }}\fP
+.RE
+{{- end }}
 {{- if .ShortDescription }}
 {{ manInline .ShortDescription }}
 {{- end }}
@@ -124,8 +133,12 @@
 {{- if .Description }}
 {{ manInline .Description }}
 {{- if hiddenMark .Hidden }} \fB({{ i18n "doc.tmpl.man.hidden" }})\fP{{ end }}
+{{- if .Deprecated }} \fB({{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }})\fP{{ end }}
 {{- else if hiddenMark .Hidden }}
 \fB({{ i18n "doc.tmpl.man.hidden" }})\fP
+{{- if .Deprecated }} \fB({{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }})\fP{{ end }}
+{{- else if .Deprecated }}
+\fB({{ i18n "doc.tmpl.man.deprecated" }}: {{ quoteMan .Deprecated }})\fP
 {{- end }}
 {{- if .Choices }}
 \fB{{ i18n "doc.tmpl.man.label.choices" }}\fP: {{ quoteMan (join .Choices ", ") }}

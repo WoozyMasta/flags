@@ -155,6 +155,11 @@
       border-color: color-mix(in srgb, var(--warn) 50%, var(--border));
     }
 
+    .chip.deprecated {
+      color: var(--warn);
+      border-color: color-mix(in srgb, var(--warn) 50%, var(--border));
+    }
+
     a {
       color: var(--accent);
       text-decoration: none;
@@ -252,6 +257,9 @@
 {{- if hiddenMark .Hidden }}
             <span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>
 {{- end }}
+{{- if .Deprecated }}
+            <span class="chip deprecated">{{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }}</span>
+{{- end }}
 {{- if .Env }}
             <span>{{ i18n "doc.tmpl.html.meta.env" }}</span> <span class="chip">{{ quoteHTML .EnvSignature }}</span>
 {{- end }}
@@ -305,6 +313,9 @@
 {{ define "command" }}
       <article>
         <h3 id="{{ tocCommandAnchor .Name }}">{{ quoteHTML .Name }}</h3>
+{{- if .Deprecated }}
+        <blockquote><span class="chip deprecated">{{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }}</span></blockquote>
+{{- end }}
         <p class="pre-wrap">{{ quoteHTML .ShortDescription }}</p>
 {{- if .LongDescription }}
         <p class="pre-wrap">{{ quoteHTML .LongDescription }}</p>
@@ -335,6 +346,9 @@
 {{- end }}
 {{- if hiddenMark .Hidden }}
               <span class="chip hidden">{{ i18n "doc.tmpl.html.hidden" }}</span>
+{{- end }}
+{{- if .Deprecated }}
+              <span class="chip deprecated">{{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }}</span>
 {{- end }}
 {{- if .Env }}
               <span>{{ i18n "doc.tmpl.html.meta.env" }}</span> <span class="chip">{{ quoteHTML .EnvSignature }}</span>

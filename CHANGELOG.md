@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning][].
 * `WriteHelpWithOptions` and `HelpRenderOptions` for per-call overrides
   of help output width, flag render style, env render style,
   and hidden-option inclusion without mutating the parser.
+* `deprecated` struct tag and `SetDeprecated`/`IsDeprecated` methods
+  on `Option` and `Command` mark CLI entities as deprecated
+  with a short replacement hint.
 
 ## [0.4.0] - 2026-05-06
 

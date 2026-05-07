@@ -33,9 +33,9 @@ Most tags are tied to one field kind.
 Use this as the quick map before reading the detailed sections:
 
 * option fields use identity, value, default, environment, relation,
-  I/O, validation, INI, completion, and visibility tags;
-* command fields use command, alias, command group, description,
-  visibility, immediate, ordering, INI group, and pass-through tags;
+  I/O, validation, INI, completion, visibility, and deprecation tags;
+* command fields use command, alias, command group, description, visibility,
+  immediate, ordering, INI group, pass-through, and deprecation tags;
 * group fields use group, namespace, description, visibility,
   immediate, and INI group tags;
 * positional argument fields use positional name, description, required,
@@ -249,6 +249,12 @@ or structs shared with other systems.
 
 `hidden` keeps an option, command, or group parseable,
 but removes it from help, completion, and generated docs.
+
+`deprecated` marks an option or command as deprecated.
+The tag value is a short replacement hint shown in help and in parse warnings.
+Deprecated entities remain parseable.
+When a deprecated option or command is used during parsing,
+the parser emits a localized warning to standard error.
 
 `immediate` marks an option, command, or group as a control-flow trigger.
 When an immediate option is set,

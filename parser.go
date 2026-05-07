@@ -271,6 +271,10 @@ const (
 	// parser errors (for example required/unknown flags or command issues).
 	PrintHelpOnInputErrors
 
+	// SilenceDeprecationWarnings suppresses the stderr warning emitted when
+	// a deprecated option or command is used during parsing.
+	SilenceDeprecationWarnings
+
 	// PassAfterNonOption passes all arguments after the first non option
 	// as remaining command line arguments. This is equivalent to strict
 	// POSIX processing.
@@ -1052,6 +1056,7 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.Default, FlagTagDefault)
 	normalizeTagAlias(c, p.flagTags.Defaults, FlagTagDefaults)
 	normalizeTagAlias(c, p.flagTags.DefaultMask, FlagTagDefaultMask)
+	normalizeTagAlias(c, p.flagTags.Deprecated, FlagTagDeprecated)
 	normalizeTagAlias(c, p.flagTags.Secret, FlagTagSecret)
 	normalizeTagAlias(c, p.flagTags.Env, FlagTagEnv)
 	normalizeTagAlias(c, p.flagTags.AutoEnv, FlagTagAutoEnv)

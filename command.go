@@ -34,6 +34,10 @@ type Command struct {
 	// Optional i18n key for CommandGroup.
 	CommandGroupI18nKey string
 
+	// If non-empty, marks this command as deprecated. The value is a short
+	// replacement hint shown in help output and parse warnings.
+	Deprecated string
+
 	// Aliases for the command
 	Aliases []string
 
@@ -173,6 +177,17 @@ func (c *Command) SetIniName(name string) {
 // SetHidden controls command visibility in help/completion/docs.
 func (c *Command) SetHidden(hidden bool) {
 	c.Hidden = hidden
+}
+
+// SetDeprecated marks the command as deprecated with the given replacement hint.
+// An empty string clears the deprecation marker.
+func (c *Command) SetDeprecated(msg string) {
+	c.Deprecated = msg
+}
+
+// IsDeprecated reports whether this command is marked as deprecated.
+func (c *Command) IsDeprecated() bool {
+	return c.Deprecated != ""
 }
 
 // SetSubcommandsOptional configures whether subcommand selection is optional.
@@ -467,6 +482,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			if err != nil {
 				return true, err
 			}
+			deprecated := mtag.Get(FlagTagDeprecated)
 
 			subc, err := c.AddCommand(subcommand, shortDescription, longDescription, ptrval.Interface())
 
@@ -476,6 +492,7 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 
 			subc.Hidden = hidden
 			subc.Immediate = immediate
+			subc.Deprecated = deprecated
 			subc.IniName = iniGroup
 			subc.CommandGroup = mtag.Get(FlagTagCommandGroup)
 			subc.ShortDescriptionI18nKey = shortDescriptionI18n

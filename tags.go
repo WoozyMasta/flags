@@ -49,6 +49,9 @@ const (
 	FlagTagDefaults = "defaults"
 	// FlagTagDefaultMask customizes how default is shown in generated help.
 	FlagTagDefaultMask = "default-mask"
+	// FlagTagDeprecated marks an option or command as deprecated.
+	// The value is a short replacement hint shown in help output and parse warnings.
+	FlagTagDeprecated = "deprecated"
 	// FlagTagSecret marks option values as sensitive in rendered output.
 	FlagTagSecret = "secret"
 	// FlagTagEnv maps option default to an environment variable key.
@@ -196,6 +199,8 @@ type FlagTags struct {
 	Defaults string
 	// DefaultMask maps to help default-mask tag (default: "default-mask").
 	DefaultMask string
+	// Deprecated maps to deprecation marker tag (default: "deprecated").
+	Deprecated string
 	// Secret maps to sensitive value policy tag (default: "secret").
 	Secret string
 	// Env maps to environment variable key tag (default: "env").
@@ -323,6 +328,7 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Default:              prefix + FlagTagDefault,
 		Defaults:             prefix + FlagTagDefaults,
 		DefaultMask:          prefix + FlagTagDefaultMask,
+		Deprecated:           prefix + FlagTagDeprecated,
 		Secret:               prefix + FlagTagSecret,
 		Env:                  prefix + FlagTagEnv,
 		AutoEnv:              prefix + FlagTagAutoEnv,
@@ -439,6 +445,9 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.DefaultMask != "" {
 		d.DefaultMask = t.DefaultMask
+	}
+	if t.Deprecated != "" {
+		d.Deprecated = t.Deprecated
 	}
 	if t.Secret != "" {
 		d.Secret = t.Secret

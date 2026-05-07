@@ -346,6 +346,12 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					)
 				}
 
+				if c.Deprecated != "" {
+					deprecatedLabel := p.i18nText("help.meta.deprecated", "deprecated")
+					marker := " (" + deprecatedLabel + ": " + c.Deprecated + ")"
+					_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(marker, p.helpColorScheme.OptionChoices))
+				}
+
 				_, _ = fmt.Fprintln(wr)
 			}
 			if gi < len(commandGroups)-1 {
@@ -1142,6 +1148,7 @@ func (p *Parser) renderHelpOptionRows(
 	defaultFrag string,
 	envFrag string,
 	repeatableFrag string,
+	deprecatedFrag string,
 ) {
 	if len(descLines) == 0 {
 		for _, line := range leftLines {
@@ -1162,6 +1169,9 @@ func (p *Parser) renderHelpOptionRows(
 	}
 	if repeatableFrag != "" {
 		descWrapped = strings.Replace(descWrapped, repeatableFrag, p.colorizeHelp(repeatableFrag, p.helpColorScheme.OptionChoices), 1)
+	}
+	if deprecatedFrag != "" {
+		descWrapped = strings.Replace(descWrapped, deprecatedFrag, p.colorizeHelp(deprecatedFrag, p.helpColorScheme.OptionChoices), 1)
 	}
 
 	descWrapped = p.colorizeHelp(descWrapped, p.helpColorScheme.OptionDesc)
@@ -1231,10 +1241,10 @@ func (p *Parser) buildHelpOptionDescription(
 	option *Option,
 	format optionRenderFormat,
 	descWidth int,
-) ([]string, string, string, string) {
+) ([]string, string, string, string, string) {
 	description := option.localizedDescription()
 	if description == "" {
-		return nil, "", "", ""
+		return nil, "", "", "", ""
 	}
 
 	def := ""
@@ -1265,7 +1275,12 @@ func (p *Parser) buildHelpOptionDescription(
 		repeatableFrag = p.i18nText("help.meta.repeatable", "repeatable")
 	}
 
-	extras := make([]string, 0, 3)
+	deprecatedFrag := ""
+	if option.Deprecated != "" {
+		deprecatedFrag = p.i18nText("help.meta.deprecated", "deprecated") + ": " + option.Deprecated
+	}
+
+	extras := make([]string, 0, 4)
 	if defaultFrag != "" {
 		extras = append(extras, "("+defaultFrag+")")
 	}
@@ -1275,10 +1290,13 @@ func (p *Parser) buildHelpOptionDescription(
 	if repeatableFrag != "" {
 		extras = append(extras, "("+repeatableFrag+")")
 	}
+	if deprecatedFrag != "" {
+		extras = append(extras, "("+deprecatedFrag+")")
+	}
 
 	desc := description
 	if len(extras) == 0 {
-		return strings.Split(desc, "\n"), defaultFrag, envFrag, repeatableFrag
+		return strings.Split(desc, "\n"), defaultFrag, envFrag, repeatableFrag, deprecatedFrag
 	}
 
 	lines := strings.Split(desc, "\n")
@@ -1288,7 +1306,7 @@ func (p *Parser) buildHelpOptionDescription(
 
 	if descWidth <= 0 {
 		lines = append(lines, extras...)
-		return lines, defaultFrag, envFrag, repeatableFrag
+		return lines, defaultFrag, envFrag, repeatableFrag, deprecatedFrag
 	}
 
 	for _, extra := range extras {
@@ -1308,7 +1326,7 @@ func (p *Parser) buildHelpOptionDescription(
 		lines = append(lines, extra)
 	}
 
-	return lines, defaultFrag, envFrag, repeatableFrag
+	return lines, defaultFrag, envFrag, repeatableFrag, deprecatedFrag
 }
 
 func isHelpTextStyleSet(style HelpTextStyle) bool {
@@ -1364,7 +1382,7 @@ func (p *Parser) writeLaidOutHelpOption(
 		leftLines = []string{p.colorizeOptionPunctuation(leftLine, format)}
 	}
 
-	descLines, defaultFrag, envFrag, repeatableFrag := p.buildHelpOptionDescription(
+	descLines, defaultFrag, envFrag, repeatableFrag, deprecatedFrag := p.buildHelpOptionDescription(
 		option,
 		format,
 		layout.DescWidth,
@@ -1379,6 +1397,7 @@ func (p *Parser) writeLaidOutHelpOption(
 		defaultFrag,
 		envFrag,
 		repeatableFrag,
+		deprecatedFrag,
 	)
 }
 

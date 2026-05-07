@@ -72,6 +72,10 @@ type Option struct {
 	// blocks. Only slice and slice-of-slices options are valid with terminator.
 	Terminator string
 
+	// If non-empty, marks this option as deprecated. The value is a short
+	// replacement hint shown in help output and parse warnings.
+	Deprecated string
+
 	validation valueValidationConfig
 
 	// Additional long names for the option (without namespace prefix in tags).
@@ -365,6 +369,17 @@ func (option *Option) SetSecret(secret bool) {
 // parser errors.
 func (option *Option) IsSecret() bool {
 	return option.Secret
+}
+
+// SetDeprecated marks the option as deprecated with the given replacement hint.
+// An empty string clears the deprecation marker.
+func (option *Option) SetDeprecated(msg string) {
+	option.Deprecated = msg
+}
+
+// IsDeprecated reports whether this option is marked as deprecated.
+func (option *Option) IsDeprecated() bool {
+	return option.Deprecated != ""
 }
 
 // SetValueNameI18nKey sets i18n key used to localize option value placeholder.

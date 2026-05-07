@@ -61,7 +61,7 @@
 {{- if gt $idx 0 }}, {{ end -}}<code>{{ quoteHTML $f }}</code>
 {{- end -}}
 {{ defaultValue .Default }}{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}
-{{- if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
+{{- if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ if .Deprecated }} <strong>({{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ if .Deprecated }} <strong>({{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }})</strong>{{ end }}{{ else if .Deprecated }} - <strong>({{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }})</strong>{{ end }}
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
         <ul>
 {{- if .Env }}
@@ -126,6 +126,9 @@
 {{ define "command" }}
     <article>
       <h3 id="{{ tocCommandAnchor .Name }}">{{ quoteHTML .Name }}</h3>
+{{- if .Deprecated }}
+      <blockquote><strong>{{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }}</strong></blockquote>
+{{- end }}
       <p style="white-space: pre-wrap;">{{ quoteHTML .ShortDescription }}</p>
 {{- if .LongDescription }}
       <p style="white-space: pre-wrap;">{{ quoteHTML .LongDescription }}</p>
@@ -149,7 +152,7 @@
 {{- if gt $idx 0 }}, {{ end -}}<code>{{ quoteHTML $f }}</code>
 {{- end -}}
 {{ defaultValue .Default }}{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}
-{{- if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}
+{{- if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ if hiddenMark .Hidden }} <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ end }}{{ if .Deprecated }} <strong>({{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }})</strong>{{ end }}{{ else if hiddenMark .Hidden }} - <strong>({{ i18n "doc.tmpl.html.hidden" }})</strong>{{ if .Deprecated }} <strong>({{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }})</strong>{{ end }}{{ else if .Deprecated }} - <strong>({{ i18n "doc.tmpl.html.deprecated" }}: {{ quoteHTML .Deprecated }})</strong>{{ end }}
 {{- if or .Env .Choices .Optional .IniName .KeyValueDelim .Terminator .DefaultMask .Base .UnquoteTag (ne .Order 0) }}
           <ul>
 {{- if .Env }}

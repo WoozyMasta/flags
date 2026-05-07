@@ -24,6 +24,36 @@ Use hidden entities for:
 Do not use hidden entities as authorization.
 If a command should not be available, do not register it.
 
+## Deprecated Entities
+
+`deprecated` marks an option or command as deprecated
+with a short replacement hint.
+
+```go
+type Options struct {
+  OldOutput string `long:"output" deprecated:"use --out instead"`
+  Output    string `long:"out" description:"Output file path"`
+}
+```
+
+Deprecated entities remain parseable.
+When a deprecated option or command is used during parsing,
+the parser emits a localized warning to standard error:
+
+```text
+warning: flag `--output` is deprecated: use --out instead
+```
+
+With `PrintErrorsOnStdout`, the warning is routed to standard output.
+Use `SilenceDeprecationWarnings` to suppress warnings in tests or
+automation that manages its own diagnostic output.
+
+Use `SetDeprecated` to set the deprecation hint at runtime:
+
+```go
+parser.FindOptionByLongName("output").SetDeprecated("use --out instead")
+```
+
 ## Default Masks
 
 `default-mask` changes how defaults are displayed.

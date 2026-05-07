@@ -31,6 +31,7 @@ type docCommand struct {
 	LongDescription     string
 	UsageLine           string
 	Group               string
+	Deprecated          string
 	Aliases             []string
 	Args                []docArg
 	Groups              []docGroup
@@ -80,6 +81,7 @@ type docOption struct {
 	Base          string
 	AutoEnvTag    string
 	UnquoteTag    string
+	Deprecated    string
 	Choices       []string
 	DefaultRaw    []string
 	Order         int
@@ -160,6 +162,7 @@ func buildDocCommand(
 		SubcommandsOptional: cmd.SubcommandsOptional,
 		PassAfterNonOption:  cmd.PassAfterNonOption,
 		Hidden:              cmd.Hidden,
+		Deprecated:          cmd.Deprecated,
 		Group:               cmd.localizedCommandGroup(),
 		Args:                buildDocArgs(cmd, includeHidden, trimDescriptions),
 		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format, trimDescriptions),
@@ -240,6 +243,7 @@ func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions boo
 		NoIni:         parseDocBoolTag(opt.tag.Get(FlagTagNoIni)),
 		NoFlag:        parseDocBoolTag(opt.tag.Get(FlagTagNoFlag)),
 		Secret:        opt.Secret,
+		Deprecated:    opt.Deprecated,
 	}
 
 	if opt.ShortName != 0 {

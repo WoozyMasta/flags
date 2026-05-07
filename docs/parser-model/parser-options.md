@@ -61,6 +61,10 @@ but useful for CLIs whose output contract expects all parser text on stdout.
 `PrintHelpOnInputErrors` prints help before common user-input errors.
 This is useful for interactive tools, but can be noisy in scripts.
 
+`SilenceDeprecationWarnings` suppresses the warning emitted to standard error
+when a deprecated option or command is used during parsing.
+Use it in tests, wrappers, or automation that controls its own warning output.
+
 ## Argument Passing Options
 
 `PassDoubleDash` stops parsing after `--`.

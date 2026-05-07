@@ -677,6 +677,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err != nil {
 			return err
 		}
+		deprecated := mtag.Get(FlagTagDeprecated)
 
 		envKey := mtag.Get(FlagTagEnv)
 		autoEnv, hasAutoEnvTag, err := parseStructBoolTag(mtag, FlagTagAutoEnv, field.Name)
@@ -717,6 +718,7 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			ValueName:          valueName,
 			ValueNameI18nKey:   valueNameI18n,
 			DefaultMask:        defaultMask,
+			Deprecated:         deprecated,
 			Secret:             secret,
 			Choices:            choices,
 			XorGroups:          xorGroups,
