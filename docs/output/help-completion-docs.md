@@ -54,6 +54,33 @@ Raw blocks are not trimmed, wrapped, or reformatted.
 If a non-empty block does not end with a newline, help rendering adds one.
 `WriteBanner` writes only the configured banner to a caller-provided writer.
 
+## Help Render Options
+
+`WriteHelpWithOptions` applies per-call overrides without mutating the parser.
+All overrides are rolled back before the method returns.
+
+```go
+parser.WriteHelpWithOptions(os.Stdout, flags.HelpRenderOptions{
+    Width:         100,
+    FlagStyle:     flags.RenderStylePOSIX,
+    IncludeHidden: true,
+})
+```
+
+`HelpRenderOptions` fields:
+
+* `Width` — overrides output wrapping width for this call.
+  Zero (the default) uses the parser's configured width
+  or auto-detects the terminal width.
+* `FlagStyle` — overrides the flag render style.
+  `RenderStyleAuto` (the default) uses the parser's configured style.
+* `EnvStyle` — overrides the env render style.
+  `RenderStyleAuto` (the default) uses the parser's configured style.
+* `IncludeHidden` — includes hidden options and groups in the output.
+
+`WriteHelpWithOptions` is useful in tests, admin tooling, and generator scripts
+where deterministic output is required without permanently changing the parser.
+
 ## Completion
 
 Completion scripts are generated from the same command tree,

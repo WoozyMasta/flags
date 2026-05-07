@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `WriteHelpWithOptions` and `HelpRenderOptions` for per-call overrides
+  of help output width, flag render style, env render style,
+  and hidden-option inclusion without mutating the parser.
+
 ## [0.4.0] - 2026-05-06
 
 ### Added

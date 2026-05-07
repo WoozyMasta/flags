@@ -1954,6 +1954,128 @@ func TestWriteHelpAddsBuiltinHelpGroupWithoutParse(t *testing.T) {
 	}
 }
 
+func TestWriteHelpWithOptionsWidth(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"alpha beta gamma delta epsilon zeta eta theta"`
+	}
+
+	p := NewNamedParser("WithWidth", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	p.WriteHelpWithOptions(&out, HelpRenderOptions{Width: 32})
+
+	got := out.String()
+	if !strings.Contains(got, "\n") {
+		t.Fatalf("expected narrow width to wrap description, got:\n%s", got)
+	}
+	if !strings.Contains(got, "delta epsilon zeta") {
+		t.Fatalf("expected wrapped description content, got:\n%s", got)
+	}
+
+	// Parser state must not be mutated.
+	var out2 bytes.Buffer
+	p.WriteHelp(&out2)
+	if strings.Contains(out2.String(), "\n           delta epsilon zeta") {
+		t.Fatalf("WriteHelp after WriteHelpWithOptions should not retain width override")
+	}
+}
+
+func TestWriteHelpWithOptionsIncludeHidden(t *testing.T) {
+	var opts struct {
+		Visible string `long:"visible" description:"visible option"`
+		Hidden  string `long:"hidden" description:"hidden option" hidden:"true"`
+	}
+
+	p := NewNamedParser("WithHidden", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var outDefault bytes.Buffer
+	p.WriteHelp(&outDefault)
+	if strings.Contains(outDefault.String(), "--hidden") {
+		t.Fatalf("default WriteHelp should not show hidden option, got:\n%s", outDefault.String())
+	}
+
+	var outWithHidden bytes.Buffer
+	p.WriteHelpWithOptions(&outWithHidden, HelpRenderOptions{IncludeHidden: true})
+	if !strings.Contains(outWithHidden.String(), "--hidden") {
+		t.Fatalf("WriteHelpWithOptions IncludeHidden should show hidden option, got:\n%s", outWithHidden.String())
+	}
+	if !strings.Contains(outWithHidden.String(), "--visible") {
+		t.Fatalf("WriteHelpWithOptions IncludeHidden should also show visible option, got:\n%s", outWithHidden.String())
+	}
+
+	// Parser state must not be mutated.
+	var outAfter bytes.Buffer
+	p.WriteHelp(&outAfter)
+	if strings.Contains(outAfter.String(), "--hidden") {
+		t.Fatalf("WriteHelp after WriteHelpWithOptions should not show hidden option, got:\n%s", outAfter.String())
+	}
+}
+
+func TestWriteHelpWithOptionsHiddenGroup(t *testing.T) {
+	var visible struct {
+		A string `long:"alpha" description:"alpha option"`
+	}
+	var hidden struct {
+		B string `long:"beta" description:"beta option"`
+	}
+
+	p := NewNamedParser("WithHiddenGroup", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if _, err := p.AddGroup("Visible Group", "", &visible); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	grp, err := p.AddGroup("Hidden Group", "", &hidden)
+	if err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	grp.Hidden = true
+
+	var outDefault bytes.Buffer
+	p.WriteHelp(&outDefault)
+	if strings.Contains(outDefault.String(), "--beta") {
+		t.Fatalf("default WriteHelp should not show hidden group option, got:\n%s", outDefault.String())
+	}
+
+	var outWithHidden bytes.Buffer
+	p.WriteHelpWithOptions(&outWithHidden, HelpRenderOptions{IncludeHidden: true})
+	if !strings.Contains(outWithHidden.String(), "--beta") {
+		t.Fatalf("WriteHelpWithOptions IncludeHidden should show hidden group option, got:\n%s", outWithHidden.String())
+	}
+}
+
+func TestWriteHelpWithOptionsFlagStyle(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"some option"`
+	}
+
+	p := NewNamedParser("WithStyle", None)
+	p.SetHelpFlagRenderStyle(RenderStylePOSIX)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var outWindows bytes.Buffer
+	p.WriteHelpWithOptions(&outWindows, HelpRenderOptions{FlagStyle: RenderStyleWindows})
+	if !strings.Contains(outWindows.String(), "/value") {
+		t.Fatalf("expected Windows-style flag rendering, got:\n%s", outWindows.String())
+	}
+
+	// Parser style must be unchanged.
+	var outDefault bytes.Buffer
+	p.WriteHelp(&outDefault)
+	if !strings.Contains(outDefault.String(), "--value") {
+		t.Fatalf("WriteHelp after WriteHelpWithOptions should keep POSIX style, got:\n%s", outDefault.String())
+	}
+}
+
 func TestWroteHelp(t *testing.T) {
 	type testInfo struct {
 		value  error

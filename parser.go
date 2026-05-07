@@ -132,6 +132,9 @@ type Parser struct {
 	// Tracks whether helpWidth was explicitly configured.
 	helpWidthSet bool
 
+	// When set by WriteHelpWithOptions, bypasses hidden filtering in WriteHelp.
+	helpIncludeHidden bool
+
 	// Indicates that post-scan configurators should be applied before parse.
 	configDirty bool
 

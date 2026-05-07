@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -222,12 +223,12 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 			// Skip built-in help group for all commands except the top-level
 			// parser
-			if grp.Hidden || (grp.isBuiltinHelp && c != p.Command) {
+			if (grp.isBuiltinHelp && c != p.Command) || !p.helpGroupVisible(grp) {
 				return
 			}
 
 			for _, info := range c.sortedOptionsForGroup(grp) {
-				if !info.showInHelp() {
+				if !p.helpOptionVisible(info) {
 					continue
 				}
 
@@ -363,6 +364,55 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	p.writeHelpRawBlock(wr, p.helpFooter, p.helpColorScheme.HelpFooter, aligninfo.terminalColumns)
 
 	_ = wr.Flush()
+}
+
+// HelpRenderOptions configures a single WriteHelpWithOptions call without
+// mutating the parser. Zero-value fields use the parser's existing settings.
+type HelpRenderOptions struct {
+	// Width overrides the output wrapping width for this call.
+	// Zero (the default) uses the parser's configured width or auto-detects
+	// the terminal width. Set to a large value to approximate unlimited width.
+	Width int
+	// FlagStyle overrides the flag render style. RenderStyleAuto (the default)
+	// uses the parser's configured style.
+	FlagStyle RenderStyle
+	// EnvStyle overrides the env render style. RenderStyleAuto (the default)
+	// uses the parser's configured style.
+	EnvStyle RenderStyle
+	// IncludeHidden includes hidden options and groups in the output.
+	IncludeHidden bool
+}
+
+// WriteHelpWithOptions writes help output applying per-call render overrides.
+// It does not mutate the parser; all overrides are rolled back before it returns.
+func (p *Parser) WriteHelpWithOptions(writer io.Writer, opts HelpRenderOptions) {
+	prevWidth := p.helpWidth
+	prevWidthSet := p.helpWidthSet
+	prevFlagStyle := p.helpFlagStyle
+	prevEnvStyle := p.helpEnvStyle
+	prevIncludeHidden := p.helpIncludeHidden
+
+	defer func() {
+		p.helpWidth = prevWidth
+		p.helpWidthSet = prevWidthSet
+		p.helpFlagStyle = prevFlagStyle
+		p.helpEnvStyle = prevEnvStyle
+		p.helpIncludeHidden = prevIncludeHidden
+	}()
+
+	if opts.Width > 0 {
+		p.helpWidth = opts.Width
+		p.helpWidthSet = true
+	}
+	if opts.FlagStyle != RenderStyleAuto {
+		p.helpFlagStyle = opts.FlagStyle
+	}
+	if opts.EnvStyle != RenderStyleAuto {
+		p.helpEnvStyle = opts.EnvStyle
+	}
+	p.helpIncludeHidden = opts.IncludeHidden
+
+	p.WriteHelp(writer)
 }
 
 // WriteBanner writes the configured banner text to writer as a raw block.
@@ -505,11 +555,11 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 	}
 
 	p.eachActiveGroup(func(_ *Command, grp *Group) {
-		if !grp.showInHelp() {
+		if !p.helpGroupVisible(grp) {
 			return
 		}
 		for _, info := range grp.options {
-			if !info.showInHelp() {
+			if !p.helpOptionVisible(info) {
 				continue
 			}
 
@@ -538,11 +588,11 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 			}
 			prevcmd = c
 		}
-		if !grp.showInHelp() {
+		if !p.helpGroupVisible(grp) {
 			return
 		}
 		for _, info := range grp.options {
-			if !info.showInHelp() {
+			if !p.helpOptionVisible(info) {
 				continue
 			}
 
@@ -572,6 +622,20 @@ func (p *Parser) helpColumns() int {
 	}
 
 	return width
+}
+
+func (p *Parser) helpOptionVisible(o *Option) bool {
+	if p.helpIncludeHidden {
+		return o.ShortName != 0 || len(o.LongName) != 0
+	}
+	return o.showInHelp()
+}
+
+func (p *Parser) helpGroupVisible(g *Group) bool {
+	if p.helpIncludeHidden {
+		return slices.ContainsFunc(g.options, p.helpOptionVisible)
+	}
+	return g.showInHelp()
 }
 
 func wrapText(s string, l int, prefix string, trimWhitespace bool) string {
@@ -1325,7 +1389,7 @@ func (p *Parser) writeHelpOption(
 	trimDescriptions bool,
 	format optionRenderFormat,
 ) {
-	if option.Hidden {
+	if !p.helpIncludeHidden && option.Hidden {
 		return
 	}
 
