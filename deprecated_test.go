@@ -146,7 +146,6 @@ func TestDeprecatedOptionEmitsWarningOnParse(t *testing.T) {
 	var out bytes.Buffer
 	origStdout := captureParserOutput(p, &out)
 
-
 	if _, err := p.ParseArgs([]string{"--old", "val"}); err != nil {
 		origStdout()
 		t.Fatalf("unexpected parse error: %v", err)
