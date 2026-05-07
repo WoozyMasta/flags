@@ -631,6 +631,25 @@ func (option *Option) String() string {
 	return s
 }
 
+func (option *Option) renderString() string {
+	if p := option.parser(); p != nil {
+		rf := p.optionRenderFormat()
+		if option.ShortName != 0 {
+			short := string(option.ShortName)
+			if option.LongName != "" {
+				return fmt.Sprintf("%s%s, %s%s",
+					string(rf.shortDelimiter), short,
+					rf.longDelimiter, option.LongNameWithNamespace())
+			}
+			return fmt.Sprintf("%s%s", string(rf.shortDelimiter), short)
+		}
+		if option.LongName != "" {
+			return fmt.Sprintf("%s%s", rf.longDelimiter, option.LongNameWithNamespace())
+		}
+	}
+	return option.String()
+}
+
 // Value returns the option value as an interface{}.
 func (option *Option) Value() any {
 	return option.value.Interface()

@@ -184,11 +184,11 @@ func (p *parseState) checkRequired(parser *Parser) error {
 
 func optionRequiredName(option *Option) string {
 	if !option.requiredValueRange {
-		return option.String()
+		return option.renderString()
 	}
 
 	count := option.requiredValueCount()
-	name := option.String()
+	name := option.renderString()
 
 	if count < option.requiredValueMin {
 		values := "value"
@@ -360,7 +360,7 @@ func joinedOptionList(parser *Parser, options []*Option, key string, fallback st
 	names := make([]string, 0, len(options))
 
 	for _, option := range options {
-		names = append(names, option.String())
+		names = append(names, option.renderString())
 	}
 
 	sort.Strings(names)
@@ -470,17 +470,7 @@ func (p *parseState) estimateCommand() error {
 
 func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg bool, argument string, hasArgument bool) (err error) {
 	if option.Deprecated != "" && !option.isSet && (p.Options&SilenceDeprecationWarnings) == None {
-		rf := p.optionRenderFormat()
-		var flagName string
-		switch {
-		case option.LongName != "":
-			flagName = rf.longDelimiter + option.LongNameWithNamespace()
-		case option.ShortName != 0:
-			flagName = string(rf.shortDelimiter) + string(option.ShortName)
-		default:
-			flagName = option.String()
-		}
-		p.printDeprecationWarning("flag", flagName, option.Deprecated)
+		p.printDeprecationWarning("flag", option.renderString(), option.Deprecated)
 	}
 
 	if option.Counter {
@@ -521,7 +511,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 				p.i18nTextf(
 					"err.bool.no_argument",
 					"bool flag `{flag}` cannot have an argument",
-					map[string]string{"flag": option.String()},
+					map[string]string{"flag": option.renderString()},
 				),
 			)
 		}
@@ -537,7 +527,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 				p.i18nTextf(
 					"err.terminated.inline_argument",
 					"terminated option flag `{flag}` cannot use inline argument syntax",
-					map[string]string{"flag": option.String()},
+					map[string]string{"flag": option.renderString()},
 				),
 			)
 		}
@@ -563,7 +553,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 					p.i18nTextf(
 						"err.expected_argument.double_dash",
 						"expected argument for flag `{flag}`, but got double dash `--`",
-						map[string]string{"flag": option.String()},
+						map[string]string{"flag": option.renderString()},
 					),
 				)
 			}
@@ -592,7 +582,7 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 			p.i18nTextf(
 				"err.expected_argument.flag",
 				"expected argument for flag `{flag}`",
-				map[string]string{"flag": option.String()},
+				map[string]string{"flag": option.renderString()},
 			),
 		)
 	}
@@ -678,7 +668,7 @@ func (p *Parser) marshalError(option *Option, err error) *Error {
 			"err.marshal.option",
 			"invalid argument for flag `{flag}`{expected}: {error}",
 			map[string]string{
-				"flag":     option.String(),
+				"flag":     option.renderString(),
 				"expected": expected,
 				"error":    errorText,
 			},

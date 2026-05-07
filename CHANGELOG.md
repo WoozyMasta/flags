@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning][].
   and potential false suggestions for non-ASCII input
   such as wrong-layout keyboard typos.
 
+### Fixed
+
+* Error messages that reference flag names now use the active render style
+  (`--flag` vs `/flag`) instead of the platform default,
+  so bash users on Windows see POSIX-style names in all error output.
+
 ## [0.4.0] - 2026-05-06
 
 ### Added

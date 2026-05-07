@@ -823,39 +823,63 @@ func addDuplicateFlagScope(g *Group, shortNames map[rune]*Option, longNames map[
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same long name as option `%s`", option, otherOption)
+					duplicateError = newErrorf(
+						ErrDuplicatedFlag, "option `%s` uses the same long name as option `%s`",
+						option.renderString(), otherOption.renderString(),
+					)
 					return
 				}
 				longNames[longName] = option
 			}
+
 			for _, alias := range option.LongAliasesWithNamespace() {
 				if otherOption, ok := longNames[alias]; ok {
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same long alias `%s` as option `%s`", option, alias, otherOption)
+					longPfx := defaultLongOptDelimiter
+					if p := option.parser(); p != nil {
+						longPfx = p.optionRenderFormat().longDelimiter
+					}
+					duplicateError = newErrorf(
+						ErrDuplicatedFlag, "option `%s` uses the same long alias `%s` as option `%s`",
+						option.renderString(), longPfx+alias, otherOption.renderString(),
+					)
 					return
 				}
 				longNames[alias] = option
 			}
+
 			if option.ShortName != 0 {
 				if otherOption, ok := shortNames[option.ShortName]; ok {
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same short name as option `%s`", option, otherOption)
+					duplicateError = newErrorf(
+						ErrDuplicatedFlag, "option `%s` uses the same short name as option `%s`",
+						option.renderString(), otherOption.renderString(),
+					)
 					return
 				}
 				shortNames[option.ShortName] = option
 			}
+
 			for _, alias := range option.ShortAliases {
 				if otherOption, ok := shortNames[alias]; ok {
 					if duplicateAllowedForBuiltinOptions(option, otherOption) {
 						continue
 					}
-					duplicateError = newErrorf(ErrDuplicatedFlag, "option `%s` uses the same short alias `%c` as option `%s`", option, alias, otherOption)
+					shortPfx := string(defaultShortOptDelimiter)
+					if p := option.parser(); p != nil {
+						shortPfx = string(p.optionRenderFormat().shortDelimiter)
+					}
+					duplicateError = newErrorf(
+						ErrDuplicatedFlag, "option `%s` uses the same short alias `%s%c` as option `%s`",
+						option.renderString(), shortPfx, alias, otherOption.renderString(),
+					)
 					return
 				}
+
 				shortNames[alias] = option
 			}
 		}

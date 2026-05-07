@@ -489,7 +489,7 @@ func (option *Option) isValidValue(arg string) error {
 					"err.invalid_argument.option",
 					"expected argument for flag `{flag}`, but got option `{option}`",
 					map[string]string{
-						"flag":   option.String(),
+						"flag":   option.renderString(),
 						"option": arg,
 					},
 				),
@@ -536,7 +536,7 @@ func (option *Option) validateChoice(value string) error {
 				"Invalid value `{value}` for option `{option}`. Allowed values are: {allowed}",
 				map[string]string{
 					"value":   displayedValue,
-					"option":  option.String(),
+					"option":  option.renderString(),
 					"allowed": allowed,
 				},
 			),
