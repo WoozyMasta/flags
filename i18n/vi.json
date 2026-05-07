@@ -156,6 +156,7 @@
   "help.builtin.command.config.desc": "Tạo ví dụ cấu hình INI",
   "help.builtin.command.docs.desc": "Tạo tài liệu",
   "help.builtin.command.docs.html.desc": "Tạo tài liệu HTML",
+  "help.builtin.command.docs.json.desc": "Tạo tệp kê khai tài liệu JSON",
   "help.builtin.command.docs.include_hidden.desc": "Bao gồm tùy chọn, nhóm và lệnh bị ẩn",
   "help.builtin.command.docs.man.desc": "Tạo tài liệu man page",
   "help.builtin.command.docs.mark_hidden.desc": "Đánh dấu các thực thể bị ẩn trong tài liệu",

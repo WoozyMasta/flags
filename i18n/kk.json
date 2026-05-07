@@ -156,6 +156,7 @@
   "help.builtin.command.config.desc": "INI конфигурация мысалын жасау",
   "help.builtin.command.docs.desc": "Құжаттама жасау",
   "help.builtin.command.docs.html.desc": "HTML құжаттамасын жасау",
+  "help.builtin.command.docs.json.desc": "JSON құжаттама манифестін жасау",
   "help.builtin.command.docs.include_hidden.desc": "Жасырын опцияларды, топтарды және командаларды қосу",
   "help.builtin.command.docs.man.desc": "man беті құжаттамасын жасау",
   "help.builtin.command.docs.mark_hidden.desc": "Құжаттама шығысында жасырын нысандарды белгілеу",

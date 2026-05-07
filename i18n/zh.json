@@ -156,6 +156,7 @@
   "help.builtin.command.config.desc": "生成 INI 配置示例",
   "help.builtin.command.docs.desc": "生成文档",
   "help.builtin.command.docs.html.desc": "生成 HTML 文档",
+  "help.builtin.command.docs.json.desc": "生成 JSON 文档清单",
   "help.builtin.command.docs.include_hidden.desc": "包含隐藏的选项、组和命令",
   "help.builtin.command.docs.man.desc": "生成 man 页面文档",
   "help.builtin.command.docs.mark_hidden.desc": "在文档输出中标记隐藏实体",

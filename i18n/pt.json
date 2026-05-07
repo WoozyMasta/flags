@@ -156,6 +156,7 @@
   "help.builtin.command.config.desc": "Gerar exemplo de configuração INI",
   "help.builtin.command.docs.desc": "Gerar documentação",
   "help.builtin.command.docs.html.desc": "Gerar documentação HTML",
+  "help.builtin.command.docs.json.desc": "Gerar manifesto de documentação JSON",
   "help.builtin.command.docs.include_hidden.desc": "Incluir opções, grupos e comandos ocultos",
   "help.builtin.command.docs.man.desc": "Gerar documentação man",
   "help.builtin.command.docs.mark_hidden.desc": "Marcar entidades ocultas na documentação",

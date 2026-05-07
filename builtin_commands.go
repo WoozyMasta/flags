@@ -55,8 +55,9 @@ func (c *builtinCompletionCommand) Execute(_ []string) error {
 }
 
 type builtinDocsCommand struct {
-	Man  builtinDocManCommand      `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
 	HTML builtinDocHTMLCommand     `command:"html" ini-group:"docs.html" description:"Generate HTML documentation" description-i18n:"help.builtin.command.docs.html.desc"`
+	Man  builtinDocManCommand      `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
+	JSON builtinDocJSONCommand     `command:"json" ini-group:"docs.json" description:"Generate JSON documentation manifest" description-i18n:"help.builtin.command.docs.json.desc"`
 	MD   builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
 }
 
@@ -172,6 +173,33 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
 		return c.parser.WriteDoc(w, DocFormatMarkdown, opts...)
+	})
+}
+
+type builtinDocJSONCommand struct {
+	parser *Parser
+
+	Output struct {
+		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+	} `positional-args:"yes"`
+
+	builtinDocProgramNameOption
+	builtinDocRenderStyleOption
+	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output"`
+	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	Compact          bool `long:"compact" description:"Emit compact JSON without indentation"`
+}
+
+func (c *builtinDocJSONCommand) Execute(_ []string) error {
+	opts := []DocOption{
+		WithProgramName(c.ProgramName),
+		WithTrimDescriptions(c.TrimDescriptions),
+		WithIncludeHidden(c.IncludeHidden),
+		withJSONCompact(c.Compact),
+	}
+	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
+	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
+		return c.parser.WriteDoc(w, DocFormatJSON, opts...)
 	})
 }
 
@@ -365,6 +393,7 @@ func (p *Parser) ensureBuiltinCommands() error {
 			Man:  builtinDocManCommand{parser: p},
 			HTML: builtinDocHTMLCommand{parser: p},
 			MD:   builtinDocMarkdownCommand{parser: p},
+			JSON: builtinDocJSONCommand{parser: p},
 		}
 		if err := p.addBuiltinCommand("docs", "Generate documentation", "help.builtin.command.docs.desc", docs); err != nil {
 			return err
@@ -419,4 +448,5 @@ func (*builtinDocsCommand) isBuiltinCommand()        {}
 func (*builtinDocManCommand) isBuiltinCommand()      {}
 func (*builtinDocHTMLCommand) isBuiltinCommand()     {}
 func (*builtinDocMarkdownCommand) isBuiltinCommand() {}
+func (*builtinDocJSONCommand) isBuiltinCommand()     {}
 func (*builtinConfigCommand) isBuiltinCommand()      {}

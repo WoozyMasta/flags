@@ -5,6 +5,7 @@
 package flags
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -21,6 +22,8 @@ const (
 	DocFormatMarkdown DocFormat = "markdown"
 	// DocFormatHTML renders HTML documentation.
 	DocFormatHTML DocFormat = "html"
+	// DocFormatJSON renders the doc model as a JSON manifest.
+	DocFormatJSON DocFormat = "json"
 )
 
 type docRenderOptions struct {
@@ -34,6 +37,7 @@ type docRenderOptions struct {
 	trimDescriptions bool
 	includeHidden    bool
 	markHidden       bool
+	jsonCompact      bool
 	hasRenderStyle   bool
 	hasWrapWidth     bool
 }
@@ -182,6 +186,8 @@ func (p *Parser) WriteDoc(w io.Writer, format DocFormat, opts ...DocOption) erro
 		return p.writeDocMarkdown(w, cfg)
 	case DocFormatHTML:
 		return p.writeDocHTML(w, cfg)
+	case DocFormatJSON:
+		return p.writeDocJSON(w, cfg)
 	default:
 		return fmt.Errorf("unsupported doc format %q", format)
 	}
@@ -191,4 +197,22 @@ func (p *Parser) WriteDoc(w io.Writer, format DocFormat, opts ...DocOption) erro
 // writer.
 func (p *Parser) WriteManPage(w io.Writer) {
 	_ = p.WriteDoc(w, DocFormatMan, WithBuiltinTemplate(DocTemplateManDefault))
+}
+
+func withJSONCompact(compact bool) DocOption {
+	return func(o *docRenderOptions) error {
+		o.jsonCompact = compact
+		return nil
+	}
+}
+
+func (p *Parser) writeDocJSON(w io.Writer, cfg docRenderOptions) error {
+	model := p.buildDocModel(cfg)
+
+	enc := json.NewEncoder(w)
+	if !cfg.jsonCompact {
+		enc.SetIndent("", "  ")
+	}
+
+	return enc.Encode(model)
 }

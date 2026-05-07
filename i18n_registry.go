@@ -161,6 +161,7 @@ var builtinI18nMessages = []i18nMessageSpec{
 	{Key: "help.builtin.command.config.desc", Source: "Generate INI configuration example"},
 	{Key: "help.builtin.command.docs.desc", Source: "Generate documentation"},
 	{Key: "help.builtin.command.docs.html.desc", Source: "Generate HTML documentation"},
+	{Key: "help.builtin.command.docs.json.desc", Source: "Generate JSON documentation manifest"},
 	{Key: "help.builtin.command.docs.include_hidden.desc", Source: "Include hidden options, groups and commands"},
 	{Key: "help.builtin.command.docs.man.desc", Source: "Generate man page documentation"},
 	{Key: "help.builtin.command.docs.mark_hidden.desc", Source: "Mark hidden entities in documentation output"},

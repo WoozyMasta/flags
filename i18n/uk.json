@@ -156,6 +156,7 @@
   "help.builtin.command.config.desc": "Згенерувати приклад INI-конфігурації",
   "help.builtin.command.docs.desc": "Згенерувати документацію",
   "help.builtin.command.docs.html.desc": "Згенерувати HTML-документацію",
+  "help.builtin.command.docs.json.desc": "Згенерувати JSON-маніфест документації",
   "help.builtin.command.docs.include_hidden.desc": "Включати приховані опції, групи та команди",
   "help.builtin.command.docs.man.desc": "Згенерувати man-документацію",
   "help.builtin.command.docs.mark_hidden.desc": "Позначати приховані сутності в документації",

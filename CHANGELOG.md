@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning][].
   Levenshtein distance mechanism, respecting the active flag render style.
 * `Option.SetCompletionFunc` and `Arg.SetCompletionFunc` register a per-option
   callback invoked during shell completion with the partial input typed so far.
+* `DocFormatJSON` and built-in `docs json` command expose the parser doc model
+  as a machine-readable JSON manifest.
+  Supports `--compact`, `--include-hidden`, `--program-name`, and `--style`.
 
 ### Changed
 

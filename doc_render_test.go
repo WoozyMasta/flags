@@ -2,6 +2,7 @@ package flags
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -906,5 +907,144 @@ func TestWriteDocBuiltinTemplatesRenderCommandGroupsAndLinearArgs(t *testing.T) 
 				}
 			}
 		})
+	}
+}
+
+func TestWriteDocJSON(t *testing.T) {
+	var opts struct {
+		Verbose bool   `short:"v" long:"verbose" description:"Enable verbose output"`
+		Output  string `long:"output" default:"stdout" description:"Output file"`
+		Run     struct {
+			Force bool `long:"force" description:"Force execution"`
+		} `command:"run" description:"Run command" aliases:"exec"`
+	}
+
+	p := NewNamedParser("testapp", None)
+	p.ShortDescription = "Test application"
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("AddGroup: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := p.WriteDoc(&buf, DocFormatJSON); err != nil {
+		t.Fatalf("WriteDoc JSON: %v", err)
+	}
+
+	raw := buf.Bytes()
+	if !json.Valid(raw) {
+		t.Fatalf("output is not valid JSON: %s", raw)
+	}
+
+	var doc map[string]any
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	if doc["name"] != "testapp" {
+		t.Errorf("name: got %v, want testapp", doc["name"])
+	}
+	if doc["short_description"] != "Test application" {
+		t.Errorf("short_description: got %v, want 'Test application'", doc["short_description"])
+	}
+	if _, ok := doc["generated_at"]; ok {
+		t.Error("generated_at must not appear in JSON output")
+	}
+
+	cmds, _ := doc["commands"].([]any)
+	if len(cmds) == 0 {
+		t.Fatal("expected at least one command in JSON")
+	}
+	cmd := cmds[0].(map[string]any)
+	if cmd["name"] != "run" {
+		t.Errorf("command name: got %v, want run", cmd["name"])
+	}
+	aliases, _ := cmd["aliases"].([]any)
+	if len(aliases) == 0 || aliases[0] != "exec" {
+		t.Errorf("command aliases: got %v, want [exec]", aliases)
+	}
+
+	groups, _ := doc["groups"].([]any)
+	if len(groups) == 0 {
+		t.Fatal("expected at least one group in JSON")
+	}
+	options, _ := groups[0].(map[string]any)["options"].([]any)
+	longNames := make([]string, 0, len(options))
+	for _, o := range options {
+		if ln, ok := o.(map[string]any)["long"].(string); ok {
+			longNames = append(longNames, ln)
+		}
+	}
+	for _, want := range []string{"verbose", "output"} {
+		found := false
+		for _, ln := range longNames {
+			if ln == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("option %q not found in JSON groups; got %v", want, longNames)
+		}
+	}
+}
+
+func TestWriteDocJSONSecretMasked(t *testing.T) {
+	var opts struct {
+		Token  string `long:"token" default:"secret123" secret:"true" description:"API token"`
+		Region string `long:"region" choices:"us;eu" secret:"true" description:"Region"`
+	}
+
+	p := NewNamedParser("secapp", None)
+	if _, err := p.AddGroup("Options", "", &opts); err != nil {
+		t.Fatalf("AddGroup: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := p.WriteDoc(&buf, DocFormatJSON); err != nil {
+		t.Fatalf("WriteDoc JSON: %v", err)
+	}
+
+	out := buf.String()
+
+	if strings.Contains(out, "secret123") {
+		t.Error("secret default value 'secret123' must not appear in JSON output")
+	}
+	if strings.Contains(out, `"us"`) || strings.Contains(out, `"eu"`) {
+		t.Error("choices for secret option must not appear in JSON output")
+	}
+	if !strings.Contains(out, `"secret": true`) {
+		t.Error("'secret: true' marker must be present in JSON output")
+	}
+	if !strings.Contains(out, secretValueMask) {
+		t.Error("secret mask sentinel must appear in JSON output for masked default")
+	}
+}
+
+func TestWriteDocJSONDocOptions(t *testing.T) {
+	var opts struct {
+		Name   string `long:"name" description:"Name"`
+		Hidden string `long:"secret-key" hidden:"true" description:"Hidden key"`
+	}
+
+	p := NewNamedParser("optapp", None)
+	if _, err := p.AddGroup("Options", "", &opts); err != nil {
+		t.Fatalf("AddGroup: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := p.WriteDoc(&buf, DocFormatJSON); err != nil {
+		t.Fatalf("WriteDoc: %v", err)
+	}
+	if strings.Contains(buf.String(), "secret-key") {
+		t.Error("hidden option must not appear without WithIncludeHidden")
+	}
+
+	buf.Reset()
+	if err := p.WriteDoc(&buf, DocFormatJSON, WithIncludeHidden(true)); err != nil {
+		t.Fatalf("WriteDoc with hidden: %v", err)
+	}
+	if !strings.Contains(buf.String(), "secret-key") {
+		t.Error("hidden option must appear with WithIncludeHidden(true)")
 	}
 }

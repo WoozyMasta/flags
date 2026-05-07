@@ -14,6 +14,7 @@ Supported output formats are:
 * `DocFormatMarkdown`
 * `DocFormatHTML`
 * `DocFormatMan`
+* `DocFormatJSON`
 
 ```go
 err := parser.WriteDoc(os.Stdout, flags.DocFormatMarkdown)
@@ -21,6 +22,7 @@ err := parser.WriteDoc(os.Stdout, flags.DocFormatMarkdown)
 
 The format controls escaping and default template selection.
 A custom template can still be supplied for any supported format.
+`DocFormatJSON` does not use templates — it serializes the doc model directly.
 
 ## Built-in Templates
 
@@ -219,6 +221,45 @@ err := parser.WriteDoc(
 
 Shell detection is useful for runtime help,
 but generated repository files should usually use explicit styles.
+
+## JSON Manifest
+
+`DocFormatJSON` serializes the doc model as a machine-readable JSON object.
+It does not use templates.
+
+```go
+err := parser.WriteDoc(os.Stdout, flags.DocFormatJSON)
+```
+
+The manifest contains the full command tree with options, positional arguments,
+env keys, INI keys, choices, defaults, aliases, deprecation markers,
+and visibility flags.
+Secret option values and choices are masked
+the same way as in all other formats.
+
+`DocFormatJSON` accepts the same `DocOption` values as other formats:
+
+```go
+err := parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatJSON,
+  flags.WithIncludeHidden(true),
+  flags.WithProgramName("myapp"),
+)
+```
+
+The built-in `docs json` command exposes the same options at the CLI level,
+including `--include-hidden`, `--program-name`, `--style`, and `--compact`
+for single-line output without indentation:
+
+```bash
+myapp docs json
+myapp docs json --compact
+myapp docs json --include-hidden manifest.json
+```
+
+Use `DocFormatJSON` for documentation sites, GUI wrappers, editor integrations,
+and snapshot tests that verify CLI contracts without parsing rendered text.
 
 ## Manpage Compatibility
 

@@ -14,84 +14,84 @@ import (
 )
 
 type docParser struct {
-	Name             string
-	ShortDescription string
-	LongDescription  string
-	GeneratedAt      time.Time
-	Usage            string
-	Args             []docArg
-	Groups           []docGroup
-	Commands         []docCommand
-	CommandGroups    []docCommandGroup
+	Name             string            `json:"name"`
+	ShortDescription string            `json:"short_description,omitempty"`
+	LongDescription  string            `json:"long_description,omitempty"`
+	GeneratedAt      time.Time         `json:"-"`
+	Usage            string            `json:"usage,omitempty"`
+	Args             []docArg          `json:"args,omitempty"`
+	Groups           []docGroup        `json:"groups,omitempty"`
+	Commands         []docCommand      `json:"commands,omitempty"`
+	CommandGroups    []docCommandGroup `json:"-"`
 }
 
 type docCommand struct {
-	Name                string
-	ShortDescription    string
-	LongDescription     string
-	UsageLine           string
-	Group               string
-	Deprecated          string
-	Aliases             []string
-	Args                []docArg
-	Groups              []docGroup
-	Commands            []docCommand
-	CommandGroups       []docCommandGroup
-	SubcommandsOptional bool
-	PassAfterNonOption  bool
-	Hidden              bool
+	Name                string            `json:"name"`
+	ShortDescription    string            `json:"short_description,omitempty"`
+	LongDescription     string            `json:"long_description,omitempty"`
+	UsageLine           string            `json:"usage_line,omitempty"`
+	Group               string            `json:"group,omitempty"`
+	Deprecated          string            `json:"deprecated,omitempty"`
+	Aliases             []string          `json:"aliases,omitempty"`
+	Args                []docArg          `json:"args,omitempty"`
+	Groups              []docGroup        `json:"groups,omitempty"`
+	Commands            []docCommand      `json:"commands,omitempty"`
+	CommandGroups       []docCommandGroup `json:"-"`
+	SubcommandsOptional bool              `json:"subcommands_optional,omitempty"`
+	PassAfterNonOption  bool              `json:"pass_after_non_option,omitempty"`
+	Hidden              bool              `json:"hidden,omitempty"`
 }
 
 type docArg struct {
-	Name        string
-	Description string
-	Required    bool
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Required    bool   `json:"required,omitempty"`
 }
 
 type docCommandGroup struct {
-	Name     string
-	Commands []docCommand
+	Name     string       `json:"name"`
+	Commands []docCommand `json:"commands,omitempty"`
 }
 
 type docGroup struct {
-	ShortDescription string
-	LongDescription  string
-	Namespace        string
-	EnvNamespace     string
-	Options          []docOption
-	Hidden           bool
+	ShortDescription string      `json:"short_description,omitempty"`
+	LongDescription  string      `json:"long_description,omitempty"`
+	Namespace        string      `json:"namespace,omitempty"`
+	EnvNamespace     string      `json:"env_namespace,omitempty"`
+	Options          []docOption `json:"options,omitempty"`
+	Hidden           bool        `json:"hidden,omitempty"`
 }
 
 type docOption struct {
-	Tags          map[string][]string
-	Short         string
-	Long          string
-	Env           string
-	ValueName     string
-	OptionalVal   string
-	Default       string
-	Description   string
-	Signature     string
-	EnvDelim      string
-	EnvSignature  string
-	IniName       string
-	DefaultMask   string
-	KeyValueDelim string
-	Terminator    string
-	Base          string
-	AutoEnvTag    string
-	UnquoteTag    string
-	Deprecated    string
-	Choices       []string
-	DefaultRaw    []string
-	Order         int
-	TypeClass     OptionTypeClass
-	Hidden        bool
-	NoIni         bool
-	NoFlag        bool
-	Optional      bool
-	Required      bool
-	Secret        bool
+	Tags          map[string][]string `json:"-"`
+	Short         string              `json:"short,omitempty"`
+	Long          string              `json:"long,omitempty"`
+	Env           string              `json:"env,omitempty"`
+	ValueName     string              `json:"value_name,omitempty"`
+	OptionalVal   string              `json:"optional_value,omitempty"`
+	Default       string              `json:"-"`
+	Description   string              `json:"description,omitempty"`
+	Signature     string              `json:"-"`
+	EnvDelim      string              `json:"env_delimiter,omitempty"`
+	EnvSignature  string              `json:"-"`
+	IniName       string              `json:"ini_name,omitempty"`
+	DefaultMask   string              `json:"-"`
+	KeyValueDelim string              `json:"key_value_delimiter,omitempty"`
+	Terminator    string              `json:"terminator,omitempty"`
+	Base          string              `json:"base,omitempty"`
+	AutoEnvTag    string              `json:"-"`
+	UnquoteTag    string              `json:"-"`
+	Deprecated    string              `json:"deprecated,omitempty"`
+	Choices       []string            `json:"choices,omitempty"`
+	DefaultRaw    []string            `json:"default_raw,omitempty"`
+	Order         int                 `json:"-"`
+	TypeClass     OptionTypeClass     `json:"-"`
+	Hidden        bool                `json:"hidden,omitempty"`
+	NoIni         bool                `json:"no_ini,omitempty"`
+	NoFlag        bool                `json:"no_flag,omitempty"`
+	Optional      bool                `json:"optional,omitempty"`
+	Required      bool                `json:"required,omitempty"`
+	Secret        bool                `json:"secret,omitempty"`
 }
 
 func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {

@@ -156,6 +156,7 @@
   "help.builtin.command.config.desc": "Vygenerovat příklad INI konfigurace",
   "help.builtin.command.docs.desc": "Vygenerovat dokumentaci",
   "help.builtin.command.docs.html.desc": "Vygenerovat HTML dokumentaci",
+  "help.builtin.command.docs.json.desc": "Vygenerovat manifest dokumentace JSON",
   "help.builtin.command.docs.include_hidden.desc": "Zahrnout skryté volby, skupiny a příkazy",
   "help.builtin.command.docs.man.desc": "Vygenerovat man dokumentaci",
   "help.builtin.command.docs.mark_hidden.desc": "Označit skryté entity v dokumentaci",

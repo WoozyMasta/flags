@@ -11,11 +11,16 @@ import (
 
 // Arg represents a positional argument on the command line.
 type Arg struct {
-	tag        multiTag
-	value      reflect.Value
-	cmd        *Command
-	io         argIOConfig
-	validation valueValidationConfig
+	cmd *Command
+
+	// completionFunc, when set, is called to generate dynamic completions for
+	// this positional argument. It takes priority over the hint fallback but
+	// yields to the Completer interface on the argument's value type.
+	completionFunc func(match string) []Completion
+
+	io    argIOConfig
+	tag   multiTag
+	value reflect.Value
 
 	// The name of the positional argument (used in the help)
 	Name string
@@ -29,22 +34,19 @@ type Arg struct {
 	// Optional i18n key for Description.
 	DescriptionI18nKey string
 
+	validation valueValidationConfig
+
 	// The default value(s) of the positional argument.
 	Default []string
-
-	// completionHint controls fallback completion mode (file, dir, none).
-	completionHint completionHint
-
-	// completionFunc, when set, is called to generate dynamic completions for
-	// this positional argument. It takes priority over the hint fallback but
-	// yields to the Completer interface on the argument's value type.
-	completionFunc func(match string) []Completion
 
 	// The minimal number of required positional arguments
 	Required int
 
 	// The maximum number of required positional arguments
 	RequiredMaximum int
+
+	// completionHint controls fallback completion mode (file, dir, none).
+	completionHint completionHint
 }
 
 // SetName updates positional argument name used in usage/help placeholders.

@@ -27,7 +27,13 @@ const (
 type Option struct {
 	// The group which the option belongs to
 	group *Group
-	io    argIOConfig
+
+	// completionFunc, when set, is called to generate dynamic completions for
+	// this option. It takes priority over Choices but yields to the Completer
+	// interface on the option's value type.
+	completionFunc func(match string) []Completion
+
+	io argIOConfig
 
 	// Parsed struct tags associated with this option.
 	tag multiTag
@@ -128,11 +134,6 @@ type Option struct {
 
 	// completionHint controls fallback completion mode (file, dir, none).
 	completionHint completionHint
-
-	// completionFunc, when set, is called to generate dynamic completions for
-	// this option. It takes priority over Choices but yields to the Completer
-	// interface on the option's value type.
-	completionFunc func(match string) []Completion
 
 	defaultLiteralInitialized bool
 
