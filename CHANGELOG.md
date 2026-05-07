@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.5.0] - 2026-05-07
 
 ### Added
 
@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning][].
   scope has the same long name.
   Options belonging to library-controlled built-in commands are now exempt
   from cross-scope duplicate validation.
+
+[0.5.0]: https://github.com/WoozyMasta/flags/compare/v0.4.0...v0.5.0
 
 ## [0.4.0] - 2026-05-06
 
