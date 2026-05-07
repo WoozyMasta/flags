@@ -472,11 +472,12 @@ func (p *Parser) parseOption(s *parseState, _ string, option *Option, canarg boo
 	if option.Deprecated != "" && !option.isSet && (p.Options&SilenceDeprecationWarnings) == None {
 		rf := p.optionRenderFormat()
 		var flagName string
-		if option.LongName != "" {
+		switch {
+		case option.LongName != "":
 			flagName = rf.longDelimiter + option.LongNameWithNamespace()
-		} else if option.ShortName != 0 {
+		case option.ShortName != 0:
 			flagName = string(rf.shortDelimiter) + string(option.ShortName)
-		} else {
+		default:
 			flagName = option.String()
 		}
 		p.printDeprecationWarning("flag", flagName, option.Deprecated)
