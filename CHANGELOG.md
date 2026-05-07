@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning][].
   with a short replacement hint.
 * "Did you mean" suggestions for unknown long flags using the existing
   Levenshtein distance mechanism, respecting the active flag render style.
+* `Option.SetCompletionFunc` and `Arg.SetCompletionFunc` register a per-option
+  callback invoked during shell completion with the partial input typed so far.
 
 ### Changed
 

@@ -35,6 +35,11 @@ type Arg struct {
 	// completionHint controls fallback completion mode (file, dir, none).
 	completionHint completionHint
 
+	// completionFunc, when set, is called to generate dynamic completions for
+	// this positional argument. It takes priority over the hint fallback but
+	// yields to the Completer interface on the argument's value type.
+	completionFunc func(match string) []Completion
+
 	// The minimal number of required positional arguments
 	Required int
 
@@ -89,6 +94,15 @@ func (a *Arg) SetRequiredRange(requiredMin int, requiredMax int) error {
 	a.Required = requiredMin
 	a.RequiredMaximum = requiredMax
 	return nil
+}
+
+// SetCompletionFunc registers a callback that generates dynamic completions for
+// this positional argument. The callback is invoked during shell completion
+// with the partial input typed so far. It takes priority over the hint fallback
+// but yields to the Completer interface on the value type. Pass nil to remove
+// a previously set callback.
+func (a *Arg) SetCompletionFunc(fn func(match string) []Completion) {
+	a.completionFunc = fn
 }
 
 func (a *Arg) isRemaining() bool {

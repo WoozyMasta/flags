@@ -402,6 +402,13 @@ func (c *completion) completeValue(opt *Option, arg *Arg, value reflect.Value, p
 		}
 	}
 
+	if ret == nil && opt != nil && opt.completionFunc != nil {
+		ret = opt.completionFunc(match)
+	}
+	if ret == nil && arg != nil && arg.completionFunc != nil {
+		ret = arg.completionFunc(match)
+	}
+
 	if ret == nil && opt != nil && len(opt.Choices) > 0 && !opt.Secret {
 		return completeChoices(opt.Choices, prefix, match)
 	}

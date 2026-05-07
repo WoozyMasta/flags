@@ -129,6 +129,11 @@ type Option struct {
 	// completionHint controls fallback completion mode (file, dir, none).
 	completionHint completionHint
 
+	// completionFunc, when set, is called to generate dynamic completions for
+	// this option. It takes priority over Choices but yields to the Completer
+	// interface on the option's value type.
+	completionFunc func(match string) []Completion
+
 	defaultLiteralInitialized bool
 
 	// If true, specifies that the argument to an option flag is optional.
@@ -473,6 +478,14 @@ func (option *Option) SetAutoEnv(enabled bool) error {
 // SetChoices replaces allowed option values.
 func (option *Option) SetChoices(values ...string) {
 	option.Choices = append(option.Choices[:0], values...)
+}
+
+// SetCompletionFunc registers a callback that generates dynamic completions for
+// this option. The callback is invoked during shell completion with the partial
+// input typed so far. It takes priority over Choices but yields to the Completer
+// interface on the value type. Pass nil to remove a previously set callback.
+func (option *Option) SetCompletionFunc(fn func(match string) []Completion) {
+	option.completionFunc = fn
 }
 
 // SetXorGroups replaces mutually exclusive relation groups for this option.

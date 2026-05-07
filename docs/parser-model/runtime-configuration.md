@@ -192,7 +192,8 @@ Use parser setters for behavior that belongs to the whole CLI, not one field.
 
 Option setters change one option's metadata.
 They can rename an option, add aliases, set defaults, set env keys,
-set choices, set required/hidden state, or adjust ordering.
+set choices, set required/hidden state, adjust ordering,
+or register a dynamic completion callback.
 
 Find options by canonical name:
 
@@ -230,7 +231,7 @@ Groups expose setters for descriptions, namespaces, INI section names,
 visibility, and immediate behavior.
 
 Arguments expose setters for display name, description, defaults,
-completion hints, and validation-related metadata.
+completion hints, completion callbacks, and validation-related metadata.
 `Arg.SetRequiredRange` uses the same min/max model as repeatable required
 option ranges.
 

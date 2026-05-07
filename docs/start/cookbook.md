@@ -412,6 +412,34 @@ Keep completion fast. Shells may call it on every tab press.
 
 Related: [Completion][] and [Custom Values][].
 
+## Dynamic Completion Callback
+
+Use `SetCompletionFunc` when the value type is a plain string
+but completions depend on runtime state.
+
+```go
+parser := flags.NewParser(&opts, flags.Default)
+
+if opt := parser.FindOptionByLongName("zone"); opt != nil {
+  opt.SetCompletionFunc(func(match string) []flags.Completion {
+    zones, _ := cloud.ListZones()
+    out := make([]flags.Completion, 0, len(zones))
+    for _, z := range zones {
+      if strings.HasPrefix(z.Name, match) {
+        out = append(out, flags.Completion{Item: z.Name, Description: z.Region})
+      }
+    }
+    return out
+  })
+}
+```
+
+Positional arguments use the same API via `Arg.SetCompletionFunc`.
+Return nil to fall through to choices or hint; return an empty non-nil slice
+to suppress all completions for that token.
+
+Related: [Completion][].
+
 ## Localized Help
 
 Use i18n tags when help and docs should be translated.

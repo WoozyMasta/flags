@@ -66,7 +66,8 @@ The shell may call completion often.
 
 Value completion priority is:
 
-1. custom `Completer` implementation;
+1. custom `Completer` implementation on the value type;
+1. `SetCompletionFunc` callback registered on the option or arg;
 1. `choice` or `choices` tags;
 1. `completion` hint;
 1. built-in bool values when `AllowBoolValues` is enabled.
@@ -135,6 +136,43 @@ flags.Completion{Item: "json", Description: "Machine-readable JSON"}
 
 Keep completers fast.
 Avoid network calls unless they are cached and clearly expected by users.
+
+## Completion Callbacks
+
+`SetCompletionFunc` registers a per-option or per-arg callback
+without requiring a custom type.
+It is the lighter-weight alternative to implementing `Completer`.
+
+```go
+opt := parser.FindOptionByLongName("zone")
+opt.SetCompletionFunc(func(match string) []flags.Completion {
+  zones := fetchZones()
+  out := make([]flags.Completion, 0)
+  for _, z := range zones {
+    if strings.HasPrefix(z, match) {
+      out = append(out, flags.Completion{Item: z})
+    }
+  }
+  return out
+})
+```
+
+Positional arguments accept the same callback:
+
+```go
+arg.SetCompletionFunc(func(match string) []flags.Completion {
+  return fetchTargets(match)
+})
+```
+
+The callback receives the partial value typed so far.
+Return an empty non-nil slice to suppress all completions.
+Return nil to let lower-priority sources (choices, hint) take over.
+Pass nil to `SetCompletionFunc` to remove a previously registered callback.
+
+The `Completer` interface on the value type still takes priority over a
+registered callback. Use the callback when the value type is a plain string
+or when the completions depend on runtime state rather than the type itself.
 
 ## Filename Completer
 
