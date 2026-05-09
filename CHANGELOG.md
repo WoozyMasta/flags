@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning][].
 
 * Built-in command struct fields no longer inherit the parser's auto-env
   namespace prefix.
+* Bash completion script replaced `COMPREPLY=($(…))`
+  with `mapfile -t COMPREPLY < <(…)`.
+* PowerShell completion script renamed `$args` to `$__goFlagsArgs`
+  to avoid assigning to a PowerShell automatic variable.
 
 ## [0.5.0] - 2026-05-07
 
