@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "टेम्पलेट",
   "help.builtin.command.version.desc": "संस्करण जानकारी दिखाएँ",
+  "help.builtin.command.version.json.desc": "संस्करण जानकारी JSON के रूप में प्रिंट करें",
   "help.builtin.command.version.commit.desc": "केवल कमिट SHA प्रिंट करें",
   "help.builtin.command.version.short.desc": "केवल संस्करण संख्या प्रिंट करें",
   "help.builtin.show_help": "यह सहायता संदेश दिखाएँ",

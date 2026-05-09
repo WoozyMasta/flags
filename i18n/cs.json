@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "ŠABLONA",
   "help.builtin.command.version.desc": "Zobrazit informace o verzi",
+  "help.builtin.command.version.json.desc": "Zobrazit informace o verzi ve formátu JSON",
   "help.builtin.command.version.commit.desc": "Vypsat pouze SHA commitu",
   "help.builtin.command.version.short.desc": "Vypsat pouze číslo verze",
   "help.builtin.show_help": "Zobrazit tuto nápovědu",

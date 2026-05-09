@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning][].
 * `VersionFieldLicense` field mask and `SetVersionLicense` render the optional
   license identifier in version output.
 * `version --short` flag on the built-in `version` command prints only the bare
-  version string; `version --commit` prints only the bare commit SHA.
+  version string; `version --commit` prints only the bare commit SHA;
+  `version --json` prints all version fields as indented JSON.
 * `SetVersionShort(bool)` on `Parser` makes the built-in `--version`/`-v` flag
   behave like `version --short` — printing only the version string
   instead of the full metadata block.

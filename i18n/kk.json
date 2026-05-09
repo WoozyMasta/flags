@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "ҮЛГІ",
   "help.builtin.command.version.desc": "Нұсқа ақпаратын көрсету",
+  "help.builtin.command.version.json.desc": "Нұсқа туралы ақпаратты JSON пішімінде шығару",
   "help.builtin.command.version.commit.desc": "Тек коммит SHA-ын шығару",
   "help.builtin.command.version.short.desc": "Тек нұсқа нөмірін шығару",
   "help.builtin.show_help": "Осы анықтама хабарын көрсету",

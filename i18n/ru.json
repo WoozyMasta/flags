@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "ШАБЛОН",
   "help.builtin.command.version.desc": "Показать информацию о версии",
+  "help.builtin.command.version.json.desc": "Вывести информацию о версии в формате JSON",
   "help.builtin.command.version.commit.desc": "Вывести только SHA коммита",
   "help.builtin.command.version.short.desc": "Вывести только номер версии",
   "help.builtin.show_help": "Показать это сообщение справки",

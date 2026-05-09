@@ -34,17 +34,30 @@ or when helper commands are part of the public CLI design.
 
 ## Short Version Output
 
-The built-in `version` command supports two short-output flags:
+The built-in `version` command supports short-output
+and machine-readable flags:
 
 * `version --short` prints only the bare version string.
 * `version --commit` prints only the bare commit SHA.
+* `version --json` prints all version fields as indented JSON.
 
-Both are useful in scripts where only a single value is needed:
+`--short` and `--commit` are useful in scripts
+where only a single value is needed:
 
 ```sh
 TAG=$(myapp version --short)
 SHA=$(myapp version --commit)
 ```
+
+`--json` is useful for tooling that needs to consume version metadata:
+
+```sh
+myapp version --json | jq .version
+```
+
+The JSON output includes only non-empty fields.
+`built` is omitted when VCS time is unavailable; `modified` and `license`
+are omitted when false or empty respectively.
 
 To make the built-in `--version`/`-v` flag print only the version string
 (equivalent to `version --short`), call `SetVersionShort`:

@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "템플릿",
   "help.builtin.command.version.desc": "버전 정보 표시",
+  "help.builtin.command.version.json.desc": "버전 정보를 JSON 형식으로 출력",
   "help.builtin.command.version.commit.desc": "커밋 SHA만 출력",
   "help.builtin.command.version.short.desc": "버전 번호만 출력",
   "help.builtin.show_help": "이 도움말 메시지 표시",

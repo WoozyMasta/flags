@@ -176,6 +176,7 @@ var builtinI18nMessages = []i18nMessageSpec{
 	{Key: "help.builtin.command.value.template", Source: "TEMPLATE"},
 	{Key: "help.builtin.command.version.commit.desc", Source: "Print commit SHA only"},
 	{Key: "help.builtin.command.version.desc", Source: "Show version information"},
+	{Key: "help.builtin.command.version.json.desc", Source: "Print version information as JSON"},
 	{Key: "help.builtin.command.version.short.desc", Source: "Print version number only"},
 	{Key: "help.builtin.show_help", Source: "Show this help message"},
 	{Key: "help.builtin.show_version", Source: "Show version information"},

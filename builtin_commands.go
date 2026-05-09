@@ -5,9 +5,11 @@
 package flags
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
 
 type builtinCommand interface {
@@ -30,6 +32,7 @@ type builtinVersionCommand struct {
 
 	Short  bool `long:"short" description:"Print version number only" description-i18n:"help.builtin.command.version.short.desc" auto-env:"false"`
 	Commit bool `long:"commit" description:"Print commit SHA only" description-i18n:"help.builtin.command.version.commit.desc" auto-env:"false"`
+	JSON   bool `long:"json" description:"Print version information as JSON" description-i18n:"help.builtin.command.version.json.desc" auto-env:"false"`
 }
 
 func (c *builtinVersionCommand) Execute(_ []string) error {
@@ -42,6 +45,7 @@ func (c *builtinVersionCommand) Execute(_ []string) error {
 		_, _ = fmt.Fprintln(os.Stdout, version)
 		return nil
 	}
+
 	if c.Commit {
 		info := c.parser.VersionInfo()
 		commit := info.Revision
@@ -51,6 +55,45 @@ func (c *builtinVersionCommand) Execute(_ []string) error {
 		_, _ = fmt.Fprintln(os.Stdout, commit)
 		return nil
 	}
+
+	if c.JSON {
+		info := c.parser.VersionInfo()
+		out := struct {
+			File      string     `json:"file,omitempty"`
+			Version   string     `json:"version,omitempty"`
+			Commit    string     `json:"commit,omitempty"`
+			Built     *time.Time `json:"built,omitempty"`
+			URL       string     `json:"url,omitempty"`
+			Path      string     `json:"path,omitempty"`
+			Module    string     `json:"module,omitempty"`
+			GoVersion string     `json:"go,omitempty"`
+			GOOS      string     `json:"goos,omitempty"`
+			GOARCH    string     `json:"goarch,omitempty"`
+			Modified  bool       `json:"modified,omitempty"`
+			License   string     `json:"license,omitempty"`
+		}{
+			File:      info.File,
+			Version:   info.Version,
+			Commit:    info.Revision,
+			URL:       info.URL,
+			Path:      info.Path,
+			Module:    info.ModulePath,
+			GoVersion: info.GoVersion,
+			GOOS:      info.GOOS,
+			GOARCH:    info.GOARCH,
+			Modified:  info.Modified,
+			License:   info.License,
+		}
+
+		if !info.RevisionTime.IsZero() {
+			out.Built = &info.RevisionTime
+		}
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(out)
+	}
+
 	c.parser.WriteVersion(os.Stdout, c.parser.versionFields)
 	return nil
 }

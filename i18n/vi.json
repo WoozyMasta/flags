@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "MẪU",
   "help.builtin.command.version.desc": "Hiển thị thông tin phiên bản",
+  "help.builtin.command.version.json.desc": "In thông tin phiên bản dưới dạng JSON",
   "help.builtin.command.version.commit.desc": "Chỉ in SHA commit",
   "help.builtin.command.version.short.desc": "Chỉ in số phiên bản",
   "help.builtin.show_help": "Hiển thị trợ giúp này",

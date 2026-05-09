@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "模板",
   "help.builtin.command.version.desc": "显示版本信息",
+  "help.builtin.command.version.json.desc": "以JSON格式输出版本信息",
   "help.builtin.command.version.commit.desc": "仅打印提交 SHA",
   "help.builtin.command.version.short.desc": "仅打印版本号",
   "help.builtin.show_help": "显示此帮助信息",

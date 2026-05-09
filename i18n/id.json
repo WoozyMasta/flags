@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "TEMPLATE",
   "help.builtin.command.version.desc": "Tampilkan informasi versi",
+  "help.builtin.command.version.json.desc": "Cetak informasi versi sebagai JSON",
   "help.builtin.command.version.commit.desc": "Cetak SHA commit saja",
   "help.builtin.command.version.short.desc": "Cetak nomor versi saja",
   "help.builtin.show_help": "Tampilkan pesan bantuan ini",

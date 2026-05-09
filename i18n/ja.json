@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "テンプレート",
   "help.builtin.command.version.desc": "バージョン情報を表示",
+  "help.builtin.command.version.json.desc": "バージョン情報をJSON形式で出力する",
   "help.builtin.command.version.commit.desc": "コミットSHAのみ出力",
   "help.builtin.command.version.short.desc": "バージョン番号のみ出力",
   "help.builtin.show_help": "このヘルプメッセージを表示",

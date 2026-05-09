@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "PLANTILLA",
   "help.builtin.command.version.desc": "Mostrar información de versión",
+  "help.builtin.command.version.json.desc": "Imprimir información de versión en formato JSON",
   "help.builtin.command.version.commit.desc": "Mostrar solo el SHA del commit",
   "help.builtin.command.version.short.desc": "Mostrar solo el número de versión",
   "help.builtin.show_help": "Mostrar este mensaje de ayuda",

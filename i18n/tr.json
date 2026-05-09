@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "ŞABLON",
   "help.builtin.command.version.desc": "Sürüm bilgisini göster",
+  "help.builtin.command.version.json.desc": "Sürüm bilgilerini JSON formatında yazdır",
   "help.builtin.command.version.commit.desc": "Yalnızca commit SHA'sını yazdır",
   "help.builtin.command.version.short.desc": "Yalnızca sürüm numarasını yazdır",
   "help.builtin.show_help": "Bu yardım mesajını göster",

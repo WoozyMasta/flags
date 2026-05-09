@@ -169,6 +169,7 @@
   "help.builtin.command.value.shell": "SHELL",
   "help.builtin.command.value.template": "ШАБЛОН",
   "help.builtin.command.version.desc": "Показати інформацію про версію",
+  "help.builtin.command.version.json.desc": "Вивести інформацію про версію у форматі JSON",
   "help.builtin.command.version.commit.desc": "Вивести лише SHA коміту",
   "help.builtin.command.version.short.desc": "Вивести лише номер версії",
   "help.builtin.show_help": "Показати це повідомлення довідки",
