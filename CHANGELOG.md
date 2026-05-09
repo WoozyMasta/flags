@@ -34,6 +34,11 @@ and this project adheres to [Semantic Versioning][].
 * `docs template render` built-in subcommand renders the parser doc model
   through a custom template read from a file path or stdin.
 
+### Changed
+
+* Built-in command options with a fixed `choices` list
+  no longer carry a redundant value-name placeholder in help output.
+
 ### Fixed
 
 * Built-in command struct fields no longer inherit the parser's auto-env

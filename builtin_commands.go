@@ -102,7 +102,7 @@ func (c *builtinVersionCommand) Execute(_ []string) error {
 type builtinCompletionCommand struct {
 	parser *Parser
 
-	Shell CompletionShell `long:"shell" value-name:"SHELL" value-name-i18n:"help.builtin.command.value.shell" choices:"bash;zsh;pwsh" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc" auto-env:"false"`
+	Shell CompletionShell `long:"shell" choices:"bash;zsh;pwsh" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc" auto-env:"false"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
@@ -133,7 +133,7 @@ type builtinDocProgramNameOption struct {
 }
 
 type builtinDocRenderStyleOption struct {
-	Style string `long:"style" value-name:"STYLE" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation" auto-env:"false"`
+	Style string `long:"style" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation" auto-env:"false"`
 }
 
 type builtinDocBuiltinCommandsOption struct {
@@ -173,7 +173,7 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 
 type builtinDocHTMLCommand struct {
 	parser   *Parser
-	Template string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"default;styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc" auto-env:"false"`
+	Template string `long:"template" choices:"default;styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc" auto-env:"false"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
@@ -211,7 +211,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 
 type builtinDocMarkdownCommand struct {
 	parser   *Parser
-	Template string `long:"template" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" choices:"list;table;code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc" auto-env:"false"`
+	Template string `long:"template" choices:"list;table;code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc" auto-env:"false"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
@@ -288,7 +288,7 @@ type builtinDocTemplateCommand struct {
 }
 
 type builtinDocTemplateExportCommand struct {
-	Name string `long:"name" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" description:"Built-in template name to export" description-i18n:"help.builtin.command.docs.template.name.desc" required:"yes" auto-env:"false"`
+	Name string `long:"name" description:"Built-in template name to export" description-i18n:"help.builtin.command.docs.template.name.desc" required:"yes" auto-env:"false"`
 
 	Output struct {
 		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
@@ -304,7 +304,7 @@ func (c *builtinDocTemplateExportCommand) Execute(_ []string) error {
 type builtinDocTemplateRenderCommand struct {
 	parser *Parser
 
-	Format string `long:"format" value-name:"FORMAT" choices:"markdown;html;man;json" default:"markdown" description:"Output format for template rendering" description-i18n:"help.builtin.command.docs.template.format.desc" auto-env:"false"`
+	Format string `long:"format" choices:"markdown;html;man;json" default:"markdown" description:"Output format for template rendering" description-i18n:"help.builtin.command.docs.template.format.desc" auto-env:"false"`
 
 	Inputs struct {
 		Template string `positional-arg-name:"template" arg-name-i18n:"help.builtin.command.docs.template.input.name" description:"Template file path or - for stdin" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`

@@ -102,7 +102,6 @@ func TestBuiltinCommandHelpTextIsLocalized(t *testing.T) {
 	}
 	normalizedStdout := strings.Join(strings.Fields(stdout), " ")
 	for _, want := range []string{
-		"ШАБЛОН",
 		"Шаблон Markdown-документации",
 		"Включать скрытые опции, группы и команды",
 		"Помечать скрытые сущности в документации",
@@ -602,7 +601,7 @@ func TestBuiltinDocsCommandTOCHTML(t *testing.T) {
 		"href=\"#command-version\">version</a>",
 		"href=\"#command-completion\">completion</a>",
 		"id=\"command-docs-html\">docs html</h3>",
-		"template TEMPLATE",
+		"id=\"command-docs-template-export\">docs template export</h3>",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected html toc entry %q, got:\n%s", want, text)
