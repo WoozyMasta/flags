@@ -121,10 +121,11 @@ func (c *builtinCompletionCommand) Execute(_ []string) error {
 }
 
 type builtinDocsCommand struct {
-	HTML builtinDocHTMLCommand     `command:"html" ini-group:"docs.html" description:"Generate HTML documentation" description-i18n:"help.builtin.command.docs.html.desc"`
-	Man  builtinDocManCommand      `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
-	JSON builtinDocJSONCommand     `command:"json" ini-group:"docs.json" description:"Generate JSON documentation manifest" description-i18n:"help.builtin.command.docs.json.desc"`
-	MD   builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
+	HTML     builtinDocHTMLCommand     `command:"html" ini-group:"docs.html" description:"Generate HTML documentation" description-i18n:"help.builtin.command.docs.html.desc"`
+	Man      builtinDocManCommand      `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
+	JSON     builtinDocJSONCommand     `command:"json" ini-group:"docs.json" description:"Generate JSON documentation manifest" description-i18n:"help.builtin.command.docs.json.desc"`
+	MD       builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
+	Template builtinDocTemplateCommand `command:"template" ini-group:"docs.template" description:"Export or render documentation templates" description-i18n:"help.builtin.command.docs.template.desc"`
 }
 
 type builtinDocProgramNameOption struct {
@@ -281,6 +282,91 @@ func (c *builtinDocJSONCommand) Execute(_ []string) error {
 	})
 }
 
+type builtinDocTemplateCommand struct {
+	Export builtinDocTemplateExportCommand `command:"export" ini-group:"docs.template.export" description:"Export a built-in documentation template" description-i18n:"help.builtin.command.docs.template.export.desc"`
+	Render builtinDocTemplateRenderCommand `command:"render" ini-group:"docs.template.render" description:"Render documentation using a custom template" description-i18n:"help.builtin.command.docs.template.render.desc"`
+}
+
+type builtinDocTemplateExportCommand struct {
+	Name string `long:"name" value-name:"TEMPLATE" value-name-i18n:"help.builtin.command.value.template" description:"Built-in template name to export" description-i18n:"help.builtin.command.docs.template.name.desc" required:"yes" auto-env:"false"`
+
+	Output struct {
+		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+	} `positional-args:"yes"`
+}
+
+func (c *builtinDocTemplateExportCommand) Execute(_ []string) error {
+	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
+		return WriteBuiltinTemplate(w, c.Name)
+	})
+}
+
+type builtinDocTemplateRenderCommand struct {
+	parser *Parser
+
+	Format string `long:"format" value-name:"FORMAT" choices:"markdown;html;man;json" default:"markdown" description:"Output format for template rendering" description-i18n:"help.builtin.command.docs.template.format.desc" auto-env:"false"`
+
+	Inputs struct {
+		Template string `positional-arg-name:"template" arg-name-i18n:"help.builtin.command.docs.template.input.name" description:"Template file path or - for stdin" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`
+		Output   string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+	} `positional-args:"yes"`
+
+	builtinDocProgramNameOption
+	builtinDocRenderStyleOption
+	builtinDocBuiltinCommandsOption
+	WrapWidth        int  `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
+	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
+	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
+	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
+	MarkHidden       bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc" auto-env:"false"`
+	Compact          bool `long:"compact" description:"Emit compact JSON without indentation" auto-env:"false"`
+}
+
+func (c *builtinDocTemplateRenderCommand) Execute(_ []string) error {
+	var tplBytes []byte
+	var err error
+
+	if c.Inputs.Template == "" || c.Inputs.Template == "-" {
+		tplBytes, err = io.ReadAll(os.Stdin)
+	} else {
+		tplBytes, err = os.ReadFile(c.Inputs.Template)
+	}
+	if err != nil {
+		return err
+	}
+
+	var format DocFormat
+	switch c.Format {
+	case "html":
+		format = DocFormatHTML
+	case "man":
+		format = DocFormatMan
+	case "json":
+		format = DocFormatJSON
+	default:
+		format = DocFormatMarkdown
+	}
+
+	opts := []DocOption{
+		WithTemplateBytes(tplBytes),
+		WithProgramName(c.ProgramName),
+		WithTOC(c.TOC),
+		WithTrimDescriptions(c.TrimDescriptions),
+		WithDocWrapWidth(c.WrapWidth),
+		WithIncludeHidden(c.IncludeHidden),
+		WithMarkHidden(c.MarkHidden),
+		WithBuiltinCommands(c.Builtins),
+	}
+	if c.Compact {
+		opts = append(opts, withJSONCompact(c.Compact))
+	}
+	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
+
+	return writeBuiltinCommandOutput(c.Inputs.Output, func(w io.Writer) error {
+		return c.parser.WriteDoc(w, format, opts...)
+	})
+}
+
 // SetBuiltinCommandHidden controls visibility of an enabled built-in command in
 // help, completion, and generated documentation.
 func (p *Parser) SetBuiltinCommandHidden(name string, hidden bool) error {
@@ -345,6 +431,22 @@ func (p *Parser) configureDocBuiltinCommandsOption() {
 		if opt := subCmd.Group.FindOptionByLongName("builtins"); opt != nil {
 			opt.SetChoices(enabled...)
 			opt.SetDefault(defaults...)
+		}
+	}
+
+	templateCmd := docCmd.Find("template")
+	if templateCmd == nil {
+		return
+	}
+	if renderCmd := templateCmd.Find("render"); renderCmd != nil {
+		if opt := renderCmd.Group.FindOptionByLongName("builtins"); opt != nil {
+			opt.SetChoices(enabled...)
+			opt.SetDefault(defaults...)
+		}
+	}
+	if exportCmd := templateCmd.Find("export"); exportCmd != nil {
+		if opt := exportCmd.Group.FindOptionByLongName("name"); opt != nil {
+			opt.SetChoices(ListBuiltinTemplates()...)
 		}
 	}
 }
@@ -515,6 +617,9 @@ func (p *Parser) ensureBuiltinCommands() error {
 			HTML: builtinDocHTMLCommand{parser: p},
 			MD:   builtinDocMarkdownCommand{parser: p},
 			JSON: builtinDocJSONCommand{parser: p},
+			Template: builtinDocTemplateCommand{
+				Render: builtinDocTemplateRenderCommand{parser: p},
+			},
 		}
 		if err := p.addBuiltinCommand("docs", "Generate documentation", "help.builtin.command.docs.desc", docs); err != nil {
 			return err
@@ -563,12 +668,15 @@ func builtinCommandOrder(name string) int {
 	}
 }
 
-func (*builtinHelpCommand) isBuiltinCommand()        {}
-func (*builtinVersionCommand) isBuiltinCommand()     {}
-func (*builtinCompletionCommand) isBuiltinCommand()  {}
-func (*builtinDocsCommand) isBuiltinCommand()        {}
-func (*builtinDocManCommand) isBuiltinCommand()      {}
-func (*builtinDocHTMLCommand) isBuiltinCommand()     {}
-func (*builtinDocMarkdownCommand) isBuiltinCommand() {}
-func (*builtinDocJSONCommand) isBuiltinCommand()     {}
-func (*builtinConfigCommand) isBuiltinCommand()      {}
+func (*builtinHelpCommand) isBuiltinCommand()              {}
+func (*builtinVersionCommand) isBuiltinCommand()           {}
+func (*builtinCompletionCommand) isBuiltinCommand()        {}
+func (*builtinDocsCommand) isBuiltinCommand()              {}
+func (*builtinDocManCommand) isBuiltinCommand()            {}
+func (*builtinDocHTMLCommand) isBuiltinCommand()           {}
+func (*builtinDocMarkdownCommand) isBuiltinCommand()       {}
+func (*builtinDocJSONCommand) isBuiltinCommand()           {}
+func (*builtinDocTemplateCommand) isBuiltinCommand()       {}
+func (*builtinDocTemplateExportCommand) isBuiltinCommand() {}
+func (*builtinDocTemplateRenderCommand) isBuiltinCommand() {}
+func (*builtinConfigCommand) isBuiltinCommand()            {}

@@ -282,6 +282,61 @@ myapp docs json --include-hidden manifest.json
 Use `DocFormatJSON` for documentation sites, GUI wrappers, editor integrations,
 and snapshot tests that verify CLI contracts without parsing rendered text.
 
+## Template CLI Subcommands
+
+The built-in `docs template` command provides two subcommands
+for working with templates from the command line without writing Go code.
+
+### Export a Built-in Template
+
+`docs template export` writes a built-in template to stdout or a file.
+Use `--name` to select which template to export.
+
+```sh
+myapp docs template export --name markdown/list
+myapp docs template export --name html/default > my-template.html
+myapp docs template export --name man/default man-template.roff
+```
+
+Choices for `--name` come from `ListBuiltinTemplates()`
+and are limited to templates that are actually embedded.
+
+### Render with a Custom Template
+
+`docs template render` renders the parser doc model through a template read
+from a file path or from stdin (pass `-` or omit the argument to read stdin).
+Output goes to stdout by default; a second positional argument writes to a file.
+
+```sh
+myapp docs template render my-template.html output.html
+myapp docs template render - < my-template.html
+```
+
+Use `--format` to control which doc format is used for escaping
+and the defaulttemplate selection context (default: `markdown`):
+
+```sh
+myapp docs template render --format html my-template.html output.html
+```
+
+`docs template render` accepts the same options as the other `docs` subcommands
+
+### Edit and Re-render a Built-in Template
+
+Export, edit, and re-render in one pipeline:
+
+```sh
+myapp docs template export --name html/default | myapp docs template render --format html
+```
+
+Or capture an intermediate copy to edit:
+
+```sh
+myapp docs template export --name markdown/list > my-template.md.tmpl
+# edit my-template.md.tmpl
+myapp docs template render my-template.md.tmpl docs/reference.md
+```
+
 ## Manpage Compatibility
 
 `WriteManPage` is kept for compatibility.

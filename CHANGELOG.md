@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning][].
 * `WithBuiltinCommands` doc option and `--builtins` flag on all built-in doc
   subcommands (`html`, `man`, `md`, `json`) control which built-in commands
   appear in the generated output.
+* `docs template export` built-in subcommand exports a built-in template by
+  name to stdout or a file.
+* `docs template render` built-in subcommand renders the parser doc model
+  through a custom template read from a file path or stdin.
 
 ### Fixed
 
