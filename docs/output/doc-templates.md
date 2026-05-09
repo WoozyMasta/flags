@@ -90,6 +90,27 @@ repository URLs, build IDs, generated-file notices, or site metadata.
 Use `WithIncludeHidden` and `WithMarkHidden` for internal documentation.
 Hidden entities are excluded unless `WithIncludeHidden(true)` is set.
 
+Use `WithBuiltinCommands` to control which built-in commands appear in
+the generated output.
+Pass `nil` to include all (the default when calling `WriteDoc` directly).
+Pass a non-nil slice to restrict to the named commands only:
+
+```go
+err := parser.WriteDoc(
+  os.Stdout,
+  flags.DocFormatMarkdown,
+  flags.WithBuiltinCommands([]string{"version"}),
+)
+```
+
+When using the built-in `docs` command, the `--builtins` flag does the same.
+Its choices are limited to actually-enabled commands;
+the default is `help`, `version`, `completion`.
+
+```sh
+myapp docs html --builtins version --builtins completion output.html
+```
+
 Use `WithDocWrapWidth` to control markdown text wrapping for one render call.
 A width of zero disables wrapping:
 

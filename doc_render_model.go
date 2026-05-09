@@ -7,6 +7,7 @@ package flags
 import (
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -118,7 +119,21 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format, cfg.trimDescriptions),
 	}
 
-	for _, cmd := range docCommands(p.Command, cfg.includeHidden) {
+	commands := docCommands(p.Command, cfg.includeHidden)
+	if cfg.includeBuiltinCommands != nil {
+		filtered := make([]*Command, 0, len(commands))
+		for _, cmd := range commands {
+			if !isBuiltinCommandData(cmd.Data()) {
+				filtered = append(filtered, cmd)
+				continue
+			}
+			if slices.Contains(cfg.includeBuiltinCommands, cmd.Name) {
+				filtered = append(filtered, cmd)
+			}
+		}
+		commands = filtered
+	}
+	for _, cmd := range commands {
 		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, cmd, cfg.includeHidden, format, cfg.trimDescriptions))
 	}
 	model.CommandGroups = buildDocCommandGroups(model.Commands)

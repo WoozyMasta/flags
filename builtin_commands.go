@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"time"
 )
 
@@ -134,6 +135,10 @@ type builtinDocRenderStyleOption struct {
 	Style string `long:"style" value-name:"STYLE" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation" auto-env:"false"`
 }
 
+type builtinDocBuiltinCommandsOption struct {
+	Builtins []string `long:"builtins" choices:"help;version;completion;docs;config" description:"Built-in commands to include in generated output" description-i18n:"help.builtin.command.docs.builtins.desc" auto-env:"false"`
+}
+
 type builtinDocManCommand struct {
 	parser *Parser
 
@@ -143,6 +148,7 @@ type builtinDocManCommand struct {
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocBuiltinCommandsOption
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
@@ -156,6 +162,7 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
+		WithBuiltinCommands(c.Builtins),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -172,6 +179,7 @@ type builtinDocHTMLCommand struct {
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocBuiltinCommandsOption
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 
@@ -192,6 +200,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
+		WithBuiltinCommands(c.Builtins),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -208,6 +217,7 @@ type builtinDocMarkdownCommand struct {
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocBuiltinCommandsOption
 	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
 
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
@@ -234,6 +244,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 		WithDocWrapWidth(c.WrapWidth),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
+		WithBuiltinCommands(c.Builtins),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -250,6 +261,7 @@ type builtinDocJSONCommand struct {
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocBuiltinCommandsOption
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
 	Compact          bool `long:"compact" description:"Emit compact JSON without indentation" auto-env:"false"`
@@ -261,6 +273,7 @@ func (c *builtinDocJSONCommand) Execute(_ []string) error {
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithIncludeHidden(c.IncludeHidden),
 		withJSONCompact(c.Compact),
+		WithBuiltinCommands(c.Builtins),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -291,6 +304,49 @@ func (p *Parser) SetBuiltinCommandHidden(name string, hidden bool) error {
 func isBuiltinCommandData(data any) bool {
 	_, ok := data.(builtinCommand)
 	return ok
+}
+
+func (p *Parser) configureDocBuiltinCommandsOption() {
+	enabled := make([]string, 0, 5)
+	if (p.Options & HelpCommand) != None {
+		enabled = append(enabled, "help")
+	}
+	if (p.Options & VersionCommand) != None {
+		enabled = append(enabled, "version")
+	}
+	if (p.Options & CompletionCommand) != None {
+		enabled = append(enabled, "completion")
+	}
+	if (p.Options & DocsCommand) != None {
+		enabled = append(enabled, "docs")
+	}
+	if (p.Options & ConfigCommand) != None {
+		enabled = append(enabled, "config")
+	}
+	// docs is in choices but not in defaults: excluded from default output
+
+	preferred := []string{"help", "version", "completion"}
+	defaults := make([]string, 0, 3)
+	for _, name := range preferred {
+		if slices.Contains(enabled, name) {
+			defaults = append(defaults, name)
+		}
+	}
+
+	docCmd := p.Find("docs")
+	if docCmd == nil {
+		return
+	}
+	for _, subName := range []string{"html", "man", "md", "json"} {
+		subCmd := docCmd.Find(subName)
+		if subCmd == nil {
+			continue
+		}
+		if opt := subCmd.Group.FindOptionByLongName("builtins"); opt != nil {
+			opt.SetChoices(enabled...)
+			opt.SetDefault(defaults...)
+		}
+	}
 }
 
 func appendBuiltinDocRenderStyleOption(opts []DocOption, style string) []DocOption {
@@ -463,6 +519,7 @@ func (p *Parser) ensureBuiltinCommands() error {
 		if err := p.addBuiltinCommand("docs", "Generate documentation", "help.builtin.command.docs.desc", docs); err != nil {
 			return err
 		}
+		p.configureDocBuiltinCommandsOption()
 	}
 	if (missing & ConfigCommand) != None {
 		if err := p.addBuiltinCommand("config", "Generate INI configuration example", "help.builtin.command.config.desc", &builtinConfigCommand{parser: p}); err != nil {

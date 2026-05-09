@@ -580,7 +580,13 @@ func TestBuiltinDocsCommandTOCHTML(t *testing.T) {
 	p := NewNamedParser("app.exe", HelpCommands)
 	out := filepath.Join(t.TempDir(), "docs.html")
 
-	if _, err := p.ParseArgs([]string{"docs", "html", "--toc", "--program-name", "app", out}); err != nil {
+	if _, err := p.ParseArgs([]string{
+		"docs", "html", "--toc", "--builtins",
+		"help", "--builtins",
+		"version", "--builtins",
+		"completion", "--builtins",
+		"docs", "--program-name", "app", out,
+	}); err != nil {
 		t.Fatalf("unexpected parse error: %v", err)
 	}
 

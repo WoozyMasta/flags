@@ -154,6 +154,7 @@
   "help.builtin.command.config.comment_width.desc": "Largeur maximale des commentaires repliés",
   "help.builtin.command.config.desc": "Générer un exemple de configuration INI",
   "help.builtin.command.docs.desc": "Générer la documentation",
+  "help.builtin.command.docs.builtins.desc": "Commandes intégrées à inclure dans la sortie générée",
   "help.builtin.command.docs.html.desc": "Générer la documentation HTML",
   "help.builtin.command.docs.json.desc": "Générer le manifeste de documentation JSON",
   "help.builtin.command.docs.include_hidden.desc": "Inclure les options, groupes et commandes masqués",

@@ -154,6 +154,7 @@
   "help.builtin.command.config.comment_width.desc": "折り返しコメントの最大幅",
   "help.builtin.command.config.desc": "INI 設定例を生成",
   "help.builtin.command.docs.desc": "ドキュメントを生成",
+  "help.builtin.command.docs.builtins.desc": "生成された出力に含める組み込みコマンド",
   "help.builtin.command.docs.html.desc": "HTML ドキュメントを生成",
   "help.builtin.command.docs.json.desc": "JSON ドキュメントマニフェストを生成",
   "help.builtin.command.docs.include_hidden.desc": "非表示のオプション、グループ、コマンドを含める",

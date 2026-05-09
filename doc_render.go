@@ -27,19 +27,20 @@ const (
 )
 
 type docRenderOptions struct {
-	templateData     map[string]any
-	builtinTemplate  string
-	templateText     string
-	programName      string
-	wrapWidth        int
-	renderStyle      RenderStyle
-	toc              bool
-	trimDescriptions bool
-	includeHidden    bool
-	markHidden       bool
-	jsonCompact      bool
-	hasRenderStyle   bool
-	hasWrapWidth     bool
+	templateData           map[string]any
+	builtinTemplate        string
+	templateText           string
+	programName            string
+	includeBuiltinCommands []string // nil = include all; non-nil = include only these names
+	wrapWidth              int
+	renderStyle            RenderStyle
+	toc                    bool
+	trimDescriptions       bool
+	includeHidden          bool
+	markHidden             bool
+	jsonCompact            bool
+	hasRenderStyle         bool
+	hasWrapWidth           bool
 }
 
 // DocOption configures WriteDoc behavior.
@@ -123,6 +124,17 @@ func WithTOC(enabled bool) DocOption {
 func WithTrimDescriptions(enabled bool) DocOption {
 	return func(o *docRenderOptions) error {
 		o.trimDescriptions = enabled
+		return nil
+	}
+}
+
+// WithBuiltinCommands sets the list of built-in command names to include in
+// the documentation output. Pass nil to include all built-in commands.
+// Pass an empty slice to exclude all built-in commands.
+// The default when using the built-in docs command is help, version, completion.
+func WithBuiltinCommands(names []string) DocOption {
+	return func(o *docRenderOptions) error {
+		o.includeBuiltinCommands = names
 		return nil
 	}
 }

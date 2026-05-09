@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning][].
 * `SetVersionShort(bool)` on `Parser` makes the built-in `--version`/`-v` flag
   behave like `version --short` — printing only the version string
   instead of the full metadata block.
+* `WithBuiltinCommands` doc option and `--builtins` flag on all built-in doc
+  subcommands (`html`, `man`, `md`, `json`) control which built-in commands
+  appear in the generated output.
 
 ### Fixed
 

@@ -154,6 +154,7 @@
   "help.builtin.command.config.comment_width.desc": "Độ rộng tối đa cho chú thích xuống dòng",
   "help.builtin.command.config.desc": "Tạo ví dụ cấu hình INI",
   "help.builtin.command.docs.desc": "Tạo tài liệu",
+  "help.builtin.command.docs.builtins.desc": "Các lệnh tích hợp để đưa vào đầu ra được tạo",
   "help.builtin.command.docs.html.desc": "Tạo tài liệu HTML",
   "help.builtin.command.docs.json.desc": "Tạo tệp kê khai tài liệu JSON",
   "help.builtin.command.docs.include_hidden.desc": "Bao gồm tùy chọn, nhóm và lệnh bị ẩn",
