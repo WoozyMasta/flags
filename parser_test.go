@@ -1355,8 +1355,10 @@ func TestDefaultCommand(t *testing.T) {
 
 func TestDefaultCommandExplicit(t *testing.T) {
 	var opts struct {
-		Run   struct{ Val string `short:"v" long:"val"` } `command:"run" description:"Run"`
-		Other struct{}                                     `command:"other" description:"Other"`
+		Run struct {
+			Val string `short:"v" long:"val"`
+		} `command:"run" description:"Run"`
+		Other struct{} `command:"other" description:"Other"`
 	}
 
 	p := NewParser(&opts, Default&^PrintErrors)
