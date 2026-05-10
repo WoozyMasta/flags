@@ -38,6 +38,10 @@ type Command struct {
 	// replacement hint shown in help output and parse warnings.
 	Deprecated string
 
+	// Name of the subcommand to activate when no explicit command token is
+	// provided. Set via SetDefaultSubcommand or the default-command struct tag.
+	defaultCommand string
+
 	// Aliases for the command
 	Aliases []string
 
@@ -64,10 +68,6 @@ type Command struct {
 	// This is command-local version of PassAfterNonOption Parser flag. It
 	// cannot be turned off when PassAfterNonOption Parser flag is set.
 	PassAfterNonOption bool
-
-	// Name of the subcommand to activate when no explicit command token is
-	// provided. Set via SetDefaultSubcommand or the default-command struct tag.
-	defaultCommand string
 
 	// Whether the built-in help group has already been attached.
 	hasBuiltinHelpGroup bool
