@@ -122,6 +122,9 @@ const (
 	FlagTagKeyValueDelimiter = "key-value-delimiter"
 	// FlagTagPassAfterNonOption enables command-local strict POSIX behavior.
 	FlagTagPassAfterNonOption = "pass-after-non-option"
+	// FlagTagDefaultCommand marks a subcommand as the default when no explicit
+	// command token is provided. Only one subcommand per parent may be marked.
+	FlagTagDefaultCommand = "default-command"
 	// FlagTagUnquote controls automatic unquoting of string arguments.
 	FlagTagUnquote = "unquote"
 	// FlagTagTerminator marks an option that consumes arguments until terminator token.

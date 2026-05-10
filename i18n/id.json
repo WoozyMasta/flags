@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Tampilkan pesan bantuan ini",
   "help.builtin.show_version": "Tampilkan informasi versi",
   "help.command.aliases_suffix": " (Alias: {aliases})",
+  "help.command.default_suffix": " (default)",
   "help.command.arguments_header": "[argumen perintah {command}]",
   "help.command_group.main_commands": "Perintah utama",
   "help.command_group.help_commands": "Perintah bantuan",

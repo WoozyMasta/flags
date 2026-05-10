@@ -1335,6 +1335,71 @@ func TestCommandHandler(t *testing.T) {
 	assertStringArray(t, executedArgs, []string{"arg1", "arg2"})
 }
 
+func TestDefaultCommand(t *testing.T) {
+	var opts struct {
+		Run struct {
+			Verbose bool `short:"v"`
+		} `command:"run" default-command:"true" description:"Run something"`
+		Other struct{} `command:"other" description:"Other command"`
+	}
+
+	p := NewParser(&opts, Default&^PrintErrors)
+	_, err := p.ParseArgs([]string{"file.txt"})
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	if p.Active == nil || p.Active.Name != "run" {
+		t.Fatalf("Expected active command 'run', got %v", p.Active)
+	}
+}
+
+func TestDefaultCommandExplicit(t *testing.T) {
+	var opts struct {
+		Run   struct{ Val string `short:"v" long:"val"` } `command:"run" description:"Run"`
+		Other struct{}                                     `command:"other" description:"Other"`
+	}
+
+	p := NewParser(&opts, Default&^PrintErrors)
+	_, err := p.ParseArgs([]string{"other"})
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	if p.Active == nil || p.Active.Name != "other" {
+		t.Fatalf("Explicit command should override default, got %v", p.Active)
+	}
+}
+
+func TestDefaultCommandSetViaCode(t *testing.T) {
+	var opts struct {
+		Run   struct{} `command:"run" description:"Run"`
+		Other struct{} `command:"other" description:"Other"`
+	}
+
+	p := NewParser(&opts, Default&^PrintErrors)
+	p.SetDefaultCommand("run")
+
+	_, err := p.ParseArgs([]string{"--"})
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	if p.Active == nil || p.Active.Name != "run" {
+		t.Fatalf("Expected active command 'run', got %v", p.Active)
+	}
+}
+
+func TestDefaultCommandDuplicateTag(t *testing.T) {
+	var opts struct {
+		Run   struct{} `command:"run"   default-command:"true"`
+		Other struct{} `command:"other" default-command:"true"`
+	}
+
+	p := NewParser(&opts, Default&^PrintErrors)
+	_, err := p.ParseArgs([]string{})
+	if err == nil {
+		t.Fatal("Expected error for duplicate default-command tags")
+	}
+}
+
 func TestAllowBoolValues(t *testing.T) {
 	var tests = []struct {
 		msg                string

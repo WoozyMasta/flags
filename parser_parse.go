@@ -897,6 +897,24 @@ func (p *Parser) parseNonOption(s *parseState) error {
 			}
 
 			return nil
+		} else if s.command.defaultCommand != "" {
+			cmd := s.lookup.commands[s.command.defaultCommand]
+			if cmd == nil {
+				return newErrorf(
+					ErrUnknownCommand,
+					"default command %q not found",
+					s.command.defaultCommand,
+				)
+			}
+
+			s.command.Active = cmd
+			cmd.fillParseState(s)
+
+			if cmd.Deprecated != "" && (p.Options&SilenceDeprecationWarnings) == None {
+				p.printDeprecationWarning("command", cmd.Name, cmd.Deprecated)
+			}
+
+			return p.parseNonOption(s)
 		} else if !s.command.SubcommandsOptional {
 			if len(s.positional) > 0 {
 				return s.addArgs(s.arg)

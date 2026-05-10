@@ -195,6 +195,7 @@
   "help.builtin.show_help": "यह सहायता संदेश दिखाएँ",
   "help.builtin.show_version": "संस्करण जानकारी दिखाएँ",
   "help.command.aliases_suffix": " (उपनाम: {aliases})",
+  "help.command.default_suffix": " (डिफ़ॉल्ट)",
   "help.command.arguments_header": "[{command} कमांड के तर्क]",
   "help.command_group.main_commands": "मुख्य कमांड्स",
   "help.command_group.help_commands": "सहायता आदेश",

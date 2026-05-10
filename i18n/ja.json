@@ -195,6 +195,7 @@
   "help.builtin.show_help": "このヘルプメッセージを表示",
   "help.builtin.show_version": "バージョン情報を表示",
   "help.command.aliases_suffix": " (エイリアス: {aliases})",
+  "help.command.default_suffix": " (デフォルト)",
   "help.command.arguments_header": "[{command} コマンド引数]",
   "help.command_group.main_commands": "メインコマンド",
   "help.command_group.help_commands": "ヘルプコマンド",

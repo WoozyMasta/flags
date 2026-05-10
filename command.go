@@ -65,6 +65,10 @@ type Command struct {
 	// cannot be turned off when PassAfterNonOption Parser flag is set.
 	PassAfterNonOption bool
 
+	// Name of the subcommand to activate when no explicit command token is
+	// provided. Set via SetDefaultSubcommand or the default-command struct tag.
+	defaultCommand string
+
 	// Whether the built-in help group has already been attached.
 	hasBuiltinHelpGroup bool
 
@@ -118,6 +122,13 @@ func (c *Command) AddCommand(command string, shortDescription string, longDescri
 	}
 
 	return cmd, nil
+}
+
+// SetDefaultSubcommand sets the subcommand to activate when no explicit command
+// token is provided. The named subcommand must already be registered.
+// Call with an empty string to clear the default.
+func (c *Command) SetDefaultSubcommand(name string) {
+	c.defaultCommand = name
 }
 
 // SetName updates command name used for lookup and help output.
@@ -459,6 +470,23 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 			if err != nil {
 				return true, err
 			}
+
+			isDefaultCommand, _, err := parseStructBoolTag(mtag, FlagTagDefaultCommand, sfield.Name)
+			if err != nil {
+				return true, err
+			}
+			if isDefaultCommand {
+				if c.defaultCommand != "" && c.defaultCommand != subcommand {
+					return true, newErrorf(
+						ErrInvalidTag,
+						"command `%s` cannot be the default: `%s` is already the default command",
+						subcommand,
+						c.defaultCommand,
+					)
+				}
+				c.defaultCommand = subcommand
+			}
+
 			order := 0
 			if rawOrder := mtag.Get(FlagTagOrder); rawOrder != "" {
 				parsedOrder, convErr := strconv.Atoi(rawOrder)

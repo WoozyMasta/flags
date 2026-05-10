@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Mostra questo messaggio di aiuto",
   "help.builtin.show_version": "Mostra le informazioni sulla versione",
   "help.command.aliases_suffix": " (alias: {aliases})",
+  "help.command.default_suffix": " (predefinito)",
   "help.command.arguments_header": "[argomenti del comando {command}]",
   "help.command_group.main_commands": "Comandi principali",
   "help.command_group.help_commands": "Comandi di aiuto",

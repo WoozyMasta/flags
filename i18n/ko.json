@@ -195,6 +195,7 @@
   "help.builtin.show_help": "이 도움말 메시지 표시",
   "help.builtin.show_version": "버전 정보 표시",
   "help.command.aliases_suffix": " (별칭: {aliases})",
+  "help.command.default_suffix": " (기본값)",
   "help.command.arguments_header": "[{command} 명령 인수]",
   "help.command_group.main_commands": "기본 명령",
   "help.command_group.help_commands": "도움말 명령",

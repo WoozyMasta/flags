@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Diese Hilfe anzeigen",
   "help.builtin.show_version": "Versionsinformationen anzeigen",
   "help.command.aliases_suffix": " (Aliasse: {aliases})",
+  "help.command.default_suffix": " (Standard)",
   "help.command.arguments_header": "[Argumente des Befehls {command}]",
   "help.command_group.main_commands": "Hauptbefehle",
   "help.command_group.help_commands": "Hilfebefehle",

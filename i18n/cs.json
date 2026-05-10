@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Zobrazit tuto nápovědu",
   "help.builtin.show_version": "Zobrazit informace o verzi",
   "help.command.aliases_suffix": " (aliasy: {aliases})",
+  "help.command.default_suffix": " (výchozí)",
   "help.command.arguments_header": "[argumenty příkazu {command}]",
   "help.command_group.main_commands": "Hlavní příkazy",
   "help.command_group.help_commands": "Příkazy nápovědy",

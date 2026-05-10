@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning][].
   name to stdout or a file.
 * `docs template render` built-in subcommand renders the parser doc model
   through a custom template read from a file path or stdin.
+* `default-command` struct tag and `SetDefaultCommand`/`SetDefaultSubcommand`
+  mark a subcommand to activate when no explicit command token is provided.
+  Named commands always take precedence;
+  the default also activates when parsing ends with no command selected.
 * `SetVersionAuthor` and `SetVersionBugsURL` extend `VersionInfo`
   with author and bug-tracker URL; both appear in `WriteVersion` output.
 * `SetManSection` configures the man page section number in the `.TH` line.

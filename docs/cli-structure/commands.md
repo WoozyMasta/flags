@@ -108,6 +108,58 @@ Use it when the parent command has useful behavior on its own.
 Avoid it when the parent is only a namespace,
 because ambiguous command trees are harder to explain in help output.
 
+## Default Command
+
+`default-command` marks a subcommand to activate
+when no explicit command token is provided.
+
+```go
+type Options struct {
+  Run RunCmd `command:"run" description:"Run the app" default-command:"true"`
+  Fmt FmtCmd `command:"fmt" description:"Format code"`
+}
+```
+
+With this in place:
+
+```sh
+app file.txt         # routes to: app run file.txt
+app run file.txt     # explicit — same result
+app fmt file.txt     # explicit — uses fmt
+```
+
+Named commands always take precedence over the default.
+If the first token matches any registered command name,
+it is dispatched as usual and the default is not activated.
+
+The default command also activates when no token is present at all:
+
+```sh
+app      # activates run with no arguments
+app --   # option terminator: activates run with no arguments
+```
+
+Set the default programmatically when the command is registered at runtime:
+
+```go
+parser.SetDefaultCommand("run")
+cmd.SetDefaultSubcommand("deploy")
+```
+
+Call with an empty string to clear a previously set default.
+
+Only one subcommand per parent may be the default.
+Using `default-command:"true"` on two fields
+returns an error during struct scan.
+
+The default command is marked `(default)` in help output.
+
+Do not combine a default command with root positional arguments.
+When the root command has positional args defined,
+the first non-option token would be ambiguous.  
+Use `subcommands-optional` instead when you want the parent command to
+have its own behavior without requiring a child.
+
 ## Command Groups
 
 `command-group` changes how commands are grouped in help and generated docs.

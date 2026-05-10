@@ -201,6 +201,7 @@ var builtinI18nMessages = []i18nMessageSpec{
 	{Key: "help.builtin.show_help", Source: "Show this help message"},
 	{Key: "help.builtin.show_version", Source: "Show version information"},
 	{Key: "help.command.aliases_suffix", Source: " (aliases: {aliases})"},
+	{Key: "help.command.default_suffix", Source: " (default)"},
 	{Key: "help.command.arguments_header", Source: "[{command} command arguments]"},
 	{Key: "help.command_group.main_commands", Source: "Main Commands"},
 	{Key: "help.command_group.help_commands", Source: "Help Commands"},

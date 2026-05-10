@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Hiển thị trợ giúp này",
   "help.builtin.show_version": "Hiển thị thông tin phiên bản",
   "help.command.aliases_suffix": " (Bí danh: {aliases})",
+  "help.command.default_suffix": " (mặc định)",
   "help.command.arguments_header": "[đối số lệnh {command}]",
   "help.command_group.main_commands": "Lệnh chính",
   "help.command_group.help_commands": "Lệnh trợ giúp",

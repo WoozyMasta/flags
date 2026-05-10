@@ -195,6 +195,7 @@
   "help.builtin.show_help": "显示此帮助信息",
   "help.builtin.show_version": "显示版本信息",
   "help.command.aliases_suffix": "（别名：{aliases}）",
+  "help.command.default_suffix": " (默认)",
   "help.command.arguments_header": "[{command} 命令参数]",
   "help.command_group.main_commands": "主要命令",
   "help.command_group.help_commands": "帮助命令",

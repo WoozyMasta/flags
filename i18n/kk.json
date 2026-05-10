@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Осы анықтама хабарын көрсету",
   "help.builtin.show_version": "Нұсқа ақпаратын көрсету",
   "help.command.aliases_suffix": " (алиастар: {aliases})",
+  "help.command.default_suffix": " (әдепкі)",
   "help.command.arguments_header": "[{command} командасының аргументтері]",
   "help.command_group.main_commands": "Негізгі командалар",
   "help.command_group.help_commands": "Анықтама командалары",

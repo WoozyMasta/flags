@@ -352,6 +352,11 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 					_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(marker, p.helpColorScheme.OptionChoices))
 				}
 
+				if cmd.defaultCommand == c.Name {
+					defaultLabel := p.i18nText("help.command.default_suffix", " (default)")
+					_, _ = fmt.Fprintf(wr, "%s", p.colorizeHelp(defaultLabel, p.helpColorScheme.CommandAliases))
+				}
+
 				_, _ = fmt.Fprintln(wr)
 			}
 			if gi < len(commandGroups)-1 {

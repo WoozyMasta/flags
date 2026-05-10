@@ -195,6 +195,7 @@
   "help.builtin.show_help": "Показать это сообщение справки",
   "help.builtin.show_version": "Показать информацию о версии",
   "help.command.aliases_suffix": " (алиасы: {aliases})",
+  "help.command.default_suffix": " (по умолчанию)",
   "help.command.arguments_header": "[аргументы команды {command}]",
   "help.command_group.main_commands": "Основные команды",
   "help.command_group.help_commands": "Команды справки",

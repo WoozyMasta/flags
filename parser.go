@@ -737,6 +737,14 @@ func (p *Parser) BuiltinVersionOption() *Option {
 	return p.FindOptionByLongName("version")
 }
 
+// SetDefaultCommand sets the root subcommand to activate when no explicit
+// command token is provided. Equivalent to calling SetDefaultSubcommand on the
+// root Command. The named subcommand must already be registered.
+// Call with an empty string to clear the default.
+func (p *Parser) SetDefaultCommand(name string) {
+	p.Command.SetDefaultSubcommand(name)
+}
+
 // ParseArgs parses the command line arguments according to the option groups that
 // were added to the parser. On successful parsing of the arguments, the
 // remaining, non-option, arguments (if any) are returned. The returned error
@@ -942,6 +950,16 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			if relationErr := s.checkOptionRelations(p); relationErr != nil {
 				s.err = relationErr
 			}
+		}
+	}
+
+	// If no explicit command was selected and a default is configured, activate
+	// it now so that post-parse execution and error checks use the right command.
+	if s.err == nil && s.command.Active == nil &&
+		s.command.defaultCommand != "" && len(s.command.commands) > 0 {
+		if cmd := s.lookup.commands[s.command.defaultCommand]; cmd != nil {
+			s.command.Active = cmd
+			cmd.fillParseState(s)
 		}
 	}
 
