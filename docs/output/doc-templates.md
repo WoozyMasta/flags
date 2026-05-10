@@ -243,6 +243,40 @@ err := parser.WriteDoc(
 Shell detection is useful for runtime help,
 but generated repository files should usually use explicit styles.
 
+## Generated Documentation Language
+
+`WriteDoc` and the built-in `docs` command
+use the same locale detection as runtime help.
+The locale is read from `LC_ALL`, `LC_MESSAGES`, `LANG`,
+and `LANGUAGE` environment variables in that order.
+On Windows, the system UI language is used
+as a fallback when none of the variables are set.
+
+To generate documentation in a specific language, set `LANG` before the call:
+
+```sh
+# Unix
+LANG=ru myapp docs markdown docs/reference.md
+LANG=de myapp docs html docs/reference.html
+```
+
+```powershell
+# Windows PowerShell
+$env:LANG = "fr"
+myapp docs markdown docs\reference.md
+```
+
+This works for all output formats — Markdown, HTML, man, and JSON.
+The locale affects option descriptions, section headings,
+and any i18n-tagged strings registered in the application catalog.
+
+For reproducible generated files in a repository, fix the locale explicitly
+so the output does not depend on the machine running the build:
+
+```sh
+LANG=en myapp docs markdown docs/reference.md
+```
+
 ## JSON Manifest
 
 `DocFormatJSON` serializes the doc model as a machine-readable JSON object.
