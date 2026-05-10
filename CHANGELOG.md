@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.6.0] - 2026-05-11
 
 ### Added
 
@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning][].
   with `mapfile -t COMPREPLY < <(…)`.
 * PowerShell completion script renamed `$args` to `$__goFlagsArgs`
   to avoid assigning to a PowerShell automatic variable.
+
+[0.6.0]: https://github.com/WoozyMasta/flags/compare/v0.5.0...v0.6.0
 
 ## [0.5.0] - 2026-05-07
 
