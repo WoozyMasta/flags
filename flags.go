@@ -78,6 +78,8 @@ General option tags:
   - `long-description`: extended text (currently used in generated man pages)
   - `no-flag`: ignore field as command-line option
   - `hidden`: hide from help and man pages
+  - `secret`: redact value in help, docs, completion, and error output
+  - `deprecated`: mark option as deprecated with a replacement hint
 
 Value and default tags:
 
@@ -117,8 +119,11 @@ Group and command tags:
   - `command`: treat struct field as a command
   - `command-group`: display group for command help/docs
   - `subcommands-optional`: make subcommands under this command optional
+  - `default-command`: activate this subcommand when no explicit command token
+    is provided; only one subcommand per parent may carry this tag
   - `pass-after-non-option`: for this command, stop option parsing after the
     first non-option argument
+  - `deprecated`: mark command as deprecated with a replacement hint
   - `alias`: extra command name (repeatable)
   - `aliases`: delimiter-separated command aliases (non-repeatable)
   - `positional-args`: map trailing positional arguments into struct fields
@@ -208,6 +213,10 @@ are grouped as `Help Commands` in help/docs by default; use
 [Parser.SetBuiltinCommandGroup] to rename that display group or set it to an
 empty string. Built-in `completion` auto-detects shell format when `--shell`
 is omitted (`zsh`/`pwsh`) and falls back to `bash`.
+The `docs` command supports Markdown, HTML, man page, and JSON output formats;
+`docs json` serializes the full parser model as a machine-readable manifest.
+Use [SetDefaultCommand] or the `default-command` struct tag to activate a
+subcommand automatically when no explicit command token is given.
 
 Command-local options become valid after the command token is parsed.
 With a global `-v` option and an `add` command, these are equivalent:
@@ -234,9 +243,8 @@ Because completion executes your program, avoid side effects during startup
 Bash integration example:
 
 	_completion_example() {
-		args=("${COMP_WORDS[@]:1:$COMP_CWORD}")
-		local IFS=$'\n'
-		COMPREPLY=($(GO_FLAGS_COMPLETION=1 ${COMP_WORDS[0]} "${args[@]}"))
+		local args=("${COMP_WORDS[@]:1:$COMP_CWORD}")
+		mapfile -t COMPREPLY < <(GO_FLAGS_COMPLETION=1 "${COMP_WORDS[0]}" "${args[@]}")
 		return 0
 	}
 	complete -F _completion_example completion-example
