@@ -746,7 +746,7 @@ func (p *Parser) BuiltinVersionOption() *Option {
 // root Command. The named subcommand must already be registered.
 // Call with an empty string to clear the default.
 func (p *Parser) SetDefaultCommand(name string) {
-	p.Command.SetDefaultSubcommand(name)
+	p.SetDefaultSubcommand(name)
 }
 
 // ParseArgs parses the command line arguments according to the option groups that
