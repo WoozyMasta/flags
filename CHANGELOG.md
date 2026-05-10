@@ -33,6 +33,13 @@ and this project adheres to [Semantic Versioning][].
   name to stdout or a file.
 * `docs template render` built-in subcommand renders the parser doc model
   through a custom template read from a file path or stdin.
+* `SetVersionAuthor` and `SetVersionBugsURL` extend `VersionInfo`
+  with author and bug-tracker URL; both appear in `WriteVersion` output.
+* `SetManSection` configures the man page section number in the `.TH` line.
+* `SetSeeAlso` sets SEE ALSO cross-reference entries.
+* All built-in templates (`man`, `html`, `markdown`) render
+  `AUTHOR`, `BUGS`, `SEE ALSO`, and `LICENSE` sections
+  when the corresponding fields are set.
 
 ### Changed
 

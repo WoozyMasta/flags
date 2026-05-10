@@ -323,6 +323,13 @@ func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderF
 		},
 
 		"tocHeadingAnchor": slugifyTOC,
+
+		"manPageSection": func(meta *docParserMeta) int {
+			if meta == nil || meta.Section == 0 {
+				return 1
+			}
+			return meta.Section
+		},
 	}
 }
 

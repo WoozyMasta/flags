@@ -556,6 +556,141 @@ func TestWriteDocManDefault(t *testing.T) {
 	}
 }
 
+func TestWriteDocManMeta(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("meta-man", None)
+	p.ShortDescription = "Meta man test"
+	p.SetManSection(8)
+	p.SetVersionAuthor("Test Author <author@example.com>")
+	p.SetVersionURL("https://example.com")
+	p.SetVersionBugsURL("https://example.com/issues")
+	p.SetSeeAlso("grep(1)", "sed(1)")
+	p.SetVersionLicense("MIT")
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("add group: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMan); err != nil {
+		t.Fatalf("write doc: %v", err)
+	}
+
+	got := out.String()
+
+	checks := []string{
+		".TH meta-man 8",
+		"AUTHOR",
+		"Test Author",
+		"SEE ALSO",
+		"grep(1), sed(1)",
+		"https://example.com",
+		"BUGS",
+		"https://example.com/issues",
+		"LICENSE",
+		"MIT",
+	}
+	for _, tok := range checks {
+		if !strings.Contains(got, tok) {
+			t.Fatalf("man meta: expected %q in output:\n%s", tok, got)
+		}
+	}
+}
+
+func TestWriteDocManMetaDefaultSection(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("meta-man-default", None)
+	p.SetVersionAuthor("Author Only")
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("add group: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMan); err != nil {
+		t.Fatalf("write doc: %v", err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, ".TH meta-man-default 1") {
+		t.Fatalf("expected default section 1 when only author is set:\n%s", got)
+	}
+}
+
+func TestWriteDocManMetaNoMetaDefaultSection(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("no-meta-man", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("add group: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMan); err != nil {
+		t.Fatalf("write doc: %v", err)
+	}
+
+	got := out.String()
+	if !strings.Contains(got, ".TH no-meta-man 1") {
+		t.Fatalf("expected section 1 when no man meta set:\n%s", got)
+	}
+}
+
+func TestWriteDocManMetaJSON(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("json-man", None)
+	p.SetManSection(8)
+	p.SetVersionAuthor("Test Author")
+	p.SetSeeAlso("foo(1)")
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("add group: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatJSON); err != nil {
+		t.Fatalf("write doc JSON: %v", err)
+	}
+
+	got := out.String()
+	for _, tok := range []string{`"meta"`, `"section": 8`, `"author": "Test Author"`, `"see_also"`} {
+		if !strings.Contains(got, tok) {
+			t.Fatalf("JSON man meta: expected %q in output:\n%s", tok, got)
+		}
+	}
+}
+
+func TestWriteDocManMetaJSONOmitted(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("no-meta-json-man", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("add group: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatJSON); err != nil {
+		t.Fatalf("write doc JSON: %v", err)
+	}
+
+	if strings.Contains(out.String(), `"meta"`) {
+		t.Fatalf("expected meta to be absent from JSON when no meta is set:\n%s", out.String())
+	}
+}
+
 func TestWriteDocManCustomTemplate(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"Value"`

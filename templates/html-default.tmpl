@@ -123,6 +123,40 @@
   </section>
 {{- end }}
 
+{{- if .Doc.Meta }}
+{{- if .Doc.Meta.Author }}
+  <section id="section-author">
+    <h2>{{ i18n "doc.tmpl.html.section.author" }}</h2>
+    <p>{{ quoteHTML .Doc.Meta.Author }}</p>
+  </section>
+{{- end }}
+{{- if .Doc.Meta.BugsURL }}
+  <section id="section-bugs">
+    <h2>{{ i18n "doc.tmpl.html.section.bugs" }}</h2>
+    <p><a href="{{ quoteHTML .Doc.Meta.BugsURL }}">{{ quoteHTML .Doc.Meta.BugsURL }}</a></p>
+  </section>
+{{- end }}
+{{- if or .Doc.Meta.SeeAlso .Doc.Meta.Homepage }}
+  <section id="section-see-also">
+    <h2>{{ i18n "doc.tmpl.html.section.see_also" }}</h2>
+    <ul>
+{{- range .Doc.Meta.SeeAlso }}
+      <li>{{ quoteHTML . }}</li>
+{{- end }}
+{{- if .Doc.Meta.Homepage }}
+      <li><a href="{{ quoteHTML .Doc.Meta.Homepage }}">{{ quoteHTML .Doc.Meta.Homepage }}</a></li>
+{{- end }}
+    </ul>
+  </section>
+{{- end }}
+{{- if .Doc.Meta.License }}
+  <section id="section-license">
+    <h2>{{ i18n "doc.tmpl.html.section.license" }}</h2>
+    <p>{{ quoteHTML .Doc.Meta.License }}</p>
+  </section>
+{{- end }}
+{{- end }}
+
 {{ define "command" }}
     <article>
       <h3 id="{{ tocCommandAnchor .Name }}">{{ quoteHTML .Name }}</h3>

@@ -74,6 +74,31 @@
 {{ end }}
 {{ end }}
 
+{{ if .Doc.Meta }}
+{{ if .Doc.Meta.Author }}
+## {{ i18n "doc.tmpl.markdown.section.author" }}
+
+{{ markdownWrap .Doc.Meta.Author }}
+{{ end }}
+{{ if .Doc.Meta.BugsURL }}
+## {{ i18n "doc.tmpl.markdown.section.bugs" }}
+
+{{ .Doc.Meta.BugsURL }}
+{{ end }}
+{{ if or .Doc.Meta.SeeAlso .Doc.Meta.Homepage }}
+## {{ i18n "doc.tmpl.markdown.section.see_also" }}
+
+{{ range .Doc.Meta.SeeAlso }}* {{ . }}
+{{ end }}{{ if .Doc.Meta.Homepage }}* {{ .Doc.Meta.Homepage }}
+{{ end }}
+{{ end }}
+{{ if .Doc.Meta.License }}
+## {{ i18n "doc.tmpl.markdown.section.license" }}
+
+{{ .Doc.Meta.License }}
+{{ end }}
+{{ end }}
+
 {{ define "command" }}
 ### {{ .Name }}
 

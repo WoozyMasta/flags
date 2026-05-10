@@ -24,6 +24,19 @@ type docParser struct {
 	Groups           []docGroup        `json:"groups,omitempty"`
 	Commands         []docCommand      `json:"commands,omitempty"`
 	CommandGroups    []docCommandGroup `json:"-"`
+	Meta             *docParserMeta    `json:"meta,omitempty"`
+}
+
+// docParserMeta holds project metadata shared across all doc format templates.
+// Man-page-specific fields (Section, SeeAlso) are also stored here but are
+// only rendered by the man page template.
+type docParserMeta struct {
+	Section  int      `json:"section,omitempty"`
+	Author   string   `json:"author,omitempty"`
+	Homepage string   `json:"homepage,omitempty"`
+	BugsURL  string   `json:"bugs_url,omitempty"`
+	SeeAlso  []string `json:"see_also,omitempty"`
+	License  string   `json:"license,omitempty"`
 }
 
 type docCommand struct {
@@ -117,6 +130,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		Usage:            usage,
 		Args:             buildDocArgs(p.Command, cfg.includeHidden, cfg.trimDescriptions),
 		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format, cfg.trimDescriptions),
+		Meta:             p.buildDocMeta(),
 	}
 
 	commands := docCommands(p.Command, cfg.includeHidden)
@@ -422,6 +436,41 @@ func optionSignature(opt *Option, format optionRenderFormat) string {
 	}
 
 	return b.String()
+}
+
+// SetSeeAlso sets the SEE ALSO cross-reference entries rendered in all
+// documentation formats. In man pages each entry should follow the
+// man page convention, e.g. "grep(1)".
+func (p *Parser) SetSeeAlso(refs ...string) {
+	p.seeAlso = refs
+}
+
+// buildDocMeta returns a *docParserMeta populated from parser configuration
+// and VersionInfo. Returns nil when nothing is explicitly set so the field
+// is omitted from JSON output.
+func (p *Parser) buildDocMeta() *docParserMeta {
+	ev := p.versionInfo
+	// Use explicit overrides only for the nil check so that auto-detected
+	// module URL from debug.ReadBuildInfo does not trigger output.
+	if p.manConfig.Section == 0 && len(p.seeAlso) == 0 &&
+		ev.Author == "" && ev.BugsURL == "" && ev.License == "" && ev.URL == "" {
+		return nil
+	}
+
+	vi := p.VersionInfo() // merged (auto-detected + explicit overrides)
+	section := p.manConfig.Section
+	if section == 0 {
+		section = 1
+	}
+
+	return &docParserMeta{
+		Section:  section,
+		Author:   vi.Author,
+		Homepage: vi.URL,
+		BugsURL:  vi.BugsURL,
+		SeeAlso:  p.seeAlso,
+		License:  vi.License,
+	}
 }
 
 func docNow() time.Time {

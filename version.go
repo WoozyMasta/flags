@@ -42,6 +42,12 @@ const (
 	// VersionFieldLicense is the application license identifier.
 	// Not auto-detected; set via SetVersionLicense.
 	VersionFieldLicense
+	// VersionFieldAuthor is the application author string.
+	// Not auto-detected; set via SetVersionAuthor.
+	VersionFieldAuthor
+	// VersionFieldBugsURL is the bug-tracker URL.
+	// Not auto-detected; set via SetVersionBugsURL.
+	VersionFieldBugsURL
 )
 
 const (
@@ -62,7 +68,9 @@ const (
 		VersionFieldModified |
 		VersionFieldGoVersion |
 		VersionFieldTarget |
-		VersionFieldLicense
+		VersionFieldLicense |
+		VersionFieldAuthor |
+		VersionFieldBugsURL
 )
 
 var (
@@ -95,6 +103,12 @@ type VersionInfo struct {
 	// License is the application license identifier (e.g. "MIT", "Apache-2.0").
 	// Not auto-detected; set via SetVersionLicense.
 	License string
+	// Author is the application author string.
+	// Not auto-detected; set via SetVersionAuthor.
+	Author string
+	// BugsURL is the bug-tracker URL.
+	// Not auto-detected; set via SetVersionBugsURL.
+	BugsURL string
 	// Modified reports whether source tree was dirty at build time.
 	Modified bool
 }
@@ -135,6 +149,12 @@ func (p *Parser) VersionInfo() VersionInfo {
 	}
 	if p.versionInfo.Modified {
 		base.Modified = true
+	}
+	if p.versionInfo.Author != "" {
+		base.Author = p.versionInfo.Author
+	}
+	if p.versionInfo.BugsURL != "" {
+		base.BugsURL = p.versionInfo.BugsURL
 	}
 	if p.versionInfo.License != "" {
 		base.License = p.versionInfo.License
@@ -189,6 +209,16 @@ func (p *Parser) SetVersionFields(fields VersionFields) {
 // SetVersionLicense sets the application license identifier shown in version output.
 func (p *Parser) SetVersionLicense(license string) {
 	p.versionInfo.License = license
+}
+
+// SetVersionAuthor sets the application author string shown in version output.
+func (p *Parser) SetVersionAuthor(author string) {
+	p.versionInfo.Author = author
+}
+
+// SetVersionBugsURL sets the bug-tracker URL shown in version output.
+func (p *Parser) SetVersionBugsURL(url string) {
+	p.versionInfo.BugsURL = url
 }
 
 // SetVersionShort configures the built-in --version/-v flag to print only the
@@ -296,6 +326,8 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	goLabel := p.i18nText("version.label.go", "go")
 	targetLabel := p.i18nText("version.label.target", "target")
 	licenseLabel := p.i18nText("version.label.license", "license")
+	authorLabel := p.i18nText("version.label.author", "author")
+	bugsLabel := p.i18nText("version.label.bugs", "bugs")
 
 	writeVersionLine := func(label string, value string) {
 		padded := label + ":"
@@ -352,6 +384,12 @@ func (p *Parser) WriteVersion(w io.Writer, fields VersionFields) {
 	}
 	if (fields&VersionFieldLicense) != 0 && info.License != "" {
 		writeVersionLine(licenseLabel, info.License)
+	}
+	if (fields&VersionFieldAuthor) != 0 && info.Author != "" {
+		writeVersionLine(authorLabel, info.Author)
+	}
+	if (fields&VersionFieldBugsURL) != 0 && info.BugsURL != "" {
+		writeVersionLine(bugsLabel, info.BugsURL)
 	}
 
 	if (p.Options&ColorHelp) != None && p.helpColorEnabled {

@@ -82,6 +82,12 @@ type Parser struct {
 	// Cached version metadata (auto-detected and/or overridden).
 	versionInfo VersionInfo
 
+	// Man-page-specific configuration (section number).
+	manConfig manConfig
+
+	// SEE ALSO cross-references rendered in all doc formats.
+	seeAlso []string
+
 	// MaxLongNameLength limits allowed rune length of option `long` names.
 	// Zero disables the limit.
 	MaxLongNameLength int

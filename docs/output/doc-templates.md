@@ -337,6 +337,47 @@ myapp docs template export --name markdown/list > my-template.md.tmpl
 myapp docs template render my-template.md.tmpl docs/reference.md
 ```
 
+## Project Metadata
+
+Project metadata is set on the parser directly rather than through
+`WithTemplateData`.
+All built-in templates (man, HTML, Markdown) render the metadata
+sections when the corresponding fields are set.
+
+Man-page-specific fields:
+
+```go
+parser.SetManSection(8)
+parser.SetSeeAlso("grep(1)", "sed(1)")
+```
+
+Fields shared with version output (set once, used by both):
+
+```go
+parser.SetVersionAuthor("Name Surname <email@example.com>")
+parser.SetVersionURL("https://example.com/myapp")
+parser.SetVersionBugsURL("https://github.com/example/myapp/issues")
+parser.SetVersionLicense("MIT")
+```
+
+* `SetManSection` sets the section number in the `.TH` header line.
+  Valid values are 1–9. The default is 1 (user commands).
+  This field is man-page-only and has no effect in other formats.
+* `SetSeeAlso` adds cross-reference entries to the `SEE ALSO` section
+  in all formats. In man pages entries follow the `grep(1)` convention.
+* `SetVersionAuthor` adds an `AUTHOR` section.
+* `SetVersionURL` adds the project URL to the `SEE ALSO` section.
+* `SetVersionBugsURL` adds a `BUGS` section.
+* `SetVersionLicense` adds a `LICENSE` section.
+
+Section order: `AUTHOR` → `BUGS` → `SEE ALSO` → `LICENSE`.
+
+The metadata is also included in `DocFormatJSON` output under the `meta`
+key, and is omitted from JSON when none of the fields are set explicitly.
+
+Use `WithTemplateData` for values that are not part of the parser model.
+Use these setters when the value is a standard project or version field.
+
 ## Manpage Compatibility
 
 `WriteManPage` is kept for compatibility.
