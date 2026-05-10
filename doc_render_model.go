@@ -15,28 +15,28 @@ import (
 )
 
 type docParser struct {
+	GeneratedAt      time.Time         `json:"-"`
+	Meta             *docParserMeta    `json:"meta,omitempty"`
 	Name             string            `json:"name"`
 	ShortDescription string            `json:"short_description,omitempty"`
 	LongDescription  string            `json:"long_description,omitempty"`
-	GeneratedAt      time.Time         `json:"-"`
 	Usage            string            `json:"usage,omitempty"`
 	Args             []docArg          `json:"args,omitempty"`
 	Groups           []docGroup        `json:"groups,omitempty"`
 	Commands         []docCommand      `json:"commands,omitempty"`
 	CommandGroups    []docCommandGroup `json:"-"`
-	Meta             *docParserMeta    `json:"meta,omitempty"`
 }
 
 // docParserMeta holds project metadata shared across all doc format templates.
 // Man-page-specific fields (Section, SeeAlso) are also stored here but are
 // only rendered by the man page template.
 type docParserMeta struct {
-	Section  int      `json:"section,omitempty"`
 	Author   string   `json:"author,omitempty"`
 	Homepage string   `json:"homepage,omitempty"`
 	BugsURL  string   `json:"bugs_url,omitempty"`
-	SeeAlso  []string `json:"see_also,omitempty"`
 	License  string   `json:"license,omitempty"`
+	SeeAlso  []string `json:"see_also,omitempty"`
+	Section  int      `json:"section,omitempty"`
 }
 
 type docCommand struct {
