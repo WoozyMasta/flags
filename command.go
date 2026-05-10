@@ -399,6 +399,11 @@ func (c *Command) scanSubcommandHandler(parentg *Group) scanHandler {
 					return true, err
 				}
 				arg.validation = argValidation
+				if argValidation.hasRules() {
+					if p := c.parser(); p != nil {
+						p.validationRuleCount++
+					}
+				}
 				if rawCompletion == "" {
 					if autoHint, ok := completionHintFromIO(argIO); ok {
 						arg.completionHint = autoHint

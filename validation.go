@@ -260,6 +260,10 @@ func cmpOrdered[T ~int64 | ~uint64 | ~float64](left T, right T) int {
 }
 
 func (p *parseState) checkValueValidators(parser *Parser) error {
+	if parser.validationRuleCount == 0 {
+		return nil
+	}
+
 	for c := parser.Command; c != nil; c = c.Active {
 		if err := p.checkCommandValueValidators(parser, c); err != nil {
 			p.err = err
@@ -279,6 +283,9 @@ func (p *parseState) checkCommandValueValidators(parser *Parser, command *Comman
 		}
 
 		for _, option := range g.options {
+			if !option.validation.hasRules() {
+				continue
+			}
 			if shouldSkipOptionValidation(option) {
 				continue
 			}
@@ -307,11 +314,6 @@ func (p *parseState) checkCommandValueValidators(parser *Parser, command *Comman
 func shouldSkipOptionValidation(option *Option) bool {
 	if option.isSet || len(option.Default) > 0 {
 		return false
-	}
-	if envKey := option.EnvKeyWithNamespace(); envKey != "" {
-		if _, ok := os.LookupEnv(envKey); ok {
-			return false
-		}
 	}
 
 	return option.isEmpty()

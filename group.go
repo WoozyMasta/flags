@@ -747,6 +747,11 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			return err
 		}
 		option.validation = optionValidation
+		if optionValidation.hasRules() {
+			if p := g.parser(); p != nil {
+				p.validationRuleCount++
+			}
+		}
 		if rawCompletion == "" {
 			if autoHint, ok := completionHintFromIO(optionIO); ok {
 				option.completionHint = autoHint

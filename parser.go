@@ -158,6 +158,10 @@ type Parser struct {
 
 	// Set when any immediate option/group is requested during parse.
 	immediateRequested bool
+
+	// Number of options or positional args that carry validate-* rules.
+	// When zero the post-parse validation sweep is skipped entirely.
+	validationRuleCount int
 }
 
 // SplitArgument represents the argument value of an option that was passed using
