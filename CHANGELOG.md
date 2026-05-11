@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+## [0.6.1] - 2026-05-11
+
+### Changed
+
+* Windows color output no longer depends on `github.com/mattn/go-colorable`.
+  ANSI support is now enabled via `ENABLE_VIRTUAL_TERMINAL_PROCESSING`.
+
+### Removed
+
+* `github.com/go-cmp/cmp` test dependency replaced with `reflect.DeepEqual`.
+
+[0.6.1]: https://github.com/WoozyMasta/flags/compare/v0.6.0...v0.6.1
+
 ## [0.6.0] - 2026-05-11
 
 ### Added
