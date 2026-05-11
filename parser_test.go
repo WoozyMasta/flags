@@ -11,8 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"reflect"
 )
 
 type defaultOptions struct {
@@ -160,8 +159,8 @@ func TestDefaults(t *testing.T) {
 				opts.Slice = []int{}
 			}
 
-			if diff := cmp.Diff(test.expected, opts); diff != "" {
-				t.Errorf("%s:\nUnexpected options with arguments %+v (-expected +actual):\n%s", test.msg, test.args, diff)
+			if !reflect.DeepEqual(test.expected, opts) {
+				t.Errorf("%s:\nUnexpected options with arguments %+v:\nexpected: %+v\ngot:      %+v", test.msg, test.args, test.expected, opts)
 			}
 		}
 	}
@@ -419,8 +418,8 @@ func TestEnvDefaults(t *testing.T) {
 				opts.Slice = []int{}
 			}
 
-			if diff := cmp.Diff(test.expected, opts); diff != "" {
-				t.Errorf("%s:\nUnexpected options with arguments %+v (-expected +actual):\n%s", test.msg, test.args, diff)
+			if !reflect.DeepEqual(test.expected, opts) {
+				t.Errorf("%s:\nUnexpected options with arguments %+v:\nexpected: %+v\ngot:      %+v", test.msg, test.args, test.expected, opts)
 			}
 		}
 	}
@@ -778,12 +777,12 @@ func TestDefaultsIfEmptyCollections(t *testing.T) {
 		t.Fatalf("unexpected parse error: %v", err)
 	}
 
-	if diff := cmp.Diff(map[string]int{"a": 1}, opts.Map); diff != "" {
-		t.Fatalf("unexpected map defaults (-expected +actual):\n%s", diff)
+	if !reflect.DeepEqual(map[string]int{"a": 1}, opts.Map) {
+		t.Fatalf("unexpected map defaults:\nexpected: %#v\ngot:      %#v", map[string]int{"a": 1}, opts.Map)
 	}
 
-	if diff := cmp.Diff([]int{2}, opts.Slice); diff != "" {
-		t.Fatalf("unexpected slice defaults (-expected +actual):\n%s", diff)
+	if !reflect.DeepEqual([]int{2}, opts.Slice) {
+		t.Fatalf("unexpected slice defaults:\nexpected: %#v\ngot:      %#v", []int{2}, opts.Slice)
 	}
 
 	opts.Map = map[string]int{"x": 9}
@@ -794,12 +793,12 @@ func TestDefaultsIfEmptyCollections(t *testing.T) {
 		t.Fatalf("unexpected parse error on second pass: %v", err)
 	}
 
-	if diff := cmp.Diff(map[string]int{"x": 9}, opts.Map); diff != "" {
-		t.Fatalf("non-empty map should be preserved (-expected +actual):\n%s", diff)
+	if !reflect.DeepEqual(map[string]int{"x": 9}, opts.Map) {
+		t.Fatalf("non-empty map should be preserved:\nexpected: %#v\ngot:      %#v", map[string]int{"x": 9}, opts.Map)
 	}
 
-	if diff := cmp.Diff([]int{9}, opts.Slice); diff != "" {
-		t.Fatalf("non-empty slice should be preserved (-expected +actual):\n%s", diff)
+	if !reflect.DeepEqual([]int{9}, opts.Slice) {
+		t.Fatalf("non-empty slice should be preserved:\nexpected: %#v\ngot:      %#v", []int{9}, opts.Slice)
 	}
 }
 
@@ -1121,16 +1120,16 @@ func TestTerminatedOptions(t *testing.T) {
 				t.Fatalf("expected Bool=%v, got %v", tt.wantBool, opts.Bool)
 			}
 
-			if diff := cmp.Diff(tt.wantSlice, opts.Slice, cmpopts.EquateEmpty()); diff != "" {
-				t.Fatalf("unexpected Slice (-expected +actual):\n%s", diff)
+			if !equalEmpty(tt.wantSlice, opts.Slice) {
+				t.Fatalf("unexpected Slice:\nexpected: %#v\ngot:      %#v", tt.wantSlice, opts.Slice)
 			}
 
-			if diff := cmp.Diff(tt.wantMultipleSlice, opts.MultipleSlice, cmpopts.EquateEmpty()); diff != "" {
-				t.Fatalf("unexpected MultipleSlice (-expected +actual):\n%s", diff)
+			if !equalEmpty(tt.wantMultipleSlice, opts.MultipleSlice) {
+				t.Fatalf("unexpected MultipleSlice:\nexpected: %#v\ngot:      %#v", tt.wantMultipleSlice, opts.MultipleSlice)
 			}
 
-			if diff := cmp.Diff(tt.wantRest, rest, cmpopts.EquateEmpty()); diff != "" {
-				t.Fatalf("unexpected rest args (-expected +actual):\n%s", diff)
+			if !equalEmpty(tt.wantRest, rest) {
+				t.Fatalf("unexpected rest args:\nexpected: %#v\ngot:      %#v", tt.wantRest, rest)
 			}
 		})
 	}
@@ -1455,8 +1454,8 @@ func TestAllowBoolValues(t *testing.T) {
 			if opts.Value != test.expected {
 				t.Errorf("%s:\nExpected %v; got %v", test.msg, test.expected, opts.Value)
 			}
-			if diff := cmp.Diff(test.expectedNonOptArgs, nonOptArgs, cmpopts.EquateEmpty()); diff != "" {
-				t.Errorf("%s:\nUnexpected non-argument options (-expected +actual):\n%s", test.msg, diff)
+			if !equalEmpty(test.expectedNonOptArgs, nonOptArgs) {
+				t.Errorf("%s:\nUnexpected non-argument options:\nexpected: %#v\ngot:      %#v", test.msg, test.expectedNonOptArgs, nonOptArgs)
 			}
 		} else {
 			if err == nil {
@@ -2126,8 +2125,8 @@ func TestSetTagPrefixTerminator(t *testing.T) {
 		t.Fatalf("unexpected parse error: %v", err)
 	}
 
-	if diff := cmp.Diff([]string{"echo", "hello"}, opts.Exec, cmpopts.EquateEmpty()); diff != "" {
-		t.Fatalf("unexpected terminated values (-expected +actual):\n%s", diff)
+	if !equalEmpty([]string{"echo", "hello"}, opts.Exec) {
+		t.Fatalf("unexpected terminated values:\nexpected: %#v\ngot:      %#v", []string{"echo", "hello"}, opts.Exec)
 	}
 }
 
@@ -2164,8 +2163,8 @@ func TestDefaultsListTag(t *testing.T) {
 		t.Fatalf("unexpected parse error: %v", err)
 	}
 
-	if diff := cmp.Diff([]string{"one", "two", "three"}, opts.Slice, cmpopts.EquateEmpty()); diff != "" {
-		t.Fatalf("unexpected defaults from list tag (-expected +actual):\n%s", diff)
+	if !equalEmpty([]string{"one", "two", "three"}, opts.Slice) {
+		t.Fatalf("unexpected defaults from list tag:\nexpected: %#v\ngot:      %#v", []string{"one", "two", "three"}, opts.Slice)
 	}
 }
 
@@ -2210,8 +2209,8 @@ func TestSetTagListDelimiter(t *testing.T) {
 		t.Fatalf("unexpected parse error: %v", err)
 	}
 
-	if diff := cmp.Diff([]int{1, 2, 3}, opts.Slice, cmpopts.EquateEmpty()); diff != "" {
-		t.Fatalf("unexpected defaults from custom delimiter (-expected +actual):\n%s", diff)
+	if !equalEmpty([]int{1, 2, 3}, opts.Slice) {
+		t.Fatalf("unexpected defaults from custom delimiter:\nexpected: %#v\ngot:      %#v", []int{1, 2, 3}, opts.Slice)
 	}
 
 	if opts.Mode != "safe" {

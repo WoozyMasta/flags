@@ -3,10 +3,9 @@ package flags
 import (
 	"fmt"
 	"path"
+	"reflect"
 	"runtime"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func assertCallerInfo() (string, int) {
@@ -127,10 +126,17 @@ func assertParseFail(t *testing.T, typ ErrorType, msg string, data interface{}, 
 }
 
 func assertDiff(t *testing.T, actual, expected, msg string) {
-	diff := cmp.Diff(expected, actual)
-	if diff == "" {
+	if actual == expected {
 		return
 	}
 
-	assertErrorf(t, "Unexpected %s (-expected +actual):\n%s", msg, diff)
+	assertErrorf(t, "Unexpected %s:\nexpected: %q\ngot:      %q", msg, expected, actual)
+}
+
+func equalEmpty[T any](a, b []T) bool {
+	if len(a) == 0 && len(b) == 0 {
+		return true
+	}
+
+	return reflect.DeepEqual(a, b)
 }

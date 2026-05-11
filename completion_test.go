@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"reflect"
 )
 
 type TestComplete struct {
@@ -340,8 +340,8 @@ func TestCompletion(t *testing.T) {
 		sort.Strings(items)
 		sort.Strings(test.Completed)
 
-		if diff := cmp.Diff(test.Completed, items); diff != "" {
-			t.Errorf("Args: %#v, showDescriptions=%v, mismatch (-expected +actual):\n%s", test.Args, test.ShowDescriptions, diff)
+		if !reflect.DeepEqual(test.Completed, items) {
+			t.Errorf("Args: %#v, showDescriptions=%v, mismatch:\nexpected: %#v\ngot:      %#v", test.Args, test.ShowDescriptions, test.Completed, items)
 		}
 	}
 }
@@ -388,8 +388,8 @@ func TestParserCompletion(t *testing.T) {
 
 		got := strings.Split(strings.Trim(<-out, "\n"), "\n")
 
-		if diff := cmp.Diff(test.Completed, got); diff != "" {
-			t.Errorf("Completion output mismatch (-expected +actual):\n%s", diff)
+		if !reflect.DeepEqual(test.Completed, got) {
+			t.Errorf("Completion output mismatch:\nexpected: %#v\ngot:      %#v", test.Completed, got)
 		}
 	}
 
@@ -446,8 +446,8 @@ func TestCompletionHintFile(t *testing.T) {
 
 	want := []string{first, second}
 	sort.Strings(want)
-	if diff := cmp.Diff(want, items); diff != "" {
-		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	if !reflect.DeepEqual(want, items) {
+		t.Fatalf("completion mismatch:\nexpected: %#v\ngot:      %#v", want, items)
 	}
 }
 
@@ -473,8 +473,8 @@ func TestCompletionHintDir(t *testing.T) {
 
 	want := []string{dirA + "/", dirB + "/"}
 	sort.Strings(want)
-	if diff := cmp.Diff(want, items); diff != "" {
-		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	if !reflect.DeepEqual(want, items) {
+		t.Fatalf("completion mismatch:\nexpected: %#v\ngot:      %#v", want, items)
 	}
 }
 
@@ -497,8 +497,8 @@ func TestCompletionHintChoicesOverrideNone(t *testing.T) {
 	items := completionItemsForArgs(t, p, []string{"--mode=f"})
 
 	want := []string{"--mode=fast"}
-	if diff := cmp.Diff(want, items); diff != "" {
-		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	if !reflect.DeepEqual(want, items) {
+		t.Fatalf("completion mismatch:\nexpected: %#v\ngot:      %#v", want, items)
 	}
 }
 
@@ -535,7 +535,7 @@ func TestCompletionHintPositionalDir(t *testing.T) {
 	items := completionItemsForArgs(t, p, []string{"run", filepath.Join(tempDir, "target-")})
 
 	want := []string{dir + "/"}
-	if diff := cmp.Diff(want, items); diff != "" {
-		t.Fatalf("completion mismatch (-want +got):\n%s", diff)
+	if !reflect.DeepEqual(want, items) {
+		t.Fatalf("completion mismatch:\nexpected: %#v\ngot:      %#v", want, items)
 	}
 }
