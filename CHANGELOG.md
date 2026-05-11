@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Changed
+
+* TTY detection switched from `golang.org/x/term` to
+  `github.com/mattn/go-isatty`: `DetectFDTTY` now also recognizes
+  Cygwin/Git Bash/MSYS2 pseudo-terminals via `isatty.IsCygwinTerminal`.
+
 ## [0.6.0] - 2026-05-11
 
 ### Added
