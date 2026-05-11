@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/mattn/go-colorable"
+	"golang.org/x/sys/windows"
 )
 
 func colorOutputWriter(w io.Writer) io.Writer {
@@ -19,5 +19,11 @@ func colorOutputWriter(w io.Writer) io.Writer {
 		return w
 	}
 
-	return colorable.NewColorable(file)
+	handle := windows.Handle(file.Fd())
+	var mode uint32
+	if windows.GetConsoleMode(handle, &mode) == nil {
+		_ = windows.SetConsoleMode(handle, mode|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+	}
+
+	return w
 }
