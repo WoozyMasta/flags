@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mattn/go-isatty"
+	"golang.org/x/term"
 )
 
 // TTYInfo describes tty availability for standard streams.
@@ -107,7 +107,12 @@ func DetectFileTTY(file *os.File) bool {
 
 // DetectFDTTY reports whether file descriptor points to a tty.
 func DetectFDTTY(fd uintptr) bool {
-	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+	intFD, ok := fdToInt(fd)
+	if !ok {
+		return false
+	}
+
+	return term.IsTerminal(intFD)
 }
 
 func detectNoColor() bool {
@@ -127,4 +132,13 @@ func detectForceColor() bool {
 	default:
 		return true
 	}
+}
+
+func fdToInt(fd uintptr) (int, bool) {
+	maxInt := int(^uint(0) >> 1)
+	if fd > uintptr(maxInt) {
+		return 0, false
+	}
+
+	return int(fd), true //nolint:gosec // fd is checked against max int above.
 }
