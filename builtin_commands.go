@@ -227,8 +227,9 @@ type builtinDocMarkdownCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
-	builtinDocHelpGroupOption
 	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
+
+	builtinDocHelpGroupOption
 
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
@@ -316,18 +317,18 @@ func (c *builtinDocTemplateExportCommand) Execute(_ []string) error {
 type builtinDocTemplateRenderCommand struct {
 	parser *Parser
 
-	Format string `long:"format" choices:"markdown;html;man;json" default:"markdown" description:"Output format for template rendering" description-i18n:"help.builtin.command.docs.template.format.desc" auto-env:"false"`
-
 	Inputs struct {
 		Template string `positional-arg-name:"template" arg-name-i18n:"help.builtin.command.docs.template.input.name" description:"Template file path or - for stdin" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`
 		Output   string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
+	Format string `long:"format" choices:"markdown;html;man;json" default:"markdown" description:"Output format for template rendering" description-i18n:"help.builtin.command.docs.template.format.desc" auto-env:"false"`
+
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
+	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
 	builtinDocHelpGroupOption
-	WrapWidth        int  `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
