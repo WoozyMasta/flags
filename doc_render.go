@@ -27,20 +27,21 @@ const (
 )
 
 type docRenderOptions struct {
-	templateData           map[string]any
-	builtinTemplate        string
-	templateText           string
-	programName            string
-	includeBuiltinCommands []string // nil = include all; non-nil = include only these names
-	wrapWidth              int
-	renderStyle            RenderStyle
-	toc                    bool
-	trimDescriptions       bool
-	includeHidden          bool
-	markHidden             bool
-	jsonCompact            bool
-	hasRenderStyle         bool
-	hasWrapWidth           bool
+	templateData                    map[string]any
+	builtinTemplate                 string
+	templateText                    string
+	programName                     string
+	includeBuiltinCommands          []string // nil = include all; non-nil = include only these names
+	wrapWidth                       int
+	renderStyle                     RenderStyle
+	toc                             bool
+	trimDescriptions                bool
+	includeHidden                   bool
+	markHidden                      bool
+	jsonCompact                     bool
+	hasRenderStyle                  bool
+	hasWrapWidth                    bool
+	includeBuiltinHelpInSubcommands bool
 }
 
 // DocOption configures WriteDoc behavior.
@@ -135,6 +136,17 @@ func WithTrimDescriptions(enabled bool) DocOption {
 func WithBuiltinCommands(names []string) DocOption {
 	return func(o *docRenderOptions) error {
 		o.includeBuiltinCommands = names
+		return nil
+	}
+}
+
+// WithBuiltinHelpInSubcommands controls whether the builtin help options
+// (-h/--help) group is included in nested command sections in generated
+// documentation. By default (false) the help group is only shown for the
+// root command, matching the behavior of the interactive --help output.
+func WithBuiltinHelpInSubcommands(include bool) DocOption {
+	return func(o *docRenderOptions) error {
+		o.includeBuiltinHelpInSubcommands = include
 		return nil
 	}
 }

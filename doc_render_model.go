@@ -129,9 +129,11 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		GeneratedAt:      docNow(),
 		Usage:            usage,
 		Args:             buildDocArgs(p.Command, cfg.includeHidden, cfg.trimDescriptions),
-		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format, cfg.trimDescriptions),
+		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format, cfg.trimDescriptions, false),
 		Meta:             p.buildDocMeta(),
 	}
+
+	skipBuiltinHelpInSubs := !cfg.includeBuiltinHelpInSubcommands
 
 	commands := docCommands(p.Command, cfg.includeHidden)
 	if cfg.includeBuiltinCommands != nil {
@@ -148,7 +150,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		commands = filtered
 	}
 	for _, cmd := range commands {
-		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, cmd, cfg.includeHidden, format, cfg.trimDescriptions))
+		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, cmd, cfg.includeHidden, format, cfg.trimDescriptions, skipBuiltinHelpInSubs))
 	}
 	model.CommandGroups = buildDocCommandGroups(model.Commands)
 
@@ -162,6 +164,7 @@ func buildDocCommand(
 	includeHidden bool,
 	format optionRenderFormat,
 	trimDescriptions bool,
+	skipBuiltinHelpGroup bool,
 ) docCommand {
 	fullName := cmd.Name
 	if parentName != "" {
@@ -194,11 +197,11 @@ func buildDocCommand(
 		Deprecated:          cmd.Deprecated,
 		Group:               cmd.localizedCommandGroup(),
 		Args:                buildDocArgs(cmd, includeHidden, trimDescriptions),
-		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format, trimDescriptions),
+		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup),
 	}
 
 	for _, sub := range docCommands(cmd, includeHidden) {
-		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden, format, trimDescriptions))
+		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup))
 	}
 	doc.CommandGroups = buildDocCommandGroups(doc.Commands)
 
@@ -211,10 +214,14 @@ func buildDocGroups(
 	includeHidden bool,
 	format optionRenderFormat,
 	trimDescriptions bool,
+	skipBuiltinHelp bool,
 ) []docGroup {
 	var groups []docGroup
 
 	root.eachGroup(func(group *Group) {
+		if skipBuiltinHelp && group.isBuiltinHelp {
+			return
+		}
 		if !includeHidden && !group.showInHelp() {
 			return
 		}

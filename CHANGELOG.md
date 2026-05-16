@@ -14,7 +14,25 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.6.2] - Unreleased
+
+### Added
+
+* `WithBuiltinHelpInSubcommands(bool)`
+  doc option and `--help-in-subcommands` flag on all built-in doc subcommands
+  (`html`, `man`, `md`, `json`, `template render`) control whether
+  the builtin help-options group (`-h/--help`) is included
+  in nested command sections of generated documentation.
+
+### Changed
+
+* Doc generation now omits the builtin help-options group
+  from nested command sections by default, matching the behavior
+  of the interactive `--help` output which already suppressed it there.
+  Pass `WithBuiltinHelpInSubcommands(true)` or `--help-in-subcommands`
+  to restore the previous behavior.
+
+[0.6.2]: https://github.com/WoozyMasta/flags/compare/v0.6.1...v0.6.2
 
 ## [0.6.1] - 2026-05-11
 

@@ -81,6 +81,64 @@ func TestWriteDocMarkdownBuiltin(t *testing.T) {
 	}
 }
 
+func TestWriteDocBuiltinHelpGroupInSubcommands(t *testing.T) {
+	var opts struct {
+		Serve struct {
+			Port int `long:"port" description:"Port to listen on"`
+		} `command:"serve" description:"Serve the app"`
+	}
+
+	newParser := func() *Parser {
+		p := NewNamedParser("myapp", HelpFlag)
+		if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+			t.Fatalf("unexpected add group error: %v", err)
+		}
+		// Materialize the builtin help group so it appears in docs.
+		p.EnsureBuiltinOptions()
+		return p
+	}
+
+	helpOptPattern := defaultLongOptDelimiter + "help"
+
+	// Default behavior: help group should NOT appear in subcommand sections.
+	p := newParser()
+	var outDefault bytes.Buffer
+	if err := p.WriteDoc(&outDefault, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+	got := outDefault.String()
+	// The root-level help option should be present.
+	if !strings.Contains(got, helpOptPattern) {
+		t.Fatalf("expected root-level %q in default output, got:\n%s", helpOptPattern, got)
+	}
+	// After the "### serve" section, the help option must not repeat.
+	serveIdx := strings.Index(got, "### serve")
+	if serveIdx == -1 {
+		t.Fatalf("expected ### serve section in output, got:\n%s", got)
+	}
+	if strings.Contains(got[serveIdx:], helpOptPattern) {
+		t.Fatalf("expected no %q in subcommand section by default, got:\n%s", helpOptPattern, got[serveIdx:])
+	}
+
+	// With WithBuiltinHelpInSubcommands(true): help group should appear in subcommands too.
+	p = newParser()
+	var outLegacy bytes.Buffer
+	if err := p.WriteDoc(&outLegacy, DocFormatMarkdown,
+		WithBuiltinTemplate(DocTemplateMarkdownList),
+		WithBuiltinHelpInSubcommands(true),
+	); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+	gotLegacy := outLegacy.String()
+	serveIdx = strings.Index(gotLegacy, "### serve")
+	if serveIdx == -1 {
+		t.Fatalf("expected ### serve section in legacy output, got:\n%s", gotLegacy)
+	}
+	if !strings.Contains(gotLegacy[serveIdx:], helpOptPattern) {
+		t.Fatalf("expected %q in subcommand section with WithBuiltinHelpInSubcommands(true), got:\n%s", helpOptPattern, gotLegacy[serveIdx:])
+	}
+}
+
 func TestWriteDocBuiltinTemplatesIncludeGeneratedMarker(t *testing.T) {
 	p := NewNamedParser("generated-marker", None)
 

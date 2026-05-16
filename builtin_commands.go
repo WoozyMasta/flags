@@ -140,6 +140,10 @@ type builtinDocBuiltinCommandsOption struct {
 	Builtins []string `long:"builtins" choices:"help;version;completion;docs;config" description:"Built-in commands to include in generated output" description-i18n:"help.builtin.command.docs.builtins.desc" auto-env:"false"`
 }
 
+type builtinDocHelpGroupOption struct {
+	HelpInSubcommands bool `long:"help-in-subcommands" description:"Include builtin help options (-h/--help) in nested command sections" auto-env:"false"`
+}
+
 type builtinDocManCommand struct {
 	parser *Parser
 
@@ -150,6 +154,7 @@ type builtinDocManCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
+	builtinDocHelpGroupOption
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
@@ -164,6 +169,7 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 		WithBuiltinCommands(c.Builtins),
+		WithBuiltinHelpInSubcommands(c.HelpInSubcommands),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -181,6 +187,7 @@ type builtinDocHTMLCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
+	builtinDocHelpGroupOption
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 
@@ -202,6 +209,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 		WithBuiltinCommands(c.Builtins),
+		WithBuiltinHelpInSubcommands(c.HelpInSubcommands),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -219,6 +227,7 @@ type builtinDocMarkdownCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
+	builtinDocHelpGroupOption
 	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
 
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
@@ -246,6 +255,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 		WithBuiltinCommands(c.Builtins),
+		WithBuiltinHelpInSubcommands(c.HelpInSubcommands),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -263,6 +273,7 @@ type builtinDocJSONCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
+	builtinDocHelpGroupOption
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
 	Compact          bool `long:"compact" description:"Emit compact JSON without indentation" auto-env:"false"`
@@ -275,6 +286,7 @@ func (c *builtinDocJSONCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		withJSONCompact(c.Compact),
 		WithBuiltinCommands(c.Builtins),
+		WithBuiltinHelpInSubcommands(c.HelpInSubcommands),
 	}
 	opts = appendBuiltinDocRenderStyleOption(opts, c.Style)
 	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
@@ -314,6 +326,7 @@ type builtinDocTemplateRenderCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
+	builtinDocHelpGroupOption
 	WrapWidth        int  `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
@@ -356,6 +369,7 @@ func (c *builtinDocTemplateRenderCommand) Execute(_ []string) error {
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
 		WithBuiltinCommands(c.Builtins),
+		WithBuiltinHelpInSubcommands(c.HelpInSubcommands),
 	}
 	if c.Compact {
 		opts = append(opts, withJSONCompact(c.Compact))
