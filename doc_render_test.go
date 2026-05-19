@@ -329,9 +329,10 @@ func TestWriteDocMarkdownDashListsOption(t *testing.T) {
 	}
 
 	got := out.String()
+	longValue := string(defaultLongOptDelimiter) + "value"
 	for _, needle := range []string{
 		"- [OPTIONS](#options)",
-		"- `/value` -",
+		"- `" + longValue + "` -",
 	} {
 		if !strings.Contains(got, needle) {
 			t.Fatalf("expected dash list marker %q, got:\n%s", needle, got)

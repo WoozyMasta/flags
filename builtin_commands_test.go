@@ -599,9 +599,10 @@ func TestBuiltinDocsCommandMarkdownDashLists(t *testing.T) {
 		t.Fatalf("unexpected read error: %v", err)
 	}
 	text := string(got)
+	longValue := string(defaultLongOptDelimiter) + "value"
 	for _, want := range []string{
 		"- [OPTIONS](#options)",
-		"- `/value` -",
+		"- `" + longValue + "` -",
 	} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected markdown '-' list marker %q, got:\n%s", want, text)
