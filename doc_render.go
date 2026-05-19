@@ -35,6 +35,7 @@ type docRenderOptions struct {
 	wrapWidth                       int
 	renderStyle                     RenderStyle
 	toc                             bool
+	markdownDashLists               bool
 	trimDescriptions                bool
 	includeHidden                   bool
 	markHidden                      bool
@@ -115,6 +116,15 @@ func WithDocWrapWidth(width int) DocOption {
 func WithTOC(enabled bool) DocOption {
 	return func(o *docRenderOptions) error {
 		o.toc = enabled
+		return nil
+	}
+}
+
+// WithMarkdownDashLists switches markdown list marker from '*' to '-'.
+// By default markdown templates render lists with '*'.
+func WithMarkdownDashLists(enabled bool) DocOption {
+	return func(o *docRenderOptions) error {
+		o.markdownDashLists = enabled
 		return nil
 	}
 }

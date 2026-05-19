@@ -13,10 +13,10 @@
 {{ if .ShowTOC }}
 ## Table of Contents
 
-{{ if .Doc.LongDescription }}- [DESCRIPTION](#description)
-{{ end }}{{ if .Doc.Groups }}- [OPTIONS](#options)
-{{ end }}{{ if .Doc.Commands }}- [COMMANDS](#commands)
-{{ range tocCommandEntries .Doc.Commands }}  - [{{ .Name }}](#{{ tocHeadingAnchor .Name }})
+{{ if .Doc.LongDescription }}{{ mdList }} [DESCRIPTION](#description)
+{{ end }}{{ if .Doc.Groups }}{{ mdList }} [OPTIONS](#options)
+{{ end }}{{ if .Doc.Commands }}{{ mdList }} [COMMANDS](#commands)
+{{ range tocCommandEntries .Doc.Commands }}  {{ mdList }} [{{ .Name }}](#{{ tocHeadingAnchor .Name }})
 {{ end }}{{ end }}
 {{ end }}
 
@@ -39,22 +39,22 @@
 {{ end }}
 
 {{ range .Options }}
-* {{ codeJoin (optionForms .) }}{{ if .Description }} -
+{{ mdList }} {{ codeJoin (optionForms .) }}{{ if .Description }} -
 {{ markdownWrapIndent .Description 2 }}{{ if hiddenMark .Hidden }} **({{ i18n "doc.tmpl.markdown.hidden" }})**{{ end }}{{ else if hiddenMark .Hidden }} - **({{ i18n "doc.tmpl.markdown.hidden" }})**{{ end }}
-{{ if .Required }}  * {{ i18n "doc.tmpl.markdown.label.required" }}: `{{ i18n "doc.tmpl.markdown.value.yes" }}`
-{{ end }}{{ if .Deprecated }}  * {{ i18n "doc.tmpl.markdown.deprecated" }}: {{ .Deprecated }}
-{{ end }}{{ if .Optional }}  * {{ i18n "doc.tmpl.markdown.label.optional_value" }}: {{ code .OptionalVal }}
-{{ end }}{{ if .Default }}  * {{ i18n "doc.tmpl.markdown.label.defaults" }}: {{ code .Default }}
-{{ end }}{{ if .Env }}  * {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
-{{ end }}{{ if .Choices }}  * {{ i18n "doc.tmpl.markdown.label.choices" }}: {{ code (join .Choices ", ") }}
-{{ end }}{{ if .ValueName }}  * {{ i18n "doc.tmpl.markdown.label.value_name" }}: {{ code .ValueName }}
-{{ end }}{{ if .Terminator }}  * {{ i18n "doc.tmpl.markdown.label.terminator" }}: {{ code .Terminator }}
-{{ end }}{{ if .IniName }}  * {{ i18n "doc.tmpl.markdown.label.ini_key" }}: {{ code .IniName }}
-{{ end }}{{ if .KeyValueDelim }}  * {{ i18n "doc.tmpl.markdown.label.key_value_delimiter" }}: {{ code .KeyValueDelim }}
-{{ end }}{{ if .DefaultMask }}  * {{ i18n "doc.tmpl.markdown.label.default_mask" }}: {{ code .DefaultMask }}
-{{ end }}{{ if .Base }}  * {{ i18n "doc.tmpl.markdown.label.base" }}: {{ code .Base }}
-{{ end }}{{ if .UnquoteTag }}  * {{ i18n "doc.tmpl.markdown.label.unquote_tag" }}: {{ code .UnquoteTag }}
-{{ end }}{{ if ne .Order 0 }}  * {{ i18n "doc.tmpl.markdown.label.order" }}: {{ .Order }}
+{{ if .Required }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.required" }}: `{{ i18n "doc.tmpl.markdown.value.yes" }}`
+{{ end }}{{ if .Deprecated }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.deprecated" }}: {{ .Deprecated }}
+{{ end }}{{ if .Optional }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.optional_value" }}: {{ code .OptionalVal }}
+{{ end }}{{ if .Default }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.defaults" }}: {{ code .Default }}
+{{ end }}{{ if .Env }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
+{{ end }}{{ if .Choices }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.choices" }}: {{ code (join .Choices ", ") }}
+{{ end }}{{ if .ValueName }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.value_name" }}: {{ code .ValueName }}
+{{ end }}{{ if .Terminator }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.terminator" }}: {{ code .Terminator }}
+{{ end }}{{ if .IniName }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.ini_key" }}: {{ code .IniName }}
+{{ end }}{{ if .KeyValueDelim }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.key_value_delimiter" }}: {{ code .KeyValueDelim }}
+{{ end }}{{ if .DefaultMask }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.default_mask" }}: {{ code .DefaultMask }}
+{{ end }}{{ if .Base }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.base" }}: {{ code .Base }}
+{{ end }}{{ if .UnquoteTag }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.unquote_tag" }}: {{ code .UnquoteTag }}
+{{ end }}{{ if ne .Order 0 }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.order" }}: {{ .Order }}
 {{ end }}
 {{ end }}
 
@@ -85,8 +85,8 @@
 ## {{ i18n "doc.tmpl.markdown.section.arguments" }}
 
 {{ range .Doc.Args }}
-* {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
-  * {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
+{{ mdList }} {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
+  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
 {{ end }}
 {{ end }}
 
@@ -104,8 +104,8 @@
 {{ if or .Doc.Meta.SeeAlso .Doc.Meta.Homepage }}
 ## {{ i18n "doc.tmpl.markdown.section.see_also" }}
 
-{{ range .Doc.Meta.SeeAlso }}* {{ . }}
-{{ end }}{{ if .Doc.Meta.Homepage }}* {{ .Doc.Meta.Homepage }}
+{{ range .Doc.Meta.SeeAlso }}{{ mdList }} {{ . }}
+{{ end }}{{ if .Doc.Meta.Homepage }}{{ mdList }} {{ .Doc.Meta.Homepage }}
 {{ end }}
 {{ end }}
 {{ if .Doc.Meta.License }}
@@ -146,22 +146,22 @@
 
 {{ end }}
 {{ range .Options }}
-* {{ codeJoin (optionForms .) }}{{ if .Description }} -
+{{ mdList }} {{ codeJoin (optionForms .) }}{{ if .Description }} -
 {{ markdownWrapIndent .Description 2 }}{{ if hiddenMark .Hidden }} **({{ i18n "doc.tmpl.markdown.hidden" }})**{{ end }}{{ else if hiddenMark .Hidden }} - **({{ i18n "doc.tmpl.markdown.hidden" }})**{{ end }}
-{{ if .Required }}  * {{ i18n "doc.tmpl.markdown.label.required" }}: `{{ i18n "doc.tmpl.markdown.value.yes" }}`
-{{ end }}{{ if .Deprecated }}  * {{ i18n "doc.tmpl.markdown.deprecated" }}: {{ .Deprecated }}
-{{ end }}{{ if .Optional }}  * {{ i18n "doc.tmpl.markdown.label.optional_value" }}: {{ code .OptionalVal }}
-{{ end }}{{ if .Default }}  * {{ i18n "doc.tmpl.markdown.label.defaults" }}: {{ code .Default }}
-{{ end }}{{ if .Env }}  * {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
-{{ end }}{{ if .Choices }}  * {{ i18n "doc.tmpl.markdown.label.choices" }}: {{ code (join .Choices ", ") }}
-{{ end }}{{ if .ValueName }}  * {{ i18n "doc.tmpl.markdown.label.value_name" }}: {{ code .ValueName }}
-{{ end }}{{ if .Terminator }}  * {{ i18n "doc.tmpl.markdown.label.terminator" }}: {{ code .Terminator }}
-{{ end }}{{ if .IniName }}  * {{ i18n "doc.tmpl.markdown.label.ini_key" }}: {{ code .IniName }}
-{{ end }}{{ if .KeyValueDelim }}  * {{ i18n "doc.tmpl.markdown.label.key_value_delimiter" }}: {{ code .KeyValueDelim }}
-{{ end }}{{ if .DefaultMask }}  * {{ i18n "doc.tmpl.markdown.label.default_mask" }}: {{ code .DefaultMask }}
-{{ end }}{{ if .Base }}  * {{ i18n "doc.tmpl.markdown.label.base" }}: {{ code .Base }}
-{{ end }}{{ if .UnquoteTag }}  * {{ i18n "doc.tmpl.markdown.label.unquote_tag" }}: {{ code .UnquoteTag }}
-{{ end }}{{ if ne .Order 0 }}  * {{ i18n "doc.tmpl.markdown.label.order" }}: {{ .Order }}
+{{ if .Required }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.required" }}: `{{ i18n "doc.tmpl.markdown.value.yes" }}`
+{{ end }}{{ if .Deprecated }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.deprecated" }}: {{ .Deprecated }}
+{{ end }}{{ if .Optional }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.optional_value" }}: {{ code .OptionalVal }}
+{{ end }}{{ if .Default }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.defaults" }}: {{ code .Default }}
+{{ end }}{{ if .Env }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.environment" }}: {{ code .EnvSignature }}{{ if .EnvDelim }} ({{ i18n "doc.tmpl.markdown.label.delimiter" }} {{ code .EnvDelim }}){{ end }}
+{{ end }}{{ if .Choices }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.choices" }}: {{ code (join .Choices ", ") }}
+{{ end }}{{ if .ValueName }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.value_name" }}: {{ code .ValueName }}
+{{ end }}{{ if .Terminator }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.terminator" }}: {{ code .Terminator }}
+{{ end }}{{ if .IniName }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.ini_key" }}: {{ code .IniName }}
+{{ end }}{{ if .KeyValueDelim }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.key_value_delimiter" }}: {{ code .KeyValueDelim }}
+{{ end }}{{ if .DefaultMask }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.default_mask" }}: {{ code .DefaultMask }}
+{{ end }}{{ if .Base }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.base" }}: {{ code .Base }}
+{{ end }}{{ if .UnquoteTag }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.unquote_tag" }}: {{ code .UnquoteTag }}
+{{ end }}{{ if ne .Order 0 }}  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.order" }}: {{ .Order }}
 {{ end }}
 {{ end }}
 
@@ -170,8 +170,8 @@
 #### {{ i18n "doc.tmpl.markdown.section.arguments_title" }}
 
 {{ range .Args }}
-* {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
-  * {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
+{{ mdList }} {{ code .Name }}{{ if .Required }} *({{ i18n "doc.tmpl.markdown.required" }})*{{ end }}
+  {{ mdList }} {{ i18n "doc.tmpl.markdown.label.description" }}: {{ markdownWrap .Description }}
 {{ end }}
 {{ end }}
 {{ if hasNamedCommandGroups .CommandGroups }}

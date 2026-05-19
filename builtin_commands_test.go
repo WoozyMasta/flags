@@ -559,6 +559,7 @@ func TestBuiltinDocsCommandTOCMarkdown(t *testing.T) {
 	text := string(got)
 	for _, want := range []string{
 		"## Table of Contents",
+		"* [COMMANDS](#commands)",
 		"[COMMANDS](#commands)",
 		"[help](#help)",
 		"[version](#version)",
@@ -568,9 +569,42 @@ func TestBuiltinDocsCommandTOCMarkdown(t *testing.T) {
 			t.Fatalf("expected markdown toc entry %q, got:\n%s", want, text)
 		}
 	}
+	if strings.Contains(text, "\n- [COMMANDS](#commands)\n") {
+		t.Fatalf("did not expect '-' marker in markdown toc, got:\n%s", text)
+	}
 	for _, unwanted := range []string{"(#name)", "(#synopsis)"} {
 		if strings.Contains(text, unwanted) {
 			t.Fatalf("did not expect %q in toc, got:\n%s", unwanted, text)
+		}
+	}
+}
+
+func TestBuiltinDocsCommandMarkdownDashLists(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"Value option"`
+	}
+
+	p := NewNamedParser("dash-docs", DocsCommand)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	out := filepath.Join(t.TempDir(), "docs.md")
+
+	if _, err := p.ParseArgs([]string{"docs", "md", "--toc", "--dash-lists", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	text := string(got)
+	for _, want := range []string{
+		"- [OPTIONS](#options)",
+		"- `/value` -",
+	} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected markdown '-' list marker %q, got:\n%s", want, text)
 		}
 	}
 }

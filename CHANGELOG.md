@@ -14,7 +14,22 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## [0.6.2] - Unreleased
+## [0.6.3] - 2026-05-19
+
+### Added
+
+* `WithMarkdownDashLists(bool)` doc option and `--dash-lists` flag
+  on `docs md` and `docs template render`
+  switch markdown list markers from `*` (default) to `-`.
+
+### Changed
+
+* Markdown TOC list markers now use the same list marker as the rest
+  of markdown templates (default `*`, or `-` when `--dash-lists` is set).
+
+[0.6.3]: https://github.com/WoozyMasta/flags/compare/v0.6.2...v0.6.3
+
+## [0.6.2] - 2026-05-16
 
 ### Added
 

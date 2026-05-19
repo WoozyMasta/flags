@@ -307,6 +307,38 @@ func TestWriteDocMarkdownWrapWidthOption(t *testing.T) {
 	}
 }
 
+func TestWriteDocMarkdownDashListsOption(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"Value option"`
+	}
+
+	p := NewNamedParser("doc-dash", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(
+		&out,
+		DocFormatMarkdown,
+		WithBuiltinTemplate(DocTemplateMarkdownList),
+		WithTOC(true),
+		WithMarkdownDashLists(true),
+	); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+	for _, needle := range []string{
+		"- [OPTIONS](#options)",
+		"- `/value` -",
+	} {
+		if !strings.Contains(got, needle) {
+			t.Fatalf("expected dash list marker %q, got:\n%s", needle, got)
+		}
+	}
+}
+
 func TestWriteDocWrapWidthRejectsNegativeWidth(t *testing.T) {
 	p := NewNamedParser("doc-wrap-invalid", None)
 

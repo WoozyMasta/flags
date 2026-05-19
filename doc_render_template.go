@@ -107,6 +107,10 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 
 func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderFormat) template.FuncMap {
 	markHidden := cfg.markHidden
+	listMarker := "*"
+	if cfg.markdownDashLists {
+		listMarker = "-"
+	}
 	markdownWidth := defaultDocMarkdownWrapWidth
 	if cfg.hasWrapWidth {
 		markdownWidth = cfg.wrapWidth
@@ -323,6 +327,10 @@ func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderF
 		},
 
 		"tocHeadingAnchor": slugifyTOC,
+
+		"mdList": func() string {
+			return listMarker
+		},
 
 		"manPageSection": func(meta *docParserMeta) int {
 			if meta == nil || meta.Section == 0 {

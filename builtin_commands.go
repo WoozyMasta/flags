@@ -232,6 +232,7 @@ type builtinDocMarkdownCommand struct {
 	builtinDocHelpGroupOption
 
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
+	DashLists        bool `long:"dash-lists" description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 
 	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
@@ -251,6 +252,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
 		WithTOC(c.TOC),
+		WithMarkdownDashLists(c.DashLists),
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithDocWrapWidth(c.WrapWidth),
 		WithIncludeHidden(c.IncludeHidden),
@@ -330,6 +332,7 @@ type builtinDocTemplateRenderCommand struct {
 	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
 	builtinDocHelpGroupOption
 	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
+	DashLists        bool `long:"dash-lists" description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false"`
 	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
 	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
 	MarkHidden       bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc" auto-env:"false"`
@@ -365,6 +368,7 @@ func (c *builtinDocTemplateRenderCommand) Execute(_ []string) error {
 		WithTemplateBytes(tplBytes),
 		WithProgramName(c.ProgramName),
 		WithTOC(c.TOC),
+		WithMarkdownDashLists(c.DashLists),
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithDocWrapWidth(c.WrapWidth),
 		WithIncludeHidden(c.IncludeHidden),
