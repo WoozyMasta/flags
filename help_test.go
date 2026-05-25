@@ -699,11 +699,7 @@ func TestCommandOptionsAlignmentMatrix(t *testing.T) {
 				t.Fatalf("unexpected add group error: %v", err)
 			}
 
-			helpArg := "--help"
-			if format := p.optionRenderFormat(); format.longDelimiter == "/" {
-				helpArg = "/?"
-			}
-			_, err := p.ParseArgs([]string{"serve", helpArg})
+			_, err := p.ParseArgs([]string{"serve", "--help"})
 			if err == nil {
 				t.Fatalf("expected help error")
 			}
