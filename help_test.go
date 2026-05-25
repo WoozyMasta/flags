@@ -626,6 +626,128 @@ func commandOptionHelpMessage(t *testing.T, indent int) string {
 	return flagsErr.Message
 }
 
+func TestCommandOptionsDoNotReserveShortSlot(t *testing.T) {
+	var opts struct {
+		Serve struct {
+			Config    string `short:"c" long:"config" description:"Path to config file"`
+			AssetsDir string `long:"assets-dir" description:"Override embedded web assets directory"`
+		} `command:"serve" description:"Start server"`
+	}
+
+	p := NewNamedParser("restreamer", HelpFlag)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err := p.ParseArgs([]string{"serve", "--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	got := flagsErr.Message
+	if !strings.Contains(got, "[serve command options]") {
+		t.Fatalf("expected serve command options header, got:\n%s", got)
+	}
+	longPrefix := "\n  " + string(defaultLongOptDelimiter) + "assets-dir"
+	if !strings.Contains(got, longPrefix) {
+		t.Fatalf("expected long-only command option to use base indent, got:\n%s", got)
+	}
+	if strings.Contains(got, "\n      "+string(defaultLongOptDelimiter)+"assets-dir") {
+		t.Fatalf("did not expect long-only command option to reserve short slot, got:\n%s", got)
+	}
+}
+
+func TestCommandOptionsAlignmentMatrix(t *testing.T) {
+	type tc struct {
+		name   string
+		style  RenderStyle
+		indent int
+		width  int
+	}
+
+	tests := []tc{
+		{name: "posix_indent2", style: RenderStylePOSIX, indent: 2, width: 120},
+		{name: "posix_indent4", style: RenderStylePOSIX, indent: 4, width: 120},
+		{name: "windows_indent2", style: RenderStyleWindows, indent: 2, width: 120},
+		{name: "windows_indent4", style: RenderStyleWindows, indent: 4, width: 120},
+		{name: "auto_indent2", style: RenderStyleAuto, indent: 2, width: 120},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var opts struct {
+				Serve struct {
+					Config    string `short:"c" long:"config" description:"Path to config file"`
+					AssetsDir string `long:"assets-dir" description:"Override embedded web assets directory"`
+				} `command:"serve" description:"Start server"`
+			}
+
+			p := NewNamedParser("restreamer", HelpFlag)
+			p.SetHelpFlagRenderStyle(tt.style)
+			if err := p.SetCommandOptionIndent(tt.indent); err != nil {
+				t.Fatalf("unexpected set command option indent error: %v", err)
+			}
+			if err := p.SetHelpWidth(tt.width); err != nil {
+				t.Fatalf("unexpected set help width error: %v", err)
+			}
+			if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+				t.Fatalf("unexpected add group error: %v", err)
+			}
+
+			helpArg := "--help"
+			if format := p.optionRenderFormat(); format.longDelimiter == "/" {
+				helpArg = "/?"
+			}
+			_, err := p.ParseArgs([]string{"serve", helpArg})
+			if err == nil {
+				t.Fatalf("expected help error")
+			}
+
+			flagsErr, ok := err.(*Error)
+			if !ok || flagsErr.Type != ErrHelp {
+				t.Fatalf("expected ErrHelp, got %v", err)
+			}
+
+			got := flagsErr.Message
+
+			if !strings.Contains(got, "[serve command options]") {
+				t.Fatalf("expected serve command options header, got:\n%s", got)
+			}
+
+			format := p.optionRenderFormat()
+			configNeedle := string(format.shortDelimiter) + "c, " + string(format.longDelimiter) + "config"
+			assetsNeedle := string(format.longDelimiter) + "assets-dir"
+			configLine := helpLineContaining(t, got, configNeedle)
+			assetsLine := helpLineContaining(t, got, assetsNeedle)
+
+			expectedIndent := strings.Repeat(" ", paddingBeforeOption+tt.indent)
+			if !strings.HasPrefix(configLine, expectedIndent) {
+				t.Fatalf("expected config line indent %d, got:\n%s", paddingBeforeOption+tt.indent, configLine)
+			}
+			if !strings.HasPrefix(assetsLine, expectedIndent) {
+				t.Fatalf("expected assets line indent %d, got:\n%s", paddingBeforeOption+tt.indent, assetsLine)
+			}
+			if !strings.HasPrefix(assetsLine, expectedIndent+assetsNeedle) {
+				t.Fatalf("did not expect long-only command option to reserve short slot, got:\n%s", assetsLine)
+			}
+
+			assertHelpDescriptionColumn(
+				t,
+				got,
+				configNeedle,
+				"Path to config file",
+				assetsNeedle,
+				"Override embedded web assets directory",
+			)
+		})
+	}
+}
+
 func assertHelpDescriptionColumn(
 	t *testing.T,
 	help string,

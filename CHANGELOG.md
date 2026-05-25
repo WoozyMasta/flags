@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.6.4] - 2026-05-25
+
+### Fixed
+
+* Help output for `[{command} command options]` now keeps long-only flags
+  at the same base command-option indent (no extra short-flag slot offset),
+  with alignment covered by a render-style matrix test.
+
+[0.6.4]: https://github.com/WoozyMasta/flags/compare/v0.6.3...v0.6.4
+
 ## [0.6.3] - 2026-05-19
 
 ### Added
