@@ -61,6 +61,11 @@ Minimal parse flow:
 
 For custom value conversion, implement [Marshaler] and [Unmarshaler].
 
+To export the current parser state back to CLI argv, use [Parser.ExportArgs].
+It returns a deterministic []string suitable for passing back to ParseArgs,
+capturing the resolved configuration without manual field mapping.
+Re-parse callers should set [AllowBoolValues] to accept explicit bool tokens.
+
 # Struct Tags
 
 An option field must define at least one of `short` or `long`.

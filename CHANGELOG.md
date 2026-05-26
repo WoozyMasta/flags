@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.7.0] - 2026-05-26
+
+### Added
+
+* `Parser.ExportArgs` exports the current parser state as CLI argv (`[]string`)
+  for re-parsing or process re-launch without manual field mapping.
+  Supports selection modes (`ExportModeResolved`, `ExportModeExplicit`,
+  `ExportModeNonZero`), subcommand targeting,
+  and secret/hidden/deprecated visibility controls via functional options.
+
+[0.7.0]: https://github.com/WoozyMasta/flags/compare/v0.6.4...v0.7.0
+
 ## [0.6.4] - 2026-05-25
 
 ### Fixed

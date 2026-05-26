@@ -47,7 +47,8 @@ Building a polished CLI: read [Help, Completion, and Docs][],
 [Completion][], [Version Metadata][], and [Localization][].
 
 Adding config support:
-read [Defaults and Configuration][], [Environment][], and [INI Configuration][].
+read [Defaults and Configuration][], [Environment][], [INI Configuration][],
+and [Exporting Arguments][].
 
 ## Core Concepts
 
@@ -74,6 +75,7 @@ formatting, completion, and dynamic defaults.
 [Defaults and Configuration]: configuration/defaults-and-configuration.md
 [Environment]: configuration/environment.md
 [Error Handling]: parser-model/error-handling.md
+[Exporting Arguments]: configuration/export-args.md
 [Getting Started]: start/getting-started.md
 [Help, Completion, and Docs]: output/help-completion-docs.md
 [INI Configuration]: configuration/ini.md
