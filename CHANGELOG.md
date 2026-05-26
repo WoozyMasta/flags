@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning][].
   `ExportModeNonZero`), subcommand targeting,
   and secret/hidden/deprecated visibility controls via functional options.
 
+### Fixed
+
+* Long-only options in a command section now align their descriptions with
+  short+long options in the same block when the command has any short flag.
+  Previously the short-flag slot was never reserved for command sections,
+  causing descriptions to be misaligned.
+
 [0.7.0]: https://github.com/WoozyMasta/flags/compare/v0.6.4...v0.7.0
 
 ## [0.6.4] - 2026-05-25

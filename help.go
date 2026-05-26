@@ -214,9 +214,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 		printcmd := c != p.Command
 		optionAlignInfo := aligninfo
 		if printcmd {
-			// Keep command option blocks visually stable: long-only flags should
-			// not shift under short+long entries inside the same command section.
-			optionAlignInfo.reserveShort = false
+			optionAlignInfo.reserveShort = commandHasVisibleShortOption(c)
 			optionAlignInfo.indent = p.commandOptionIndent
 		}
 
@@ -1466,6 +1464,25 @@ func (p *Parser) writeHelpArgument(
 	}
 
 	_, _ = fmt.Fprintln(wr)
+}
+
+func commandHasVisibleShortOption(c *Command) bool {
+	found := false
+
+	c.eachGroup(func(g *Group) {
+		if found || !g.showInHelp() || g.isBuiltinHelp {
+			return
+		}
+
+		for _, opt := range g.options {
+			if opt.showInHelp() && opt.ShortName != 0 {
+				found = true
+				return
+			}
+		}
+	})
+
+	return found
 }
 
 func maxCommandLength(s []*Command) int {

@@ -626,7 +626,7 @@ func commandOptionHelpMessage(t *testing.T, indent int) string {
 	return flagsErr.Message
 }
 
-func TestCommandOptionsDoNotReserveShortSlot(t *testing.T) {
+func TestCommandOptionsAlignShortSlotWhenShortPresent(t *testing.T) {
 	var opts struct {
 		Serve struct {
 			Config    string `short:"c" long:"config" description:"Path to config file"`
@@ -653,12 +653,55 @@ func TestCommandOptionsDoNotReserveShortSlot(t *testing.T) {
 	if !strings.Contains(got, "[serve command options]") {
 		t.Fatalf("expected serve command options header, got:\n%s", got)
 	}
-	longPrefix := "\n  " + string(defaultLongOptDelimiter) + "assets-dir"
-	if !strings.Contains(got, longPrefix) {
-		t.Fatalf("expected long-only command option to use base indent, got:\n%s", got)
+
+	// When the section has a short flag (-c), long-only options must reserve
+	// the short slot so descriptions align in the same column.
+	shortSlotPrefix := "\n" + strings.Repeat(" ", paddingBeforeOption+4) + string(defaultLongOptDelimiter) + "assets-dir"
+	if !strings.Contains(got, shortSlotPrefix) {
+		t.Fatalf("expected long-only command option to reserve short slot for alignment, got:\n%s", got)
 	}
-	if strings.Contains(got, "\n      "+string(defaultLongOptDelimiter)+"assets-dir") {
-		t.Fatalf("did not expect long-only command option to reserve short slot, got:\n%s", got)
+
+	format := p.optionRenderFormat()
+	assertHelpDescriptionColumn(
+		t, got,
+		string(format.shortDelimiter)+"c, "+string(format.longDelimiter)+"config", "Path to config file",
+		string(format.longDelimiter)+"assets-dir", "Override embedded web assets directory",
+	)
+}
+
+func TestCommandOptionsNoShortSlotWhenNoShortOption(t *testing.T) {
+	var opts struct {
+		Serve struct {
+			AssetsDir string `long:"assets-dir" description:"Override embedded web assets directory"`
+			Port      int    `long:"port" description:"Listen port"`
+		} `command:"serve" description:"Start server"`
+	}
+
+	p := NewNamedParser("restreamer", HelpFlag)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	_, err := p.ParseArgs([]string{"serve", "--help"})
+	if err == nil {
+		t.Fatalf("expected help error")
+	}
+
+	flagsErr, ok := err.(*Error)
+	if !ok || flagsErr.Type != ErrHelp {
+		t.Fatalf("expected ErrHelp, got %v", err)
+	}
+
+	got := flagsErr.Message
+
+	// When the section has no short flags, long-only options sit at base indent.
+	basePrefix := "\n" + strings.Repeat(" ", paddingBeforeOption) + string(defaultLongOptDelimiter) + "assets-dir"
+	if !strings.Contains(got, basePrefix) {
+		t.Fatalf("expected long-only command option at base indent, got:\n%s", got)
+	}
+	shortSlotPrefix := "\n" + strings.Repeat(" ", paddingBeforeOption+4) + string(defaultLongOptDelimiter) + "assets-dir"
+	if strings.Contains(got, shortSlotPrefix) {
+		t.Fatalf("did not expect short-slot indent when no short flags in section, got:\n%s", got)
 	}
 }
 
@@ -721,15 +764,14 @@ func TestCommandOptionsAlignmentMatrix(t *testing.T) {
 			configLine := helpLineContaining(t, got, configNeedle)
 			assetsLine := helpLineContaining(t, got, assetsNeedle)
 
-			expectedIndent := strings.Repeat(" ", paddingBeforeOption+tt.indent)
-			if !strings.HasPrefix(configLine, expectedIndent) {
+			baseIndent := strings.Repeat(" ", paddingBeforeOption+tt.indent)
+			if !strings.HasPrefix(configLine, baseIndent) {
 				t.Fatalf("expected config line indent %d, got:\n%s", paddingBeforeOption+tt.indent, configLine)
 			}
-			if !strings.HasPrefix(assetsLine, expectedIndent) {
-				t.Fatalf("expected assets line indent %d, got:\n%s", paddingBeforeOption+tt.indent, assetsLine)
-			}
-			if !strings.HasPrefix(assetsLine, expectedIndent+assetsNeedle) {
-				t.Fatalf("did not expect long-only command option to reserve short slot, got:\n%s", assetsLine)
+			// Long-only option must reserve the short slot to align with -c, --config.
+			shortSlotIndent := strings.Repeat(" ", paddingBeforeOption+tt.indent+4)
+			if !strings.HasPrefix(assetsLine, shortSlotIndent+assetsNeedle) {
+				t.Fatalf("expected long-only command option to reserve short slot for alignment, got:\n%s", assetsLine)
 			}
 
 			assertHelpDescriptionColumn(
