@@ -1,5 +1,6 @@
 {
   "app.description": "Montras plenan i18n-fluon por parser-helpo, eraroj kaj aplikaj mesaĝoj.",
+  "err.arg.unexpected": "Neatendita argumento `{arg}`",
   "err.bool.no_argument": "bulea flago `{flag}` ne povas havi argumenton",
   "err.command.did_you_mean": "{base}, ĉu vi celis `{choice}`?",
   "err.command.required.multi": "Bonvolu specifi unu komandon el: {commands} aŭ {last}",

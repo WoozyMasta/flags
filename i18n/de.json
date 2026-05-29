@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Erforderlich",
   "doc.tmpl.markdown.value.no": "nein",
   "doc.tmpl.markdown.value.yes": "ja",
+  "err.arg.unexpected": "Unerwartetes Argument `{arg}`",
   "err.bool.no_argument": "Boolesches Flag `{flag}` darf kein Argument haben",
   "err.command.did_you_mean": "{base}, meinten Sie `{choice}`?",
   "err.command.required.multi": "Bitte geben Sie einen Befehl an: {commands} oder {last}",

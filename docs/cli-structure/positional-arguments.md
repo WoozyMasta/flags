@@ -141,6 +141,31 @@ type Options struct {
 `app add item` fills `Add.Args.Name`.
 A sibling command does not see that positional definition.
 
+## Strict Positional Arguments
+
+By default, extra positional arguments beyond declared slots become remaining
+args and are silently passed to the application.
+This allows positional overflow to go unnoticed.
+
+`StrictPositionalArgs` parser option returns `ErrUnexpectedArgument`
+for any extra argument after all declared slots are filled:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.StrictPositionalArgs)
+```
+
+`Command.StrictArgs` applies the same rule only to that command:
+
+```go
+parser.Find("add").StrictArgs = true
+```
+
+Trailing slice fields (`[]string` without an upper bound) are not affected:
+a slice consumes arguments indefinitely and is never considered "full."
+
+Use `StrictPositionalArgs` or `StrictArgs` for commands
+where extra tokens indicate a user mistake rather than pass-through input.
+
 ## Positionals vs Options
 
 Use positional arguments for values that users naturally remember by order.

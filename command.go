@@ -60,8 +60,21 @@ type Command struct {
 	// Whether subcommands are optional
 	SubcommandsOptional bool
 
+	// StrictSubcommands causes the parser to return ErrUnknownCommand for any
+	// unrecognized token at this command level, even when positional arguments
+	// are defined or SubcommandsOptional is true.
+	// This is the command-local version of the StrictCommands parser flag.
+	// Cannot be turned off when the StrictCommands parser flag is set.
+	StrictSubcommands bool
+
 	// Whether positional arguments are required
 	ArgsRequired bool
+
+	// StrictArgs causes the parser to return ErrUnexpectedArgument when more
+	// positional arguments are passed than are declared for this command.
+	// This is the command-local version of the StrictPositionalArgs parser flag.
+	// Cannot be turned off when the StrictPositionalArgs parser flag is set.
+	StrictArgs bool
 
 	// Whether to pass all arguments after the first non option as remaining
 	// command line arguments. This is equivalent to strict POSIX processing.

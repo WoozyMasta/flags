@@ -881,6 +881,9 @@ func (p *parseState) applyPositionalDefaults(parser *Parser, defaultsIfEmpty boo
 }
 
 func (p *Parser) parseNonOption(s *parseState) error {
+	isStrictCmds := (p.Options&StrictCommands) != 0 || s.command.StrictSubcommands
+	isStrictPos := (p.Options&StrictPositionalArgs) != 0 || s.command.StrictArgs
+
 	if len(s.command.commands) > 0 && len(s.retargs) == 0 {
 		if cmd := s.lookup.commands[s.arg]; cmd != nil {
 			if len(s.positional) > 0 {
@@ -915,11 +918,36 @@ func (p *Parser) parseNonOption(s *parseState) error {
 			}
 
 			return p.parseNonOption(s)
-		} else if !s.command.SubcommandsOptional {
-			if len(s.positional) > 0 {
+		} else if !s.command.SubcommandsOptional || isStrictCmds {
+			if len(s.positional) > 0 && !isStrictCmds {
+				// Lenient mode: treat unknown command token as positional arg.
 				return s.addArgs(s.arg)
 			}
 
+			if p.UnknownCommandHandler != nil {
+				if err := p.UnknownCommandHandler(s.arg, s.args); err != nil {
+					s.err = err
+					return s.err
+				}
+				// Handler accepted the token — add to retargs,
+				// mark as handled so estimateCommand() is suppressed at the end of the parse loop.
+				s.retargs = append(s.retargs, s.arg)
+				s.unknownCmdHandled = true
+				return nil
+			}
+
+			if isStrictCmds {
+				// Strict mode: add directly to retargs (bypass positional slots)
+				// so estimateCommand() produces the right "Unknown command" message.
+				// Set s.err directly to preserve the error even when SubcommandsOptional is true
+				// (where estimateCommand wouldn't run after the loop).
+				s.retargs = append(s.retargs, s.arg)
+				s.err = s.estimateCommand()
+				return s.err
+			}
+
+			// Original non-strict path (SubcommandsOptional=false, no positional):
+			// add to retargs and return a break signal; estimateCommand() runs after the parse loop.
 			if err := s.addArgs(s.arg); err != nil {
 				return err
 			}
@@ -934,8 +962,16 @@ func (p *Parser) parseNonOption(s *parseState) error {
 		}
 	}
 
-	if len(s.positional) > 0 {
-		return s.addArgs(s.arg)
+	if isStrictPos && len(s.positional) == 0 {
+		s.err = newError(
+			ErrUnexpectedArgument,
+			p.i18nTextf(
+				"err.arg.unexpected",
+				"Unexpected argument `{arg}`",
+				map[string]string{"arg": s.arg},
+			),
+		)
+		return s.err
 	}
 
 	return s.addArgs(s.arg)

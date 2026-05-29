@@ -108,6 +108,38 @@ Use it when the parent command has useful behavior on its own.
 Avoid it when the parent is only a namespace,
 because ambiguous command trees are harder to explain in help output.
 
+## Strict Subcommands
+
+By default, an unknown command token
+is silently treated as a positional argument or remaining arg
+when the active command has positional slots defined
+or `SubcommandsOptional` is true.
+This means typos and misspelled subcommands can go unnoticed.
+
+`StrictSubcommands` on a `*Command` makes that command reject unrecognized
+tokens with `ErrUnknownCommand`, regardless of positional or optional settings:
+
+```go
+parser.Find("deploy").StrictSubcommands = true
+```
+
+The global `StrictCommands` parser option applies
+the same rule to every command level at once:
+
+```go
+parser := flags.NewParser(&opts, flags.Default|flags.StrictCommands)
+```
+
+Use `StrictSubcommands` when only one specific command tree level
+should be strict. Use `StrictCommands` for applications
+that want uniform unknown-command errors everywhere.
+
+When an `UnknownCommandHandler` is set on the parser,
+it is called before the error is generated.
+Returning `nil` from the handler adds the token
+to retargs and continues parsing. Returning an error propagates it.
+See [Handlers and Integration Points][] for the full handler API.
+
 ## Default Command
 
 `default-command` marks a subcommand to activate

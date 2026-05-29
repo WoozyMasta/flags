@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Обязательно",
   "doc.tmpl.markdown.value.no": "нет",
   "doc.tmpl.markdown.value.yes": "да",
+  "err.arg.unexpected": "Неожиданный аргумент `{arg}`",
   "err.bool.no_argument": "булевый флаг `{flag}` не может принимать аргумент",
   "err.command.did_you_mean": "{base}, вы имели в виду `{choice}`?",
   "err.command.required.multi": "Укажите одну из команд: {commands} или {last}",

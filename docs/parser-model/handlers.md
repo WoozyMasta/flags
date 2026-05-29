@@ -39,6 +39,31 @@ parser.UnknownOptionHandler = func(
 Use this when unknown options need domain-specific rewriting.
 Use `IgnoreUnknown` when unknown options should simply become remaining args.
 
+## Unknown Command Handler
+
+`Parser.UnknownCommandHandler` runs when the parser encounters
+a command token that does not match any registered subcommand.
+It is called whenever an `ErrUnknownCommand` would be produced:
+when `SubcommandsOptional` is false and no positional slots are available,
+or when `StrictCommands` / `Command.StrictSubcommands` is active.
+
+The handler receives the unknown token and the remaining unparsed args.
+
+```go
+parser.UnknownCommandHandler = func(command string, args []string) error {
+  log.Printf("unknown command %q ignored, remaining: %v", command, args)
+  return nil
+}
+```
+
+Returning `nil` adds the token to retargs and continues parsing.
+Returning an error stops parsing and propagates the error to the caller.
+
+Use `UnknownCommandHandler` for proxies and dispatch shims where unknown
+subcommands should be forwarded or logged rather than rejected.
+Use `StrictCommands` or `StrictSubcommands` when the application should
+always reject unrecognized tokens without a handler.
+
 ## Completion Handler
 
 `Parser.CompletionHandler` receives completion candidates in raw completion

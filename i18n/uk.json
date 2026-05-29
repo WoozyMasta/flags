@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Обов'язково",
   "doc.tmpl.markdown.value.no": "ні",
   "doc.tmpl.markdown.value.yes": "так",
+  "err.arg.unexpected": "Неочікуваний аргумент `{arg}`",
   "err.bool.no_argument": "булевий прапорець `{flag}` не може мати аргумент",
   "err.command.did_you_mean": "{base}, можливо ви мали на увазі `{choice}`?",
   "err.command.required.multi": "Вкажіть одну з команд: {commands} або {last}",

@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "zorunlu",
   "doc.tmpl.markdown.value.no": "hayır",
   "doc.tmpl.markdown.value.yes": "evet",
+  "err.arg.unexpected": "Beklenmeyen argüman `{arg}`",
   "err.bool.no_argument": "bool flag `{flag}` cannot have an argument",
   "err.command.did_you_mean": "{base}, did you mean `{choice}`?",
   "err.command.required.multi": "Please specify one command of: {commands} or {last}",

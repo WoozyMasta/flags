@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Required",
   "doc.tmpl.markdown.value.no": "no",
   "doc.tmpl.markdown.value.yes": "yes",
+  "err.arg.unexpected": "Unexpected argument `{arg}`",
   "err.bool.no_argument": "bool flag `{flag}` cannot have an argument",
   "err.command.did_you_mean": "{base}, did you mean `{choice}`?",
   "err.command.required.multi": "Please specify one command of: {commands} or {last}",

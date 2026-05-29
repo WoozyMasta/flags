@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "bắt buộc",
   "doc.tmpl.markdown.value.no": "không",
   "doc.tmpl.markdown.value.yes": "có",
+  "err.arg.unexpected": "Đối số không mong đợi `{arg}`",
   "err.bool.no_argument": "cờ bool `{flag}` không thể có đối số",
   "err.command.did_you_mean": "{base}, ý bạn là `{choice}`?",
   "err.command.required.multi": "Chỉ định một trong các lệnh: {commands} hoặc {last}",

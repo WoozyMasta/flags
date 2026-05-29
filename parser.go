@@ -20,13 +20,22 @@ type Parser struct {
 	// Embedded, see Command for more information
 	*Command
 
-	// UnknownOptionsHandler is a function which gets called when the parser
+	// UnknownOptionHandler is a function which gets called when the parser
 	// encounters an unknown option. The function receives the unknown option
 	// name, a SplitArgument which specifies its value if set with an argument
 	// separator, and the remaining command line arguments.
 	// It should return a new list of remaining arguments to continue parsing,
 	// or an error to indicate a parse failure.
 	UnknownOptionHandler func(option string, arg SplitArgument, args []string) ([]string, error)
+
+	// UnknownCommandHandler is called when an unrecognized command token is
+	// encountered. It receives the unknown command name and the remaining
+	// unparsed arguments. Return a non-nil error to fail parsing; return nil
+	// to add the token to retargs and continue.
+	// This handler is invoked whenever an unknown command would produce
+	// ErrUnknownCommand (i.e. StrictCommands/StrictSubcommands is active, or
+	// SubcommandsOptional is false and no positional slots are available).
+	UnknownCommandHandler func(command string, args []string) error
 
 	// CompletionHandler is a function gets called to handle the completion of
 	// items. By default, the items are printed and the application is exited.
@@ -267,6 +276,18 @@ const (
 	// remaining command line arguments instead of generating an error.
 	IgnoreUnknown
 
+	// StrictCommands causes the parser to return ErrUnknownCommand for any
+	// unrecognized command token, even when the active command has positional
+	// arguments defined or SubcommandsOptional is true.
+	// Per-command override: Command.StrictSubcommands.
+	StrictCommands
+
+	// StrictPositionalArgs causes the parser to return ErrUnexpectedArgument
+	// when more positional arguments are passed than are declared on the
+	// active command.
+	// Per-command override: Command.StrictArgs.
+	StrictPositionalArgs
+
 	// PrintErrors prints any errors which occurred during parsing to
 	// os.Stderr. In the special case of ErrHelp, the message will be printed
 	// to os.Stdout unless PrintHelpOnStderr is set.
@@ -408,6 +429,11 @@ type parseState struct {
 	args       []string
 	retargs    []string
 	positional []*Arg
+
+	// unknownCmdHandled is set when UnknownCommandHandler returned nil, meaning
+	// the caller deliberately accepted the unknown token. This suppresses the
+	// automatic estimateCommand() call at the end of parsing.
+	unknownCmdHandled bool
 }
 
 // CommandDescriptions contains short and long user-facing command descriptions.
@@ -974,7 +1000,7 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		reterr = s.err
 	case p.shouldSkipCommandExecution():
 		return s.retargs, nil
-	case len(s.command.commands) != 0 && !s.command.SubcommandsOptional:
+	case len(s.command.commands) != 0 && !s.command.SubcommandsOptional && !s.unknownCmdHandled:
 		reterr = s.estimateCommand()
 	default:
 		reterr = p.executeCommands(s.command, s.retargs)

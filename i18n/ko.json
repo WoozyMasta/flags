@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "필수",
   "doc.tmpl.markdown.value.no": "아니요",
   "doc.tmpl.markdown.value.yes": "예",
+  "err.arg.unexpected": "예기치 않은 인수 `{arg}`",
   "err.bool.no_argument": "불리언 플래그 `{flag}`에는 인수를 사용할 수 없습니다",
   "err.command.did_you_mean": "{base}, `{choice}`를 의미했습니까?",
   "err.command.required.multi": "다음 명령 중 하나를 지정하세요: {commands} 또는 {last}",

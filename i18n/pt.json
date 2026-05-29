@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "obrigatório",
   "doc.tmpl.markdown.value.no": "não",
   "doc.tmpl.markdown.value.yes": "sim",
+  "err.arg.unexpected": "Argumento inesperado `{arg}`",
   "err.bool.no_argument": "bool flag `{flag}` cannot have an argument",
   "err.command.did_you_mean": "{base}, did you mean `{choice}`?",
   "err.command.required.multi": "Please specify one command of: {commands} or {last}",

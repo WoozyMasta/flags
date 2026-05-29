@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Wymagane",
   "doc.tmpl.markdown.value.no": "nie",
   "doc.tmpl.markdown.value.yes": "tak",
+  "err.arg.unexpected": "Nieoczekiwany argument `{arg}`",
   "err.bool.no_argument": "flaga logiczna `{flag}` nie może mieć argumentu",
   "err.command.did_you_mean": "{base}, czy chodziło o `{choice}`?",
   "err.command.required.multi": "Podaj jedno z poleceń: {commands} lub {last}",

@@ -14,6 +14,28 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.8.0] - 2026-05-29
+
+### Added
+
+* `StrictCommands` parser option and `Command.StrictSubcommands` field return
+  `ErrUnknownCommand` for unrecognized command tokens instead of silently
+  treating them as positional values or remaining args.
+* `StrictPositionalArgs` parser option and `Command.StrictArgs` field
+  return `ErrUnexpectedArgument` when
+  extra positional arguments exceed declared slots.
+* `Parser.UnknownCommandHandler func(command string, args []string) error`
+  intercepts unrecognized command tokens before an error is returned.
+
+### Changed
+
+* `StrictCommands` and `StrictPositionalArgs`
+  were inserted after `IgnoreUnknown` in the `Options` bitmask;
+  raw numeric values of subsequent constants shifted.
+  Code using named constants is unaffected after recompilation.
+
+[0.8.0]: https://github.com/WoozyMasta/flags/compare/v0.7.0...v0.8.0
+
 ## [0.7.0] - 2026-05-26
 
 ### Added

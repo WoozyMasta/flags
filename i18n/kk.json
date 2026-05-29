@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Міндетті",
   "doc.tmpl.markdown.value.no": "жоқ",
   "doc.tmpl.markdown.value.yes": "иә",
+  "err.arg.unexpected": "Күтілмеген аргумент `{arg}`",
   "err.bool.no_argument": "`{flag}` логикалық жалаушасы аргумент қабылдамайды",
   "err.command.did_you_mean": "{base}, `{choice}` дегенді меңзедіңіз бе?",
   "err.command.required.multi": "Келесі командалардың бірін көрсетіңіз: {commands} немесе {last}",

@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "必填",
   "doc.tmpl.markdown.value.no": "否",
   "doc.tmpl.markdown.value.yes": "是",
+  "err.arg.unexpected": "意外的参数 `{arg}`",
   "err.bool.no_argument": "布尔标志 `{flag}` 不能带参数",
   "err.command.did_you_mean": "{base}，你是指 `{choice}` 吗？",
   "err.command.required.multi": "请指定以下命令之一：{commands} 或 {last}",

@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Requis",
   "doc.tmpl.markdown.value.no": "non",
   "doc.tmpl.markdown.value.yes": "oui",
+  "err.arg.unexpected": "Argument inattendu `{arg}`",
   "err.bool.no_argument": "le drapeau booléen `{flag}` ne peut pas avoir d`argument",
   "err.command.did_you_mean": "{base}, vouliez-vous dire `{choice}` ?",
   "err.command.required.multi": "Veuillez spécifier une commande parmi : {commands} ou {last}",

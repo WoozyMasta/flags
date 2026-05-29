@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "आवश्यक",
   "doc.tmpl.markdown.value.no": "नहीं",
   "doc.tmpl.markdown.value.yes": "हाँ",
+  "err.arg.unexpected": "अप्रत्याशित तर्क `{arg}`",
   "err.bool.no_argument": "बूलियन फ्लैग `{flag}` में तर्क नहीं हो सकता",
   "err.command.did_you_mean": "{base}, क्या आपका मतलब `{choice}` था?",
   "err.command.required.multi": "इनमें से एक कमांड बताएं: {commands} या {last}",

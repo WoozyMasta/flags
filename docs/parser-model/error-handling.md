@@ -69,6 +69,9 @@ not version output.
 * `ErrTag` means a generic tag parse failure.
 * `ErrCommandRequired` means a command or subcommand was required but omitted.
 * `ErrUnknownCommand` means a command token did not match a known command.
+* `ErrUnexpectedArgument` means an extra positional argument
+  was passed beyond what is declared,
+  when `StrictPositionalArgs` or `Command.StrictArgs` is enabled.
 * `ErrInvalidChoice` means a parsed value was outside `choice` or `choices`.
 * `ErrInvalidTag` means a tag exists but is invalid for that field,
   value, or combination.

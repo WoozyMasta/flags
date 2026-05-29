@@ -127,6 +127,7 @@ var builtinI18nMessages = []i18nMessageSpec{
 	{Key: "doc.tmpl.markdown.table.required", Source: "Required"},
 	{Key: "doc.tmpl.markdown.value.no", Source: "no"},
 	{Key: "doc.tmpl.markdown.value.yes", Source: "yes"},
+	{Key: "err.arg.unexpected", Source: "Unexpected argument `{arg}`"},
 	{Key: "err.bool.no_argument", Source: "bool flag `{flag}` cannot have an argument"},
 	{Key: "err.command.did_you_mean", Source: "{base}, did you mean `{choice}`?"},
 	{Key: "err.command.required.multi", Source: "Please specify one command of: {commands} or {last}"},

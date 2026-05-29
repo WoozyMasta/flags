@@ -78,6 +78,18 @@ Avoid it for strict public CLIs where typos should fail fast.
 This is strict POSIX-style behavior.
 For command-local behavior, prefer the `pass-after-non-option` command tag.
 
+`StrictCommands` returns `ErrUnknownCommand`
+for any unrecognized command token, even when the active command
+has positional arguments defined or `SubcommandsOptional` is true.
+Without this option the parser silently treats the token
+as a positional value or remaining arg in those cases.
+Per-command equivalent: `Command.StrictSubcommands`.
+
+`StrictPositionalArgs` returns `ErrUnexpectedArgument` when more positional
+arguments are passed than are declared on the active command.
+Without this option extra tokens become remaining args.
+Per-command equivalent: `Command.StrictArgs`.
+
 `AllowBoolValues` allows explicit bool values such as `--flag=true`.
 Without it, passing an argument to a bool option is an error.
 

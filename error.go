@@ -104,6 +104,10 @@ const (
 	// ErrUnknownCommand indicates that an unknown command was specified.
 	ErrUnknownCommand
 
+	// ErrUnexpectedArgument indicates a positional argument was passed beyond
+	// what is declared, when StrictPositionalArgs is enabled.
+	ErrUnexpectedArgument
+
 	// ErrInvalidChoice indicates an invalid option value which only allows
 	// a certain number of choices.
 	ErrInvalidChoice
@@ -151,6 +155,8 @@ func (e ErrorType) String() string {
 		return "command required"
 	case ErrUnknownCommand:
 		return "unknown command"
+	case ErrUnexpectedArgument:
+		return "unexpected argument"
 	case ErrInvalidChoice:
 		return "invalid choice"
 	case ErrInvalidTag:

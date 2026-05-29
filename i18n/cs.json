@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Povinné",
   "doc.tmpl.markdown.value.no": "ne",
   "doc.tmpl.markdown.value.yes": "ano",
+  "err.arg.unexpected": "Neočekávaný argument `{arg}`",
   "err.bool.no_argument": "booleovský přepínač `{flag}` nemůže mít argument",
   "err.command.did_you_mean": "{base}, mysleli jste `{choice}`?",
   "err.command.required.multi": "Zadejte jeden z příkazů: {commands} nebo {last}",

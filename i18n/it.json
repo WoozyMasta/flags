@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "Obbligatorio",
   "doc.tmpl.markdown.value.no": "no",
   "doc.tmpl.markdown.value.yes": "si",
+  "err.arg.unexpected": "Argomento inaspettato `{arg}`",
   "err.bool.no_argument": "il flag booleano `{flag}` non può avere un argomento",
   "err.command.did_you_mean": "{base}, volevi dire `{choice}`?",
   "err.command.required.multi": "Specifica uno dei comandi: {commands} o {last}",

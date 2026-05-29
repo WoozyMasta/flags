@@ -121,6 +121,7 @@
   "doc.tmpl.markdown.table.required": "必須",
   "doc.tmpl.markdown.value.no": "いいえ",
   "doc.tmpl.markdown.value.yes": "はい",
+  "err.arg.unexpected": "予期しない引数 `{arg}`",
   "err.bool.no_argument": "真偽値フラグ `{flag}` に引数は指定できません",
   "err.command.did_you_mean": "{base}。`{choice}` のことですか？",
   "err.command.required.multi": "次のいずれかのコマンドを指定してください: {commands} または {last}",
