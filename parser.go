@@ -203,9 +203,8 @@ func (s strArgument) Value() (string, bool) {
 	return s.value, true
 }
 
-// Options provides parser options that change the behavior of the option
-// parser.
-type Options uint
+// Options provides parser options that change the behavior of the option parser.
+type Options uint64
 
 // OptionSortMode configures how options are ordered within each group block.
 type OptionSortMode uint8
