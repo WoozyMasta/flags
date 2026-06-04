@@ -31,7 +31,7 @@ Useful strengths:
 * short and long options with POSIX-style parsing;
 * commands, subcommands, option groups, and positional arguments;
 * typed values, defaults, slices, maps, counters, and custom parsers;
-* environment variables and INI configuration;
+* environment variables, .env file and INI configuration;
 * value validators for common string, path, and numeric constraints;
 * shell completion for bash, zsh, and PowerShell;
 * generated help, markdown, HTML, and manpage output;
