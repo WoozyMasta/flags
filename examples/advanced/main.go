@@ -132,9 +132,14 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 			flags.EnvProvisioning|
 			flags.KeepDescriptionWhitespace|
 			flags.DetectShellFlagStyle|
-			flags.DetectShellEnvStyle,
+			flags.DetectShellEnvStyle|
+			// DotEnv loads a .env file from the working directory before parsing.
+			// DotEnvFlags adds --env-file, --no-env and --env-override to the
+			// built-in "Env Options" group shown in help output.
+			flags.DotEnv|
+			flags.DotEnvFlags,
 	)
-	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block"
+	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block\n  - .env file support with variable expansion"
 	p.SetHelpHeader(advancedHelpHeader)
 	p.SetBanner(advancedHelpBanner)
 	p.SetHelpFooter(advancedHelpFooter)

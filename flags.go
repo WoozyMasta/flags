@@ -27,6 +27,7 @@ Core features:
   - Option argument forms such as `-I/usr/include`, `-I=/usr/include`, `-I /usr/include`
   - Repeated options (store in slices or use counter semantics)
   - Primitive scalar types, maps, and callback/function options
+  - `.env` file loading with variable expansion ([DotEnv], [DotEnvOverride], [DotEnvFlags])
 
 Windows-specific behavior:
 
@@ -58,6 +59,16 @@ Minimal parse flow:
 
 `HelpCommands` opt-in enables built-in commands:
 `help`, `version`, `completion`, `docs`, `config`.
+
+To load a `.env` file before parsing, add [DotEnv] or [DotEnvOverride] to
+the options. A missing `.env` file is silently ignored with [DotEnv].
+
+	parser := NewParser(&opts, Default|DotEnv)
+	_, err := parser.Parse()
+
+[DotEnvFlags] adds three pre-configured CLI flags (`--env-file`, `--no-env`,
+`--env-override`) for runtime control. Use [Parser.SetDotEnvFile] and
+[Parser.SetDotEnvNoExpand] for programmatic configuration.
 
 For custom value conversion, implement [Marshaler] and [Unmarshaler].
 

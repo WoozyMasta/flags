@@ -929,7 +929,7 @@ func (p *Parser) parseNonOption(s *parseState) error {
 					s.err = err
 					return s.err
 				}
-				// Handler accepted the token — add to retargs,
+				// Handler accepted the token - add to retargs,
 				// mark as handled so estimateCommand() is suppressed at the end of the parse loop.
 				s.retargs = append(s.retargs, s.arg)
 				s.unknownCmdHandled = true

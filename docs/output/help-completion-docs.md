@@ -69,14 +69,14 @@ parser.WriteHelpWithOptions(os.Stdout, flags.HelpRenderOptions{
 
 `HelpRenderOptions` fields:
 
-* `Width` — overrides output wrapping width for this call.
+* `Width` - overrides output wrapping width for this call.
   Zero (the default) uses the parser's configured width
   or auto-detects the terminal width.
-* `FlagStyle` — overrides the flag render style.
+* `FlagStyle` - overrides the flag render style.
   `RenderStyleAuto` (the default) uses the parser's configured style.
-* `EnvStyle` — overrides the env render style.
+* `EnvStyle` - overrides the env render style.
   `RenderStyleAuto` (the default) uses the parser's configured style.
-* `IncludeHidden` — includes hidden options and groups in the output.
+* `IncludeHidden` - includes hidden options and groups in the output.
 
 `WriteHelpWithOptions` is useful in tests, admin tooling, and generator scripts
 where deterministic output is required without permanently changing the parser.

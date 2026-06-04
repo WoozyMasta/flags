@@ -172,6 +172,31 @@ Custom schemes are built from `HelpTextStyle` and `ANSIColor`.
 Built-in commands are opt-in so applications
 do not expose extra public commands accidentally.
 
+## .env File Options
+
+* `DotEnv` loads a `.env` file before parsing
+  and populates environment variables. A missing `.env` is silently ignored.
+* `DotEnvOverride` is like `DotEnv`
+  but overrides existing environment variables.
+  Without it, values already in the environment take precedence.
+* `DotEnvFlags` adds a built-in "Env Options" group
+  with three pre-scanned flags:
+  `--env-file FILE`, `--no-env`, and `--env-override`.  
+  These flags are resolved before the `.env` file is loaded so specifying
+  a file path on the command line takes effect for all option defaults.
+
+```go
+// Load .env, skip if missing, keep existing env vars
+parser := flags.NewParser(&opts, flags.Default|flags.DotEnv)
+
+// Load .env and add the three control flags
+parser := flags.NewParser(&opts, flags.Default|flags.DotEnv|flags.DotEnvFlags)
+```
+
+See [.env Configuration][] for the full `.env` file syntax and programmatic
+API including `LoadDotEnv`, `OverloadDotEnv`, `SetDotEnvFile`,
+and `SetDotEnvNoExpand`.
+
 ## Command Execution Option
 
 `CommandChain` changes command execution from leaf-only to parent-to-leaf.
@@ -259,3 +284,4 @@ Sorting and layout setters are covered in [Runtime Configuration][].
 
 [Defaults and Configuration]: ../configuration/defaults-and-configuration.md
 [Runtime Configuration]: runtime-configuration.md
+[.env Configuration]: ../configuration/dotenv.md

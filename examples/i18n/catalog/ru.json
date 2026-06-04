@@ -17,5 +17,9 @@
   "opt.excited.desc": "Добавить эмоцию в приветствие",
   "arg.target.name": "цель",
   "arg.target.desc": "Цель приветствия",
-  "app.greeting": "Привет, {target}"
+  "app.greeting": "Привет, {target}",
+  "help.group.env_options": "Переменные окружения",
+  "help.builtin.dotenv.file.desc": "Путь к файлу .env",
+  "help.builtin.dotenv.no_env.desc": "Отключить загрузку файла .env",
+  "help.builtin.dotenv.override.desc": "Перезаписать существующие переменные окружения из файла .env"
 }

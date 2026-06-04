@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.9.0] - 2026-06-04
+
+### Added
+
+* Support for loading environment variables from `.env` files
+  before argument parsing,
+  with variable expansion and optional built-in CLI flags.
+
+[0.9.0]: https://github.com/WoozyMasta/flags/compare/v0.8.0...v0.9.0
+
 ## [0.8.0] - 2026-05-29
 
 ### Added
@@ -123,7 +133,7 @@ and this project adheres to [Semantic Versioning][].
   version string; `version --commit` prints only the bare commit SHA;
   `version --json` prints all version fields as indented JSON.
 * `SetVersionShort(bool)` on `Parser` makes the built-in `--version`/`-v` flag
-  behave like `version --short` — printing only the version string
+  behave like `version --short` - printing only the version string
   instead of the full metadata block.
 * `WithBuiltinCommands` doc option and `--builtins` flag on all built-in doc
   subcommands (`html`, `man`, `md`, `json`) control which built-in commands

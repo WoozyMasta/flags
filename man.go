@@ -12,7 +12,7 @@ type manConfig struct {
 }
 
 // SetManSection sets the man page section number used in the .TH header line.
-// Valid values are 1–9. The default is 1 (user commands).
+// Valid values are 1-9. The default is 1 (user commands).
 func (p *Parser) SetManSection(section int) {
 	p.manConfig.Section = section
 }

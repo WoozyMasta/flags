@@ -88,6 +88,14 @@ type Parser struct {
 	banner     string
 	helpFooter string
 
+	// .env file path used when DotEnv/DotEnvOverride/DotEnvFlags is set.
+	dotEnvFile string
+
+	// Long names of the three optional pre-configured dotenv flags.
+	dotEnvFileFlagName     string
+	dotEnvDisableFlagName  string
+	dotEnvOverrideFlagName string
+
 	// Cached version metadata (auto-detected and/or overridden).
 	versionInfo VersionInfo
 
@@ -118,6 +126,10 @@ type Parser struct {
 
 	// Built-in command options that have already been attached.
 	builtinCommandsAdded Options
+
+	// Number of options or positional args that carry validate-* rules.
+	// When zero the post-parse validation sweep is skipped entirely.
+	validationRuleCount int
 
 	// TagListDelimiter splits values for list-based struct tags such as
 	// defaults/choices/aliases.
@@ -168,9 +180,11 @@ type Parser struct {
 	// Set when any immediate option/group is requested during parse.
 	immediateRequested bool
 
-	// Number of options or positional args that carry validate-* rules.
-	// When zero the post-parse validation sweep is skipped entirely.
-	validationRuleCount int
+	// When true, variable expansion ($VAR / ${VAR} / $${VAR}) in .env is disabled.
+	dotEnvNoExpand bool
+
+	// Guard: dotenv options group already materialised.
+	hasDotEnvGroup bool
 }
 
 // SplitArgument represents the argument value of an option that was passed using
@@ -397,6 +411,25 @@ const (
 	// CommandChain executes every active command implementing Commander from
 	// parent to leaf. Without this option only the last active command runs.
 	CommandChain
+
+	// DotEnv enables automatic loading of the .env file before ParseArgs.
+	// The default file name is ".env" in the current working directory.
+	// When the file does not exist, parsing continues silently.
+	// Use SetDotEnvFile to change the file path.
+	DotEnv
+
+	// DotEnvOverride is like DotEnv but overrides existing environment
+	// variables. Without this option values already set in the environment
+	// take precedence over .env entries.
+	DotEnvOverride
+
+	// DotEnvFlags adds a built-in "Env Options" group with three flags:
+	//   --env-file FILE   path to the .env file
+	//   --no-env          disable .env loading for this run
+	//   --env-override    override existing env vars from the .env file
+	// These flags are pre-scanned before loading the .env file so they take
+	// effect even when the file is specified on the command line.
+	DotEnvFlags
 
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
@@ -792,6 +825,16 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 
 	if err := p.applyConfigurators(); err != nil {
 		return nil, p.printError(err)
+	}
+
+	// Load .env file when any DotEnv option is active. This must happen before
+	// EnsureBuiltinOptions so env vars are available when option defaults are
+	// resolved from the environment.
+	if (p.Options & (DotEnv | DotEnvOverride | DotEnvFlags)) != None {
+		p.EnsureBuiltinDotEnvOptions()
+		if err := p.applyDotEnv(args); err != nil {
+			return nil, p.printError(err)
+		}
 	}
 
 	// Add built-in help/version group before duplicate validation so their

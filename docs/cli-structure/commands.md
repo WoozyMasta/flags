@@ -156,8 +156,8 @@ With this in place:
 
 ```sh
 app file.txt         # routes to: app run file.txt
-app run file.txt     # explicit — same result
-app fmt file.txt     # explicit — uses fmt
+app run file.txt     # explicit - same result
+app fmt file.txt     # explicit - uses fmt
 ```
 
 Named commands always take precedence over the default.

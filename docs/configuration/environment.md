@@ -7,6 +7,9 @@ Do not mix them conceptually. `env` tags configure option defaults.
 Detection helpers describe the process environment,
 shell, terminal, locale, and color support.
 
+For loading `.env` files to populate environment variables before parsing,
+see [.env Configuration][].
+
 ## Option Values from Environment
 
 Use `env` to provide a fallback value for an option.
@@ -155,3 +158,5 @@ Use detection helpers for presentation and runtime adaptation.
 
 Avoid making parse behavior depend heavily on detected shell or terminal.
 Scripts should see stable semantics across environments.
+
+[.env Configuration]: dotenv.md

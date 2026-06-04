@@ -40,7 +40,7 @@ func main() {
 	var opts Options
 	localeOverride := detectLocaleArg(os.Args[1:])
 
-	parser := flags.NewNamedParser("i18n-demo", flags.Default|flags.VersionFlag|flags.HelpCommands)
+	parser := flags.NewNamedParser("i18n-demo", flags.Default|flags.VersionFlag|flags.HelpCommands|flags.DotEnv|flags.DotEnvFlags)
 	parser.SetLongDescriptionI18nKey("app.description")
 
 	// Groups can also be localized after registration. This keeps ordinary

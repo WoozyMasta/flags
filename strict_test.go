@@ -107,19 +107,19 @@ func TestStrictSubcommandsDoesNotAffectParent(t *testing.T) {
 	p := NewParser(&opts, None)
 	p.Find("cmd").StrictSubcommands = true
 
-	// "other" is known at root — should succeed
+	// "other" is known at root - should succeed
 	_, err := p.ParseArgs([]string{"other"})
 	if err != nil {
 		t.Fatalf("Unexpected error for known command: %v", err)
 	}
 
-	// "cmd sub" — known subcommand — should succeed
+	// "cmd sub" - known subcommand - should succeed
 	_, err = p.ParseArgs([]string{"cmd", "sub"})
 	if err != nil {
 		t.Fatalf("Unexpected error for cmd sub: %v", err)
 	}
 
-	// "cmd unknown" — cmd is strict — should error
+	// "cmd unknown" - cmd is strict - should error
 	_, err = p.ParseArgs([]string{"cmd", "unknown"})
 	assertError(t, err, ErrUnknownCommand, "Unknown command `unknown`. You should use the sub command")
 }
@@ -240,7 +240,7 @@ func TestStrictPositionalArgsNoDeclared(t *testing.T) {
 	assertError(t, err, ErrUnexpectedArgument, "Unexpected argument `unexpected`")
 }
 
-// StrictPositionalArgs does not restrict a slice (remaining) positional field —
+// StrictPositionalArgs does not restrict a slice (remaining) positional field -
 // it acts as an unbounded collector.
 func TestStrictPositionalArgsSliceUnlimited(t *testing.T) {
 	var opts = struct {
@@ -290,7 +290,7 @@ func TestStrictArgsDoesNotAffectRoot(t *testing.T) {
 	p.Find("cmd").StrictArgs = true
 	p.SubcommandsOptional = true
 
-	// Extra arg at root level — no strict at root — goes to retargs
+	// Extra arg at root level - no strict at root - goes to retargs
 	ret, err := p.ParseArgs([]string{"extra"})
 	if err != nil {
 		t.Fatalf("Unexpected error at root level: %v", err)

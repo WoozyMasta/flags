@@ -22,7 +22,7 @@ err := parser.WriteDoc(os.Stdout, flags.DocFormatMarkdown)
 
 The format controls escaping and default template selection.
 A custom template can still be supplied for any supported format.
-`DocFormatJSON` does not use templates — it serializes the doc model directly.
+`DocFormatJSON` does not use templates - it serializes the doc model directly.
 
 ## Built-in Templates
 
@@ -266,7 +266,7 @@ $env:LANG = "fr"
 myapp docs markdown docs\reference.md
 ```
 
-This works for all output formats — Markdown, HTML, man, and JSON.
+This works for all output formats - Markdown, HTML, man, and JSON.
 The locale affects option descriptions, section headings,
 and any i18n-tagged strings registered in the application catalog.
 
@@ -395,7 +395,7 @@ parser.SetVersionLicense("MIT")
 ```
 
 * `SetManSection` sets the section number in the `.TH` header line.
-  Valid values are 1–9. The default is 1 (user commands).
+  Valid values are 1-9. The default is 1 (user commands).
   This field is man-page-only and has no effect in other formats.
 * `SetSeeAlso` adds cross-reference entries to the `SEE ALSO` section
   in all formats. In man pages entries follow the `grep(1)` convention.

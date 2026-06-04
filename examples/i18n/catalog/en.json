@@ -17,5 +17,9 @@
   "opt.excited.desc": "Add excitement to greeting",
   "arg.target.name": "target",
   "arg.target.desc": "Greeting target",
-  "app.greeting": "Hello, {target}"
+  "app.greeting": "Hello, {target}",
+  "help.group.env_options": "Env Options",
+  "help.builtin.dotenv.file.desc": "Path to .env file",
+  "help.builtin.dotenv.no_env.desc": "Disable .env file loading",
+  "help.builtin.dotenv.override.desc": "Override existing environment variables from .env file"
 }
