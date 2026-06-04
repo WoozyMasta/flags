@@ -55,69 +55,92 @@ func (l ServiceLabel) MarshalText() ([]byte, error) {
 }
 
 type AdvancedOptions struct {
-	Alpha            string                 `long:"alpha" description:"Example string flag for sort demo" default:"a"`
-	Profile          string                 `long:"profile" description:"Runtime profile" default:"dev" auto-env:"true"`
-	Region           string                 `long:"region" description:"Cloud region" env:"APP_REGION" default:"eu-west-1"`
-	Zone             string                 `long:"zone" description:"Cloud zone" deprecated:"use --region with a zone suffix, e.g. eu-west-1a"`
-	Token            DynamicToken           `long:"token" description:"Dynamic default token"`
-	Strategy         string                 `long:"deployment-strategy-with-very-long-name" value-name:"STRATEGY_PROFILE_NAME" description:"Deployment strategy selector with long value" default:"rolling-update-with-pre-drain-and-post-verify"`
-	FormatPolicy     string                 `long:"output-format-negotiation-policy-for-generated-artifacts" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" description:"Output format negotiation policy for generated artifacts" choices:"prefer-human-readable-markdown-with-inline-metadata;prefer-machine-readable-json-with-stable-field-order;prefer-manpage-compatible-plain-text-with-unicode-disabled" default:"prefer-machine-readable-json-with-stable-field-order"`
-	TemplateStrategy string                 `long:"profile-template-selection-strategy-for-runtime-environments" value-name:"PROFILE_TEMPLATE_SELECTION_STRATEGY_NAME" description:"Profile template selection strategy for runtime environments" optional:"yes" optional-value:"prefer-latest-template-compatible-with-runtime-features" choices:"prefer-latest-template-compatible-with-runtime-features;prefer-template-locked-to-application-major-version;prefer-template-selected-by-explicit-environment-marker"`
-	ManualEnvOnly    string                 `long:"manual-env-only" description:"Explicit opt-out from global auto env" auto-env:"false" default:"local" order:"-40"`
-	ReleaseID        string                 `long:"release-id" value-name:"RELEASE_IDENTIFIER" description:"Release identifier for audit trail" required:"yes"`
-	SecretKey        string                 `long:"secret-key" description:"Hidden secret key for debugging deployments" hidden:"yes"`
-	HelpColor        string                 `long:"help-color" choices:"none;default;contrast;gray;light" default:"none" description:"Color scheme for built-in help output"`
+	Env              AdvancedEnvCommand     `description:"Print greeting using USER from environment" command:"env"`
+	Publish          AdvancedPublishCommand `description:"Publish artifact to registry" command:"publish" deprecated:"use deploy instead"`
+	Alpha            string                 `description:"Example string flag for sort demo" long:"alpha" default:"a"`
+	Profile          string                 `description:"Runtime profile" long:"profile" default:"dev" auto-env:"true"`
+	Region           string                 `description:"Cloud region" long:"region" default:"eu-west-1" env:"APP_REGION"`
+	Zone             string                 `description:"Cloud zone" long:"zone" deprecated:"use --region with a zone suffix, e.g. eu-west-1a"`
+	Strategy         string                 `description:"Deployment strategy selector with long value" long:"deployment-strategy-with-very-long-name" default:"rolling-update-with-pre-drain-and-post-verify" value-name:"STRATEGY_PROFILE_NAME"`
+	FormatPolicy     string                 `description:"Output format negotiation policy for generated artifacts" long:"output-format-negotiation-policy-for-generated-artifacts" default:"prefer-machine-readable-json-with-stable-field-order" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" choices:"prefer-human-readable-markdown-with-inline-metadata;prefer-machine-readable-json-with-stable-field-order;prefer-manpage-compatible-plain-text-with-unicode-disabled"`
+	TemplateStrategy string                 `description:"Profile template selection strategy for runtime environments" long:"profile-template-selection-strategy-for-runtime-environments" value-name:"PROFILE_TEMPLATE_SELECTION_STRATEGY_NAME" choices:"prefer-latest-template-compatible-with-runtime-features;prefer-template-locked-to-application-major-version;prefer-template-selected-by-explicit-environment-marker" optional:"yes" optional-value:"prefer-latest-template-compatible-with-runtime-features"`
+	ManualEnvOnly    string                 `description:"Explicit opt-out from global auto env" long:"manual-env-only" default:"local" order:"-40" auto-env:"false"`
+	SecretKey        string                 `description:"Hidden secret key for debugging deployments" long:"secret-key" hidden:"yes"`
+	HelpColor        string                 `description:"Color scheme for built-in help output" long:"help-color" default:"none" choices:"none;default;contrast;gray;light"`
+	Token            DynamicToken           `description:"Dynamic default token" long:"token"`
 	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
-	Deploy           AdvancedDeployCommand  `command:"deploy" description:"Deploy selected targets" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
-	Publish          AdvancedPublishCommand `command:"publish" deprecated:"use deploy instead" description:"Publish artifact to registry"`
-	Verbose          []bool                 `short:"V" long:"verbose" description:"Increase verbosity level" order:"100"`
-	Labels           []ServiceLabel         `long:"label" description:"Service labels"`
-	Exec             []string               `long:"exec" description:"Collect args until ';' terminator" terminator:";" order:"-30"`
+	Deploy           AdvancedDeployCommand  `description:"Deploy selected targets" command:"deploy" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
+	Verbose          []bool                 `description:"Increase verbosity level" long:"verbose" order:"100" short:"V"`
+	Labels           []ServiceLabel         `description:"Service labels" long:"label"`
+	Exec             []string               `description:"Collect args until ';' terminator" long:"exec" order:"-30" terminator:";"`
 	Network          AdvancedNetworkOptions `group:"Network Options" namespace:"net" env-namespace:"NET"`
-	Count            int                    `long:"count" description:"Example number flag for sort demo" default:"7"`
-	Delay            time.Duration          `long:"delay" description:"Example duration flag for sort demo" default:"2s"`
-	Zeta             bool                   `long:"zeta" description:"Example bool flag for sort demo"`
+	Count            int                    `description:"Example number flag for sort demo" long:"count" default:"7"`
+	Delay            time.Duration          `description:"Example duration flag for sort demo" long:"delay" default:"2s"`
+	Zeta             bool                   `description:"Example bool flag for sort demo" long:"zeta"`
 }
 
 type AdvancedNetworkOptions struct {
 	Endpoint string        `long:"endpoint" description:"Service endpoint" auto-env:"true"`
-	Mode     string        `long:"mode" description:"Network mode"`
-	Timeout  time.Duration `long:"timeout" description:"Request timeout" default:"10s"`
-	Retries  int           `long:"retries" description:"Retry attempts" default:"3"`
-	TLS      bool          `long:"tls" description:"Enable TLS" order:"50"`
+	Mode     string        `long:"mode"     description:"Network mode"`
+	Timeout  time.Duration `long:"timeout"  description:"Request timeout" default:"10s"`
+	Retries  int           `long:"retries"  description:"Retry attempts" default:"3"`
+	TLS      bool          `long:"tls"      description:"Enable TLS" order:"50"`
 }
 
 // AdvancedDemoOptions is tagged as an immediate group in AdvancedOptions, so
 // these render/demo flags can run without satisfying normal required values.
 type AdvancedDemoOptions struct {
-	Help       string `long:"demo-help" value-name:"MODE" choices:"decl;name-asc;name-desc;type" description:"Render built-in help with selected sort mode and exit"`
-	Completion string `long:"demo-completion" value-name:"SHELL" choices:"bash;zsh;pwsh" description:"Render shell completion script and exit"`
-	DocFormat  string `long:"demo-doc-format" value-name:"FORMAT" choices:"markdown;html;man" description:"Render documentation in selected format and exit"`
-	DocStyle   string `long:"demo-doc-style" value-name:"STYLE" choices:"list;table;code" description:"Render markdown style variant for --demo-doc-format=markdown"`
-	INI        bool   `long:"demo-ini" description:"Render example INI and exit"`
+	Help       string `long:"demo-help"       description:"Render built-in help with selected sort mode and exit"        value-name:"MODE"   choices:"decl;name-asc;name-desc;type"`
+	Completion string `long:"demo-completion" description:"Render shell completion script and exit"                      value-name:"SHELL"  choices:"bash;zsh;pwsh"`
+	DocFormat  string `long:"demo-doc-format" description:"Render documentation in selected format and exit"             value-name:"FORMAT" choices:"markdown;html;man"`
+	DocStyle   string `long:"demo-doc-style"  description:"Render markdown style variant for --demo-doc-format=markdown" value-name:"STYLE"  choices:"list;table;code"`
+	INI        bool   `long:"demo-ini"        description:"Render example INI and exit"`
 }
 
 type AdvancedDeployCommand struct {
-	// A command-local positional-args struct keeps deploy operands close to
-	// the command that consumes them.
-	Positional AdvancedDeployPositionalArgs `positional-args:"yes" required:"yes"`
-
-	Force bool `long:"force" description:"Force deployment"`
-	Plan  bool `long:"plan" description:"Show execution plan only"`
+	ReleaseID  string                       `long:"release-id" description:"Release identifier for audit trail" required:"yes" value-name:"RELEASE_IDENTIFIER"`
+	Positional AdvancedDeployPositionalArgs `required:"yes" positional-args:"yes"`
+	Force      bool                         `long:"force"      description:"Force deployment"`
+	Plan       bool                         `long:"plan"       description:"Show execution plan only"`
 }
 
 type AdvancedDeployPositionalArgs struct {
-	Target   string `positional-arg-name:"target" description:"Target service name or host"`
+	Target   string `positional-arg-name:"target"   description:"Target service name or host"`
 	Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
 }
 
 type AdvancedPublishCommand struct {
 	Positional struct {
-		Artifact string `positional-arg-name:"artifact" description:"Artifact path or reference"`
+		Artifact string `description:"Artifact path or reference" positional-arg-name:"artifact"`
 	} `positional-args:"yes"`
 
 	Registry string `long:"registry" description:"Target registry URL"`
-	Tag      string `long:"tag" description:"Image tag" default:"latest"`
+	Tag      string `long:"tag"      description:"Image tag" default:"latest"`
+}
+
+// AdvancedEnvCommand demonstrates .env file loading. USER is populated from
+// the .env file located in examples/advanced/ only when the binary runs with
+// that directory as the working directory:
+//
+//	From the project root - .env is NOT loaded:
+//	  go run ./examples/advanced/ env     →  profile: dev
+//
+//	From this directory - .env IS loaded:
+//	  cd examples/advanced && go run . env  →  profile: production
+type AdvancedEnvCommand struct {
+	// opts is wired in main() before Parse so Execute can read parsed flags.
+	opts *AdvancedOptions
+}
+
+func (c *AdvancedEnvCommand) Execute(_ []string) error {
+	user := os.Getenv("USER")
+	if user == "" {
+		user = "nobody"
+	}
+	if _, err := fmt.Printf("Hello %s\nprofile: %s\n", user, c.opts.Profile); err != nil {
+		return err
+	}
+	return nil
 }
 
 func newParser(opts *AdvancedOptions) *flags.Parser {
@@ -133,9 +156,6 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 			flags.KeepDescriptionWhitespace|
 			flags.DetectShellFlagStyle|
 			flags.DetectShellEnvStyle|
-			// DotEnv loads a .env file from the working directory before parsing.
-			// DotEnvFlags adds --env-file, --no-env and --env-override to the
-			// built-in "Env Options" group shown in help output.
 			flags.DotEnv|
 			flags.DotEnvFlags,
 	)
@@ -317,7 +337,9 @@ func resolveDocMode(format, style string) (flags.DocFormat, string, error) {
 
 func main() {
 	opts := &AdvancedOptions{}
+	opts.Env.opts = opts
 	p := newParser(opts)
+
 	// Pre-parse hooks like this are a practical way to let a flag influence
 	// parser rendering behavior before Parse handles --help.
 	if mode, ok := detectHelpColorArg(os.Args[1:]); ok {

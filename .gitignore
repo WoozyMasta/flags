@@ -190,3 +190,4 @@ $RECYCLE.BIN/
 bench_*.txt
 *.pprof
 .rumdl_cache
+!examples/advanced/.env

@@ -22,18 +22,19 @@ type Options struct {
 	// i18n tags point to catalog keys. The fallback text lives in code paths
 	// that call Localize, while parser metadata resolves through SetI18n.
 	Greet struct {
-		Excited bool `short:"e" long:"excited" description-i18n:"opt.excited.desc"`
+		Excited bool `long:"excited" description-i18n:"opt.excited.desc" short:"e"`
 		Args    struct {
-			Target string `arg-name-i18n:"arg.target.name" arg-description-i18n:"arg.target.desc" default:"world"`
+			Target string `default:"world" arg-name-i18n:"arg.target.name" arg-description-i18n:"arg.target.desc"`
 		} `positional-args:"yes"`
 	} `command:"greet" command-i18n:"cmd.greet.desc" long-description-i18n:"cmd.greet.long" ini-group:"greet"`
 
-	Locale string `short:"l" long:"locale" choices:"en;ru;eo" description-i18n:"opt.locale.desc" value-name-i18n:"opt.locale.value"`
+	Locale string `long:"locale" description-i18n:"opt.locale.desc" short:"l" choices:"en;ru;eo" value-name-i18n:"opt.locale.value"`
 
 	Display struct {
-		Style string `long:"style" default:"plain" choices:"plain;fancy" description-i18n:"opt.style.desc"`
+		Style string `long:"style"   description-i18n:"opt.style.desc" default:"plain" choices:"plain;fancy"`
 	} `group:"Display" group-i18n:"group.display" long-description-i18n:"group.display.long" ini-group:"display"`
-	Verbose bool `short:"V" long:"verbose" description-i18n:"opt.verbose.desc"`
+
+	Verbose bool `long:"verbose" description-i18n:"opt.verbose.desc" short:"V"`
 }
 
 func main() {

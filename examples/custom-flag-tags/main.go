@@ -21,8 +21,8 @@ type PrefixTagsOptions struct {
 type CustomTagsOptions struct {
 	// SetFlagTags can replace individual tag names while leaving all other
 	// standard tags unchanged.
-	Path  string `x-short:"p" long:"path" description:"Path to input file"`
-	Level int    `long:"level" default:"1" description:"Verbosity level"`
+	Path  string `long:"path"  description:"Path to input file" x-short:"p"`
+	Level int    `long:"level" description:"Verbosity level" default:"1"`
 }
 
 type PrefixCommand struct{}

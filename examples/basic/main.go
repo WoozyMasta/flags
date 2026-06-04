@@ -15,8 +15,8 @@ import (
 )
 
 type EditorOptions struct {
-	Input  flags.Filename `short:"i" long:"input" description:"Input file" default:"-"`
-	Output flags.Filename `short:"o" long:"output" description:"Output file" default:"-"`
+	Input  flags.Filename `short:"i" default:"-" long:"input"  description:"Input file"`
+	Output flags.Filename `short:"o" default:"-" long:"output" description:"Output file"`
 }
 
 type Point struct {
