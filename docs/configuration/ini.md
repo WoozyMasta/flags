@@ -8,6 +8,14 @@ starter config generation, and examples.
 For complex application configuration, JSON, YAML, TOML,
 or domain-specific formats may still be a better fit.
 
+To enable the built-in `config` command with INI format
+and the `-c / --config FILE` flag,
+add `ConfigIni` and `ConfigFlags` to parser options.  
+See [JSON Configuration][] for the shared config flag mechanism -
+it works identically for INI.
+
+[JSON Configuration]: json.md
+
 ## Reading INI
 
 Create an INI parser from an existing parser:

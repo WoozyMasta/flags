@@ -598,7 +598,7 @@ func writeIniToFile(parser *IniParser, filename string, options IniOptions) erro
 }
 
 func readIniFromFile(filename string) (*ini, error) {
-	file, err := os.Open(filename)
+	file, err := os.Open(filename) //nolint:gosec // filename is a user-supplied config file path.
 
 	if err != nil {
 		return nil, err

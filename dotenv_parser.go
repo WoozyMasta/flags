@@ -31,7 +31,7 @@ const (
 	dotEnvExport      = "export"
 )
 
-// parseDotEnvBytes parses src and returns a key→value map.
+// parseDotEnvBytes parses src and returns a key->value map.
 // When noExpand is true, dollar-sign sequences are left as-is.
 func parseDotEnvBytes(src []byte, noExpand bool) (map[string]string, error) {
 	src = bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n"))
@@ -156,7 +156,7 @@ func dotEnvExtractUnquoted(src []byte, vars map[string]string, noExpand bool) (s
 	line := []rune(string(src[:eol]))
 	end := len(line)
 
-	// Strip inline comment: "# …" preceded by whitespace.
+	// Strip inline comment: "# ..." preceded by whitespace.
 	for i := 1; i < end; i++ {
 		if line[i] == dotEnvComment && dotEnvIsSpace(line[i-1]) {
 			end = i

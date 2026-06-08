@@ -58,15 +58,15 @@ type AdvancedOptions struct {
 	Env              AdvancedEnvCommand     `description:"Print greeting using USER from environment" command:"env"`
 	Publish          AdvancedPublishCommand `description:"Publish artifact to registry" command:"publish" deprecated:"use deploy instead"`
 	Alpha            string                 `description:"Example string flag for sort demo" long:"alpha" default:"a"`
-	Profile          string                 `description:"Runtime profile" long:"profile" default:"dev" auto-env:"true"`
+	Profile          string                 `description:"Runtime profile" long:"profile" default:"dev" json:",omitempty" auto-env:"true"` //nolint:tagliatelle
 	Region           string                 `description:"Cloud region" long:"region" default:"eu-west-1" env:"APP_REGION"`
-	Zone             string                 `description:"Cloud zone" long:"zone" deprecated:"use --region with a zone suffix, e.g. eu-west-1a"`
+	Zone             string                 `description:"Cloud zone" long:"zone" json:"-" deprecated:"use --region with a zone suffix, e.g. eu-west-1a"`
 	Strategy         string                 `description:"Deployment strategy selector with long value" long:"deployment-strategy-with-very-long-name" default:"rolling-update-with-pre-drain-and-post-verify" value-name:"STRATEGY_PROFILE_NAME"`
 	FormatPolicy     string                 `description:"Output format negotiation policy for generated artifacts" long:"output-format-negotiation-policy-for-generated-artifacts" default:"prefer-machine-readable-json-with-stable-field-order" value-name:"OUTPUT_FORMAT_NEGOTIATION_POLICY_IDENTIFIER" choices:"prefer-human-readable-markdown-with-inline-metadata;prefer-machine-readable-json-with-stable-field-order;prefer-manpage-compatible-plain-text-with-unicode-disabled"`
 	TemplateStrategy string                 `description:"Profile template selection strategy for runtime environments" long:"profile-template-selection-strategy-for-runtime-environments" value-name:"PROFILE_TEMPLATE_SELECTION_STRATEGY_NAME" choices:"prefer-latest-template-compatible-with-runtime-features;prefer-template-locked-to-application-major-version;prefer-template-selected-by-explicit-environment-marker" optional:"yes" optional-value:"prefer-latest-template-compatible-with-runtime-features"`
 	ManualEnvOnly    string                 `description:"Explicit opt-out from global auto env" long:"manual-env-only" default:"local" order:"-40" auto-env:"false"`
-	SecretKey        string                 `description:"Hidden secret key for debugging deployments" long:"secret-key" hidden:"yes"`
-	HelpColor        string                 `description:"Color scheme for built-in help output" long:"help-color" default:"none" choices:"none;default;contrast;gray;light"`
+	SecretKey        string                 `description:"Hidden secret key for debugging deployments" long:"secret-key" json:"-" hidden:"yes"`
+	HelpColor        string                 `description:"Color scheme for built-in help output" long:"help-color" default:"none" json:"helpColor" choices:"none;default;contrast;gray;light"` //nolint:tagliatelle
 	Token            DynamicToken           `description:"Dynamic default token" long:"token"`
 	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
 	Deploy           AdvancedDeployCommand  `description:"Deploy selected targets" command:"deploy" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
@@ -80,21 +80,22 @@ type AdvancedOptions struct {
 }
 
 type AdvancedNetworkOptions struct {
-	Endpoint string        `long:"endpoint" description:"Service endpoint" auto-env:"true"`
+	Endpoint string        `long:"endpoint" description:"Service endpoint" json:"endpoint" auto-env:"true"`
 	Mode     string        `long:"mode"     description:"Network mode"`
-	Timeout  time.Duration `long:"timeout"  description:"Request timeout" default:"10s"`
+	Timeout  time.Duration `long:"timeout"  description:"Request timeout"  json:",omitzero" default:"10s"` //nolint:tagliatelle
 	Retries  int           `long:"retries"  description:"Retry attempts" default:"3"`
-	TLS      bool          `long:"tls"      description:"Enable TLS" order:"50"`
+	TLS      bool          `long:"tls"      description:"Enable TLS"       json:"tls" order:"50"`
 }
 
 // AdvancedDemoOptions is tagged as an immediate group in AdvancedOptions, so
 // these render/demo flags can run without satisfying normal required values.
 type AdvancedDemoOptions struct {
-	Help       string `long:"demo-help"       description:"Render built-in help with selected sort mode and exit"        value-name:"MODE"   choices:"decl;name-asc;name-desc;type"`
-	Completion string `long:"demo-completion" description:"Render shell completion script and exit"                      value-name:"SHELL"  choices:"bash;zsh;pwsh"`
-	DocFormat  string `long:"demo-doc-format" description:"Render documentation in selected format and exit"             value-name:"FORMAT" choices:"markdown;html;man"`
-	DocStyle   string `long:"demo-doc-style"  description:"Render markdown style variant for --demo-doc-format=markdown" value-name:"STYLE"  choices:"list;table;code"`
-	INI        bool   `long:"demo-ini"        description:"Render example INI and exit"`
+	Help       string `json:"-" long:"demo-help"       description:"Render built-in help with selected sort mode and exit"        value-name:"MODE"   choices:"decl;name-asc;name-desc;type"`
+	Completion string `json:"-" long:"demo-completion" description:"Render shell completion script and exit"                      value-name:"SHELL"  choices:"bash;zsh;pwsh"`
+	DocFormat  string `json:"-" long:"demo-doc-format" description:"Render documentation in selected format and exit"             value-name:"FORMAT" choices:"markdown;html;man"`
+	DocStyle   string `json:"-" long:"demo-doc-style"  description:"Render markdown style variant for --demo-doc-format=markdown" value-name:"STYLE"  choices:"list;table;code"`
+	INI        bool   `json:"-" long:"demo-ini"        description:"Render example INI and exit"`
+	JSON       bool   `json:"-" long:"demo-json"       description:"Render example JSON config and exit"`
 }
 
 type AdvancedDeployCommand struct {
@@ -123,10 +124,10 @@ type AdvancedPublishCommand struct {
 // that directory as the working directory:
 //
 //	From the project root - .env is NOT loaded:
-//	  go run ./examples/advanced/ env     →  profile: dev
+//	  go run ./examples/advanced/ env  ->  profile: dev
 //
 //	From this directory - .env IS loaded:
-//	  cd examples/advanced && go run . env  →  profile: production
+//	  cd examples/advanced && go run . env  ->  profile: production
 type AdvancedEnvCommand struct {
 	// opts is wired in main() before Parse so Execute can read parsed flags.
 	opts *AdvancedOptions
@@ -157,7 +158,9 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 			flags.DetectShellFlagStyle|
 			flags.DetectShellEnvStyle|
 			flags.DotEnv|
-			flags.DotEnvFlags,
+			flags.DotEnvFlags|
+			flags.ConfigCommand|
+			flags.ConfigFlags,
 	)
 	p.LongDescription = "Example of advanced go-flags features:\n  - dynamic defaults\n  - env provisioning and auto-env\n  - terminated options\n  - option sorting per group block\n  - .env file support with variable expansion"
 	p.SetHelpHeader(advancedHelpHeader)
@@ -168,6 +171,7 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 	p.SetEnvPrefix("DEMO_APP")
 	p.SetVersionURL("https://github.com/woozymasta/flags")
 	p.SetVersionFields(flags.VersionFieldsAll)
+	p.SetJSONKeyName(flags.JSONKeyPascal)
 	// Long option names are intentionally used here to demonstrate wrapping;
 	// production CLIs can opt into a larger limit when needed.
 	if err := p.SetMaxLongNameLength(256); err != nil {
@@ -306,6 +310,12 @@ func demoOutput(opts *AdvancedOptions, p *flags.Parser) (bool, error) {
 	if opts.Demo.INI {
 		flags.NewIniParser(p).WriteExample(os.Stdout)
 		return true, nil
+	}
+
+	if opts.Demo.JSON {
+		jp := flags.NewJSONParser(p)
+		jp.KeyName = flags.JSONKeyPascal
+		return true, jp.Write(os.Stdout)
 	}
 
 	return false, nil

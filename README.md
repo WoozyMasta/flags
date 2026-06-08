@@ -31,7 +31,7 @@ Useful strengths:
 * short and long options with POSIX-style parsing;
 * commands, subcommands, option groups, and positional arguments;
 * typed values, defaults, slices, maps, counters, and custom parsers;
-* environment variables, .env file and INI configuration;
+* environment variables, .env file and JSON/INI configuration;
 * value validators for common string, path, and numeric constraints;
 * shell completion for bash, zsh, and PowerShell;
 * generated help, markdown, HTML, and manpage output;
@@ -133,17 +133,31 @@ type Options struct {
 }
 ```
 
-Applications that load a config file before parsing CLI arguments can use
-`flags.ConfiguredValues` so prefilled struct values are kept and can satisfy
-`required` checks.
+Applications that load a config file before parsing CLI arguments
+can use `flags.ConfiguredValues` so prefilled struct values are kept
+and can satisfy `required` checks.
 
-INI support is available when a simple generated or user-editable config file
-is useful:
+INI and JSON config files are supported.
+Automatic `.env` loading is available via the `DotEnv` parser option.
 
 ```go
+// .env is loaded automatically when DotEnv is set
+parser := flags.NewParser(&opts, flags.Default|flags.DotEnv)
+
+// INI - generated example included via the built-in config command
 ini := flags.NewIniParser(parser)
 _ = ini.ParseFile("app.ini")
+
+// JSON - key names follow the json struct tag or the long tag;
+// ParseAsDefaults lets CLI flags override values from the file
+jp := flags.NewJSONParser(parser)
+jp.ParseAsDefaults = true
+_ = jp.ParseFile("app.json")
 ```
+
+`JSONParser.ParseMap` also accepts any `map[string]interface{}`,
+so YAML or TOML can be decoded externally
+and applied without adding dependencies to the core module.
 
 ## Help, Completion
 

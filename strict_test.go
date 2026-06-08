@@ -36,7 +36,7 @@ func TestStrictCommandsSubcommandsOptional(t *testing.T) {
 
 	_, err := p.ParseArgs([]string{"nocmd"})
 
-	// estimateCommand: 1 cmd → "should use" suffix
+	// estimateCommand: 1 cmd -> "should use" suffix
 	assertError(t, err, ErrUnknownCommand, "Unknown command `nocmd`. You should use the cmd command")
 }
 
@@ -56,7 +56,7 @@ func TestStrictCommandsUnknownWithPositional(t *testing.T) {
 	p := NewParser(&opts, StrictCommands)
 	_, err := p.ParseArgs([]string{"cmd", "notasub"})
 
-	// estimateCommand on cmd: 1 subcommand "sub" → "should use" suffix
+	// estimateCommand on cmd: 1 subcommand "sub" -> "should use" suffix
 	assertError(t, err, ErrUnknownCommand, "Unknown command `notasub`. You should use the sub command")
 }
 
@@ -89,7 +89,7 @@ func TestStrictSubcommandsPerCommand(t *testing.T) {
 
 	_, err := p.ParseArgs([]string{"cmd", "unknown"})
 
-	// estimateCommand on cmd: 1 subcommand "sub" → "should use" suffix
+	// estimateCommand on cmd: 1 subcommand "sub" -> "should use" suffix
 	assertError(t, err, ErrUnknownCommand, "Unknown command `unknown`. You should use the sub command")
 }
 

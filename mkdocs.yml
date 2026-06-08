@@ -93,8 +93,11 @@ nav:
   - Configuration:
       - Defaults and Configuration: configuration/defaults-and-configuration.md
       - Environment: configuration/environment.md
+      - .env Configuration: configuration/dotenv.md
       - INI Configuration: configuration/ini.md
+      - JSON Configuration: configuration/json.md
       - Visibility and Secrets: configuration/visibility-and-secrets.md
+      - Exporting Arguments: configuration/export-args.md
   - Output:
       - Help, Completion, and Docs: output/help-completion-docs.md
       - Completion: output/completion.md

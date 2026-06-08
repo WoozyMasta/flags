@@ -140,6 +140,19 @@ func (p *Parser) addDotEnvGroup() {
 
 	grp.SetShortDescriptionI18nKey("help.group.env_options")
 
+	dotEnvDefault := p.dotEnvFile
+	if dotEnvDefault == "" {
+		dotEnvDefault = ".env"
+	}
+
+	for _, o := range grp.options {
+		if o.LongName == fileFlagLong {
+			o.Default = []string{dotEnvDefault}
+
+			break
+		}
+	}
+
 	p.dotEnvFileFlagName = fileFlagLong
 	p.dotEnvDisableFlagName = noEnvFlagLong
 	p.dotEnvOverrideFlagName = overrideFlagLong

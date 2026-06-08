@@ -166,11 +166,36 @@ Custom schemes are built from `HelpTextStyle` and `ANSIColor`.
 * `VersionCommand` adds a `version` command.
 * `CompletionCommand` adds a `completion` command.
 * `DocsCommand` adds `docs` subcommands for generated documentation formats.
-* `ConfigCommand` adds a `config` command that writes an example INI.
-* `HelpCommands` enables all built-in helper commands.
+* `ConfigIni` enables INI format in the built-in `config` command.
+* `ConfigJSON` enables JSON format in the built-in `config` command.
+* `ConfigCommand` adds the built-in `config` command with both
+  INI and JSON format support (`ConfigIni | ConfigJSON`).
+  The command is only registered when at least
+  one of `ConfigIni` or `ConfigJSON` is set.
+* `HelpCommands` enables all built-in helper commands,
+  including `config` with both formats.
 
 Built-in commands are opt-in so applications
 do not expose extra public commands accidentally.
+
+## Config File Options
+
+* `ConfigFlags` adds a `-c / --config FILE` flag that
+  is pre-scanned before argument parsing.
+  The config file is applied as defaults - CLI flags always win.
+  Format is detected from the file extension (`.ini`, `.json`)
+  and falls back to inspecting the first byte
+  (`{` = JSON, otherwise INI).
+  At least one of `ConfigIni` or `ConfigJSON` must be set for the flag to work.
+  No config file is loaded automatically when the flag is absent.
+* `SetJSONKeyName(fn)` sets the key naming function (`JSONKeyLong`,
+  `JSONKeyCamel`, `JSONKeySnake`, `JSONKeyPascal`,
+  or a custom `func(string) string`) used when
+  the built-in `config --format json` renders output.
+  Does not affect manual `NewJSONParser` usage.
+
+When `ConfigFlags` and `DotEnvFlags` are both set, their flags share one
+**Config Options** group instead of a separate "Env Options" group.
 
 ## .env File Options
 
@@ -179,11 +204,12 @@ do not expose extra public commands accidentally.
 * `DotEnvOverride` is like `DotEnv`
   but overrides existing environment variables.
   Without it, values already in the environment take precedence.
-* `DotEnvFlags` adds a built-in "Env Options" group
-  with three pre-scanned flags:
-  `--env-file FILE`, `--no-env`, and `--env-override`.  
-  These flags are resolved before the `.env` file is loaded so specifying
-  a file path on the command line takes effect for all option defaults.
+* `DotEnvFlags` adds `--env-file FILE`, `--no-env`,
+  and `--env-override` flags that are pre-scanned
+  before the `.env` file is loaded.
+  When `ConfigFlags` is also set, these flags appear
+  in the shared **Config Options** group
+  instead of a standalone **Env Options** group.
 
 ```go
 // Load .env, skip if missing, keep existing env vars

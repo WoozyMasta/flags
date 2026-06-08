@@ -61,7 +61,7 @@ func expandDotEnvInner(v string, vars map[string]string) string {
 		return masked
 	}
 
-	// Unmask \x00...\x01 → ${...}
+	// Unmask \x00...\x01 -> ${...}
 	return dotEnvUnmask(masked)
 }
 

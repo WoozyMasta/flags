@@ -63,9 +63,9 @@ An undefined variable expands to an empty string.
 
 ```sh
 BASE=/opt/app
-DATA_DIR=${BASE}/data         # → /opt/app/data
+DATA_DIR=${BASE}/data         # -> /opt/app/data
 CACHE_DIR=${TMP_DIR:=/tmp}/cache # sets TMP_DIR if unset
-TEMPLATE=$${UNESCAPED}        # → literal ${UNESCAPED}
+TEMPLATE=$${UNESCAPED}        # -> literal ${UNESCAPED}
 ```
 
 Single-quoted values are never expanded regardless of the global setting.
@@ -89,14 +89,10 @@ parser := flags.NewParser(&opts, flags.Default|flags.DotEnv|flags.DotEnvFlags)
 
 ## Env Options Group (DotEnvFlags)
 
-When `DotEnvFlags` is set,
-a built-in "Env Options" group is added with three flags
-that are evaluated **before** the `.env` file is loaded:
+When `DotEnvFlags` is set, three flags are added that are pre-scanned
+before the `.env` file is loaded:
 
 ```txt
-Usage:
-  myapp [OPTIONS]
-
 Env Options:
   --env-file=FILE   Path to .env file
   --no-env          Disable .env file loading
@@ -106,6 +102,11 @@ Env Options:
 These flags are pre-scanned before the main parse,
 so specifying `--env-file custom.env` on the command line
 takes effect even for options whose defaults come from environment variables.
+
+When `ConfigFlags` is also enabled,
+all three flags share the unified **Config Options** group
+alongside `-c / --config FILE` instead of appearing
+in a standalone Env Options group.
 
 ## Programmatic API
 
@@ -147,7 +148,7 @@ for example shell scripts or regular expressions.
 
 ```go
 parser.SetDotEnvNoExpand(true)
-// REGEX=^[a-z]{3}$  →  stored as-is, no expansion attempted
+// REGEX=^[a-z]{3}$  ->  stored as-is, no expansion attempted
 ```
 
 ## Accessing Built-in Options

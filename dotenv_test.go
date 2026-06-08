@@ -311,19 +311,19 @@ func TestDotEnvParseMultilineDoubleQuotedEscapedQuote(t *testing.T) {
 }
 
 func TestDotEnvParseMultipleHashInline(t *testing.T) {
-	// "fred=qux#baz # other # more" → "qux#baz"
+	// "fred=qux#baz # other # more" -> "qux#baz"
 	m := mustParseDotEnv(t, "fred=qux#baz # other # more\n")
 	assertDotEnvKey(t, m, "fred", "qux#baz")
 }
 
 func TestDotEnvParseQuotedValueHashAfterClose(t *testing.T) {
-	// baz="foo"#bar → "foo"  (# after closing quote is not part of value)
+	// baz="foo"#bar -> "foo"  (# after closing quote is not part of value)
 	m := mustParseDotEnv(t, `baz="foo"#bar`)
 	assertDotEnvKey(t, m, "baz", "foo")
 }
 
 func TestDotEnvParseHashWithoutSpaceNotComment(t *testing.T) {
-	// "bar=foo#baz" → "foo#baz" (# without preceding space is not a comment)
+	// "bar=foo#baz" -> "foo#baz" (# without preceding space is not a comment)
 	m := mustParseDotEnv(t, "bar=foo#baz\n")
 	assertDotEnvKey(t, m, "bar", "foo#baz")
 }

@@ -85,7 +85,7 @@ func TestBuiltinCommandHelpTextIsLocalized(t *testing.T) {
 		"Показать информацию о версии",
 		"Сгенерировать shell completion",
 		"Сгенерировать документацию",
-		"Сгенерировать пример INI-конфигурации",
+		"Сгенерировать файл конфигурации",
 	} {
 		if !strings.Contains(out.String(), want) {
 			t.Fatalf("expected root help to contain %q, got:\n%s", want, out.String())
@@ -649,12 +649,12 @@ func TestBuiltinDocsCommandTOCHTML(t *testing.T) {
 	}
 }
 
-func TestBuiltinConfigCommandWritesFile(t *testing.T) {
+func TestBuiltinConfigCommandIni(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"Config value"`
 	}
 
-	p := NewNamedParser("builtin-config", ConfigCommand)
+	p := NewNamedParser("builtin-config", ConfigIni)
 	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
 		t.Fatalf("unexpected add group error: %v", err)
 	}
@@ -669,6 +669,93 @@ func TestBuiltinConfigCommandWritesFile(t *testing.T) {
 		t.Fatalf("unexpected read error: %v", err)
 	}
 	if !strings.Contains(string(got), "value") {
-		t.Fatalf("expected config example, got:\n%s", string(got))
+		t.Fatalf("expected INI config example with 'value', got:\n%s", string(got))
+	}
+	// INI output uses "key = value" syntax
+	if !strings.Contains(string(got), "=") {
+		t.Fatalf("expected INI syntax, got:\n%s", string(got))
+	}
+}
+
+func TestBuiltinConfigCommandJson(t *testing.T) {
+	var opts struct {
+		Host string `long:"host" description:"Server host"`
+		Port int    `long:"port" description:"Server port" default:"8080"`
+	}
+
+	p := NewNamedParser("builtin-config", ConfigJSON)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	out := filepath.Join(t.TempDir(), "config.json")
+
+	if _, err := p.ParseArgs([]string{"config", out}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	got, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	if !strings.Contains(string(got), "host") {
+		t.Fatalf("expected JSON config with 'host', got:\n%s", string(got))
+	}
+	// JSON output uses "{" syntax
+	if !strings.Contains(string(got), "{") {
+		t.Fatalf("expected JSON syntax, got:\n%s", string(got))
+	}
+}
+
+func TestBuiltinConfigCommandBothFormats(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" description:"Config value"`
+	}
+
+	p := NewNamedParser("builtin-config", ConfigCommand)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	// With both formats enabled, --format selects the output format.
+	outIni := filepath.Join(t.TempDir(), "config.ini")
+	if _, err := p.ParseArgs([]string{"config", "--format", "ini", outIni}); err != nil {
+		t.Fatalf("unexpected parse error for ini: %v", err)
+	}
+	gotIni, err := os.ReadFile(outIni)
+	if err != nil {
+		t.Fatalf("read error: %v", err)
+	}
+	if !strings.Contains(string(gotIni), "=") {
+		t.Fatalf("expected INI syntax, got:\n%s", gotIni)
+	}
+
+	outJson := filepath.Join(t.TempDir(), "config.json")
+	if _, err := p.ParseArgs([]string{"config", "--format", "json", outJson}); err != nil {
+		t.Fatalf("unexpected parse error for json: %v", err)
+	}
+	gotJson, err := os.ReadFile(outJson)
+	if err != nil {
+		t.Fatalf("read error: %v", err)
+	}
+	if !strings.Contains(string(gotJson), "{") {
+		t.Fatalf("expected JSON syntax, got:\n%s", gotJson)
+	}
+}
+
+func TestBuiltinConfigCommandNotRegisteredWithoutFormat(t *testing.T) {
+	// ConfigCommand alone (no ConfigIni / ConfigJSON) should not register the command.
+	// But since ConfigCommand = ConfigIni | ConfigJSON, use a manual bit combination
+	// that explicitly has neither format bit.
+	p := NewNamedParser("builtin-config", HelpCommand)
+	if _, err := p.AddGroup("Application Options", "", &struct{ V string }{V: "x"}); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"--help"}); err == nil || !strings.Contains(err.Error(), "help") {
+		// just ensure it doesn't panic; we mainly want to confirm no "config" command
+	}
+
+	if cmd := p.Find("config"); cmd != nil {
+		t.Error("config command should not be registered when no format bit is set")
 	}
 }

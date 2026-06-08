@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.10.0] - 2026-06-08
+
+### Added
+
+* JSON configuration file support:
+  key names are derived from standard `json` struct tag
+  or `long` tag with optional transformers.
+
+[0.10.0]: https://github.com/WoozyMasta/flags/compare/v0.9.0...v0.10.0
+
 ## [0.9.0] - 2026-06-04
 
 ### Added
@@ -163,8 +173,8 @@ and this project adheres to [Semantic Versioning][].
 
 * Built-in command struct fields no longer inherit the parser's auto-env
   namespace prefix.
-* Bash completion script replaced `COMPREPLY=($(…))`
-  with `mapfile -t COMPREPLY < <(…)`.
+* Bash completion script replaced `COMPREPLY=($(...))`
+  with `mapfile -t COMPREPLY < <(...)`.
 * PowerShell completion script renamed `$args` to `$__goFlagsArgs`
   to avoid assigning to a PowerShell automatic variable.
 

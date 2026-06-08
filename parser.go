@@ -96,6 +96,16 @@ type Parser struct {
 	dotEnvDisableFlagName  string
 	dotEnvOverrideFlagName string
 
+	// Long name of the --config flag when ConfigFlags is enabled.
+	configFileFlagName string
+
+	// Default config file path used when ConfigFlags is set but --config is not passed.
+	configFile string
+
+	// JSON key naming function used by the built-in config command.
+	// When nil, JSONKeyLong (identity) is used.
+	jsonKeyName JSONKeyFunc
+
 	// Cached version metadata (auto-detected and/or overridden).
 	versionInfo VersionInfo
 
@@ -182,6 +192,9 @@ type Parser struct {
 
 	// When true, variable expansion ($VAR / ${VAR} / $${VAR}) in .env is disabled.
 	dotEnvNoExpand bool
+
+	// Guard: unified config/env options group already materialised.
+	hasConfigGroup bool
 
 	// Guard: dotenv options group already materialised.
 	hasDotEnvGroup bool
@@ -396,9 +409,13 @@ const (
 	// DocsCommand adds a built-in `docs` command with format subcommands.
 	DocsCommand
 
-	// ConfigCommand adds a built-in `config` command that writes an example INI
-	// configuration.
-	ConfigCommand
+	// ConfigIni enables INI format in the built-in config command.
+	// Has no effect unless at least one of ConfigIni or ConfigJSON is set.
+	ConfigIni
+
+	// ConfigJSON enables JSON format in the built-in config command.
+	// Has no effect unless at least one of ConfigIni or ConfigJSON is set.
+	ConfigJSON
 
 	// DetectShellFlagStyle enables shell-based flag style rendering in help
 	// and doc output when no explicit render style is set.
@@ -431,9 +448,23 @@ const (
 	// effect even when the file is specified on the command line.
 	DotEnvFlags
 
+	// ConfigFlags adds a -c/--config FILE flag to the "Config Options" group.
+	// The flag is pre-scanned before parsing so the config file is loaded first.
+	// Format is detected from the file extension (.ini, .json)
+	// or the first byte of the file ('{' = JSON, otherwise INI).
+	// Requires ConfigIni or ConfigJSON to be set to determine which formats are accepted.
+	// Use SetConfigFile to set a default config path used when --config is absent.
+	// When DotEnvFlags is also set, all flags share one "Config Options" group.
+	ConfigFlags
+
 	// Default is a convenient default set of options which should cover
 	// most of the uses of the flags package.
 	Default = HelpFlag | PrintErrors | PassDoubleDash
+
+	// ConfigCommand adds a built-in config command that can render INI and/or JSON configuration.
+	// The command is only registered when at least one of ConfigIni or ConfigJSON is also set.
+	// Use ConfigIni or ConfigJSON alone to restrict the command to a single format.
+	ConfigCommand = ConfigIni | ConfigJSON
 
 	// HelpCommands enables all built-in help-related commands.
 	HelpCommands = HelpCommand | VersionCommand | CompletionCommand | DocsCommand | ConfigCommand
@@ -827,11 +858,24 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		return nil, p.printError(err)
 	}
 
+	// Load config file when ConfigFlags is active. Must happen before dotenv
+	// and EnsureBuiltinOptions so that config values are available early.
+	if (p.Options & ConfigFlags) != None {
+		if err := p.EnsureBuiltinConfigOptions(); err != nil {
+			return nil, p.printError(err)
+		}
+
+		if err := p.applyConfigFile(args); err != nil {
+			return nil, p.printError(err)
+		}
+	}
+
 	// Load .env file when any DotEnv option is active. This must happen before
 	// EnsureBuiltinOptions so env vars are available when option defaults are
 	// resolved from the environment.
 	if (p.Options & (DotEnv | DotEnvOverride | DotEnvFlags)) != None {
 		p.EnsureBuiltinDotEnvOptions()
+
 		if err := p.applyDotEnv(args); err != nil {
 			return nil, p.printError(err)
 		}

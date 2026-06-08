@@ -404,7 +404,7 @@ parser.SetVersionLicense("MIT")
 * `SetVersionBugsURL` adds a `BUGS` section.
 * `SetVersionLicense` adds a `LICENSE` section.
 
-Section order: `AUTHOR` → `BUGS` → `SEE ALSO` → `LICENSE`.
+Section order: `AUTHOR` -> `BUGS` -> `SEE ALSO` -> `LICENSE`.
 
 The metadata is also included in `DocFormatJSON` output under the `meta`
 key, and is omitted from JSON when none of the fields are set explicitly.

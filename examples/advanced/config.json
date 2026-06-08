@@ -1,0 +1,11 @@
+{
+  "Profile": "staging",
+  "Region": "eu-central-1",
+  "helpColor": "default",
+  "net": {
+    "Mode": "http2",
+    "Retries": 5,
+    "endpoint": "https://api.staging.example.com",
+    "tls": true
+  }
+}

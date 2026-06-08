@@ -31,9 +31,9 @@ func (c *builtinHelpCommand) Execute(args []string) error {
 type builtinVersionCommand struct {
 	parser *Parser
 
-	Short  bool `long:"short" description:"Print version number only" description-i18n:"help.builtin.command.version.short.desc" auto-env:"false"`
-	Commit bool `long:"commit" description:"Print commit SHA only" description-i18n:"help.builtin.command.version.commit.desc" auto-env:"false"`
-	JSON   bool `long:"json" description:"Print version information as JSON" description-i18n:"help.builtin.command.version.json.desc" auto-env:"false"`
+	Short  bool `long:"short"  auto-env:"false" description:"Print version number only"         description-i18n:"help.builtin.command.version.short.desc"`
+	Commit bool `long:"commit" auto-env:"false" description:"Print commit SHA only"             description-i18n:"help.builtin.command.version.commit.desc"`
+	JSON   bool `long:"json"   auto-env:"false" description:"Print version information as JSON" description-i18n:"help.builtin.command.version.json.desc"`
 }
 
 func (c *builtinVersionCommand) Execute(_ []string) error {
@@ -102,10 +102,10 @@ func (c *builtinVersionCommand) Execute(_ []string) error {
 type builtinCompletionCommand struct {
 	parser *Parser
 
-	Shell CompletionShell `long:"shell" choices:"bash;zsh;pwsh" description:"Shell completion format" description-i18n:"help.builtin.command.completion.shell.desc" auto-env:"false"`
+	Shell CompletionShell `description:"Shell completion format" long:"shell" auto-env:"false" choices:"bash;zsh;pwsh" description-i18n:"help.builtin.command.completion.shell.desc"`
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 }
 
@@ -129,36 +129,36 @@ type builtinDocsCommand struct {
 }
 
 type builtinDocProgramNameOption struct {
-	ProgramName string `long:"program-name" value-name:"NAME" description:"Override program name used in generated documentation templates" auto-env:"false"`
+	ProgramName string `auto-env:"false" value-name:"NAME" long:"program-name" description:"Override program name used in generated documentation templates"`
 }
 
 type builtinDocRenderStyleOption struct {
-	Style string `long:"style" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation" auto-env:"false"`
+	Style string `long:"style" auto-env:"false" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation"`
 }
 
 type builtinDocBuiltinCommandsOption struct {
-	Builtins []string `long:"builtins" choices:"help;version;completion;docs;config" description:"Built-in commands to include in generated output" description-i18n:"help.builtin.command.docs.builtins.desc" auto-env:"false"`
+	Builtins []string `long:"builtins" auto-env:"false" choices:"help;version;completion;docs;config" description-i18n:"help.builtin.command.docs.builtins.desc" description:"Built-in commands to include in generated output"`
 }
 
 type builtinDocHelpGroupOption struct {
-	HelpInSubcommands bool `long:"help-in-subcommands" description:"Include builtin help options (-h/--help) in nested command sections" auto-env:"false"`
+	HelpInSubcommands bool `auto-env:"false" long:"help-in-subcommands" description:"Include builtin help options (-h/--help) in nested command sections"`
 }
 
 type builtinDocManCommand struct {
 	parser *Parser
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
-	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
+	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
 
-	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
-	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc" auto-env:"false"`
+	IncludeHidden bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (c *builtinDocManCommand) Execute(_ []string) error {
@@ -179,20 +179,20 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 
 type builtinDocHTMLCommand struct {
 	parser   *Parser
-	Template string `long:"template" choices:"default;styled" default:"default" description:"HTML documentation template" description-i18n:"help.builtin.command.docs.template_html.desc" auto-env:"false"`
+	Template string `description:"HTML documentation template" auto-env:"false" long:"template" description-i18n:"help.builtin.command.docs.template_html.desc" default:"default" choices:"default;styled"`
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
-	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
-	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
+	TOC              bool `description:"Include table of contents in output" auto-env:"false" long:"toc"`
+	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
 
-	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
-	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc" auto-env:"false"`
+	IncludeHidden bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (c *builtinDocHTMLCommand) Execute(_ []string) error {
@@ -219,24 +219,24 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 
 type builtinDocMarkdownCommand struct {
 	parser   *Parser
-	Template string `long:"template" choices:"list;table;code" default:"list" description:"Markdown documentation template" description-i18n:"help.builtin.command.docs.template_markdown.desc" auto-env:"false"`
+	Template string `description:"Markdown documentation template" auto-env:"false" long:"template" description-i18n:"help.builtin.command.docs.template_markdown.desc" default:"list" choices:"list;table;code"`
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
-	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
+	WrapWidth int `description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false" long:"wrap-width" default:"80" value-name:"COLUMNS"`
 
 	builtinDocHelpGroupOption
 
-	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
-	DashLists        bool `long:"dash-lists" description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false"`
-	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
+	TOC              bool `description:"Include table of contents in output" auto-env:"false" long:"toc"`
+	DashLists        bool `description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false" long:"dash-lists"`
+	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
 
-	IncludeHidden bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
-	MarkHidden    bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc" auto-env:"false"`
+	IncludeHidden bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
@@ -270,16 +270,16 @@ type builtinDocJSONCommand struct {
 	parser *Parser
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
-	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
-	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
-	Compact          bool `long:"compact" description:"Emit compact JSON without indentation" auto-env:"false"`
+	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
+	IncludeHidden    bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	Compact          bool `description:"Emit compact JSON without indentation" auto-env:"false" long:"compact"`
 }
 
 func (c *builtinDocJSONCommand) Execute(_ []string) error {
@@ -303,10 +303,10 @@ type builtinDocTemplateCommand struct {
 }
 
 type builtinDocTemplateExportCommand struct {
-	Name string `long:"name" description:"Built-in template name to export" description-i18n:"help.builtin.command.docs.template.name.desc" required:"yes" auto-env:"false"`
+	Name string `description:"Built-in template name to export" long:"name" required:"yes" auto-env:"false" description-i18n:"help.builtin.command.docs.template.name.desc"`
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 }
 
@@ -320,23 +320,23 @@ type builtinDocTemplateRenderCommand struct {
 	parser *Parser
 
 	Inputs struct {
-		Template string `positional-arg-name:"template" arg-name-i18n:"help.builtin.command.docs.template.input.name" description:"Template file path or - for stdin" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`
-		Output   string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Template string `description:"Template file path or - for stdin" positional-arg-name:"template" arg-name-i18n:"help.builtin.command.docs.template.input.name" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`
+		Output   string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
-	Format string `long:"format" choices:"markdown;html;man;json" default:"markdown" description:"Output format for template rendering" description-i18n:"help.builtin.command.docs.template.format.desc" auto-env:"false"`
+	Format string `description:"Output format for template rendering" auto-env:"false" long:"format" description-i18n:"help.builtin.command.docs.template.format.desc" default:"markdown" choices:"markdown;html;man;json"`
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
-	WrapWidth int `long:"wrap-width" value-name:"COLUMNS" default:"80" description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false"`
+	WrapWidth int `description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false" long:"wrap-width" default:"80" value-name:"COLUMNS"`
 	builtinDocHelpGroupOption
-	TOC              bool `long:"toc" description:"Include table of contents in output" auto-env:"false"`
-	DashLists        bool `long:"dash-lists" description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false"`
-	TrimDescriptions bool `long:"trim-descriptions" description:"Trim description whitespace in generated output" auto-env:"false"`
-	IncludeHidden    bool `long:"include-hidden" description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc" auto-env:"false"`
-	MarkHidden       bool `long:"mark-hidden" description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc" auto-env:"false"`
-	Compact          bool `long:"compact" description:"Emit compact JSON without indentation" auto-env:"false"`
+	TOC              bool `description:"Include table of contents in output" auto-env:"false" long:"toc"`
+	DashLists        bool `description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false" long:"dash-lists"`
+	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
+	IncludeHidden    bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden       bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
+	Compact          bool `description:"Emit compact JSON without indentation" auto-env:"false" long:"compact"`
 }
 
 func (c *builtinDocTemplateRenderCommand) Execute(_ []string) error {
@@ -489,19 +489,44 @@ type builtinConfigCommand struct {
 	parser *Parser
 
 	Output struct {
-		Path string `positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" description:"Output file path" arg-description-i18n:"help.builtin.command.output.desc"`
+		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
-	CommentWidth int `long:"comment-width" value-name:"COLUMNS" value-name-i18n:"help.builtin.command.value.columns" default:"80" description:"Maximum width for wrapped comments" description-i18n:"help.builtin.command.config.comment_width.desc" auto-env:"false"`
+	Format       string `long:"format"        description:"Output format"                       description-i18n:"help.builtin.command.config.format.desc"                    auto-env:"false"`
+	CommentWidth int    `long:"comment-width" description:"Maximum width for wrapped comments" description-i18n:"help.builtin.command.config.comment_width.desc" default:"80" value-name:"COLUMNS" value-name-i18n:"help.builtin.command.value.columns" auto-env:"false"`
+	iniEnabled   bool
+	jsonEnabled  bool
 }
 
 func (c *builtinConfigCommand) Execute(_ []string) error {
-	return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
-		NewIniParser(c.parser).WriteExampleWithOptions(w, IniExampleOptions{
-			CommentWidth: c.CommentWidth,
+	format := c.Format
+	if format == "" {
+		if c.iniEnabled {
+			format = "ini"
+		} else {
+			format = "json"
+		}
+	}
+
+	switch format {
+	case "ini":
+		return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
+			NewIniParser(c.parser).WriteExampleWithOptions(w, IniExampleOptions{
+				CommentWidth: c.CommentWidth,
+			})
+			return nil
 		})
-		return nil
-	})
+	case "json":
+		return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
+			jp := NewJSONParser(c.parser)
+			if c.parser.jsonKeyName != nil {
+				jp.KeyName = c.parser.jsonKeyName
+			}
+			return jp.Write(w)
+		})
+	default:
+		return fmt.Errorf("unknown config format %q", format)
+	}
 }
 
 type activeStateEntry struct {
@@ -646,8 +671,45 @@ func (p *Parser) ensureBuiltinCommands() error {
 		p.configureDocBuiltinCommandsOption()
 	}
 	if (missing & ConfigCommand) != None {
-		if err := p.addBuiltinCommand("config", "Generate INI configuration example", "help.builtin.command.config.desc", &builtinConfigCommand{parser: p}); err != nil {
-			return err
+		iniEnabled := (p.Options & ConfigIni) != None
+		jsonEnabled := (p.Options & ConfigJSON) != None
+
+		if iniEnabled || jsonEnabled {
+			cmd := &builtinConfigCommand{
+				parser:      p,
+				iniEnabled:  iniEnabled,
+				jsonEnabled: jsonEnabled,
+			}
+
+			if err := p.addBuiltinCommand("config", "Generate configuration file", "help.builtin.command.config.desc", cmd); err != nil {
+				return err
+			}
+
+			// Tune format and comment-width options to match enabled formats.
+			if configCmd := p.Find("config"); configCmd != nil {
+				configCmd.eachGroup(func(g *Group) {
+					for _, o := range g.options {
+						switch o.LongName {
+						case "format":
+							var choices []string
+							if iniEnabled {
+								choices = append(choices, "ini")
+							}
+							if jsonEnabled {
+								choices = append(choices, "json")
+							}
+							o.Choices = choices
+							o.Hidden = len(choices) == 1
+							// Dynamic default: first enabled format, matches Execute() fallback.
+							if len(choices) > 0 {
+								o.Default = choices[:1]
+							}
+						case "comment-width":
+							o.Hidden = !iniEnabled
+						}
+					}
+				})
+			}
 		}
 	}
 
