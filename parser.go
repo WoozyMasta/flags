@@ -980,6 +980,28 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			err = p.parseShort(s, optname, argument, hasArgument)
 		}
 
+		// An option unknown to the current command may belong to a not-yet-activated default command
+		// (e.g. `app --token x` where --token is owned by the default command).
+		// Lazily activate the default command chain and retry,
+		// mirroring the analogous fallback for non-option tokens in parseNonOption.
+		// Loop to cascade through nested defaults.
+		for err != nil && wrapError(err).Type == ErrUnknownFlag && s.command.Active == nil &&
+			s.command.defaultCommand != "" && len(s.command.commands) > 0 {
+			cmd := s.lookup.commands[s.command.defaultCommand]
+			if cmd == nil {
+				break
+			}
+
+			s.command.Active = cmd
+			cmd.fillParseState(s)
+
+			if islong {
+				err = p.parseLong(s, optname, argument, hasArgument)
+			} else {
+				err = p.parseShort(s, optname, argument, hasArgument)
+			}
+		}
+
 		if err != nil {
 			ignoreUnknown := (p.Options & IgnoreUnknown) != None
 			parseErr := wrapError(err)
@@ -1017,6 +1039,20 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 				s.args = modifiedArgs
 			}
 		}
+	}
+
+	// If no explicit command was selected and a default is configured,
+	// activate it now, before defaults/validators run, so that required/validator/relation checks
+	// and positional defaults apply to the default command's own options and args.
+	// Loop to cascade through nested default commands.
+	for s.err == nil && s.command.Active == nil &&
+		s.command.defaultCommand != "" && len(s.command.commands) > 0 {
+		cmd := s.lookup.commands[s.command.defaultCommand]
+		if cmd == nil {
+			break
+		}
+		s.command.Active = cmd
+		cmd.fillParseState(s)
 	}
 
 	if p.versionRequested {
@@ -1066,16 +1102,6 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 			if relationErr := s.checkOptionRelations(p); relationErr != nil {
 				s.err = relationErr
 			}
-		}
-	}
-
-	// If no explicit command was selected and a default is configured, activate
-	// it now so that post-parse execution and error checks use the right command.
-	if s.err == nil && s.command.Active == nil &&
-		s.command.defaultCommand != "" && len(s.command.commands) > 0 {
-		if cmd := s.lookup.commands[s.command.defaultCommand]; cmd != nil {
-			s.command.Active = cmd
-			cmd.fillParseState(s)
 		}
 	}
 

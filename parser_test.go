@@ -1401,6 +1401,128 @@ func TestDefaultCommandDuplicateTag(t *testing.T) {
 	}
 }
 
+// The following tests cover default-command activation happening before defaults/validators run,
+// so that the default command's own required options/positionals, validators
+// and relations are actually checked (and its options are recognized)
+// even when no explicit command token is given.
+
+func TestDefaultCommandRequiredOptionValidatedOptionsOnly(t *testing.T) {
+	// Each assertion uses its own parser: reusing one *Parser across a failing
+	// then succeeding ParseArgs call is a separate concern (see TestRepeatedParsePreservesExplicitValue)
+	// and not what this test covers.
+	type Opts struct {
+		Run struct {
+			Token string `long:"token" required:"true"`
+		} `command:"run" default-command:"true"`
+	}
+
+	var failOpts Opts
+	pFail := NewParser(&failOpts, Default&^PrintErrors)
+	if _, err := pFail.ParseArgs([]string{}); err == nil {
+		t.Fatal("expected required error for default command option with no args")
+	}
+
+	var okOpts Opts
+	pOK := NewParser(&okOpts, Default&^PrintErrors)
+	if _, err := pOK.ParseArgs([]string{"--token", "x"}); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if okOpts.Run.Token != "x" {
+		t.Fatalf("expected Token=x, got %q", okOpts.Run.Token)
+	}
+}
+
+func TestDefaultCommandRequiredPositionalValidatedPositionalOnly(t *testing.T) {
+	type Opts struct {
+		Run struct {
+			Positional struct {
+				Name string
+			} `positional-args:"yes" required:"yes"`
+		} `command:"run" default-command:"true"`
+	}
+
+	var failOpts Opts
+	pFail := NewParser(&failOpts, Default&^PrintErrors)
+	if _, err := pFail.ParseArgs([]string{}); err == nil {
+		t.Fatal("expected required-positional error for default command with no args")
+	}
+
+	var okOpts Opts
+	pOK := NewParser(&okOpts, Default&^PrintErrors)
+	if _, err := pOK.ParseArgs([]string{"value"}); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if okOpts.Run.Positional.Name != "value" {
+		t.Fatalf("expected Name=value, got %q", okOpts.Run.Positional.Name)
+	}
+}
+
+func TestDefaultCommandDoubleDashStillValidatesRequired(t *testing.T) {
+	var opts struct {
+		Run struct {
+			Token string `long:"token" required:"true"`
+		} `command:"run" default-command:"true"`
+	}
+
+	p := NewParser(&opts, Default&^PrintErrors)
+	if _, err := p.ParseArgs([]string{"--"}); err == nil {
+		t.Fatal("expected required error for default command after --")
+	}
+}
+
+func TestDefaultCommandNestedCascadeValidatesInnermost(t *testing.T) {
+	type Opts struct {
+		Run struct {
+			Start struct {
+				Token string `long:"token" required:"true"`
+			} `command:"start" default-command:"true"`
+		} `command:"run" default-command:"true"`
+	}
+
+	var failOpts Opts
+	pFail := NewParser(&failOpts, Default&^PrintErrors)
+	if _, err := pFail.ParseArgs([]string{}); err == nil {
+		t.Fatal("expected required error to cascade into nested default command")
+	}
+
+	var okOpts Opts
+	pOK := NewParser(&okOpts, Default&^PrintErrors)
+	if _, err := pOK.ParseArgs([]string{"--token", "x"}); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if okOpts.Run.Start.Token != "x" {
+		t.Fatalf("expected Token=x, got %q", okOpts.Run.Start.Token)
+	}
+	if pOK.Active == nil || pOK.Active.Name != "run" || pOK.Active.Active == nil || pOK.Active.Active.Name != "start" {
+		t.Fatalf("expected nested active command run/start, got %v", pOK.Active)
+	}
+}
+
+func TestDefaultCommandExplicitOverridesDefaultForOptions(t *testing.T) {
+	var opts struct {
+		Run struct {
+			Token string `long:"token" required:"true"`
+		} `command:"run" default-command:"true"`
+		Other struct {
+			Token string `long:"token"`
+		} `command:"other"`
+	}
+
+	p := NewParser(&opts, Default&^PrintErrors)
+	if _, err := p.ParseArgs([]string{"other", "--token", "y"}); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if opts.Other.Token != "y" {
+		t.Fatalf("expected Other.Token=y, got %q", opts.Other.Token)
+	}
+	if opts.Run.Token != "" {
+		t.Fatalf("expected default command not activated, Run.Token=%q", opts.Run.Token)
+	}
+	if p.Active == nil || p.Active.Name != "other" {
+		t.Fatalf("expected active command 'other', got %v", p.Active)
+	}
+}
+
 func TestAllowBoolValues(t *testing.T) {
 	var tests = []struct {
 		msg                string

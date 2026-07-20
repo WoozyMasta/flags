@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Fixed
+
+* Default command's own required options/positionals, validators,
+  and option relations were skipped when no explicit command token was given,
+  and its options were unrecognized when passed without the command name
+  (e.g. `app --token x`).
+
 ## [0.10.0] - 2026-06-08
 
 ### Added
