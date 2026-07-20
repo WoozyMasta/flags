@@ -52,6 +52,7 @@ func (p *Parser) printError(err error) error {
 
 		if p.shouldPrintHelpOnError(err) {
 			p.WriteHelp(writer)
+			_, _ = fmt.Fprintln(writer)
 		}
 
 		colorEnabled := (p.Options&ColorErrors) != None && DetectColorSupport(writer)

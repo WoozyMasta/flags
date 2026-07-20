@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning][].
   and option relations were skipped when no explicit command token was given,
   and its options were unrecognized when passed without the command name
   (e.g. `app --token x`).
+* `PrintHelpOnInputErrors` output ran the error message directly
+  into the last help line with no blank line separating them.
 
 ## [0.10.0] - 2026-06-08
 

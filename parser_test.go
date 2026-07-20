@@ -1907,6 +1907,22 @@ func TestPrintHelpOnInputErrorsForRequiredError(t *testing.T) {
 	}
 }
 
+func TestPrintHelpOnInputErrorsSeparatesHelpFromErrorLine(t *testing.T) {
+	var opts struct {
+		Add    struct{} `command:"add" description:"Add"`
+		Remove struct{} `command:"remove" description:"Remove"`
+	}
+
+	parser := NewParser(&opts, Default|PrintHelpOnInputErrors)
+	_, stderr := captureStdIO(t, func() {
+		_, _ = parser.ParseArgs([]string{})
+	})
+
+	if !strings.Contains(stderr, "\n\nPlease specify one command of:") {
+		t.Fatalf("expected a blank line between help output and the error line, got %q", stderr)
+	}
+}
+
 func TestPrintHelpOnInputErrorsForUnknownFlag(t *testing.T) {
 	var opts struct {
 		Value bool `long:"value"`
