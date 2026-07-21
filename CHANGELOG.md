@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.11.0] - 2026-07-24
 
 ### Fixed
 
@@ -70,6 +70,8 @@ and this project adheres to [Semantic Versioning][].
   the return value keep compiling unchanged.
 * `WriteManPage` now returns `error` instead of silently discarding it.
   Existing calls that don't check the return value keep compiling unchanged.
+
+[0.11.0]: https://github.com/WoozyMasta/flags/compare/v0.10.0...v0.11.0
 
 ## [0.10.0] - 2026-06-08
 
