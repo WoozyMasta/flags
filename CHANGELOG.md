@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning][].
 * Localized error/help text with overlapping placeholders
   (a value containing another placeholder's `{key}` text)
   no longer produces a result that depends on map iteration order.
+* `WriteManPage` no longer discards the underlying `WriteDoc` error.
 
 ### Changed
 
@@ -67,6 +68,8 @@ and this project adheres to [Semantic Versioning][].
   discarding a failure to register the built-in dotenv option group,
   matching `EnsureBuiltinConfigOptions`. Existing calls that don't check
   the return value keep compiling unchanged.
+* `WriteManPage` now returns `error` instead of silently discarding it.
+  Existing calls that don't check the return value keep compiling unchanged.
 
 ## [0.10.0] - 2026-06-08
 

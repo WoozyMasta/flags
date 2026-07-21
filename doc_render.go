@@ -227,10 +227,9 @@ func (p *Parser) WriteDoc(w io.Writer, format DocFormat, opts ...DocOption) erro
 	}
 }
 
-// WriteManPage writes a basic man page in groff format to the specified
-// writer.
-func (p *Parser) WriteManPage(w io.Writer) {
-	_ = p.WriteDoc(w, DocFormatMan, WithBuiltinTemplate(DocTemplateManDefault))
+// WriteManPage writes a basic man page in groff format to the specified writer.
+func (p *Parser) WriteManPage(w io.Writer) error {
+	return p.WriteDoc(w, DocFormatMan, WithBuiltinTemplate(DocTemplateManDefault))
 }
 
 func withJSONCompact(compact bool) DocOption {

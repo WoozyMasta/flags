@@ -9,15 +9,15 @@ Register-ArgumentCompleter -Native -CommandName $__goFlagsCommand -ScriptBlock {
 	}
 
 	$exe = $elements[0]
-	$args = @()
+	$__goFlagsArgs = @()
 	if ($elements.Count -gt 1) {
-		$args = $elements[1..($elements.Count - 1)]
+		$__goFlagsArgs = $elements[1..($elements.Count - 1)]
 	}
 
 	$prev = $env:GO_FLAGS_COMPLETION
 	$env:GO_FLAGS_COMPLETION = '1'
 	try {
-		$items = & $exe @args
+		$items = & $exe @__goFlagsArgs
 	} finally {
 		if ($null -ne $prev) {
 			$env:GO_FLAGS_COMPLETION = $prev
@@ -27,11 +27,6 @@ Register-ArgumentCompleter -Native -CommandName $__goFlagsCommand -ScriptBlock {
 	}
 
 	foreach ($item in $items) {
-		[System.Management.Automation.CompletionResult]::new(
-			$item,
-			$item,
-			'ParameterValue',
-			$item
-		)
+		[System.Management.Automation.CompletionResult]::new($item, $item, 'ParameterValue', $item)
 	}
 }

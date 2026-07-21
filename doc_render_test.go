@@ -647,6 +647,31 @@ func TestWriteDocManDefault(t *testing.T) {
 	}
 }
 
+// TestWriteManPagePropagatesError ensures WriteManPage no longer discards
+// the underlying WriteDoc error (it used to be `_ = p.WriteDoc(...)`).
+func TestWriteManPagePropagatesError(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("doc-man", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	if err := p.WriteManPage(nil); err == nil {
+		t.Fatal("expected WriteManPage to propagate the nil-writer error from WriteDoc")
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteManPage(&out); err != nil {
+		t.Fatalf("unexpected error on success path: %v", err)
+	}
+	if !strings.Contains(out.String(), ".TH doc-man 1") {
+		t.Fatalf("expected man output header, got:\n%s", out.String())
+	}
+}
+
 func TestWriteDocManMeta(t *testing.T) {
 	var opts struct {
 		Verbose bool `short:"v" long:"verbose" description:"Enable verbose output"`
