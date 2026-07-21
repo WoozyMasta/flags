@@ -50,7 +50,7 @@ Render current values:
 
 ```go
 ini := flags.NewIniParser(parser)
-ini.Write(os.Stdout, flags.IniDefault|flags.IniIncludeDefaults)
+err := ini.Write(os.Stdout, flags.IniDefault|flags.IniIncludeDefaults)
 ```
 
 Write to a file:
@@ -72,13 +72,13 @@ Use `IniNone` when no write options should be enabled.
 
 ```go
 ini := flags.NewIniParser(parser)
-ini.WriteExample(os.Stdout)
+err := ini.WriteExample(os.Stdout)
 ```
 
 Use `WriteExampleWithOptions` to configure comment wrapping:
 
 ```go
-ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{
+err := ini.WriteExampleWithOptions(os.Stdout, flags.IniExampleOptions{
   CommentWidth: 88,
 })
 ```

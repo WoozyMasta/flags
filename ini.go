@@ -166,19 +166,19 @@ func (i *IniParser) WriteFile(filename string, options IniOptions) error {
 // call this only after settings have been parsed since the default values of each
 // option are stored just before parsing the flags (this is only relevant when
 // IniIncludeDefaults is _not_ set in options).
-func (i *IniParser) Write(writer io.Writer, options IniOptions) {
-	writeIni(i, writer, options)
+func (i *IniParser) Write(writer io.Writer, options IniOptions) error {
+	return writeIni(i, writer, options)
 }
 
 // WriteExample writes an example INI with descriptive comments and defaults.
 // Required options are always rendered as active keys.
-func (i *IniParser) WriteExample(writer io.Writer) {
-	i.WriteExampleWithOptions(writer, IniExampleOptions{})
+func (i *IniParser) WriteExample(writer io.Writer) error {
+	return i.WriteExampleWithOptions(writer, IniExampleOptions{})
 }
 
 // WriteExampleWithOptions writes an example INI with configurable formatting.
-func (i *IniParser) WriteExampleWithOptions(writer io.Writer, opts IniExampleOptions) {
-	writeIniExample(i, writer, opts)
+func (i *IniParser) WriteExampleWithOptions(writer io.Writer, opts IniExampleOptions) error {
+	return writeIniExample(i, writer, opts)
 }
 
 func readFullLine(reader *bufio.Reader) (string, error) {
@@ -233,7 +233,7 @@ func appendIniSectionToken(base string, token string) string {
 	return base + "." + token
 }
 
-func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Writer, options IniOptions) {
+func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Writer, options IniOptions) error {
 	sname := namespace
 	if cmd.Group != group {
 		sname = appendIniSectionToken(sname, group.iniSectionName())
@@ -256,30 +256,42 @@ func writeGroupIni(cmd *Command, group *Group, namespace string, writer io.Write
 		}
 
 		if !sectionwritten {
-			_, _ = fmt.Fprintf(writer, "[%s]\n", sname)
+			if _, err := fmt.Fprintf(writer, "[%s]\n", sname); err != nil {
+				return err
+			}
 			sectionwritten = true
 		}
 
 		if comments {
 			description := option.localizedDescription()
 			if len(description) != 0 {
-				_, _ = fmt.Fprintf(writer, "; %s\n", description)
+				if _, err := fmt.Fprintf(writer, "; %s\n", description); err != nil {
+					return err
+				}
 			}
 		}
 
 		oname := optionIniName(option)
 
 		commentOption := (options&(IniIncludeDefaults|IniCommentDefaults)) == IniIncludeDefaults|IniCommentDefaults && option.valueIsDefault()
-		writeOptionValue(writer, option, oname, commentOption, true)
+		if err := writeOptionValue(writer, option, oname, commentOption, true); err != nil {
+			return err
+		}
 
 		if comments {
-			_, _ = fmt.Fprintln(writer)
+			if _, err := fmt.Fprintln(writer); err != nil {
+				return err
+			}
 		}
 	}
 
 	if sectionwritten && !comments {
-		_, _ = fmt.Fprintln(writer)
+		if _, err := fmt.Fprintln(writer); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func writeOption(
@@ -290,7 +302,7 @@ func writeOption(
 	optionValue string,
 	commentOption bool,
 	forceQuote bool,
-) {
+) error {
 	if forceQuote || (optionType == reflect.String && !isPrint(optionValue)) {
 		optionValue = strconv.Quote(optionValue)
 	}
@@ -300,15 +312,22 @@ func writeOption(
 		comment = "; "
 	}
 
-	_, _ = fmt.Fprintf(writer, "%s%s =", comment, optionName)
-
-	if optionKey != "" {
-		_, _ = fmt.Fprintf(writer, " %s:%s", optionKey, optionValue)
-	} else if optionValue != "" {
-		_, _ = fmt.Fprintf(writer, " %s", optionValue)
+	if _, err := fmt.Fprintf(writer, "%s%s =", comment, optionName); err != nil {
+		return err
 	}
 
-	_, _ = fmt.Fprintln(writer)
+	if optionKey != "" {
+		if _, err := fmt.Fprintf(writer, " %s:%s", optionKey, optionValue); err != nil {
+			return err
+		}
+	} else if optionValue != "" {
+		if _, err := fmt.Fprintf(writer, " %s", optionValue); err != nil {
+			return err
+		}
+	}
+
+	_, err := fmt.Fprintln(writer)
+	return err
 }
 
 func writeOptionValue(
@@ -317,7 +336,7 @@ func writeOptionValue(
 	optionName string,
 	commentOption bool,
 	forceCommentOnEmptyCollection bool,
-) {
+) error {
 	val := option.value
 	kind := val.Type().Kind()
 
@@ -330,14 +349,15 @@ func writeOptionValue(
 			if forceCommentOnEmptyCollection {
 				commentEmpty = true
 			}
-			writeOption(writer, optionName, elemKind, "", "", commentEmpty, option.iniQuote)
-			return
+			return writeOption(writer, optionName, elemKind, "", "", commentEmpty, option.iniQuote)
 		}
 
 		for idx := 0; idx < val.Len(); idx++ {
 			v, _ := convertToString(val.Index(idx), option.tag)
 			v = option.redactValue(v)
-			writeOption(writer, optionName, elemKind, "", v, commentOption, option.iniQuote)
+			if err := writeOption(writer, optionName, elemKind, "", v, commentOption, option.iniQuote); err != nil {
+				return err
+			}
 		}
 
 	case reflect.Map:
@@ -348,8 +368,7 @@ func writeOptionValue(
 			if forceCommentOnEmptyCollection {
 				commentEmpty = true
 			}
-			writeOption(writer, optionName, elemKind, "", "", commentEmpty, option.iniQuote)
-			return
+			return writeOption(writer, optionName, elemKind, "", "", commentEmpty, option.iniQuote)
 		}
 
 		mkeys := val.MapKeys()
@@ -366,14 +385,18 @@ func writeOptionValue(
 		for _, k := range keys {
 			v, _ := convertToString(val.MapIndex(kkmap[k]), option.tag)
 			v = option.redactValue(v)
-			writeOption(writer, optionName, elemKind, k, v, commentOption, option.iniQuote)
+			if err := writeOption(writer, optionName, elemKind, k, v, commentOption, option.iniQuote); err != nil {
+				return err
+			}
 		}
 
 	default:
 		v, _ := convertToString(val, option.tag)
 		v = option.redactValue(v)
-		writeOption(writer, optionName, kind, "", v, commentOption, option.iniQuote)
+		return writeOption(writer, optionName, kind, "", v, commentOption, option.iniQuote)
 	}
+
+	return nil
 }
 
 func optionLooksUserConfigured(option *Option) bool {
@@ -468,18 +491,22 @@ func buildIniExampleComment(option *Option) string {
 	return strings.Join(lines, "\n")
 }
 
-func writeIniCommentBlock(writer io.Writer, comment string, width int) {
+func writeIniCommentBlock(writer io.Writer, comment string, width int) error {
 	comment = strings.TrimSpace(comment)
 	if comment == "" {
-		return
+		return nil
 	}
 
 	usableWidth := max(10, width-2)
 	wrapped := wrapTextNoHyphen(comment, usableWidth)
 
 	for line := range strings.SplitSeq(wrapped, "\n") {
-		_, _ = fmt.Fprintf(writer, "; %s\n", line)
+		if _, err := fmt.Fprintf(writer, "; %s\n", line); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func writeGroupIniExample(
@@ -488,7 +515,7 @@ func writeGroupIniExample(
 	namespace string,
 	writer io.Writer,
 	opts IniExampleOptions,
-) {
+) error {
 	sname := namespace
 	if cmd.Group != group {
 		sname = appendIniSectionToken(sname, group.iniSectionName())
@@ -507,30 +534,50 @@ func writeGroupIniExample(
 		}
 
 		if !sectionwritten {
-			_, _ = fmt.Fprintf(writer, "[%s]\n", sname)
+			if _, err := fmt.Fprintf(writer, "[%s]\n", sname); err != nil {
+				return err
+			}
 			sectionwritten = true
 		}
 
 		comment := buildIniExampleComment(option)
-		writeIniCommentBlock(writer, comment, commentWidth)
+		if err := writeIniCommentBlock(writer, comment, commentWidth); err != nil {
+			return err
+		}
 		if strings.TrimSpace(comment) != "" {
-			_, _ = fmt.Fprintln(writer, ";")
+			if _, err := fmt.Fprintln(writer, ";"); err != nil {
+				return err
+			}
 		}
 
 		oname := optionIniName(option)
 		commentOption := shouldCommentExampleOption(option)
-		writeOptionValue(writer, option, oname, commentOption, false)
+		if err := writeOptionValue(writer, option, oname, commentOption, false); err != nil {
+			return err
+		}
 
-		_, _ = fmt.Fprintln(writer)
+		if _, err := fmt.Fprintln(writer); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func writeCommandIniExample(command *Command, namespace string, writer io.Writer, opts IniExampleOptions) {
+func writeCommandIniExample(command *Command, namespace string, writer io.Writer, opts IniExampleOptions) error {
+	var writeErr error
+
 	command.eachGroup(func(group *Group) {
-		if !group.Hidden {
-			writeGroupIniExample(command, group, namespace, writer, opts)
+		if writeErr != nil || group.Hidden {
+			return
 		}
+
+		writeErr = writeGroupIniExample(command, group, namespace, writer, opts)
 	})
+
+	if writeErr != nil {
+		return writeErr
+	}
 
 	for _, c := range command.commands {
 		var fqn string
@@ -545,20 +592,32 @@ func writeCommandIniExample(command *Command, namespace string, writer io.Writer
 			fqn = c.iniSectionName()
 		}
 
-		writeCommandIniExample(c, fqn, writer, opts)
-	}
-}
-
-func writeIniExample(parser *IniParser, writer io.Writer, opts IniExampleOptions) {
-	writeCommandIniExample(parser.parser.Command, "", writer, opts)
-}
-
-func writeCommandIni(command *Command, namespace string, writer io.Writer, options IniOptions) {
-	command.eachGroup(func(group *Group) {
-		if !group.Hidden {
-			writeGroupIni(command, group, namespace, writer, options)
+		if err := writeCommandIniExample(c, fqn, writer, opts); err != nil {
+			return err
 		}
+	}
+
+	return nil
+}
+
+func writeIniExample(parser *IniParser, writer io.Writer, opts IniExampleOptions) error {
+	return writeCommandIniExample(parser.parser.Command, "", writer, opts)
+}
+
+func writeCommandIni(command *Command, namespace string, writer io.Writer, options IniOptions) error {
+	var writeErr error
+
+	command.eachGroup(func(group *Group) {
+		if writeErr != nil || group.Hidden {
+			return
+		}
+
+		writeErr = writeGroupIni(command, group, namespace, writer, options)
 	})
+
+	if writeErr != nil {
+		return writeErr
+	}
 
 	for _, c := range command.commands {
 		var fqn string
@@ -573,28 +632,22 @@ func writeCommandIni(command *Command, namespace string, writer io.Writer, optio
 			fqn = c.iniSectionName()
 		}
 
-		writeCommandIni(c, fqn, writer, options)
+		if err := writeCommandIni(c, fqn, writer, options); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func writeIni(parser *IniParser, writer io.Writer, options IniOptions) {
-	writeCommandIni(parser.parser.Command, "", writer, options)
+func writeIni(parser *IniParser, writer io.Writer, options IniOptions) error {
+	return writeCommandIni(parser.parser.Command, "", writer, options)
 }
 
 func writeIniToFile(parser *IniParser, filename string, options IniOptions) error {
-	file, err := os.Create(filename)
-
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = file.Close()
-	}()
-
-	writeIni(parser, file, options)
-
-	return nil
+	return writeFileAtomically(filename, func(w io.Writer) error {
+		return writeIni(parser, w, options)
+	})
 }
 
 func readIniFromFile(filename string) (*ini, error) {

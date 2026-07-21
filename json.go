@@ -173,14 +173,7 @@ func (j *JSONParser) applyCommand(cmd *Command, data map[string]any) error {
 
 // WriteFile writes the current flag values as a JSON file.
 func (j *JSONParser) WriteFile(filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-
-	defer func() { _ = f.Close() }()
-
-	return j.Write(f)
+	return writeFileAtomically(filename, j.Write)
 }
 
 // Write encodes the current flag values as indented JSON to writer.

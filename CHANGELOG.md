@@ -39,6 +39,16 @@ and this project adheres to [Semantic Versioning][].
 * Loading a `.env` file or an INI/JSON config file that fails partway
   through no longer leaves earlier variables/fields already applied:
   both are now all-or-nothing.
+* `IniParser.WriteFile`/`JSONParser.WriteFile` write to a temporary file
+  and rename it into place instead of truncating the target directly,
+  so a failed write can no longer leave a corrupt or partial config file.
+  Both now default to `0600` permissions.
+
+### Changed
+
+* `IniParser.Write`, `WriteExample`, and `WriteExampleWithOptions`
+  now return `error` instead of silently discarding write failures.
+  Existing calls that don't check the return value keep compiling unchanged.
 
 ## [0.10.0] - 2026-06-08
 

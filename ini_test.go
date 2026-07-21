@@ -799,6 +799,9 @@ value = some other value
 		t.Fatalf("Cannot create temporary file: %s", err)
 	}
 	defer os.Remove(file.Name())
+	if err := file.Close(); err != nil {
+		t.Fatalf("Cannot close temporary file: %s", err)
+	}
 
 	err = inip.WriteFile(file.Name(), IniIncludeDefaults)
 	if err != nil {
@@ -1110,6 +1113,9 @@ func TestWriteFile(t *testing.T) {
 		t.Fatalf("Cannot create temporary file: %s", err)
 	}
 	defer os.Remove(file.Name())
+	if err := file.Close(); err != nil {
+		t.Fatalf("Cannot close temporary file: %s", err)
+	}
 
 	var opts struct {
 		Value int `long:"value"`

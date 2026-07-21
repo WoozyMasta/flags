@@ -511,10 +511,9 @@ func (c *builtinConfigCommand) Execute(_ []string) error {
 	switch format {
 	case "ini":
 		return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {
-			NewIniParser(c.parser).WriteExampleWithOptions(w, IniExampleOptions{
+			return NewIniParser(c.parser).WriteExampleWithOptions(w, IniExampleOptions{
 				CommentWidth: c.CommentWidth,
 			})
-			return nil
 		})
 	case "json":
 		return writeBuiltinCommandOutput(c.Output.Path, func(w io.Writer) error {

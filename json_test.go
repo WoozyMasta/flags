@@ -7,6 +7,8 @@ package flags
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -429,6 +431,50 @@ func TestJsonWriteBasic(t *testing.T) {
 	}
 	if got["output"] != "out.txt" {
 		t.Errorf("output = %v, want %q", got["output"], "out.txt")
+	}
+}
+
+func TestJsonWriteFileRoundTrip(t *testing.T) {
+	var opts struct {
+		Verbose bool   `long:"verbose"`
+		Output  string `long:"output"`
+	}
+	opts.Verbose = true
+	opts.Output = "out.txt"
+
+	p := NewParser(&opts, None)
+	jp := NewJSONParser(p)
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+
+	if err := jp.WriteFile(path); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+
+	var got map[string]any
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, raw)
+	}
+
+	if got["verbose"] != true {
+		t.Errorf("verbose = %v, want true", got["verbose"])
+	}
+	if got["output"] != "out.txt" {
+		t.Errorf("output = %v, want %q", got["output"], "out.txt")
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("unexpected readdir error: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected exactly one file in %s after WriteFile, got %d: %v", dir, len(entries), entries)
 	}
 }
 
