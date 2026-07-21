@@ -134,7 +134,7 @@ func TestCompletionSmokeScriptBash(t *testing.T) {
 	p := buildCompletionSmokeParser(t)
 	assertCompletionNonEmpty(t, p, CompletionShellBash, "smoke-app",
 		"GO_FLAGS_COMPLETION",
-		"complete -F _smoke_app smoke-app",
+		"complete -F _smoke_app 'smoke-app'",
 		"compopt -o nospace",
 		"COMP_WORDS",
 		"COMPREPLY",
@@ -146,7 +146,7 @@ func TestCompletionSmokeScriptZsh(t *testing.T) {
 	assertCompletionNonEmpty(t, p, CompletionShellZsh, "smoke-app",
 		"GO_FLAGS_COMPLETION",
 		"#compdef smoke-app",
-		"compdef _smoke_app smoke-app",
+		"compdef _smoke_app 'smoke-app'",
 		"compadd -S '' --",
 	)
 }

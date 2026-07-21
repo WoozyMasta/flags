@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning][].
   are now recognized using the same rules as the rest of the parser:
   they stop at a literal `--`, honor any aliases,
   and support the `/name:value` Windows style.
+* `WriteCompletion`/`WriteNamedCompletion` now reject command names
+  containing shell metacharacters instead of embedding them unescaped
+  in the generated Bash/Zsh/PowerShell script.
 
 ## [0.10.0] - 2026-06-08
 

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -91,13 +92,52 @@ func (p *Parser) WriteAutoCompletion(w io.Writer) error {
 	return p.WriteCompletion(w, DetectCompletionShell())
 }
 
+// commandNameAllowedPattern matches the characters permitted in a command name once
+// it is safe to embed in a generated shell completion script:
+// letters, digits, and a small set of punctuation actually used in real executable names.
+// It excludes every shell metacharacter (quotes, backticks, $, ;, whitespace, control characters, ...),
+// so a valid name can never break out of the generated script's syntax.
+var commandNameAllowedPattern = regexp.MustCompile(`^[A-Za-z0-9._+-]+$`)
+
+// sanitizeCompletionCommandName strips any directory components from commandName
+// and validates what remains against commandNameAllowedPattern.
+func sanitizeCompletionCommandName(commandName string) (string, error) {
+	base := filepath.Base(commandName)
+	if !commandNameAllowedPattern.MatchString(base) {
+		return "", fmt.Errorf(
+			"command name %q is not valid for a shell completion script "+
+				"(allowed characters: letters, digits, '.', '_', '+', '-'): %w",
+			commandName, ErrInvalidCommandName,
+		)
+	}
+
+	return base, nil
+}
+
+// bashSingleQuote wraps s in single quotes for safe embedding in a Bash or Zsh command line,
+// escaping any embedded single quote.
+func bashSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// pwshSingleQuote wraps s in single quotes for safe embedding in a PowerShell string literal,
+// escaping any embedded single quote.
+func pwshSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "''") + "'"
+}
+
 // WriteNamedCompletion writes a shell completion script for commandName.
 func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, commandName string) error {
 	if commandName == "" {
 		return ErrEmptyCommandName
 	}
 
-	functionName := completionFunctionName(commandName)
+	safeName, err := sanitizeCompletionCommandName(commandName)
+	if err != nil {
+		return err
+	}
+
+	functionName := completionFunctionName(safeName)
 
 	switch shell {
 	case CompletionShellBash:
@@ -115,7 +155,7 @@ func (p *Parser) WriteNamedCompletion(w io.Writer, shell CompletionShell, comman
 }
 
 complete -F _%[1]s %[2]s
-`, functionName, commandName)
+`, functionName, bashSingleQuote(safeName))
 		return err
 	case CompletionShellZsh:
 		_, err := fmt.Fprintf(w, `#compdef %[2]s
@@ -137,11 +177,11 @@ _%[1]s() {
 	return 0
 }
 
-compdef _%[1]s %[2]s
-`, functionName, commandName)
+compdef _%[1]s %[3]s
+`, functionName, safeName, bashSingleQuote(safeName))
 		return err
 	case CompletionShellPwsh:
-		_, err := fmt.Fprintf(w, `$__goFlagsCommand = '%[2]s'
+		_, err := fmt.Fprintf(w, `$__goFlagsCommand = %[2]s
 
 Register-ArgumentCompleter -Native -CommandName $__goFlagsCommand -ScriptBlock {
 	param($wordToComplete, $commandAst, $cursorPosition)
@@ -173,7 +213,7 @@ Register-ArgumentCompleter -Native -CommandName $__goFlagsCommand -ScriptBlock {
 		[System.Management.Automation.CompletionResult]::new($item, $item, 'ParameterValue', $item)
 	}
 }
-`, functionName, commandName)
+`, functionName, pwshSingleQuote(safeName))
 		return err
 	default:
 		return fmt.Errorf("unsupported completion shell %q", shell)

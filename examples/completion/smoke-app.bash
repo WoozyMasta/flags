@@ -11,4 +11,4 @@ _smoke_app() {
 	return 0
 }
 
-complete -F _smoke_app smoke-app
+complete -F _smoke_app 'smoke-app'

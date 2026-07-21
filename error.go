@@ -19,6 +19,10 @@ var (
 	// without a command name.
 	ErrEmptyCommandName = errors.New("command name must not be empty")
 
+	// ErrInvalidCommandName indicates that a command name is not safe
+	// to embed in a generated shell completion script (see WriteNamedCompletion).
+	ErrInvalidCommandName = errors.New("command name contains characters not allowed in a shell completion script")
+
 	// ErrNilWriter indicates that a nil output writer was passed.
 	ErrNilWriter = errors.New("nil writer")
 

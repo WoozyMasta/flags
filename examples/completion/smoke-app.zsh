@@ -17,4 +17,4 @@ _smoke_app() {
 	return 0
 }
 
-compdef _smoke_app smoke-app
+compdef _smoke_app 'smoke-app'
