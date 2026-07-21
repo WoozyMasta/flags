@@ -8,10 +8,8 @@ import (
 	"io"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
-	"time"
 )
 
 type helpOptions struct {
@@ -414,15 +412,7 @@ func TestMan(t *testing.T) {
 
 	got := buf.String()
 
-	tt := time.Now()
-	source_date_epoch := os.Getenv("SOURCE_DATE_EPOCH")
-	if source_date_epoch != "" {
-		sde, err := strconv.ParseInt(source_date_epoch, 10, 64)
-		if err != nil {
-			panic(fmt.Sprintf("Invalid SOURCE_DATE_EPOCH: %s", err))
-		}
-		tt = time.Unix(sde, 0)
-	}
+	tt := docNow()
 
 	expectedHeader := fmt.Sprintf(`.TH TestMan 1 "%s"`, tt.Format("2 January 2006"))
 	for _, needle := range []string{

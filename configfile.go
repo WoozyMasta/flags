@@ -162,9 +162,28 @@ func detectConfigFileFormat(path string, iniEnabled, jsonEnabled bool) (string, 
 
 	r := bufio.NewReader(f)
 
-	b, err := r.ReadByte()
-	if err != nil {
-		return "", fmt.Errorf("config file %q: %w", path, err)
+	// A UTF-8 BOM or leading whitespace before the first meaningful byte
+	// (both legal in JSON, and common when a file was hand-edited or/ saved by an editor that writes a BOM)
+	// must not be mistaken for INI content.
+	if bom, err := r.Peek(3); err == nil && bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF {
+		_, _ = r.Discard(3)
+	}
+
+	var b byte
+	for {
+		b, err = r.ReadByte()
+		if err != nil {
+			return "", fmt.Errorf(
+				"config file %q: cannot detect format (file is empty or unreadable after skipping BOM/whitespace): %w",
+				path, err,
+			)
+		}
+
+		if b == ' ' || b == '\t' || b == '\n' || b == '\r' {
+			continue
+		}
+
+		break
 	}
 
 	if b == '{' {

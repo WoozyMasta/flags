@@ -480,6 +480,11 @@ func (p *Parser) buildDocMeta() *docParserMeta {
 	}
 }
 
+// docNow returns the timestamp used for generated documentation,
+// honoring SOURCE_DATE_EPOCH for reproducible builds when it is set to a valid Unix timestamp.
+// An invalid value is ignored (falls back to the current time)
+// rather than aborting doc generation:
+// a malformed environment variable should not crash the process.
 func docNow() time.Time {
 	t := time.Now()
 	sourceDateEpoch := os.Getenv("SOURCE_DATE_EPOCH")
@@ -489,7 +494,7 @@ func docNow() time.Time {
 
 	sde, err := strconv.ParseInt(sourceDateEpoch, 10, 64)
 	if err != nil {
-		panic(fmt.Sprintf("Invalid SOURCE_DATE_EPOCH: %s", err))
+		return t
 	}
 
 	return time.Unix(sde, 0).UTC()

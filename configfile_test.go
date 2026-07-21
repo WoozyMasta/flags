@@ -62,6 +62,10 @@ func TestDetectConfigFileFormatByMagicByte(t *testing.T) {
 		{"ini fallback, ini enabled", "key=val", true, false, "ini"},
 		{"json magic byte, both enabled", `{"a":1}`, true, true, "json"},
 		{"non-json content, both enabled", "key=val", true, true, "ini"},
+		{"json with leading whitespace", "  \n\t{\"a\":1}", true, true, "json"},
+		{"json with utf-8 BOM", "\xEF\xBB\xBF{\"a\":1}", true, true, "json"},
+		{"json with utf-8 BOM and whitespace", "\xEF\xBB\xBF \n{\"a\":1}", true, true, "json"},
+		{"ini with leading whitespace", "  \nkey=val", true, true, "ini"},
 	}
 
 	for _, tc := range cases {
@@ -131,6 +135,30 @@ func TestDetectConfigFileFormatErrors(t *testing.T) {
 		_, err := detectConfigFileFormat(path, false, false)
 		if err == nil {
 			t.Fatal("expected error when no format is enabled")
+		}
+	})
+
+	t.Run("empty file", func(t *testing.T) {
+		path := filepath.Join(dir, "empty.cfg")
+		if err := os.WriteFile(path, []byte{}, 0o600); err != nil {
+			t.Fatal(err)
+		}
+
+		_, err := detectConfigFileFormat(path, true, true)
+		if err == nil {
+			t.Fatal("expected error for an empty config file")
+		}
+	})
+
+	t.Run("whitespace-only file", func(t *testing.T) {
+		path := filepath.Join(dir, "whitespace.cfg")
+		if err := os.WriteFile(path, []byte("  \n\t\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+
+		_, err := detectConfigFileFormat(path, true, true)
+		if err == nil {
+			t.Fatal("expected error for a whitespace-only config file")
 		}
 	})
 }

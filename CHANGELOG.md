@@ -43,6 +43,13 @@ and this project adheres to [Semantic Versioning][].
   and rename it into place instead of truncating the target directly,
   so a failed write can no longer leave a corrupt or partial config file.
   Both now default to `0600` permissions.
+* Generating documentation no longer panics when
+  `SOURCE_DATE_EPOCH` is set to an invalid value;
+  the current time is used instead.
+* Detecting an unknown-extension config file's format
+  by its first byte no longer misidentifies JSON as INI
+  when the file starts with a UTF-8 BOM or leading whitespace;
+  an empty or whitespace-only file now returns a clear error instead of EOF.
 
 ### Changed
 
