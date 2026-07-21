@@ -902,7 +902,9 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	// EnsureBuiltinOptions so env vars are available when option defaults are
 	// resolved from the environment.
 	if (p.Options & (DotEnv | DotEnvOverride | DotEnvFlags)) != None {
-		p.EnsureBuiltinDotEnvOptions()
+		if err := p.EnsureBuiltinDotEnvOptions(); err != nil {
+			return nil, p.printError(err)
+		}
 
 		if err := p.applyDotEnv(args); err != nil {
 			return nil, p.printError(err)

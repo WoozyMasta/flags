@@ -96,7 +96,7 @@ func splitOption(prefix string, option string, islong bool) (name string, split 
 }
 
 // addHelpGroup adds a new group that contains default help/version parameters.
-func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) *Group {
+func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) (*Group, error) {
 	style := RenderStyleWindows
 	if parser := c.parser(); parser != nil {
 		style = parser.resolveFlagRenderStyle()
@@ -118,12 +118,12 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 			help.ShowVersion = showVersion
 			ret, err := c.AddGroup("Help Options", "", &help)
 			if err != nil {
-				return nil
+				return nil, err
 			}
 			ret.SetShortDescriptionI18nKey("help.group.help_options")
 			ret.isBuiltinHelp = true
 
-			return ret
+			return ret, nil
 		}
 
 		var help struct {
@@ -133,12 +133,12 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 		help.ShowHelp = showHelp
 		ret, err := c.AddGroup("Help Options", "", &help)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		ret.SetShortDescriptionI18nKey("help.group.help_options")
 		ret.isBuiltinHelp = true
 
-		return ret
+		return ret, nil
 	}
 
 	// Windows CLI applications typically use /? for help, so make both
@@ -156,12 +156,12 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 
 		ret, err := c.AddGroup("Help Options", "", &help)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		ret.SetShortDescriptionI18nKey("help.group.help_options")
 		ret.isBuiltinHelp = true
 
-		return ret
+		return ret, nil
 	}
 
 	var help struct {
@@ -174,10 +174,10 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 
 	ret, err := c.AddGroup("Help Options", "", &help)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	ret.SetShortDescriptionI18nKey("help.group.help_options")
 	ret.isBuiltinHelp = true
 
-	return ret
+	return ret, nil
 }

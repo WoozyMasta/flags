@@ -160,7 +160,7 @@ to further customise them (rename, hide, change description, etc.):
 parser := flags.NewParser(&opts, flags.Default|flags.DotEnv|flags.DotEnvFlags)
 
 // Materialise the group early (optional - ParseArgs does this automatically)
-parser.EnsureBuiltinDotEnvOptions()
+err := parser.EnsureBuiltinDotEnvOptions()
 
 fileOpt := parser.BuiltinDotEnvFileOption()
 fileOpt.LongName = "config" // rename --env-file to --config

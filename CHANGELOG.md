@@ -50,12 +50,20 @@ and this project adheres to [Semantic Versioning][].
   by its first byte no longer misidentifies JSON as INI
   when the file starts with a UTF-8 BOM or leading whitespace;
   an empty or whitespace-only file now returns a clear error instead of EOF.
+* If the built-in help/version option group fails to register
+  (e.g. a name collision), it no longer stays silently and permanently
+  absent: the parser now retries on the next attempt and surfaces
+  the underlying error instead of discarding it.
 
 ### Changed
 
 * `IniParser.Write`, `WriteExample`, and `WriteExampleWithOptions`
   now return `error` instead of silently discarding write failures.
   Existing calls that don't check the return value keep compiling unchanged.
+* `EnsureBuiltinDotEnvOptions` now returns `error` instead of silently
+  discarding a failure to register the built-in dotenv option group,
+  matching `EnsureBuiltinConfigOptions`. Existing calls that don't check
+  the return value keep compiling unchanged.
 
 ## [0.10.0] - 2026-06-08
 

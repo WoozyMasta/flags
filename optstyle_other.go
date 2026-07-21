@@ -57,7 +57,7 @@ func splitOption(_ string, option string, islong bool) (name string, split strin
 }
 
 // addHelpGroup adds a new group that contains default help/version parameters.
-func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) *Group {
+func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) (*Group, error) {
 	includeVersion := false
 	if p := c.parser(); p != nil && (p.Options&VersionFlag) != None && showVersion != nil {
 		includeVersion = true
@@ -73,12 +73,12 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 		help.ShowVersion = showVersion
 		ret, err := c.AddGroup("Help Options", "", &help)
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		ret.SetShortDescriptionI18nKey("help.group.help_options")
 		ret.isBuiltinHelp = true
 
-		return ret
+		return ret, nil
 	}
 
 	var help struct {
@@ -88,10 +88,10 @@ func (c *Command) addHelpGroup(showHelp func() error, showVersion func() error) 
 	help.ShowHelp = showHelp
 	ret, err := c.AddGroup("Help Options", "", &help)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	ret.SetShortDescriptionI18nKey("help.group.help_options")
 	ret.isBuiltinHelp = true
 
-	return ret
+	return ret, nil
 }

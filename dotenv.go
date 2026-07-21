@@ -120,17 +120,17 @@ func (p *Parser) i18nTextfErr(key, fallback string, data map[string]string) erro
 // when DotEnvFlags is set and the group has not yet been added.
 // It is called automatically from ParseArgs
 // and can also be called by application code to access the group before parsing.
-func (p *Parser) EnsureBuiltinDotEnvOptions() {
+func (p *Parser) EnsureBuiltinDotEnvOptions() error {
 	if (p.Options&DotEnvFlags) == None || p.hasDotEnvGroup {
-		return
+		return nil
 	}
 
-	p.addDotEnvGroup()
+	return p.addDotEnvGroup()
 }
 
 // addDotEnvGroup adds the "Env Options" group containing the three dotenv flags
 // and records their long names for the pre-scan step.
-func (p *Parser) addDotEnvGroup() {
+func (p *Parser) addDotEnvGroup() error {
 	fileFlagLong := "env-file"
 	noEnvFlagLong := "no-env"
 	overrideFlagLong := "env-override"
@@ -144,7 +144,7 @@ func (p *Parser) addDotEnvGroup() {
 	data := &envOpts{}
 	grp, err := p.AddGroup("Env Options", "", data)
 	if err != nil {
-		return
+		return err
 	}
 
 	grp.SetShortDescriptionI18nKey("help.group.env_options")
@@ -166,26 +166,34 @@ func (p *Parser) addDotEnvGroup() {
 	p.dotEnvDisableFlagName = noEnvFlagLong
 	p.dotEnvOverrideFlagName = overrideFlagLong
 	p.hasDotEnvGroup = true
+
+	return nil
 }
 
 // BuiltinDotEnvFileOption returns the --env-file option when DotEnvFlags is enabled.
-// It materialises the group lazily and returns nil when unavailable.
+// It materialises the group lazily and returns nil when unavailable
+// (including when materialising the group fails; call EnsureBuiltinDotEnvOptions
+// directly to observe that error).
 func (p *Parser) BuiltinDotEnvFileOption() *Option {
-	p.EnsureBuiltinDotEnvOptions()
+	_ = p.EnsureBuiltinDotEnvOptions()
 	return p.FindOptionByLongName(p.dotEnvFileFlagName)
 }
 
 // BuiltinDotEnvNoEnvOption returns the --no-env option when DotEnvFlags is enabled.
-// It materialises the group lazily and returns nil when unavailable.
+// It materialises the group lazily and returns nil when unavailable
+// (including when materialising the group fails; call EnsureBuiltinDotEnvOptions
+// directly to observe that error).
 func (p *Parser) BuiltinDotEnvNoEnvOption() *Option {
-	p.EnsureBuiltinDotEnvOptions()
+	_ = p.EnsureBuiltinDotEnvOptions()
 	return p.FindOptionByLongName(p.dotEnvDisableFlagName)
 }
 
 // BuiltinDotEnvOverrideOption returns the --env-override option when
-// DotEnvFlags is enabled. Returns nil when unavailable.
+// DotEnvFlags is enabled. Returns nil when unavailable (including when
+// materialising the group fails; call EnsureBuiltinDotEnvOptions directly
+// to observe that error).
 func (p *Parser) BuiltinDotEnvOverrideOption() *Option {
-	p.EnsureBuiltinDotEnvOptions()
+	_ = p.EnsureBuiltinDotEnvOptions()
 	return p.FindOptionByLongName(p.dotEnvOverrideFlagName)
 }
 

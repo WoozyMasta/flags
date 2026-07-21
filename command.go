@@ -640,10 +640,23 @@ func (c *Command) eachActiveGroup(f func(cc *Command, g *Group)) {
 	}
 }
 
+// addHelpGroups materialises the built-in help/version group for c and every
+// subcommand. The guard (hasBuiltinHelpGroup) is only set once the group has
+// actually been added: a failed AddGroup call (e.g. a name collision with an
+// existing option) leaves it false so a later attempt can retry instead of
+// silently and permanently leaving help/version flags absent. The first such
+// error is recorded on the owning Parser (mirroring the deferred-error
+// pattern used for scan errors at construction time) so it surfaces the next
+// time ParseArgs runs, instead of being discarded.
 func (c *Command) addHelpGroups(showHelp func() error, showVersion func() error) {
 	if !c.hasBuiltinHelpGroup {
-		c.addHelpGroup(showHelp, showVersion)
-		c.hasBuiltinHelpGroup = true
+		if _, err := c.addHelpGroup(showHelp, showVersion); err != nil {
+			if p := c.parser(); p != nil && p.internalError == nil {
+				p.internalError = err
+			}
+		} else {
+			c.hasBuiltinHelpGroup = true
+		}
 	}
 
 	for _, cc := range c.commands {
