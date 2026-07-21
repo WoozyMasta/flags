@@ -591,6 +591,28 @@ func TestDotEnvFlagsEnvOverride(t *testing.T) {
 	}
 }
 
+func TestDotEnvFlagsNoEnvIgnoredAfterDoubleDashWhenPassDoubleDashSet(t *testing.T) {
+	os.Unsetenv("DOTENV_PASS_DOUBLE_DASH")
+
+	path := writeTmpEnv(t, "DOTENV_PASS_DOUBLE_DASH=loaded\n")
+
+	p := NewNamedParser("test", DotEnv|DotEnvFlags|PassDoubleDash)
+	p.SubcommandsOptional = true
+	p.SetDotEnvFile(path)
+
+	retargs, err := p.ParseArgs([]string{"--", "--no-env"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := os.Getenv("DOTENV_PASS_DOUBLE_DASH"); got != "loaded" {
+		t.Errorf("expected --no-env after a literal -- to be treated as a literal argument, dotenv should still load: got %q", got)
+	}
+	if len(retargs) != 1 || retargs[0] != "--no-env" {
+		t.Errorf("expected the literal token to pass through as an argument, got %v", retargs)
+	}
+}
+
 func TestDotEnvBuiltinOptionAccessors(t *testing.T) {
 	p := NewNamedParser("test", DotEnvFlags)
 

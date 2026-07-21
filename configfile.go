@@ -76,13 +76,20 @@ func (p *Parser) addConfigGroup(withEnv bool) error {
 	return nil
 }
 
-// applyConfigFile pre-scans args for -c/--config and loads the file.
-// Falls back to p.configFile when --config is absent. Nothing is loaded when
-// neither source provides a path.
+// applyConfigFile pre-scans args for -c/--config (and any aliases registered on that option)
+// using the same tokenizing rules as the main parser, and loads the file.
+// Falls back to p.configFile when --config is absent.
+// Nothing is loaded when neither source provides a path.
 func (p *Parser) applyConfigFile(args []string) error {
-	path := configPreScanArgs(args, p.configFileFlagName)
-	if path == "" {
-		path = p.configFile
+	path := p.configFile
+
+	if opt := p.FindOptionByLongName(p.configFileFlagName); opt != nil {
+		var value string
+		p.bootstrapScanArgs(args, map[*Option]*string{opt: &value}, nil)
+
+		if value != "" {
+			path = value
+		}
 	}
 
 	if path == "" {
@@ -177,37 +184,4 @@ func detectConfigFileFormat(path string, iniEnabled, jsonEnabled bool) (string, 
 	}
 
 	return "", fmt.Errorf("config file %q: no config format (ConfigIni or ConfigJSON) is enabled", path)
-}
-
-// configPreScanArgs extracts the value of -c/--config from args before parse.
-func configPreScanArgs(args []string, longName string) string {
-	for i := range args {
-		arg := args[i]
-
-		// --config=VALUE or -c=VALUE
-		if before, after, ok := strings.Cut(arg, "="); ok {
-			if before == "--"+longName || before == "-c" {
-				return after
-			}
-
-			continue
-		}
-
-		// --config VALUE
-		if arg == "--"+longName && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-			return args[i+1]
-		}
-
-		// -c VALUE
-		if arg == "-c" && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-			return args[i+1]
-		}
-
-		// -c=VALUE
-		if strings.HasPrefix(arg, "-c=") {
-			return arg[3:]
-		}
-	}
-
-	return ""
 }

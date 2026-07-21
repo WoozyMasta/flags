@@ -135,31 +135,87 @@ func TestDetectConfigFileFormatErrors(t *testing.T) {
 	})
 }
 
-// ---- configPreScanArgs ------------------------------------------------------
+// ---- bootstrapScanArgs (config) ---------------------------------------------
 
-func TestConfigPreScanArgs(t *testing.T) {
+func TestBootstrapScanArgsConfigValue(t *testing.T) {
 	cases := []struct {
-		name     string
-		args     []string
-		longName string
-		want     string
+		name string
+		args []string
+		want string
 	}{
-		{"long equals", []string{"--config=app.ini"}, "config", "app.ini"},
-		{"long space", []string{"--config", "app.ini"}, "config", "app.ini"},
-		{"short equals", []string{"-c=app.ini"}, "config", "app.ini"},
-		{"short space", []string{"-c", "app.ini"}, "config", "app.ini"},
-		{"absent", []string{"--verbose"}, "config", ""},
-		{"long next is flag", []string{"--config", "--verbose"}, "config", ""},
-		{"custom long name", []string{"--cfg=x.json"}, "cfg", "x.json"},
+		{"long equals", []string{"--config=app.ini"}, "app.ini"},
+		{"long space", []string{"--config", "app.ini"}, "app.ini"},
+		{"short equals", []string{"-c=app.ini"}, "app.ini"},
+		{"short space", []string{"-c", "app.ini"}, "app.ini"},
+		{"absent", []string{"--verbose"}, ""},
+		{"long next is flag", []string{"--config", "--verbose"}, ""},
+		// A bare dash-prefixed value looks like an option to the real
+		// tokenizer too (argumentIsOption), so it is rejected the same way
+		// the main parser would reject it for any other value-carrying
+		// option; the `=` form is the documented way around that.
+		{"dash-prefixed value needs equals form", []string{"--config", "-prod.json"}, ""},
+		{"dash-prefixed value via equals form", []string{"--config=-prod.json"}, "-prod.json"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := configPreScanArgs(tc.args, tc.longName)
+			var data struct {
+				Config string `long:"config" short:"c"`
+			}
+			p := NewParser(&data, None)
+			opt := p.FindOptionByLongName("config")
+
+			var got string
+			p.bootstrapScanArgs(tc.args, map[*Option]*string{opt: &got}, nil)
 			if got != tc.want {
 				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestBootstrapScanArgsStopsAtDoubleDashWhenEnabled(t *testing.T) {
+	var data struct {
+		Config string `long:"config"`
+	}
+	p := NewParser(&data, PassDoubleDash)
+	opt := p.FindOptionByLongName("config")
+
+	var got string
+	p.bootstrapScanArgs([]string{"--", "--config=evil.json"}, map[*Option]*string{opt: &got}, nil)
+	if got != "" {
+		t.Errorf("expected scan to stop at a literal --, got %q", got)
+	}
+}
+
+func TestBootstrapScanArgsDoesNotStopAtDoubleDashWhenDisabled(t *testing.T) {
+	var data struct {
+		Config string `long:"config"`
+	}
+	p := NewParser(&data, None)
+	opt := p.FindOptionByLongName("config")
+
+	var got string
+	p.bootstrapScanArgs([]string{"--", "--config=app.ini"}, map[*Option]*string{opt: &got}, nil)
+	if got != "app.ini" {
+		t.Errorf("expected scan to keep matching past -- when PassDoubleDash is not set, got %q", got)
+	}
+}
+
+func TestBootstrapScanArgsRecognizesLongAliases(t *testing.T) {
+	var data struct {
+		Config string `long:"config"`
+	}
+	p := NewParser(&data, None)
+	opt := p.FindOptionByLongName("config")
+	if err := opt.SetLongAliases("cfg"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var got string
+	p.bootstrapScanArgs([]string{"--cfg=app.ini"}, map[*Option]*string{opt: &got}, nil)
+	if got != "app.ini" {
+		t.Errorf("expected long alias to be recognized, got %q", got)
 	}
 }
 
@@ -217,6 +273,60 @@ func TestConfigFlagExplicitPathOverridesDefault(t *testing.T) {
 
 	if !opts.Verbose {
 		t.Error("expected verbose=true from explicit --config path")
+	}
+}
+
+func TestConfigFlagIgnoredAfterDoubleDashWhenPassDoubleDashSet(t *testing.T) {
+	dir := t.TempDir()
+	iniPath := filepath.Join(dir, "evil.ini")
+	if err := os.WriteFile(iniPath, []byte("[Application Options]\nverbose = true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var opts struct {
+		Verbose bool `long:"verbose"`
+	}
+
+	p := NewParser(&opts, ConfigIni|ConfigFlags|PassDoubleDash)
+	p.SubcommandsOptional = true
+
+	retargs, err := p.ParseArgs([]string{"--", "--config=" + iniPath})
+	if err != nil {
+		t.Fatalf("ParseArgs: %v", err)
+	}
+
+	if opts.Verbose {
+		t.Error("expected --config after a literal -- to be treated as a literal argument, not loaded")
+	}
+	if len(retargs) != 1 || retargs[0] != "--config="+iniPath {
+		t.Errorf("expected the literal token to pass through as an argument, got %v", retargs)
+	}
+}
+
+func TestConfigFlagWindowsStyleSlash(t *testing.T) {
+	if defaultLongOptDelimiter != "/" {
+		t.Skip("Windows-style option prefix is not active in this build")
+	}
+
+	dir := t.TempDir()
+	iniPath := filepath.Join(dir, "app.ini")
+	if err := os.WriteFile(iniPath, []byte("[Application Options]\nverbose = true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var opts struct {
+		Verbose bool `long:"verbose"`
+	}
+
+	p := NewParser(&opts, ConfigIni|ConfigFlags)
+	p.SubcommandsOptional = true
+
+	if _, err := p.ParseArgs([]string{"/config:" + iniPath}); err != nil {
+		t.Fatalf("ParseArgs: %v", err)
+	}
+
+	if !opts.Verbose {
+		t.Error("expected verbose=true from Windows-style /config:path")
 	}
 }
 

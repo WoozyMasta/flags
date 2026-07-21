@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning][].
   (such as `Immediate`, i18n keys, or `Deprecated`)
   or corrupt the parser tree when they rescan existing groups and commands;
   a failed call now leaves the parser exactly as it was before.
+* `--config`/`--env-file`/`--no-env`/`--env-override`
+  are now recognized using the same rules as the rest of the parser:
+  they stop at a literal `--`, honor any aliases,
+  and support the `/name:value` Windows style.
 
 ## [0.10.0] - 2026-06-08
 
