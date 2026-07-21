@@ -762,6 +762,31 @@ func TestDefaultsIfEmptyPrefilledAndCLI(t *testing.T) {
 	}
 }
 
+// TestRepeatedParsePreservesExplicitValue codifies the reusable-parser contract documented on ParseArgs:
+// a value set by an explicit CLI flag keeps its "explicitly set" bookkeeping across a later ParseArgs call,
+// so that later call (even with no matching flag, i.e. no override) does not reset it back to the tag default.
+// This is not a bug: it is what makes cumulative reparsing and config-then-CLI overlay patterns work.
+// See ParseArgs' doc comment and TestDefaultsIfEmptyPrefilledAndCLI.
+func TestRepeatedParsePreservesExplicitValue(t *testing.T) {
+	var opts struct {
+		Value string `long:"value" default:"default"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if _, err := p.ParseArgs([]string{"--value=cli"}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := p.ParseArgs(nil); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if opts.Value != "cli" {
+		t.Fatalf("expected explicit CLI value to survive a later ParseArgs(nil) call, got %q", opts.Value)
+	}
+}
+
 func TestDefaultsIfEmptyCollections(t *testing.T) {
 	var opts struct {
 		Map   map[string]int `long:"map" default:"a:1"`

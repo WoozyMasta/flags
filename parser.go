@@ -856,17 +856,27 @@ func (p *Parser) SetDefaultCommand(name string) {
 	p.SetDefaultSubcommand(name)
 }
 
-// ParseArgs parses the command line arguments according to the option groups that
-// were added to the parser. On successful parsing of the arguments, the
-// remaining, non-option, arguments (if any) are returned. The returned error
-// indicates a parsing error and can be used with PrintError to display
-// contextual information on where the error occurred exactly.
+// ParseArgs parses the command line arguments according to the option groups that were added to the parser.
+// On successful parsing of the arguments, the remaining, non-option, arguments (if any) are returned.
+// The returned error indicates a parsing error and can be used with PrintError
+// to display contextual information on where the error occurred exactly.
 //
-// When the common help group has been added (AddHelp) and either -h or --help
-// was specified in the command line arguments, a help message will be
-// automatically printed if the PrintErrors option is enabled.
+// When the common help group has been added (AddHelp)
+// and either -h or --help was specified in the command line arguments,
+// a help message will be automatically printed if the PrintErrors option is enabled.
 // Furthermore, the special error type ErrHelp is returned.
 // It is up to the caller to exit the program if so desired.
+//
+// The parser may be reused: calling ParseArgs more than once on the same Parser does not reset it.
+// Each call layers its arguments on top of the currently bound values,
+// so a value set by an earlier explicit CLI flag, or pre-filled into the bound struct before the first call,
+// is not overwritten by defaults/env/config on a later call unless that later call sets the option explicitly again.
+//
+// This is what makes patterns like config-then-CLI
+// (populate the struct from a config file, then call ParseArgs to let CLI flags override it)
+// and ConfiguredValues (see its doc comment) work.
+// Directly mutating a bound struct field outside the parser
+// does not reset the parser's own bookkeeping for that option.
 func (p *Parser) ParseArgs(args []string) ([]string, error) {
 	if p.internalError != nil {
 		return nil, p.printError(p.internalError)
