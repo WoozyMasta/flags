@@ -2498,6 +2498,164 @@ func TestSetTagListDelimiterDoesNotPreserveTagDeclaredCommandMetadata(t *testing
 	}
 }
 
+func TestRebuildTreeFailureLeavesParserIntact(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-is-a-medium-length-name"`
+	}
+
+	p := NewParser(&opts, None)
+
+	groupsBefore := p.Groups()
+	commandsBefore := p.Commands()
+	activeBefore := p.Active
+
+	// Force a rescan failure directly, bypassing SetMaxLongNameLength's own rollback wrapper (a separate concern),
+	// to isolate rebuildTree's own atomicity guarantee: a failed rescan must never mutate p.
+	p.MaxLongNameLength = 8
+	if err := p.rebuildTree(); err == nil {
+		t.Fatal("expected rebuildTree to fail with an overly strict MaxLongNameLength")
+	}
+
+	if len(p.Groups()) != len(groupsBefore) {
+		t.Fatalf("expected group count to remain %d after failed rebuild, got %d", len(groupsBefore), len(p.Groups()))
+	}
+	if len(p.Commands()) != len(commandsBefore) {
+		t.Fatalf("expected command count to remain %d after failed rebuild, got %d", len(commandsBefore), len(p.Commands()))
+	}
+	if p.Active != activeBefore {
+		t.Fatal("expected Active to remain unchanged after failed rebuild")
+	}
+	if len(p.Groups()) == 0 || p.Groups()[0] != groupsBefore[0] {
+		t.Fatal("expected the original group object to survive a failed rebuild untouched")
+	}
+
+	p.MaxLongNameLength = DefaultMaxLongNameLength
+
+	if _, err := p.ParseArgs([]string{"--this-is-a-medium-length-name=value"}); err != nil {
+		t.Fatalf("expected parser to still work after a failed rebuild, got: %v", err)
+	}
+	if opts.Value != "value" {
+		t.Fatalf("expected Value=value, got %q", opts.Value)
+	}
+}
+
+func TestSetMaxLongNameLengthRollsBackOnFailure(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-is-a-medium-length-name"`
+	}
+
+	p := NewParser(&opts, None)
+	prev := p.MaxLongNameLength
+
+	if err := p.SetMaxLongNameLength(4); err == nil {
+		t.Fatal("expected SetMaxLongNameLength to fail: existing option name exceeds the new limit")
+	}
+
+	if p.MaxLongNameLength != prev {
+		t.Fatalf("expected MaxLongNameLength to roll back to %d, got %d", prev, p.MaxLongNameLength)
+	}
+
+	if _, err := p.ParseArgs([]string{"--this-is-a-medium-length-name=value"}); err != nil {
+		t.Fatalf("expected parser to still work after a failed SetMaxLongNameLength, got: %v", err)
+	}
+	if opts.Value != "value" {
+		t.Fatalf("expected Value=value, got %q", opts.Value)
+	}
+}
+
+func TestSetFlagTagsRollsBackOnFailure(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-is-a-medium-length-name"`
+	}
+
+	p := NewParser(&opts, None)
+	prev := p.flagTags
+
+	// Force any future rescan to fail regardless of tag names,
+	// so this test isolates SetFlagTags' own rollback behavior from tag-scanning details.
+	p.MaxLongNameLength = 4
+
+	if err := p.SetFlagTags(NewFlagTagsWithPrefix("x-")); err == nil {
+		t.Fatal("expected SetFlagTags to fail due to overly strict MaxLongNameLength")
+	}
+
+	if p.flagTags != prev {
+		t.Fatalf("expected flagTags to roll back to %+v, got %+v", prev, p.flagTags)
+	}
+}
+
+func TestSetTagListDelimiterRollsBackOnFailure(t *testing.T) {
+	var opts struct {
+		Value string `long:"this-is-a-medium-length-name"`
+	}
+
+	p := NewParser(&opts, None)
+	prev := p.TagListDelimiter
+
+	// Force any future rescan to fail regardless of delimiter,
+	// so this test isolates SetTagListDelimiter's own rollback behavior from delimiter-specific scanning details.
+	p.MaxLongNameLength = 4
+
+	if err := p.SetTagListDelimiter(','); err == nil {
+		t.Fatal("expected SetTagListDelimiter to fail due to overly strict MaxLongNameLength")
+	}
+
+	if p.TagListDelimiter != prev {
+		t.Fatalf("expected TagListDelimiter to roll back to %q, got %q", prev, p.TagListDelimiter)
+	}
+}
+
+func TestRebuildTreeDoesNotDoubleCountValidationRules(t *testing.T) {
+	var opts struct {
+		Value int `long:"value" validate-min:"1" validate-max:"10"`
+	}
+
+	p := NewParser(&opts, None)
+	initial := p.validationRuleCount
+	if initial == 0 {
+		t.Fatal("expected at least one validation rule to be counted initially")
+	}
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if p.validationRuleCount != initial {
+		t.Fatalf("expected validationRuleCount to stay %d after one rebuild, got %d", initial, p.validationRuleCount)
+	}
+
+	if err := p.SetTagListDelimiter(';'); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if p.validationRuleCount != initial {
+		t.Fatalf("expected validationRuleCount to stay %d after second rebuild, got %d", initial, p.validationRuleCount)
+	}
+}
+
+func TestRebuildTreePreservesRootPositionalArgs(t *testing.T) {
+	var opts struct {
+		Positional struct {
+			Name string
+		} `positional-args:"yes" required:"yes"`
+	}
+
+	p := NewParser(&opts, None)
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := p.ParseArgs([]string{"value"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+	if opts.Positional.Name != "value" {
+		t.Fatalf("expected Name=value, got %q", opts.Positional.Name)
+	}
+
+	if _, err := p.ParseArgs([]string{}); err == nil {
+		t.Fatal("expected required-positional error to survive rebuild")
+	}
+}
+
 func TestSetTagListDelimiterRejectsNUL(t *testing.T) {
 	p := NewParser(nil, None)
 

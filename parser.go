@@ -593,9 +593,18 @@ func (p *Parser) SetTagPrefix(prefix string) error {
 
 // SetFlagTags configures custom struct tag names used by the parser.
 // It rescans already attached top-level groups and commands.
+// On failure the previous flag tags are restored and the tree is left untouched
+// (rebuildTree never mutates the parser unless every group/command rescans successfully).
 func (p *Parser) SetFlagTags(tags FlagTags) error {
+	prev := p.flagTags
 	p.flagTags = tags.withDefaults()
-	return p.rebuildTree()
+
+	if err := p.rebuildTree(); err != nil {
+		p.flagTags = prev
+		return err
+	}
+
+	return nil
 }
 
 // SetEnvPrefix configures a global prefix for all environment variable keys.
@@ -644,9 +653,8 @@ func (p *Parser) SetHelpEnvRenderStyle(style RenderStyle) {
 	p.helpEnvStyle = style
 }
 
-// SetCommandOptionIndent configures extra spaces before command option rows in
-// built-in help output. The default is 0, so top-level and command options use
-// the same indentation.
+// SetCommandOptionIndent configures extra spaces before command option rows in built-in help output.
+// The default is 0, so top-level and command options use the same indentation.
 func (p *Parser) SetCommandOptionIndent(indent int) error {
 	if indent < 0 {
 		return ErrNegativeCommandOptionIndent
@@ -656,9 +664,9 @@ func (p *Parser) SetCommandOptionIndent(indent int) error {
 	return nil
 }
 
-// SetHelpWidth configures built-in help output wrapping width. When unset,
-// help uses the current terminal width with a fallback of 80 columns. Width 0
-// disables wrapping.
+// SetHelpWidth configures built-in help output wrapping width.
+// When unset, help uses the current terminal width with a fallback of 80 columns.
+// Width 0 disables wrapping.
 func (p *Parser) SetHelpWidth(width int) error {
 	if width < 0 {
 		return ErrNegativeHelpWidth
@@ -672,7 +680,9 @@ func (p *Parser) SetHelpWidth(width int) error {
 // SetMaxLongNameLength sets the maximum allowed length for option `long` names.
 // Value 0 disables the limit. Negative values are rejected.
 // Existing parser groups/commands are rescanned so the new rule is applied
-// immediately.
+// immediately. On failure the previous limit is restored and the tree is
+// left untouched (rebuildTree never mutates the parser unless every
+// group/command rescans successfully).
 func (p *Parser) SetMaxLongNameLength(length int) error {
 	if length < 0 {
 		return ErrNegativeMaxLongNameLength
@@ -683,7 +693,6 @@ func (p *Parser) SetMaxLongNameLength(length int) error {
 
 	if err := p.rebuildTree(); err != nil {
 		p.MaxLongNameLength = prev
-		_ = p.rebuildTree()
 		return err
 	}
 
@@ -691,15 +700,24 @@ func (p *Parser) SetMaxLongNameLength(length int) error {
 }
 
 // SetTagListDelimiter sets delimiter for list-based struct tags such as
-// defaults/choices/aliases and rescans attached groups/commands.
+// defaults/choices/aliases and rescans attached groups/commands. On failure
+// the previous delimiter is restored and the tree is left untouched
+// (rebuildTree never mutates the parser unless every group/command rescans
+// successfully).
 func (p *Parser) SetTagListDelimiter(delimiter rune) error {
 	if delimiter == 0 {
 		return ErrNULTagListDelimiter
 	}
 
+	prev := p.TagListDelimiter
 	p.TagListDelimiter = delimiter
 
-	return p.rebuildTree()
+	if err := p.rebuildTree(); err != nil {
+		p.TagListDelimiter = prev
+		return err
+	}
+
+	return nil
 }
 
 // SetOptionSort configures option order mode for grouped option presentation.
@@ -1399,16 +1417,21 @@ func (p *Parser) rebuildTree() error {
 		})
 	}
 
-	p.groups = nil
-	p.commands = nil
-	p.options = rootOptions
-	p.args = nil
-	p.Active = nil
-	p.hasBuiltinHelpGroup = false
-	p.lookupCacheValid = false
+	// Build the new tree on an isolated scratch parser instead of mutating p directly:
+	// scratch shares all of p's scan settings (flag tags, tag list/ delimiter, max long-name length, i18n, ...)
+	// via a shallow copy, but owns a brand-new root Command,
+	// so groups/commands added to it never touch p.groups/p.commands.
+	//
+	// If any rescan step below fails, we return the error immediately and p is left completely untouched, including p.Active.
+	// Only once every group/command has been rescanned/ successfully do we adopt the scratch tree onto p.
+	scratchVal := *p
+	scratchVal.Command = newCommand(p.Name, p.ShortDescription, p.LongDescription, nil)
+	scratchVal.parent = &scratchVal
+	scratchVal.validationRuleCount = 0
+	scratch := &scratchVal
 
 	for _, g := range groups {
-		ng, err := p.AddGroup(g.shortDescription, g.longDescription, g.data)
+		ng, err := scratch.AddGroup(g.shortDescription, g.longDescription, g.data)
 		if err != nil {
 			return fmt.Errorf("failed to rescan group %q: %w", g.shortDescription, err)
 		}
@@ -1427,11 +1450,11 @@ func (p *Parser) rebuildTree() error {
 		// and that fresh scan already reflects current parser settings (tag list delimiter, flag tag names, ...).
 		// Restoring the pre-rebuild snapshot onto it would reintroduce stale tag-derived data
 		// (e.g. Aliases split with the old TagListDelimiter), so leave it alone.
-		if existing := p.Find(c.name); existing != nil && sameCommandData(existing.data, c.data) {
+		if existing := scratch.Find(c.name); existing != nil && sameCommandData(existing.data, c.data) {
 			continue
 		}
 
-		nc, err := p.AddCommand(c.name, c.shortDescription, c.longDescription, c.data)
+		nc, err := scratch.AddCommand(c.name, c.shortDescription, c.longDescription, c.data)
 		if err != nil {
 			return fmt.Errorf("failed to rescan command %q: %w", c.name, err)
 		}
@@ -1451,6 +1474,25 @@ func (p *Parser) rebuildTree() error {
 		nc.StrictSubcommands = c.strictSubcommands
 		nc.ArgsRequired = c.argsRequired
 		nc.StrictArgs = c.strictArgs
+	}
+
+	// Every rescan above succeeded: adopt the scratch tree.
+	// Top-level groups and commands still have their parent set to scratch.Command;
+	// repoint them at p.Command so Group.parser()/Command.parser() resolve to the real, live parser again
+	// (nested descendants need no fix-up, since their parent chain already resolves through these top-level objects).
+	p.groups = scratch.groups
+	p.commands = scratch.commands
+	p.options = rootOptions
+	p.args = scratch.args
+	p.Active = nil
+	p.hasBuiltinHelpGroup = false
+	p.validationRuleCount = scratch.validationRuleCount
+
+	for _, g := range p.groups {
+		g.parent = p.Command
+	}
+	for _, c := range p.commands {
+		c.parent = p.Command
 	}
 
 	p.invalidateLookupCache()
