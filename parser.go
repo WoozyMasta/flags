@@ -13,6 +13,9 @@ import (
 
 // A Parser provides command line option parsing. It can contain several
 // option groups each with their own set of options.
+//
+// A Parser and its bound option struct are not safe for concurrent use;
+// see the package doc's "Concurrency" section.
 type Parser struct {
 	// Internal parser scan/setup error returned by Parse/ParseArgs.
 	internalError error

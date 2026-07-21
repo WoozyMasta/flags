@@ -41,8 +41,8 @@ Windows-specific behavior:
 Minimal parse flow:
 
 	type Options struct {
-		Verbose bool   `short:"v" long:"verbose" description:"Show verbose output"`
-		Region  string `long:"region" default:"eu-west-1" description:"Cloud region"`
+		Verbose bool   `long:"verbose" description:"Show verbose output" short:"v"`
+		Region  string `long:"region"  description:"Cloud region" default:"eu-west-1"`
 	}
 
 	var opts Options
@@ -273,5 +273,17 @@ For custom value completion, implement [Completer].
 their element type implements [Completer].
 When no custom completer is available, completion source priority is:
 `choices` -> `completion` hint (`file`/`dir`/`none`) -> built-in bool values.
+
+# Concurrency
+
+A [Parser] and its bound option struct are not safe for concurrent use.
+Parsing, rescanning (for example after [Parser.SetTagListDelimiter] or [Parser.SetFlagTags]),
+and writing config/completion output all read and mutate parser and option state;
+calling any of these from multiple goroutines on the same Parser
+without external synchronization is a data race.
+Loading a `.env` file ([Parser.LoadDotEnv], [Parser.OverloadDotEnv],
+or the DotEnv/DotEnvOverride/DotEnvFlags options during ParseArgs)
+also mutates the process environment via os.Setenv,
+which is process-global state shared with any other code running in the same process.
 */
 package flags

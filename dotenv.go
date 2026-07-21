@@ -26,11 +26,16 @@ func (p *Parser) SetDotEnvNoExpand(disabled bool) {
 //
 // When called with no arguments the file configured by SetDotEnvFile (default ".env") is used.
 // A missing default file is silently ignored; a missing explicitly named file returns an error.
+//
+// This mutates the process environment (os.Setenv),
+// which is global state shared with any other code running in the same process
+// see the package doc's "Concurrency" section.
 func (p *Parser) LoadDotEnv(filenames ...string) error {
 	return p.loadDotEnvFiles(false, filenames...)
 }
 
 // OverloadDotEnv is like LoadDotEnv but overrides existing environment variables with values from the .env files.
+// See LoadDotEnv's doc comment for the process-environment concurrency caveat.
 func (p *Parser) OverloadDotEnv(filenames ...string) error {
 	return p.loadDotEnvFiles(true, filenames...)
 }

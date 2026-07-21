@@ -321,3 +321,17 @@ Do not use it to hide a static CLI contract.
 A reader should be able to understand the basic command-line interface
 from the struct alone.
 Runtime configuration should fill in dynamic details, not redefine everything.
+
+## Concurrency
+
+A `Parser` and its bound option struct are not safe for concurrent use.
+Parsing, setters, rebuilds, and output generation
+all read and mutate parser state;
+call them from a single goroutine at a time,
+or add your own synchronization around a shared `Parser`.
+
+`.env` loading (`LoadDotEnv`, `OverloadDotEnv`,
+or the DotEnv/DotEnvOverride/DotEnvFlags options during `ParseArgs`)
+also calls `os.Setenv`, which is process-global state
+shared with any other code running in the same process,
+not just other `Parser` instances.
