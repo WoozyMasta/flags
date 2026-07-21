@@ -24,6 +24,14 @@ and this project adheres to [Semantic Versioning][].
   (e.g. `app --token x`).
 * `PrintHelpOnInputErrors` output ran the error message directly
   into the last help line with no blank line separating them.
+* `SetTagListDelimiter`, `SetFlagTags`, `SetTagPrefix`, and
+  `SetMaxLongNameLength` rescan attached groups/commands and now preserve
+  `Immediate`, i18n keys, `CommandGroup`, `Deprecated`, `Order`,
+  `StrictSubcommands`, `ArgsRequired`, and `StrictArgs` across the rescan
+  for groups and for commands added directly through `AddCommand`
+  (metadata on commands declared via a nested `command` struct tag is
+  unaffected by this fix: it was already re-derived from tags on every
+  rescan, so only the tag-declared value is used).
 
 ## [0.10.0] - 2026-06-08
 

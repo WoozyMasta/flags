@@ -1298,27 +1298,58 @@ func (p *Parser) invalidateLookupCache() {
 }
 
 type groupSpec struct {
-	data             any
-	shortDescription string
-	longDescription  string
-	namespace        string
-	envNamespace     string
-	iniName          string
-	hidden           bool
+	data                    any
+	shortDescription        string
+	longDescription         string
+	namespace               string
+	envNamespace            string
+	iniName                 string
+	shortDescriptionI18nKey string
+	longDescriptionI18nKey  string
+	hidden                  bool
+	immediate               bool
 }
 
 type commandSpec struct {
-	data                any
-	name                string
-	shortDescription    string
-	longDescription     string
-	iniName             string
-	aliases             []string
-	subcommandsOptional bool
-	passAfterNonOption  bool
-	hidden              bool
+	data                    any
+	name                    string
+	shortDescription        string
+	longDescription         string
+	iniName                 string
+	shortDescriptionI18nKey string
+	longDescriptionI18nKey  string
+	commandGroup            string
+	commandGroupI18nKey     string
+	deprecated              string
+	defaultCommand          string
+	aliases                 []string
+	order                   int
+	subcommandsOptional     bool
+	passAfterNonOption      bool
+	hidden                  bool
+	immediate               bool
+	strictSubcommands       bool
+	argsRequired            bool
+	strictArgs              bool
 }
 
+// rebuildTree rescans attached top-level groups/commands
+// after a setting that changes tag-scanning rules
+// (tag list delimiter, flag tag names, max long-name length).
+// It snapshots the current runtime metadata for each top-level group/command
+// and reapplies it after rescanning.
+//
+// Known limitation: a command declared as a nested command-tagged struct field is transitively recreated
+// by its owning group's own rescan (which already reflects the new settings)
+// before this function's command loop runs.
+//
+// That loop deliberately skips reapplying its stale snapshot onto such a command,
+// because doing so would overwrite freshly-rescanned tag-derived fields
+// (e.g. Aliases split with the previous delimiter) with pre-rebuild data.
+//
+// So metadata set via Set*() calls on a tag-declared command
+// (as opposed to one added directly through AddCommand) does not survive a rebuild;
+// see TestSetTagListDelimiterDoesNotPreserveTagDeclaredCommandMetadata.
 func (p *Parser) rebuildTree() error {
 	groups := make([]groupSpec, 0, len(p.groups))
 	commands := make([]commandSpec, 0, len(p.commands))
@@ -1330,27 +1361,41 @@ func (p *Parser) rebuildTree() error {
 		}
 
 		groups = append(groups, groupSpec{
-			shortDescription: g.ShortDescription,
-			longDescription:  g.LongDescription,
-			namespace:        g.Namespace,
-			envNamespace:     g.EnvNamespace,
-			iniName:          g.IniName,
-			hidden:           g.Hidden,
-			data:             g.data,
+			shortDescription:        g.ShortDescription,
+			longDescription:         g.LongDescription,
+			namespace:               g.Namespace,
+			envNamespace:            g.EnvNamespace,
+			iniName:                 g.IniName,
+			shortDescriptionI18nKey: g.ShortDescriptionI18nKey,
+			longDescriptionI18nKey:  g.LongDescriptionI18nKey,
+			hidden:                  g.Hidden,
+			immediate:               g.Immediate,
+			data:                    g.data,
 		})
 	}
 
 	for _, c := range p.commands {
 		commands = append(commands, commandSpec{
-			name:                c.Name,
-			shortDescription:    c.ShortDescription,
-			longDescription:     c.LongDescription,
-			iniName:             c.IniName,
-			aliases:             append([]string(nil), c.Aliases...),
-			subcommandsOptional: c.SubcommandsOptional,
-			passAfterNonOption:  c.PassAfterNonOption,
-			hidden:              c.Hidden,
-			data:                c.data,
+			name:                    c.Name,
+			shortDescription:        c.ShortDescription,
+			longDescription:         c.LongDescription,
+			iniName:                 c.IniName,
+			shortDescriptionI18nKey: c.ShortDescriptionI18nKey,
+			longDescriptionI18nKey:  c.LongDescriptionI18nKey,
+			commandGroup:            c.CommandGroup,
+			commandGroupI18nKey:     c.CommandGroupI18nKey,
+			deprecated:              c.Deprecated,
+			defaultCommand:          c.defaultCommand,
+			aliases:                 append([]string(nil), c.Aliases...),
+			order:                   c.Order,
+			subcommandsOptional:     c.SubcommandsOptional,
+			passAfterNonOption:      c.PassAfterNonOption,
+			hidden:                  c.Hidden,
+			immediate:               c.Immediate,
+			strictSubcommands:       c.StrictSubcommands,
+			argsRequired:            c.ArgsRequired,
+			strictArgs:              c.StrictArgs,
+			data:                    c.data,
 		})
 	}
 
@@ -1371,9 +1416,17 @@ func (p *Parser) rebuildTree() error {
 		ng.EnvNamespace = g.envNamespace
 		ng.IniName = g.iniName
 		ng.Hidden = g.hidden
+		ng.Immediate = g.immediate
+		ng.ShortDescriptionI18nKey = g.shortDescriptionI18nKey
+		ng.LongDescriptionI18nKey = g.longDescriptionI18nKey
 	}
 
 	for _, c := range commands {
+		// A command declared as a nested struct field inside another group's data (the common case)
+		// is already recreated by that group's AddGroup scan above, via the same struct-tag reflection,
+		// and that fresh scan already reflects current parser settings (tag list delimiter, flag tag names, ...).
+		// Restoring the pre-rebuild snapshot onto it would reintroduce stale tag-derived data
+		// (e.g. Aliases split with the old TagListDelimiter), so leave it alone.
 		if existing := p.Find(c.name); existing != nil && sameCommandData(existing.data, c.data) {
 			continue
 		}
@@ -1387,6 +1440,17 @@ func (p *Parser) rebuildTree() error {
 		nc.SubcommandsOptional = c.subcommandsOptional
 		nc.PassAfterNonOption = c.passAfterNonOption
 		nc.Hidden = c.hidden
+		nc.Immediate = c.immediate
+		nc.ShortDescriptionI18nKey = c.shortDescriptionI18nKey
+		nc.LongDescriptionI18nKey = c.longDescriptionI18nKey
+		nc.CommandGroup = c.commandGroup
+		nc.CommandGroupI18nKey = c.commandGroupI18nKey
+		nc.Deprecated = c.deprecated
+		nc.defaultCommand = c.defaultCommand
+		nc.Order = c.order
+		nc.StrictSubcommands = c.strictSubcommands
+		nc.ArgsRequired = c.argsRequired
+		nc.StrictArgs = c.strictArgs
 	}
 
 	p.invalidateLookupCache()

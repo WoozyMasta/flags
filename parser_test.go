@@ -2356,6 +2356,148 @@ func TestSetTagListDelimiter(t *testing.T) {
 	}
 }
 
+func TestSetTagListDelimiterPreservesGroupMetadata(t *testing.T) {
+	p := NewParser(nil, None)
+
+	grp, err := p.AddGroup("Extra Options", "", &struct{}{})
+	if err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	grp.SetImmediate(true)
+	grp.SetShortDescriptionI18nKey("help.group.extra")
+	grp.SetLongDescriptionI18nKey("help.group.extra.long")
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected set delimiter error: %v", err)
+	}
+
+	found := false
+	for _, g := range p.Groups() {
+		if g.ShortDescription == "Extra Options" {
+			found = true
+			if !g.Immediate {
+				t.Error("expected group Immediate to survive rebuild")
+			}
+			if g.ShortDescriptionI18nKey != "help.group.extra" {
+				t.Errorf("expected group ShortDescriptionI18nKey to survive, got %q", g.ShortDescriptionI18nKey)
+			}
+			if g.LongDescriptionI18nKey != "help.group.extra.long" {
+				t.Errorf("expected group LongDescriptionI18nKey to survive, got %q", g.LongDescriptionI18nKey)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected 'Extra Options' group to survive rebuild")
+	}
+}
+
+// Commands added directly via AddCommand (not declared as a nested command-tagged struct field)
+// are not re-derived by any ancestor group's struct-tag rescan,
+// so rebuildTree's own restore loop is the only source of truth
+// for them and can safely reapply the captured metadata.
+func TestSetTagListDelimiterPreservesStandaloneCommandMetadata(t *testing.T) {
+	type runData struct {
+		Token string `long:"token"`
+	}
+
+	p := NewNamedParser("app", SilenceDeprecationWarnings)
+
+	cmd, err := p.AddCommand("run", "Run", "", &runData{})
+	if err != nil {
+		t.Fatalf("unexpected add command error: %v", err)
+	}
+	cmd.SetImmediate(true)
+	cmd.SetShortDescriptionI18nKey("help.command.run")
+	cmd.SetLongDescriptionI18nKey("help.command.run.long")
+	cmd.SetCommandGroup("Custom Group")
+	cmd.SetDeprecated("use other instead")
+	cmd.SetOrder(5)
+	cmd.SetArgsRequired(true)
+	cmd.StrictSubcommands = true
+	cmd.StrictArgs = true
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected set delimiter error: %v", err)
+	}
+
+	cmd2 := p.Find("run")
+	if cmd2 == nil {
+		t.Fatal("command 'run' not found after rebuild")
+	}
+	if !cmd2.Immediate {
+		t.Error("expected command Immediate to survive rebuild")
+	}
+	if cmd2.ShortDescriptionI18nKey != "help.command.run" {
+		t.Errorf("expected ShortDescriptionI18nKey to survive, got %q", cmd2.ShortDescriptionI18nKey)
+	}
+	if cmd2.LongDescriptionI18nKey != "help.command.run.long" {
+		t.Errorf("expected LongDescriptionI18nKey to survive, got %q", cmd2.LongDescriptionI18nKey)
+	}
+	if cmd2.CommandGroup != "Custom Group" {
+		t.Errorf("expected CommandGroup to survive, got %q", cmd2.CommandGroup)
+	}
+	if cmd2.Deprecated != "use other instead" {
+		t.Errorf("expected Deprecated to survive, got %q", cmd2.Deprecated)
+	}
+	if cmd2.Order != 5 {
+		t.Errorf("expected Order to survive, got %d", cmd2.Order)
+	}
+	if !cmd2.ArgsRequired {
+		t.Error("expected ArgsRequired to survive rebuild")
+	}
+	if !cmd2.StrictSubcommands {
+		t.Error("expected StrictSubcommands to survive rebuild")
+	}
+	if !cmd2.StrictArgs {
+		t.Error("expected StrictArgs to survive rebuild")
+	}
+}
+
+// Documents a known, deliberate limitation:
+// a command declared as a nested command-tagged struct field
+// is transitively re-scanned by its owning group's AddGroup rescan
+// (using current parser settings) before rebuildTree's command-restore loop runs,
+// so that loop intentionally skips it rather than overwriting the fresh rescan
+// with a stale pre-rebuild snapshot
+// (see the "PreservesStandaloneCommandMetadata" test above for why that matters).
+//
+// This means metadata set via Set*() calls on a tag-declared command
+// does not survive a rebuild triggered by SetTagListDelimiter,
+// SetFlagTags, SetTagPrefix, or SetMaxLongNameLength.
+//
+// If this ever starts passing, rebuildTree's doc comment
+// and the CHANGELOG note should be updated to reflect the fix.
+func TestSetTagListDelimiterDoesNotPreserveTagDeclaredCommandMetadata(t *testing.T) {
+	var opts struct {
+		Run struct{} `command:"run"`
+	}
+
+	p := NewParser(&opts, SilenceDeprecationWarnings)
+
+	cmd := p.Find("run")
+	if cmd == nil {
+		t.Fatal("command 'run' not found")
+	}
+	cmd.SetDeprecated("use other instead")
+	cmd.SetOrder(5)
+
+	if err := p.SetTagListDelimiter(','); err != nil {
+		t.Fatalf("unexpected set delimiter error: %v", err)
+	}
+
+	cmd2 := p.Find("run")
+	if cmd2 == nil {
+		t.Fatal("command 'run' not found after rebuild")
+	}
+	if cmd2.Deprecated != "" || cmd2.Order != 0 {
+		t.Fatalf(
+			"known limitation no longer reproduces (Deprecated=%q Order=%d); "+
+				"update rebuildTree's doc comment and CHANGELOG if this is now fixed",
+			cmd2.Deprecated, cmd2.Order,
+		)
+	}
+}
+
 func TestSetTagListDelimiterRejectsNUL(t *testing.T) {
 	p := NewParser(nil, None)
 
