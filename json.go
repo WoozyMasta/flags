@@ -64,6 +64,10 @@ func JSONKeyPascal(s string) string {
 type JSONParser struct {
 	parser *Parser
 
+	// tx tracks per-option pre-apply state during ParseMap so the whole
+	// apply pass can be rolled back if a later key fails to convert.
+	tx *configApplyTransaction
+
 	// KeyName transforms a long flag name to a JSON key when no standard Go
 	// json struct tag is present on the field. Defaults to JSONKeyLong.
 	KeyName JSONKeyFunc
@@ -120,12 +124,25 @@ func (j *JSONParser) Parse(reader io.Reader) error {
 //
 // It also acts as a bridge for other configuration formats: decode YAML, TOML,
 // or any map-based format with an external library and pass the result here.
+//
+// Application is transactional: if any key fails to convert, every option
+// touched earlier in this call is rolled back to its pre-apply state before
+// the error is returned, so a partially-invalid config file never leaves the
+// bound struct partially modified.
 func (j *JSONParser) ParseMap(data map[string]any) error {
 	j.parser.eachOption(func(_ *Command, _ *Group, option *Option) {
 		option.clearReferenceBeforeSet = true
 	})
 
-	return j.applyCommand(j.parser.Command, data)
+	j.tx = newConfigApplyTransaction()
+	defer func() { j.tx = nil }()
+
+	if err := j.applyCommand(j.parser.Command, data); err != nil {
+		j.tx.rollback()
+		return err
+	}
+
+	return nil
 }
 
 // applyCommand applies JSON data to a command's groups and subcommands.
@@ -332,6 +349,8 @@ func (j *JSONParser) applyScalar(opt *Option, val any) error {
 
 // applySetValue calls Set or setDefault depending on ParseAsDefaults.
 func (j *JSONParser) applySetValue(opt *Option, val *string) error {
+	j.tx.touch(opt)
+
 	if !opt.canArgument() && (val == nil || *val == "") {
 		val = nil
 	}

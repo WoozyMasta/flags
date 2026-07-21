@@ -736,7 +736,23 @@ func (i *IniParser) matchingGroups(name string) []*Group {
 	return nil
 }
 
+// parse applies an ini file's sections to the parser's flags.
+// Application is transactional:
+// if any value fails to convert, every option touched earlier in this call
+// is rolled back to its pre-apply state before the error is returned,
+// so a partially-invalid ini file never leaves the bound struct partially modified.
 func (i *IniParser) parse(ini *ini) error {
+	tx := newConfigApplyTransaction()
+
+	if err := i.applyIni(ini, tx); err != nil {
+		tx.rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (i *IniParser) applyIni(ini *ini, tx *configApplyTransaction) error {
 	p := i.parser
 
 	p.eachOption(func(_ *Command, _ *Group, option *Option) {
@@ -829,6 +845,8 @@ func (i *IniParser) parse(ini *ini) error {
 			}
 
 			var err error
+
+			tx.touch(opt)
 
 			if i.ParseAsDefaults {
 				err = opt.setDefault(pval)

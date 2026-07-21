@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning][].
 * `WriteCompletion`/`WriteNamedCompletion` now reject command names
   containing shell metacharacters instead of embedding them unescaped
   in the generated Bash/Zsh/PowerShell script.
+* Loading a `.env` file or an INI/JSON config file that fails partway
+  through no longer leaves earlier variables/fields already applied:
+  both are now all-or-nothing.
 
 ## [0.10.0] - 2026-06-08
 

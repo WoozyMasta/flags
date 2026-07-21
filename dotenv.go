@@ -36,6 +36,9 @@ func (p *Parser) OverloadDotEnv(filenames ...string) error {
 }
 
 // loadDotEnvFiles is the shared implementation for LoadDotEnv and OverloadDotEnv.
+// All files are read and parsed first; process environment variables
+// are only set once every file has parsed successfully,
+// so a later file's error never leaves an earlier file's variables applied.
 func (p *Parser) loadDotEnvFiles(override bool, filenames ...string) error {
 	explicit := len(filenames) > 0
 
@@ -48,41 +51,24 @@ func (p *Parser) loadDotEnvFiles(override bool, filenames ...string) error {
 		filenames = []string{name}
 	}
 
+	merged := make(map[string]string)
+
 	for _, name := range filenames {
-		if err := p.loadOneDotEnvFile(name, override, !explicit); err != nil {
+		vars, err := p.readOneDotEnvFile(name, !explicit)
+		if err != nil {
 			return err
 		}
-	}
 
-	return nil
-}
-
-// loadOneDotEnvFile reads a single .env file and applies its values.
-// When silentMissing is true a missing file is not an error.
-func (p *Parser) loadOneDotEnvFile(filename string, override, silentMissing bool) error {
-	src, err := os.ReadFile(filename)
-	if err != nil {
-		if silentMissing && errors.Is(err, os.ErrNotExist) {
-			return nil
+		for k, v := range vars {
+			if override {
+				merged[k] = v // Later files win when overriding.
+			} else if _, exists := merged[k]; !exists {
+				merged[k] = v // Earlier files win otherwise.
+			}
 		}
-
-		return p.i18nTextfErr(
-			"err.dotenv.load",
-			"failed to load .env file `{file}`: {error}",
-			map[string]string{"file": filename, "error": err.Error()},
-		)
 	}
 
-	vars, err := parseDotEnvBytes(src, p.dotEnvNoExpand)
-	if err != nil {
-		return p.i18nTextfErr(
-			"err.dotenv.parse",
-			"failed to parse .env file `{file}`: {error}",
-			map[string]string{"file": filename, "error": err.Error()},
-		)
-	}
-
-	for k, v := range vars {
+	for k, v := range merged {
 		if override {
 			if err := os.Setenv(k, v); err != nil {
 				return err
@@ -95,6 +81,34 @@ func (p *Parser) loadOneDotEnvFile(filename string, override, silentMissing bool
 	}
 
 	return nil
+}
+
+// readOneDotEnvFile reads and parses a single .env file without applying any values to the process environment.
+// When silentMissing is true a missing file returns (nil, nil) instead of an error.
+func (p *Parser) readOneDotEnvFile(filename string, silentMissing bool) (map[string]string, error) {
+	src, err := os.ReadFile(filename)
+	if err != nil {
+		if silentMissing && errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+
+		return nil, p.i18nTextfErr(
+			"err.dotenv.load",
+			"failed to load .env file `{file}`: {error}",
+			map[string]string{"file": filename, "error": err.Error()},
+		)
+	}
+
+	vars, err := parseDotEnvBytes(src, p.dotEnvNoExpand)
+	if err != nil {
+		return nil, p.i18nTextfErr(
+			"err.dotenv.parse",
+			"failed to parse .env file `{file}`: {error}",
+			map[string]string{"file": filename, "error": err.Error()},
+		)
+	}
+
+	return vars, nil
 }
 
 // i18nTextfErr is a convenience helper that creates a formatted error using the i18n system.

@@ -891,6 +891,39 @@ func TestIniParse(t *testing.T) {
 	}
 }
 
+// TestIniParseRollsBackOnLaterFieldError ensures an ini file that fails partway through does not leave earlier,
+// successfully-converted fields applied to the bound struct: the whole ParseFile call is transactional.
+func TestIniParseRollsBackOnLaterFieldError(t *testing.T) {
+	file, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Fatalf("Cannot create temporary file: %s", err)
+	}
+	defer os.Remove(file.Name())
+
+	if _, err := file.WriteString("first = applied\nsecond = not-a-number\n"); err != nil {
+		t.Fatalf("Cannot write to temporary file: %s", err)
+	}
+	file.Close()
+
+	var opts struct {
+		First  string `long:"first"`
+		Second int    `long:"second"`
+	}
+
+	p := NewParser(&opts, None)
+	err = NewIniParser(p).ParseFile(file.Name())
+	if err == nil {
+		t.Fatal("expected error converting the second field")
+	}
+
+	if opts.First != "" {
+		t.Fatalf("expected First to roll back to its zero value, got %q", opts.First)
+	}
+	if opts.Second != 0 {
+		t.Fatalf("expected Second to remain at its zero value, got %d", opts.Second)
+	}
+}
+
 func TestIniCliOverrides(t *testing.T) {
 	file, err := ioutil.TempFile("", "")
 

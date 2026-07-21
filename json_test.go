@@ -313,6 +313,59 @@ func TestJsonParseMap_ParseMapMethod(t *testing.T) {
 	}
 }
 
+// TestJsonParseMapRollsBackOnLaterFieldError ensures
+// a config file that fails partway through does not leave earlier,
+// successfully-converted fields applied to the bound struct:
+// the whole ParseMap call is transactional.
+func TestJsonParseMapRollsBackOnLaterFieldError(t *testing.T) {
+	var opts struct {
+		First  string `long:"first"`
+		Second int    `long:"second"`
+	}
+
+	p := NewParser(&opts, None)
+	jp := NewJSONParser(p)
+
+	err := jp.ParseMap(map[string]any{
+		"first":  "applied",
+		"second": "not-a-number",
+	})
+	if err == nil {
+		t.Fatal("expected error converting the second field")
+	}
+
+	if opts.First != "" {
+		t.Errorf("expected First to roll back to its zero value, got %q", opts.First)
+	}
+	if opts.Second != 0 {
+		t.Errorf("expected Second to remain at its zero value, got %d", opts.Second)
+	}
+}
+
+// TestJsonParseMapRollsBackSliceOnLaterFieldError covers
+// a slice-typed option that received some elements before a later, unrelated field fails.
+func TestJsonParseMapRollsBackSliceOnLaterFieldError(t *testing.T) {
+	var opts struct {
+		Tags   []string `long:"tags"`
+		Second int      `long:"second"`
+	}
+
+	p := NewParser(&opts, None)
+	jp := NewJSONParser(p)
+
+	err := jp.ParseMap(map[string]any{
+		"tags":   []any{"a", "b", "c"},
+		"second": "not-a-number",
+	})
+	if err == nil {
+		t.Fatal("expected error converting the second field")
+	}
+
+	if len(opts.Tags) != 0 {
+		t.Errorf("expected Tags to roll back to empty, got %v", opts.Tags)
+	}
+}
+
 func TestJsonParseCustomKeyName(t *testing.T) {
 	var opts struct {
 		MyFlag string `long:"my-flag"`

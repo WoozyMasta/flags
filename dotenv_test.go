@@ -419,6 +419,62 @@ func TestDotEnvLoadDoesNotOverride(t *testing.T) {
 	}
 }
 
+// TestDotEnvLoadDotEnvMultipleFilesTransactional ensures a later file's load error
+// does not leave an earlier file's variables applied to the process environment:
+// all files are read and parsed before any os.Setenv call.
+func TestDotEnvLoadDotEnvMultipleFilesTransactional(t *testing.T) {
+	os.Unsetenv("DOTENV_MULTI_FIRST")
+	defer os.Unsetenv("DOTENV_MULTI_FIRST")
+
+	dir := t.TempDir()
+
+	firstPath := filepath.Join(dir, "first.env")
+	if err := os.WriteFile(firstPath, []byte("DOTENV_MULTI_FIRST=loaded\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	missingPath := filepath.Join(dir, "missing.env")
+
+	p := NewNamedParser("test", None)
+
+	if err := p.LoadDotEnv(firstPath, missingPath); err == nil {
+		t.Fatal("expected error for missing second file")
+	}
+
+	if got := os.Getenv("DOTENV_MULTI_FIRST"); got != "" {
+		t.Errorf("expected first file's variables not to be applied when a later file fails to load, got %q", got)
+	}
+}
+
+// TestDotEnvLoadDotEnvMultipleFilesTransactionalOnParseError
+// is the same guarantee for a later file that exists but fails to parse.
+func TestDotEnvLoadDotEnvMultipleFilesTransactionalOnParseError(t *testing.T) {
+	os.Unsetenv("DOTENV_MULTI_PARSE_FIRST")
+	defer os.Unsetenv("DOTENV_MULTI_PARSE_FIRST")
+
+	dir := t.TempDir()
+
+	firstPath := filepath.Join(dir, "first.env")
+	if err := os.WriteFile(firstPath, []byte("DOTENV_MULTI_PARSE_FIRST=loaded\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	invalidPath := filepath.Join(dir, "invalid.env")
+	if err := os.WriteFile(invalidPath, []byte("not a valid line\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewNamedParser("test", None)
+
+	if err := p.LoadDotEnv(firstPath, invalidPath); err == nil {
+		t.Fatal("expected error for invalid second file")
+	}
+
+	if got := os.Getenv("DOTENV_MULTI_PARSE_FIRST"); got != "" {
+		t.Errorf("expected first file's variables not to be applied when a later file fails to parse, got %q", got)
+	}
+}
+
 func TestDotEnvOverloadDotEnvMethod(t *testing.T) {
 	os.Setenv("DOTENV_OVER", "original")
 	defer os.Unsetenv("DOTENV_OVER")
