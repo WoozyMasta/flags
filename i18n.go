@@ -171,16 +171,48 @@ func (s *i18nState) chainCopy() []string {
 	return append([]string(nil), chain...)
 }
 
+// formatI18nText replaces "{key}" placeholders in template
+// with the corresponding value from data, in a single left-to-right pass.
+// Each placeholder position in the original template is resolved independently from its own key,
+// so the result does not depend on map iteration order,
+// and a substituted value is never re-scanned for further placeholders
+// (so a value that happens to contain "{other_key}"-shaped text is not accidentally substituted again).
+// Unknown keys and malformed/unterminated "{" are left as literal text.
 func formatI18nText(template string, data map[string]string) string {
 	if len(data) == 0 {
 		return template
 	}
 
-	for k, v := range data {
-		template = strings.ReplaceAll(template, "{"+k+"}", v)
+	var b strings.Builder
+	i := 0
+
+	for i < len(template) {
+		rel := strings.IndexByte(template[i:], '{')
+		if rel == -1 {
+			b.WriteString(template[i:])
+			break
+		}
+		start := i + rel
+
+		relEnd := strings.IndexByte(template[start+1:], '}')
+		if relEnd == -1 {
+			b.WriteString(template[i:])
+			break
+		}
+		end := start + 1 + relEnd
+
+		key := template[start+1 : end]
+		if v, ok := data[key]; ok {
+			b.WriteString(template[i:start])
+			b.WriteString(v)
+		} else {
+			b.WriteString(template[i : end+1])
+		}
+
+		i = end + 1
 	}
 
-	return template
+	return b.String()
 }
 
 func lookupI18nCatalog(catalog I18nCatalog, locale, key string) (string, bool) {

@@ -308,7 +308,9 @@ func demoOutput(opts *AdvancedOptions, p *flags.Parser) (bool, error) {
 	}
 
 	if opts.Demo.INI {
-		flags.NewIniParser(p).WriteExample(os.Stdout)
+		if err := flags.NewIniParser(p).WriteExample(os.Stdout); err != nil {
+			return true, err
+		}
 		return true, nil
 	}
 

@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning][].
   (e.g. a name collision), it no longer stays silently and permanently
   absent: the parser now retries on the next attempt and surfaces
   the underlying error instead of discarding it.
+* Localized error/help text with overlapping placeholders
+  (a value containing another placeholder's `{key}` text)
+  no longer produces a result that depends on map iteration order.
 
 ### Changed
 

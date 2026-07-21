@@ -23,6 +23,48 @@ func (m mapCatalog) Lookup(locale, key string) (string, bool) {
 	return "", false
 }
 
+func TestFormatI18nTextIsOrderIndependent(t *testing.T) {
+	// A value that happens to look like another placeholder must not be re-substituted,
+	// and the result must not depend on map iteration order
+	// (run enough times that a map-order-dependent bug would show up as flakiness).
+	data := map[string]string{
+		"a": "{b}",
+		"b": "resolved-b",
+	}
+
+	want := "{b} resolved-b"
+
+	for i := 0; i < 50; i++ {
+		got := formatI18nText("{a} {b}", data)
+		if got != want {
+			t.Fatalf("iteration %d: got %q, want %q", i, got, want)
+		}
+	}
+}
+
+func TestFormatI18nTextLeavesUnknownAndMalformedPlaceholders(t *testing.T) {
+	cases := []struct {
+		name     string
+		template string
+		data     map[string]string
+		want     string
+	}{
+		{"unknown key", "hello {name}", map[string]string{"other": "x"}, "hello {name}"},
+		{"unterminated brace", "hello {name", map[string]string{"name": "x"}, "hello {name"},
+		{"empty data", "hello {name}", nil, "hello {name}"},
+		{"multiple placeholders", "{a}-{b}-{a}", map[string]string{"a": "1", "b": "2"}, "1-2-1"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := formatI18nText(tc.template, tc.data)
+			if got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestI18nResolverOrderUserBeatsModule(t *testing.T) {
 	parser := NewNamedParser("i18n", None)
 	parser.SetI18n(I18nConfig{
