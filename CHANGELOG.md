@@ -14,7 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## [0.11.0] - 2026-07-24
+## [0.11.1] - 2026-07-23
+
+### Fixed
+
+* `markdown-table` documentation template now wraps `Default`
+  and `Environment` values in inline code spans, matching the other templates.
+
+## [0.11.0] - 2026-07-22
 
 ### Fixed
 
