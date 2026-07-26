@@ -37,7 +37,7 @@ Use this as the quick map before reading the detailed sections:
 * command fields use command, alias, command group, description, visibility,
   immediate, ordering, INI group, pass-through, and deprecation tags;
 * group fields use group, namespace, description, visibility,
-  immediate, and INI group tags;
+  immediate, INI group, relation, and required tags;
 * positional argument fields use positional name, description, required,
   default, I/O, completion, and validation tags;
 * positional argument container structs use `positional-args`.
@@ -176,6 +176,36 @@ With `required` on a member of an `and` group,
 the empty group is not allowed, so all members become required as a group.
 Without `required`, either no member or every member is allowed.
 
+`or` declares at-least-one option relation groups.
+At least one option in the group must be set;
+any number of members, including all of them, may be set together.
+Unlike `xor`, `or` needs no `required` modifier -- the tag itself is
+already an unconditional "at least one" requirement.
+
+`nand` declares not-all option relation groups.
+Any subset of the group may be set, including none, but not every member
+at once. A single-member `nand` group can never be violated.
+
+`requires` and `provides` declare a directional dependency between options,
+unlike the symmetric `xor`/`and`/`or`/`nand` groups.
+Both tags take an opaque relation token,
+the same way `xor`/`and` do - not a flag name reference.
+When an option tagged `requires:"token"` is set,
+at least one option tagged `provides:"token"`
+(anywhere in the same command) must also be set;
+any live provider satisfies any live requirer sharing the token,
+so the relation is many-to-many, not one-to-one.
+A `requires` token with no matching `provides` option anywhere
+in the command is an `ErrInvalidTag` configuration error,
+reported by `Parser.Validate()` and the first `ParseArgs` call regardless
+of which CLI arguments are passed. An unused `provides` token is not an error.
+
+`required` keeps its normal, independent, per-option meaning
+when combined with `or`, `nand`, `requires`, or `provides` -
+it does not reinterpret those relations the way it does for `xor`/`and`.
+A `required` member of an `or` group is unconditionally mandatory
+in addition to (not instead of) the group's own "at least one" rule.
+
 Relation groups are command-local.
 A group name on one command does not conflict with
 the same group name on another command.
@@ -295,6 +325,33 @@ Use it when grouped options should also have grouped env names.
 
 Group fields may also use `description`, `description-i18n`,
 `long-description`, `long-description-i18n`, `hidden`, and `immediate`.
+
+## Group Relations
+
+`group-xor`, `group-and`, `group-or`, `group-nand`, `group-requires`,
+and `group-provides` mirror the option-level relation tags
+(see Option Relations), but treat each whole group as one unit:
+a group counts as active if any option in it,
+or in any of its nested subgroups, is set.
+These relation tokens live in a namespace separate
+from option-level relation tokens, so reusing the same string for both
+is fine and does not create a cross-relation.
+
+`required` becomes valid on group fields,
+but only changes behavior when combined with `group-xor` or `group-and`,
+exactly like it does for the option-level tags:
+`group-xor` with `required` needs exactly one active group;
+`group-and` with `required` makes the whole set mandatory
+(no longer allowed to be empty).
+`required:"true"` on a group with neither `group-xor` nor `group-and`
+is a scan-time `ErrInvalidTag`, since it would otherwise be a silent no-op.
+`group-or` and `group-nand` do not use `required` as a modifier,
+the same way their option-level counterparts don't.
+
+Do not apply the same relation token to a group and its own ancestor
+or descendant group. Since group activity is computed recursively,
+the descendant's state leaks into the ancestor's,
+so the pair can never be meaningfully exclusive or independent.
 
 ## Command Tags
 

@@ -56,11 +56,35 @@ type Group struct {
 	// All the subgroups
 	groups []*Group
 
+	// Relation groups where only one group can be active.
+	XorGroups []string
+
+	// Relation groups where all groups must be active together.
+	AndGroups []string
+
+	// Relation groups where at least one group must be active.
+	OrGroups []string
+
+	// Relation groups where not all groups may be active together.
+	NandGroups []string
+
+	// Relation tokens this group depends on when active.
+	// At least one group with a matching Provides token must also be active.
+	Requires []string
+
+	// Relation tokens this group satisfies for matching Requires tokens.
+	Provides []string
+
 	// If true, the group is not displayed in the help or man page
 	Hidden bool
 
 	// If true, options in this group bypass required checks and command execution.
 	Immediate bool
+
+	// If true, this group participates in its GroupXor/GroupAnd relation as a mandatory member
+	// (exactly one active group for group-xor, all groups mandatory for group-and).
+	// Meaningless without XorGroups/AndGroups.
+	Required bool
 
 	// Whether the group represents the built-in help group
 	isBuiltinHelp bool
@@ -134,6 +158,42 @@ func (g *Group) SetHidden(hidden bool) {
 // SetImmediate controls immediate parse behavior for this group subtree.
 func (g *Group) SetImmediate(immediate bool) {
 	g.Immediate = immediate
+}
+
+// SetRequired marks this group as a mandatory member of its GroupXor/GroupAnd relation.
+// It has no effect without XorGroups/AndGroups.
+func (g *Group) SetRequired(required bool) {
+	g.Required = required
+}
+
+// SetXorGroups replaces mutually exclusive relation groups for this group.
+func (g *Group) SetXorGroups(groups ...string) {
+	g.XorGroups = append(g.XorGroups[:0], groups...)
+}
+
+// SetAndGroups replaces all-or-none relation groups for this group.
+func (g *Group) SetAndGroups(groups ...string) {
+	g.AndGroups = append(g.AndGroups[:0], groups...)
+}
+
+// SetOrGroups replaces at-least-one relation groups for this group.
+func (g *Group) SetOrGroups(groups ...string) {
+	g.OrGroups = append(g.OrGroups[:0], groups...)
+}
+
+// SetNandGroups replaces not-all relation groups for this group.
+func (g *Group) SetNandGroups(groups ...string) {
+	g.NandGroups = append(g.NandGroups[:0], groups...)
+}
+
+// SetRequires replaces the relation tokens this group depends on when active.
+func (g *Group) SetRequires(tokens ...string) {
+	g.Requires = append(g.Requires[:0], tokens...)
+}
+
+// SetProvides replaces the relation tokens this group satisfies for matching Requires tokens.
+func (g *Group) SetProvides(tokens ...string) {
+	g.Provides = append(g.Provides[:0], tokens...)
 }
 
 // AddOption adds a new option to this group.
@@ -635,6 +695,22 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 		if err != nil {
 			return err
 		}
+		orGroups, err := collectDelimitedTagValues(mtag, FlagTagOr, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+		nandGroups, err := collectDelimitedTagValues(mtag, FlagTagNand, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+		requiresTokens, err := collectDelimitedTagValues(mtag, FlagTagRequires, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
+		providesTokens, err := collectDelimitedTagValues(mtag, FlagTagProvides, field.Name, delimiter)
+		if err != nil {
+			return err
+		}
 
 		rawCompletion := mtag.Get(FlagTagCompletion)
 		completionHint, err := parseCompletionHint(rawCompletion, field.Name)
@@ -723,6 +799,10 @@ func (g *Group) scanStruct(realval reflect.Value, sfield *reflect.StructField, h
 			Choices:            choices,
 			XorGroups:          xorGroups,
 			AndGroups:          andGroups,
+			OrGroups:           orGroups,
+			NandGroups:         nandGroups,
+			Requires:           requiresTokens,
+			Provides:           providesTokens,
 			completionHint:     completionHint,
 			Hidden:             hidden,
 			Immediate:          immediate,
@@ -995,6 +1075,58 @@ func (g *Group) scanSubGroupHandler(realval reflect.Value, sfield *reflect.Struc
 			return true, err
 		}
 		group.Immediate = immediate
+
+		delimiter := parserTagListDelimiter(g.parser())
+
+		groupXor, err := collectDelimitedTagValues(mtag, FlagTagGroupXor, sfield.Name, delimiter)
+		if err != nil {
+			return true, err
+		}
+		groupAnd, err := collectDelimitedTagValues(mtag, FlagTagGroupAnd, sfield.Name, delimiter)
+		if err != nil {
+			return true, err
+		}
+		groupOr, err := collectDelimitedTagValues(mtag, FlagTagGroupOr, sfield.Name, delimiter)
+		if err != nil {
+			return true, err
+		}
+		groupNand, err := collectDelimitedTagValues(mtag, FlagTagGroupNand, sfield.Name, delimiter)
+		if err != nil {
+			return true, err
+		}
+		groupRequires, err := collectDelimitedTagValues(mtag, FlagTagGroupRequires, sfield.Name, delimiter)
+		if err != nil {
+			return true, err
+		}
+		groupProvides, err := collectDelimitedTagValues(mtag, FlagTagGroupProvides, sfield.Name, delimiter)
+		if err != nil {
+			return true, err
+		}
+
+		required, requiredSet, err := parseStructBoolTag(mtag, FlagTagRequired, sfield.Name)
+		if err != nil {
+			return true, err
+		}
+		if requiredSet && required && len(groupXor) == 0 && len(groupAnd) == 0 {
+			return true, newErrorf(
+				ErrInvalidTag,
+				"group `%s` uses `%s:\"true\"` without `%s` or `%s`; "+
+					"`%s` on a group only modifies group-xor/group-and semantics",
+				subgroup,
+				FlagTagRequired,
+				FlagTagGroupXor,
+				FlagTagGroupAnd,
+				FlagTagRequired,
+			)
+		}
+
+		group.Required = required
+		group.XorGroups = groupXor
+		group.AndGroups = groupAnd
+		group.OrGroups = groupOr
+		group.NandGroups = groupNand
+		group.Requires = groupRequires
+		group.Provides = groupProvides
 
 		return true, nil
 	}

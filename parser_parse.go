@@ -221,6 +221,9 @@ func (p *parseState) checkOptionRelations(parser *Parser) error {
 		if err := p.checkCommandOptionRelations(parser, c); err != nil {
 			return err
 		}
+		if err := p.checkCommandGroupRelations(parser, c); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -229,6 +232,10 @@ func (p *parseState) checkOptionRelations(parser *Parser) error {
 func (p *parseState) checkCommandOptionRelations(parser *Parser, command *Command) error {
 	xorGroups := make(map[string][]*Option)
 	andGroups := make(map[string][]*Option)
+	orGroups := make(map[string][]*Option)
+	nandGroups := make(map[string][]*Option)
+	requiresGroups := make(map[string][]*Option)
+	providesGroups := make(map[string][]*Option)
 
 	command.eachGroup(func(g *Group) {
 		for _, option := range g.options {
@@ -242,14 +249,43 @@ func (p *parseState) checkCommandOptionRelations(parser *Parser, command *Comman
 					andGroups[group] = append(andGroups[group], option)
 				}
 			}
+			for _, group := range option.OrGroups {
+				if group != "" {
+					orGroups[group] = append(orGroups[group], option)
+				}
+			}
+			for _, group := range option.NandGroups {
+				if group != "" {
+					nandGroups[group] = append(nandGroups[group], option)
+				}
+			}
+			for _, token := range option.Requires {
+				if token != "" {
+					requiresGroups[token] = append(requiresGroups[token], option)
+				}
+			}
+			for _, token := range option.Provides {
+				if token != "" {
+					providesGroups[token] = append(providesGroups[token], option)
+				}
+			}
 		}
 	})
 
 	if err := p.checkXorOptionRelations(parser, xorGroups); err != nil {
 		return err
 	}
+	if err := p.checkAndOptionRelations(parser, andGroups); err != nil {
+		return err
+	}
+	if err := p.checkOrOptionRelations(parser, orGroups); err != nil {
+		return err
+	}
+	if err := p.checkNandOptionRelations(parser, nandGroups); err != nil {
+		return err
+	}
 
-	return p.checkAndOptionRelations(parser, andGroups)
+	return p.checkRequiresOptionRelations(parser, requiresGroups, providesGroups)
 }
 
 func (p *parseState) checkXorOptionRelations(parser *Parser, groups map[string][]*Option) error {
@@ -309,6 +345,98 @@ func (p *parseState) checkAndOptionRelations(parser *Parser, groups map[string][
 	return nil
 }
 
+// checkOrOptionRelations enforces that at least one option in each `or` relation group is set.
+// Any number of members may be set together, unlike xor.
+// The violation message is identical to xor's empty-required case,
+// so the same i18n key is reused.
+func (p *parseState) checkOrOptionRelations(parser *Parser, groups map[string][]*Option) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		options := groups[name]
+		set := setOptions(parser, options)
+
+		if len(set) == 0 {
+			msg := parser.i18nTextf(
+				"err.option_requirement.xor",
+				"one of flags {flags} must be specified",
+				map[string]string{"flags": optionDisjunction(parser, options)},
+			)
+			p.err = newError(ErrOptionRequirement, msg)
+			return p.err
+		}
+	}
+
+	return nil
+}
+
+// checkNandOptionRelations enforces that not all options
+// in each `nand` relation group are set together.
+// Any smaller subset, including none, is allowed.
+// A single-member group can never violate this
+// and is a permanent no-op, the same way a single-member xor group is.
+func (p *parseState) checkNandOptionRelations(parser *Parser, groups map[string][]*Option) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		options := groups[name]
+		if len(options) < 2 {
+			continue
+		}
+
+		set := setOptions(parser, options)
+		if len(set) == len(options) {
+			msg := parser.i18nTextf(
+				"err.option_conflict.nand",
+				"flags {flags} cannot all be specified together",
+				map[string]string{"flags": optionList(parser, options)},
+			)
+			p.err = newError(ErrOptionConflict, msg)
+			return p.err
+		}
+	}
+
+	return nil
+}
+
+// checkRequiresOptionRelations enforces that whenever an option tagged with a `requires` token is set,
+// at least one option tagged with the matching `provides` token is also set.
+// Satisfaction is many-to-many: any live provider satisfies any live requirer sharing the same token.
+// A token with requirers but no providers anywhere in the command is a structural mistake
+// caught earlier by Parser.Validate's dangling-requires check, not here.
+func (p *parseState) checkRequiresOptionRelations(
+	parser *Parser,
+	requiresGroups map[string][]*Option,
+	providesGroups map[string][]*Option,
+) error {
+	names := sortedKeys(requiresGroups)
+
+	for _, token := range names {
+		requirers := setOptions(parser, requiresGroups[token])
+		if len(requirers) == 0 {
+			continue
+		}
+
+		providers := setOptions(parser, providesGroups[token])
+		if len(providers) > 0 {
+			continue
+		}
+
+		msg := parser.i18nTextf(
+			"err.option_requirement.requires",
+			"flag {flag} requires one of flags {targets}",
+			map[string]string{
+				"flag":    optionList(parser, requirers),
+				"targets": optionDisjunction(parser, providesGroups[token]),
+			},
+		)
+		p.err = newError(ErrOptionRequirement, msg)
+		return p.err
+	}
+
+	return nil
+}
+
 func relationRequired(options []*Option) bool {
 	for _, option := range options {
 		if option.Required {
@@ -317,6 +445,295 @@ func relationRequired(options []*Option) bool {
 	}
 
 	return false
+}
+
+// checkCommandGroupRelations mirrors checkCommandOptionRelations but operates on whole option groups
+// (declared via the `group:"..."` tag) instead of individual options.
+// Group-relation tokens (group-xor, group-and, ...) live in a namespace entirely separate
+// from option-relation tokens (xor, and, ...):
+// the two are collected into different maps below and never compared against each other,
+// so a coincidental string match between an option's `xor:"db"`
+// and an unrelated group's `group-xor:"db"` cannot interact.
+func (p *parseState) checkCommandGroupRelations(parser *Parser, command *Command) error {
+	xorGroups := make(map[string][]*Group)
+	andGroups := make(map[string][]*Group)
+	orGroups := make(map[string][]*Group)
+	nandGroups := make(map[string][]*Group)
+	requiresGroups := make(map[string][]*Group)
+	providesGroups := make(map[string][]*Group)
+
+	command.eachGroup(func(g *Group) {
+		for _, token := range g.XorGroups {
+			if token != "" {
+				xorGroups[token] = append(xorGroups[token], g)
+			}
+		}
+		for _, token := range g.AndGroups {
+			if token != "" {
+				andGroups[token] = append(andGroups[token], g)
+			}
+		}
+		for _, token := range g.OrGroups {
+			if token != "" {
+				orGroups[token] = append(orGroups[token], g)
+			}
+		}
+		for _, token := range g.NandGroups {
+			if token != "" {
+				nandGroups[token] = append(nandGroups[token], g)
+			}
+		}
+		for _, token := range g.Requires {
+			if token != "" {
+				requiresGroups[token] = append(requiresGroups[token], g)
+			}
+		}
+		for _, token := range g.Provides {
+			if token != "" {
+				providesGroups[token] = append(providesGroups[token], g)
+			}
+		}
+	})
+
+	if err := p.checkXorGroupRelations(parser, xorGroups); err != nil {
+		return err
+	}
+	if err := p.checkAndGroupRelations(parser, andGroups); err != nil {
+		return err
+	}
+	if err := p.checkOrGroupRelations(parser, orGroups); err != nil {
+		return err
+	}
+	if err := p.checkNandGroupRelations(parser, nandGroups); err != nil {
+		return err
+	}
+
+	return p.checkRequiresGroupRelations(parser, requiresGroups, providesGroups)
+}
+
+func (p *parseState) checkXorGroupRelations(parser *Parser, groups map[string][]*Group) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		candidates := groups[name]
+		active := setGroups(parser, candidates)
+
+		switch {
+		case len(active) > 1:
+			msg := parser.i18nTextf(
+				"err.option_conflict.group_xor",
+				"option groups {groups} are mutually exclusive",
+				map[string]string{"groups": groupList(parser, active)},
+			)
+			p.err = newError(ErrOptionConflict, msg)
+			return p.err
+		case len(active) == 0 && relationRequiredGroups(candidates):
+			msg := parser.i18nTextf(
+				"err.option_requirement.group_xor",
+				"one of option groups {groups} must be specified",
+				map[string]string{"groups": groupDisjunction(parser, candidates)},
+			)
+			p.err = newError(ErrOptionRequirement, msg)
+			return p.err
+		}
+	}
+
+	return nil
+}
+
+func (p *parseState) checkAndGroupRelations(parser *Parser, groups map[string][]*Group) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		candidates := groups[name]
+		active := setGroups(parser, candidates)
+
+		if len(active) == len(candidates) {
+			continue
+		}
+
+		if len(active) == 0 && !relationRequiredGroups(candidates) {
+			continue
+		}
+
+		msg := parser.i18nTextf(
+			"err.option_requirement.group_and",
+			"option groups {groups} must be specified together",
+			map[string]string{"groups": groupList(parser, candidates)},
+		)
+		p.err = newError(ErrOptionRequirement, msg)
+		return p.err
+	}
+
+	return nil
+}
+
+// checkOrGroupRelations enforces that at least one group in each `group-or` relation is active.
+// The violation message reuses the group-xor empty-required key,
+// exactly like the option-level or/xor reuse.
+func (p *parseState) checkOrGroupRelations(parser *Parser, groups map[string][]*Group) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		candidates := groups[name]
+		active := setGroups(parser, candidates)
+
+		if len(active) == 0 {
+			msg := parser.i18nTextf(
+				"err.option_requirement.group_xor",
+				"one of option groups {groups} must be specified",
+				map[string]string{"groups": groupDisjunction(parser, candidates)},
+			)
+			p.err = newError(ErrOptionRequirement, msg)
+			return p.err
+		}
+	}
+
+	return nil
+}
+
+// checkNandGroupRelations enforces that not all groups in each `group-nand` relation are active together.
+// A single-member relation can never violate this and is a permanent no-op,
+// the same way a single-member group-xor is.
+func (p *parseState) checkNandGroupRelations(parser *Parser, groups map[string][]*Group) error {
+	names := sortedKeys(groups)
+
+	for _, name := range names {
+		candidates := groups[name]
+		if len(candidates) < 2 {
+			continue
+		}
+
+		active := setGroups(parser, candidates)
+		if len(active) == len(candidates) {
+			msg := parser.i18nTextf(
+				"err.option_conflict.group_nand",
+				"option groups {groups} cannot all be specified together",
+				map[string]string{"groups": groupList(parser, candidates)},
+			)
+			p.err = newError(ErrOptionConflict, msg)
+			return p.err
+		}
+	}
+
+	return nil
+}
+
+// checkRequiresGroupRelations mirrors checkRequiresOptionRelations for groups:
+// whenever an active group tagged with a `group-requires` token exists,
+// at least one group tagged with the matching `group-provides` token must also be active.
+// A token with requirers but no providers anywhere in the command
+// is caught earlier by Parser.Validate's dangling-requires check.
+func (p *parseState) checkRequiresGroupRelations(
+	parser *Parser,
+	requiresGroups map[string][]*Group,
+	providesGroups map[string][]*Group,
+) error {
+	names := sortedKeys(requiresGroups)
+
+	for _, token := range names {
+		requirers := setGroups(parser, requiresGroups[token])
+		if len(requirers) == 0 {
+			continue
+		}
+
+		providers := setGroups(parser, providesGroups[token])
+		if len(providers) > 0 {
+			continue
+		}
+
+		msg := parser.i18nTextf(
+			"err.option_requirement.group_requires",
+			"option group {group} requires one of option groups {groups}",
+			map[string]string{
+				"group":  groupList(parser, requirers),
+				"groups": groupDisjunction(parser, providesGroups[token]),
+			},
+		)
+		p.err = newError(ErrOptionRequirement, msg)
+		return p.err
+	}
+
+	return nil
+}
+
+func relationRequiredGroups(groups []*Group) bool {
+	for _, g := range groups {
+		if g.Required {
+			return true
+		}
+	}
+
+	return false
+}
+
+func setGroups(parser *Parser, groups []*Group) []*Group {
+	out := make([]*Group, 0, len(groups))
+
+	for _, g := range groups {
+		if groupSatisfied(parser, g) {
+			out = append(out, g)
+		}
+	}
+
+	return out
+}
+
+// groupSatisfied reports whether a group is active:
+// any option belonging to it or to any of its nested subgroups (recursive) is satisfied.
+// Applying the same group-relation token to a group and its own ancestor/descendant
+// is nonsensical (the descendant's state leaks into the ancestor's)
+// and is not guarded against here; see the Group Tags documentation.
+func groupSatisfied(parser *Parser, g *Group) bool {
+	satisfied := false
+
+	g.eachGroup(func(gg *Group) {
+		if satisfied {
+			return
+		}
+		for _, option := range gg.options {
+			if optionSatisfied(parser, option) {
+				satisfied = true
+				return
+			}
+		}
+	})
+
+	return satisfied
+}
+
+func groupList(parser *Parser, groups []*Group) string {
+	return joinedGroupList(parser, groups, "err.list.conjunction", "{items} and {last}")
+}
+
+func groupDisjunction(parser *Parser, groups []*Group) string {
+	return joinedGroupList(parser, groups, "err.list.disjunction", "{items} or {last}")
+}
+
+func joinedGroupList(parser *Parser, groups []*Group, key string, fallback string) string {
+	names := make([]string, 0, len(groups))
+
+	for _, g := range groups {
+		names = append(names, g.ShortDescription)
+	}
+
+	sort.Strings(names)
+
+	if len(names) == 0 {
+		return ""
+	}
+	if len(names) == 1 {
+		return names[0]
+	}
+
+	return parser.i18nTextf(
+		key,
+		fallback,
+		map[string]string{
+			"items": strings.Join(names[:len(names)-1], ", "),
+			"last":  names[len(names)-1],
+		},
+	)
 }
 
 func setOptions(parser *Parser, options []*Option) []*Option {

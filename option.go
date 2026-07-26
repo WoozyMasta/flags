@@ -106,6 +106,19 @@ type Option struct {
 	// Relation groups where all options must be used together.
 	AndGroups []string
 
+	// Relation groups where at least one option must be used.
+	OrGroups []string
+
+	// Relation groups where not all options may be used together.
+	NandGroups []string
+
+	// Relation tokens this option depends on when set.
+	// At least one option with a matching Provides token must also be set.
+	Requires []string
+
+	// Relation tokens this option satisfies for matching Requires tokens.
+	Provides []string
+
 	// Additional short names for the option.
 	ShortAliases []rune
 
@@ -497,6 +510,26 @@ func (option *Option) SetXorGroups(groups ...string) {
 // SetAndGroups replaces all-or-none relation groups for this option.
 func (option *Option) SetAndGroups(groups ...string) {
 	option.AndGroups = append(option.AndGroups[:0], groups...)
+}
+
+// SetOrGroups replaces at-least-one relation groups for this option.
+func (option *Option) SetOrGroups(groups ...string) {
+	option.OrGroups = append(option.OrGroups[:0], groups...)
+}
+
+// SetNandGroups replaces not-all relation groups for this option.
+func (option *Option) SetNandGroups(groups ...string) {
+	option.NandGroups = append(option.NandGroups[:0], groups...)
+}
+
+// SetRequires replaces the relation tokens this option depends on when set.
+func (option *Option) SetRequires(tokens ...string) {
+	option.Requires = append(option.Requires[:0], tokens...)
+}
+
+// SetProvides replaces the relation tokens this option satisfies for matching Requires tokens.
+func (option *Option) SetProvides(tokens ...string) {
+	option.Provides = append(option.Provides[:0], tokens...)
 }
 
 // SetOptional configures optional argument behavior and fallback value(s).

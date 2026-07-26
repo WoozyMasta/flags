@@ -17,6 +17,15 @@ const (
 	FlagTagXor = "xor"
 	// FlagTagAnd declares option relation groups that must be used together.
 	FlagTagAnd = "and"
+	// FlagTagOr declares option relation groups where at least one option must be used.
+	FlagTagOr = "or"
+	// FlagTagNand declares option relation groups where not all options may be used together.
+	FlagTagNand = "nand"
+	// FlagTagRequires declares a relation token this option depends on when set;
+	// at least one option with a matching FlagTagProvides token must also be set.
+	FlagTagRequires = "requires"
+	// FlagTagProvides declares a relation token this option satisfies for matching FlagTagRequires tokens.
+	FlagTagProvides = "provides"
 	// FlagTagCounter enables counter mode for integer flags.
 	FlagTagCounter = "counter"
 	// FlagTagIO marks positional argument I/O role (in|out).
@@ -86,6 +95,19 @@ const (
 	FlagTagGroup = "group"
 	// FlagTagGroupI18n provides i18n key for group display name.
 	FlagTagGroupI18n = "group-i18n"
+	// FlagTagGroupXor declares mutually exclusive option group relation groups.
+	FlagTagGroupXor = "group-xor"
+	// FlagTagGroupAnd declares option group relation groups that must be used together.
+	FlagTagGroupAnd = "group-and"
+	// FlagTagGroupOr declares option group relation groups where at least one group must be used.
+	FlagTagGroupOr = "group-or"
+	// FlagTagGroupNand declares option group relation groups where not all groups may be used together.
+	FlagTagGroupNand = "group-nand"
+	// FlagTagGroupRequires declares a relation token this group depends on when active;
+	// at least one group with a matching FlagTagGroupProvides token must also be active.
+	FlagTagGroupRequires = "group-requires"
+	// FlagTagGroupProvides declares a relation token this group satisfies for matching FlagTagGroupRequires tokens.
+	FlagTagGroupProvides = "group-provides"
 	// FlagTagNamespace prefixes long option names for grouped options.
 	FlagTagNamespace = "namespace"
 	// FlagTagEnvNamespace prefixes environment variable names for grouped options.
@@ -170,6 +192,14 @@ type FlagTags struct {
 	Xor string
 	// And maps to option relation groups that must be used together tag.
 	And string
+	// Or maps to option relation groups where at least one option must be used tag.
+	Or string
+	// Nand maps to option relation groups where not all options may be used together tag.
+	Nand string
+	// Requires maps to option relation dependency tag (default: "requires").
+	Requires string
+	// Provides maps to option relation dependency-target tag (default: "provides").
+	Provides string
 	// Counter maps to counter mode tag for integer flags.
 	Counter string
 	// IO maps to positional I/O role tag.
@@ -238,6 +268,18 @@ type FlagTags struct {
 	Group string
 	// GroupI18n maps to i18n key for group display name tag.
 	GroupI18n string
+	// GroupXor maps to mutually exclusive option group relation groups tag.
+	GroupXor string
+	// GroupAnd maps to option group relation groups that must be used together tag.
+	GroupAnd string
+	// GroupOr maps to option group relation groups where at least one group must be used tag.
+	GroupOr string
+	// GroupNand maps to option group relation groups where not all groups may be used together tag.
+	GroupNand string
+	// GroupRequires maps to option group relation dependency tag (default: "group-requires").
+	GroupRequires string
+	// GroupProvides maps to option group relation dependency-target tag (default: "group-provides").
+	GroupProvides string
 	// Namespace maps to long-name namespace tag (default: "namespace").
 	Namespace string
 	// EnvNamespace maps to env-name namespace tag (default: "env-namespace").
@@ -315,6 +357,10 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		Required:             prefix + FlagTagRequired,
 		Xor:                  prefix + FlagTagXor,
 		And:                  prefix + FlagTagAnd,
+		Or:                   prefix + FlagTagOr,
+		Nand:                 prefix + FlagTagNand,
+		Requires:             prefix + FlagTagRequires,
+		Provides:             prefix + FlagTagProvides,
 		Counter:              prefix + FlagTagCounter,
 		IO:                   prefix + FlagTagIO,
 		IOKind:               prefix + FlagTagIOKind,
@@ -349,6 +395,12 @@ func NewFlagTagsWithPrefix(prefix string) FlagTags {
 		NoIni:                prefix + FlagTagNoIni,
 		Group:                prefix + FlagTagGroup,
 		GroupI18n:            prefix + FlagTagGroupI18n,
+		GroupXor:             prefix + FlagTagGroupXor,
+		GroupAnd:             prefix + FlagTagGroupAnd,
+		GroupOr:              prefix + FlagTagGroupOr,
+		GroupNand:            prefix + FlagTagGroupNand,
+		GroupRequires:        prefix + FlagTagGroupRequires,
+		GroupProvides:        prefix + FlagTagGroupProvides,
 		Namespace:            prefix + FlagTagNamespace,
 		EnvNamespace:         prefix + FlagTagEnvNamespace,
 		Command:              prefix + FlagTagCommand,
@@ -400,6 +452,18 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.And != "" {
 		d.And = t.And
+	}
+	if t.Or != "" {
+		d.Or = t.Or
+	}
+	if t.Nand != "" {
+		d.Nand = t.Nand
+	}
+	if t.Requires != "" {
+		d.Requires = t.Requires
+	}
+	if t.Provides != "" {
+		d.Provides = t.Provides
 	}
 	if t.Counter != "" {
 		d.Counter = t.Counter
@@ -502,6 +566,24 @@ func (t FlagTags) withDefaults() FlagTags {
 	}
 	if t.GroupI18n != "" {
 		d.GroupI18n = t.GroupI18n
+	}
+	if t.GroupXor != "" {
+		d.GroupXor = t.GroupXor
+	}
+	if t.GroupAnd != "" {
+		d.GroupAnd = t.GroupAnd
+	}
+	if t.GroupOr != "" {
+		d.GroupOr = t.GroupOr
+	}
+	if t.GroupNand != "" {
+		d.GroupNand = t.GroupNand
+	}
+	if t.GroupRequires != "" {
+		d.GroupRequires = t.GroupRequires
+	}
+	if t.GroupProvides != "" {
+		d.GroupProvides = t.GroupProvides
 	}
 	if t.Namespace != "" {
 		d.Namespace = t.Namespace

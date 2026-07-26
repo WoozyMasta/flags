@@ -32,6 +32,10 @@ func (p *Parser) Validate() error {
 		return err
 	}
 
+	if err := p.validateRequiresProvides(); err != nil {
+		return err
+	}
+
 	p.validationDirty = false
 	return nil
 }
@@ -106,6 +110,86 @@ func (p *Parser) applyConfigurators() error {
 	}
 
 	p.configDirty = false
+	return nil
+}
+
+// validateRequiresProvides checks, for every command in the tree,
+// that each `requires`/`group-requires` token used anywhere in that command's own group scope
+// has at least one matching `provides`/`group-provides` token in the same scope.
+// A dangling token is a structural configuration mistake
+// (not something a caller can fix by passing different CLI args),
+// so it is reported as ErrInvalidTag here rather than deferred to the per-parse relation checks
+// in checkRequiresOptionRelations/checkRequiresGroupRelations,
+// which only report whether a live requirer's dependency is currently satisfied.
+func (p *Parser) validateRequiresProvides() error {
+	var relErr error
+
+	p.eachCommand(func(c *Command) {
+		if relErr != nil {
+			return
+		}
+
+		relErr = c.checkRequiresProvidesScope()
+	})
+
+	return relErr
+}
+
+func (c *Command) checkRequiresProvidesScope() error {
+	requiresTokens := make(map[string]bool)
+	providesTokens := make(map[string]bool)
+	groupRequiresTokens := make(map[string]bool)
+	groupProvidesTokens := make(map[string]bool)
+
+	c.eachGroup(func(g *Group) {
+		for _, option := range g.options {
+			for _, token := range option.Requires {
+				if token != "" {
+					requiresTokens[token] = true
+				}
+			}
+			for _, token := range option.Provides {
+				if token != "" {
+					providesTokens[token] = true
+				}
+			}
+		}
+		for _, token := range g.Requires {
+			if token != "" {
+				groupRequiresTokens[token] = true
+			}
+		}
+		for _, token := range g.Provides {
+			if token != "" {
+				groupProvidesTokens[token] = true
+			}
+		}
+	})
+
+	for _, token := range sortedKeys(requiresTokens) {
+		if !providesTokens[token] {
+			return newErrorf(
+				ErrInvalidTag,
+				"requires token `%s` has no matching `%s` option in command `%s`",
+				token,
+				FlagTagProvides,
+				c.Name,
+			)
+		}
+	}
+
+	for _, token := range sortedKeys(groupRequiresTokens) {
+		if !groupProvidesTokens[token] {
+			return newErrorf(
+				ErrInvalidTag,
+				"group-requires token `%s` has no matching `%s` group in command `%s`",
+				token,
+				FlagTagGroupProvides,
+				c.Name,
+			)
+		}
+	}
+
 	return nil
 }
 

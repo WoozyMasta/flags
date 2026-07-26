@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `or`, `nand`, `requires`, and `provides` option relation tags,
+  alongside the existing `xor` and `and`.
+* `group-xor`, `group-and`, `group-or`, `group-nand`, `group-requires`,
+  and `group-provides` tags for relations between whole option groups.
+
 ## [0.11.1] - 2026-07-23
 
 ### Fixed

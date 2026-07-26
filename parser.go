@@ -928,6 +928,9 @@ func (p *Parser) ParseArgs(args []string) ([]string, error) {
 		if err := p.validateDuplicateCommands(); err != nil {
 			return nil, p.printError(err)
 		}
+		if err := p.validateRequiresProvides(); err != nil {
+			return nil, p.printError(err)
+		}
 		p.validationDirty = false
 	}
 
@@ -1242,6 +1245,10 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.Required, FlagTagRequired)
 	normalizeTagAlias(c, p.flagTags.Xor, FlagTagXor)
 	normalizeTagAlias(c, p.flagTags.And, FlagTagAnd)
+	normalizeTagAlias(c, p.flagTags.Or, FlagTagOr)
+	normalizeTagAlias(c, p.flagTags.Nand, FlagTagNand)
+	normalizeTagAlias(c, p.flagTags.Requires, FlagTagRequires)
+	normalizeTagAlias(c, p.flagTags.Provides, FlagTagProvides)
 	normalizeTagAlias(c, p.flagTags.Counter, FlagTagCounter)
 	normalizeTagAlias(c, p.flagTags.IO, FlagTagIO)
 	normalizeTagAlias(c, p.flagTags.IOKind, FlagTagIOKind)
@@ -1276,6 +1283,12 @@ func (p *Parser) normalizeStructTag(mtag *multiTag) {
 	normalizeTagAlias(c, p.flagTags.NoIni, FlagTagNoIni)
 	normalizeTagAlias(c, p.flagTags.Group, FlagTagGroup)
 	normalizeTagAlias(c, p.flagTags.GroupI18n, FlagTagGroupI18n)
+	normalizeTagAlias(c, p.flagTags.GroupXor, FlagTagGroupXor)
+	normalizeTagAlias(c, p.flagTags.GroupAnd, FlagTagGroupAnd)
+	normalizeTagAlias(c, p.flagTags.GroupOr, FlagTagGroupOr)
+	normalizeTagAlias(c, p.flagTags.GroupNand, FlagTagGroupNand)
+	normalizeTagAlias(c, p.flagTags.GroupRequires, FlagTagGroupRequires)
+	normalizeTagAlias(c, p.flagTags.GroupProvides, FlagTagGroupProvides)
 	normalizeTagAlias(c, p.flagTags.Namespace, FlagTagNamespace)
 	normalizeTagAlias(c, p.flagTags.EnvNamespace, FlagTagEnvNamespace)
 	normalizeTagAlias(c, p.flagTags.Command, FlagTagCommand)
@@ -1339,8 +1352,15 @@ type groupSpec struct {
 	iniName                 string
 	shortDescriptionI18nKey string
 	longDescriptionI18nKey  string
+	xorGroups               []string
+	andGroups               []string
+	orGroups                []string
+	nandGroups              []string
+	requiresTokens          []string
+	providesTokens          []string
 	hidden                  bool
 	immediate               bool
+	required                bool
 }
 
 type commandSpec struct {
@@ -1404,6 +1424,13 @@ func (p *Parser) rebuildTree() error {
 			hidden:                  g.Hidden,
 			immediate:               g.Immediate,
 			data:                    g.data,
+			required:                g.Required,
+			xorGroups:               append([]string(nil), g.XorGroups...),
+			andGroups:               append([]string(nil), g.AndGroups...),
+			orGroups:                append([]string(nil), g.OrGroups...),
+			nandGroups:              append([]string(nil), g.NandGroups...),
+			requiresTokens:          append([]string(nil), g.Requires...),
+			providesTokens:          append([]string(nil), g.Provides...),
 		})
 	}
 
@@ -1457,6 +1484,13 @@ func (p *Parser) rebuildTree() error {
 		ng.Immediate = g.immediate
 		ng.ShortDescriptionI18nKey = g.shortDescriptionI18nKey
 		ng.LongDescriptionI18nKey = g.longDescriptionI18nKey
+		ng.Required = g.required
+		ng.XorGroups = g.xorGroups
+		ng.AndGroups = g.andGroups
+		ng.OrGroups = g.orGroups
+		ng.NandGroups = g.nandGroups
+		ng.Requires = g.requiresTokens
+		ng.Provides = g.providesTokens
 	}
 
 	for _, c := range commands {
