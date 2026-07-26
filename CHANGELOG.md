@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.12.0] - 2026-07-26
 
 ### Added
 
@@ -23,12 +23,16 @@ and this project adheres to [Semantic Versioning][].
 * `group-xor`, `group-and`, `group-or`, `group-nand`, `group-requires`,
   and `group-provides` tags for relations between whole option groups.
 
+[0.12.0]: https://github.com/WoozyMasta/flags/compare/v0.11.1...v0.12.0
+
 ## [0.11.1] - 2026-07-23
 
 ### Fixed
 
 * `markdown-table` documentation template now wraps `Default`
   and `Environment` values in inline code spans, matching the other templates.
+
+[0.11.1]: https://github.com/WoozyMasta/flags/compare/v0.11.0...v0.11.1
 
 ## [0.11.0] - 2026-07-22
 
