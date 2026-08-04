@@ -240,6 +240,67 @@ func TestWriteDocMarkdownBuiltinLocalized(t *testing.T) {
 	}
 }
 
+func TestWriteDocMarkdownTOCLocalizedLabelsMatchHeadingAnchors(t *testing.T) {
+	var opts struct {
+		Verbose bool `short:"v" long:"verbose" required:"true" description:"Enable verbose output"`
+	}
+
+	p := NewNamedParser("doc-i18n-toc", None)
+	p.LongDescription = "Long description"
+
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	p.SetI18n(I18nConfig{Locale: "ru"})
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList), WithTOC(true)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+
+	got := out.String()
+
+	if !strings.Contains(got, "## Оглавление") {
+		t.Fatalf("expected localized toc title, got:\n%s", got)
+	}
+
+	for _, headingKey := range []string{"doc.tmpl.markdown.section.description", "doc.tmpl.markdown.section.options"} {
+		heading := p.i18nText(headingKey, "")
+		if heading == "" {
+			t.Fatalf("missing localized heading text for %q", headingKey)
+		}
+
+		if !strings.Contains(got, "## "+heading) {
+			t.Fatalf("expected localized heading %q, got:\n%s", heading, got)
+		}
+
+		wantEntry := "[" + heading + "](#" + slugifyTOC(heading) + ")"
+		if !strings.Contains(got, wantEntry) {
+			t.Fatalf("expected toc entry %q whose anchor matches the heading slug, got:\n%s", wantEntry, got)
+		}
+	}
+}
+
+func TestSlugifyTOCPreservesNonLatinScripts(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{"ОПИСАНИЕ", "описание"},
+		{"Опции  и Команды", "опции-и-команды"},
+		{"目次", "目次"},
+		{"", "section"},
+		{"...", "section"},
+	}
+
+	for _, tc := range tests {
+		if got := slugifyTOC(tc.name); got != tc.want {
+			t.Fatalf("slugifyTOC(%q) = %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}
+
 func TestWriteDocMarkdownListOptionDescriptionsUseContinuationLine(t *testing.T) {
 	var opts struct {
 		Locale string `short:"l" long:"locale" value-name:"LOCALE" description:"Override language for help, errors, application text, generated documentation, and custom template rendering"`

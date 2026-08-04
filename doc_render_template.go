@@ -363,7 +363,7 @@ func buildDocTOCCommandEntries(commands []docCommand) []docTOCEntry {
 	return ret
 }
 
-var tocSlugRe = regexp.MustCompile(`[^a-z0-9]+`)
+var tocSlugRe = regexp.MustCompile(`[^\p{L}\p{N}]+`)
 
 func slugifyTOC(value string) string {
 	s := strings.ToLower(strings.TrimSpace(value))

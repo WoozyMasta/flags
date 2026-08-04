@@ -11,11 +11,11 @@
 {{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
 
 {{ if .ShowTOC }}
-## Table of Contents
+## {{ i18n "doc.tmpl.markdown.toc.title" }}
 
-{{ if .Doc.LongDescription }}{{ mdList }} [DESCRIPTION](#description)
-{{ end }}{{ if .Doc.Groups }}{{ mdList }} [OPTIONS](#options)
-{{ end }}{{ if .Doc.Commands }}{{ mdList }} [COMMANDS](#commands)
+{{ if .Doc.LongDescription }}{{ $t := i18n "doc.tmpl.markdown.section.description" }}{{ mdList }} [{{ $t }}](#{{ tocHeadingAnchor $t }})
+{{ end }}{{ if .Doc.Groups }}{{ $t := i18n "doc.tmpl.markdown.section.options" }}{{ mdList }} [{{ $t }}](#{{ tocHeadingAnchor $t }})
+{{ end }}{{ if .Doc.Commands }}{{ $t := i18n "doc.tmpl.markdown.section.commands" }}{{ mdList }} [{{ $t }}](#{{ tocHeadingAnchor $t }})
 {{ range tocCommandEntries .Doc.Commands }}  {{ mdList }} [{{ .Name }}](#{{ tocHeadingAnchor .Name }})
 {{ end }}{{ end }}
 {{ end }}

@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.12.1] - 2026-08-05
+
+### Fixed
+
+* `--toc` table of contents in generated Markdown/HTML docs is now
+  localized and its links point to the right sections again.
+* `Arguments` section titles in generated man/HTML docs are now
+  translated instead of staying in English.
+
+[0.12.1]: https://github.com/WoozyMasta/flags/compare/v0.12.0...v0.12.1
+
 ## [0.12.0] - 2026-07-26
 
 ### Added

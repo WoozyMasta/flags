@@ -631,7 +631,7 @@ func TestBuiltinDocsCommandTOCHTML(t *testing.T) {
 	text := string(got)
 	for _, want := range []string{
 		"<h2>Table of Contents</h2>",
-		"href=\"#commands\">COMMANDS</a>",
+		"href=\"#commands\">Commands</a>",
 		"href=\"#command-help\">help</a>",
 		"href=\"#command-version\">version</a>",
 		"href=\"#command-completion\">completion</a>",

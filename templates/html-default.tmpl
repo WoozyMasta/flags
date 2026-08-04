@@ -17,17 +17,17 @@
 
 {{- if .ShowTOC }}
   <section>
-    <h2>Table of Contents</h2>
+    <h2>{{ i18n "doc.tmpl.html.toc.title" }}</h2>
     <ul>
 {{- if .Doc.LongDescription }}
-      <li><a href="#description">DESCRIPTION</a></li>
+      <li><a href="#description">{{ i18n "doc.tmpl.html.section.description" }}</a></li>
 {{- end }}
 {{- if .Doc.Groups }}
-      <li><a href="#options">OPTIONS</a></li>
+      <li><a href="#options">{{ i18n "doc.tmpl.html.section.options" }}</a></li>
 {{- end }}
 {{- if .Doc.Commands }}
       <li>
-        <a href="#commands">COMMANDS</a>
+        <a href="#commands">{{ i18n "doc.tmpl.html.section.commands" }}</a>
         <ul>
 {{- range tocCommandEntries .Doc.Commands }}
           <li><a href="#{{ .Anchor }}">{{ quoteHTML .Name }}</a></li>
@@ -227,7 +227,7 @@
 {{- end }}
 
 {{- if .Args }}
-      <h4>{{ i18n "doc.tmpl.html.section.arguments" "Arguments" }}</h4>
+      <h4>{{ i18n "doc.tmpl.html.section.arguments" }}</h4>
       <ul>
 {{- range .Args }}
         <li><code>{{ quoteHTML .Name }}</code>{{ if .Required }} ({{ i18n "doc.tmpl.html.required" }}){{ end }}{{ if .Description }} - <span style="white-space: pre-wrap;">{{ quoteHTML .Description }}</span>{{ end }}</li>

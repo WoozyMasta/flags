@@ -70,7 +70,7 @@
 {{- end }}
 {{- end }}
 {{- if .Doc.Args }}
-.SH {{ quoteMan (i18n "doc.tmpl.markdown.section.arguments" "ARGUMENTS") }}
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.arguments") }}
 {{- range .Doc.Args }}
 .TP
 \fB{{ quoteMan .Name }}\fP{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}
@@ -194,7 +194,7 @@
 {{- end }}
 {{- end }}
 {{- if .Args }}
-.SS {{ quoteMan (i18n "doc.tmpl.markdown.section.arguments_title" "Arguments") }}
+.SS {{ quoteMan (i18n "doc.tmpl.man.section.arguments_title") }}
 {{- range .Args }}
 .TP
 \fB{{ quoteMan .Name }}\fP{{- if .Required }} (\fI{{ i18n "doc.tmpl.man.required" }}\fR){{- end }}
