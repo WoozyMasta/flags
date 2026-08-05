@@ -100,6 +100,35 @@ Use it in tests or unusual shell setups.
 
 `DetectShellStyle` maps shell and OS information to a render style.
 
+## Explorer Launch Detection
+
+On Windows, double-clicking a `.exe` in Explorer
+opens a new console window that closes as soon as the process exits,
+so help or error output printed just before exit is never seen.
+
+`LaunchedFromExplorer` reports whether the immediate parent process is
+`explorer.exe`.
+It always returns `false` on non-Windows platforms,
+it only detects the situation; the caller decides how to react.
+
+`WaitForEnter` is an optional helper that writes a prompt
+and blocks until a line is read, so the console stays open long enough to read:
+
+```go
+_, err := parser.Parse()
+
+if flags.LaunchedFromExplorer() {
+  _ = flags.WaitForEnter(os.Stdout, os.Stdin, "\nPress Enter to exit...")
+}
+
+if err != nil {
+  os.Exit(1)
+}
+```
+
+Neither function is called automatically by the parser;
+call them explicitly from `main()`.
+
 ## Completion Shells
 
 Completion script generation supports bash, zsh, and pwsh.

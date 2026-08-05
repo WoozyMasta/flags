@@ -87,6 +87,25 @@ go run ./examples/i18n --help
 
 Use this example when adding translations to a CLI.
 
+## Windows Launch Example
+
+Path: `examples/windows-launch`
+
+This example demonstrates:
+
+* `LaunchedFromExplorer` detection;
+* `WaitForEnter` as a pause-before-exit helper.
+
+Run it:
+
+```bash
+go run ./examples/windows-launch --help
+```
+
+Use this example when shipping a Windows binary
+users may launch by double-clicking it in Explorer.
+See [Windows and POSIX][] for details.
+
 ## Completion Templates
 
 Completion registration templates are kept under `examples/completion`.
@@ -130,3 +149,5 @@ When adding a new feature, add either:
 * a targeted test for behavior;
 * a small example if users need to see integration;
 * a cookbook recipe if the feature combines existing APIs.
+
+[Windows and POSIX]: ../output/windows-and-posix.md#explorer-launch-detection

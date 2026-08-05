@@ -114,6 +114,7 @@ func init() {
 		filepath.Join(completionTestSourcedir, "examples/custom-flag-tags"),
 		filepath.Join(completionTestSourcedir, "examples/doc-rendered"),
 		filepath.Join(completionTestSourcedir, "examples/i18n"),
+		filepath.Join(completionTestSourcedir, "examples/windows-launch"),
 	}
 
 	completionTests = []completionTest{
