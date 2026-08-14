@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `LaunchedFromExplorer` detects when the process was started
+  by double-clicking it in Windows Explorer, and `WaitForEnter`
+  is a helper to pause before exit so console output stays visible.
+* `DocProgramNamePlaceholder` (`{{.ProgramName}}`) substitutes
+  the effective program name in help and generated documentation descriptions,
+  for example `Examples:\n  - {{.ProgramName}} build`.
+
 ## [0.12.1] - 2026-08-05
 
 ### Fixed

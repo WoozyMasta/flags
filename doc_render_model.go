@@ -124,12 +124,12 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 
 	model := docParser{
 		Name:             programName,
-		ShortDescription: docDescriptionText(p.localizedShortDescription(), cfg.trimDescriptions),
-		LongDescription:  docDescriptionText(p.localizedLongDescription(), cfg.trimDescriptions),
+		ShortDescription: docDescriptionText(p.localizedShortDescription(), programName, cfg.trimDescriptions),
+		LongDescription:  docDescriptionText(p.localizedLongDescription(), programName, cfg.trimDescriptions),
 		GeneratedAt:      docNow(),
 		Usage:            usage,
-		Args:             buildDocArgs(p.Command, cfg.includeHidden, cfg.trimDescriptions),
-		Groups:           buildDocGroups(p.Group, true, cfg.includeHidden, format, cfg.trimDescriptions, false),
+		Args:             buildDocArgs(p.Command, programName, cfg.includeHidden, cfg.trimDescriptions),
+		Groups:           buildDocGroups(p.Group, programName, true, cfg.includeHidden, format, cfg.trimDescriptions, false),
 		Meta:             p.buildDocMeta(),
 	}
 
@@ -150,7 +150,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		commands = filtered
 	}
 	for _, cmd := range commands {
-		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, cmd, cfg.includeHidden, format, cfg.trimDescriptions, skipBuiltinHelpInSubs))
+		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, programName, cmd, cfg.includeHidden, format, cfg.trimDescriptions, skipBuiltinHelpInSubs))
 	}
 	model.CommandGroups = buildDocCommandGroups(model.Commands)
 
@@ -160,6 +160,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 func buildDocCommand(
 	parentName string,
 	usagePrefix string,
+	programName string,
 	cmd *Command,
 	includeHidden bool,
 	format optionRenderFormat,
@@ -187,8 +188,8 @@ func buildDocCommand(
 
 	doc := docCommand{
 		Name:                fullName,
-		ShortDescription:    docDescriptionText(cmd.localizedShortDescription(), trimDescriptions),
-		LongDescription:     docDescriptionText(cmd.localizedLongDescription(), trimDescriptions),
+		ShortDescription:    docDescriptionText(cmd.localizedShortDescription(), programName, trimDescriptions),
+		LongDescription:     docDescriptionText(cmd.localizedLongDescription(), programName, trimDescriptions),
 		UsageLine:           usageLine,
 		Aliases:             append([]string(nil), cmd.Aliases...),
 		SubcommandsOptional: cmd.SubcommandsOptional,
@@ -196,12 +197,12 @@ func buildDocCommand(
 		Hidden:              cmd.Hidden,
 		Deprecated:          cmd.Deprecated,
 		Group:               cmd.localizedCommandGroup(),
-		Args:                buildDocArgs(cmd, includeHidden, trimDescriptions),
-		Groups:              buildDocGroups(cmd.Group, true, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup),
+		Args:                buildDocArgs(cmd, programName, includeHidden, trimDescriptions),
+		Groups:              buildDocGroups(cmd.Group, programName, true, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup),
 	}
 
 	for _, sub := range docCommands(cmd, includeHidden) {
-		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, sub, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup))
+		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, programName, sub, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup))
 	}
 	doc.CommandGroups = buildDocCommandGroups(doc.Commands)
 
@@ -210,6 +211,7 @@ func buildDocCommand(
 
 func buildDocGroups(
 	root *Group,
+	programName string,
 	includeRoot bool,
 	includeHidden bool,
 	format optionRenderFormat,
@@ -230,8 +232,8 @@ func buildDocGroups(
 		}
 
 		docGroup := docGroup{
-			ShortDescription: docDescriptionText(group.localizedShortDescription(), trimDescriptions),
-			LongDescription:  docDescriptionText(group.localizedLongDescription(), trimDescriptions),
+			ShortDescription: docDescriptionText(group.localizedShortDescription(), programName, trimDescriptions),
+			LongDescription:  docDescriptionText(group.localizedLongDescription(), programName, trimDescriptions),
 			Namespace:        group.Namespace,
 			EnvNamespace:     group.EnvNamespace,
 			Hidden:           group.Hidden,
@@ -244,7 +246,7 @@ func buildDocGroups(
 			if !includeHidden && !opt.showInHelp() {
 				continue
 			}
-			docGroup.Options = append(docGroup.Options, buildDocOption(opt, format, trimDescriptions))
+			docGroup.Options = append(docGroup.Options, buildDocOption(opt, programName, format, trimDescriptions))
 		}
 
 		if len(docGroup.Options) > 0 {
@@ -255,13 +257,13 @@ func buildDocGroups(
 	return groups
 }
 
-func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions bool) docOption {
+func buildDocOption(opt *Option, programName string, format optionRenderFormat, trimDescriptions bool) docOption {
 	doc := docOption{
 		Long:          opt.LongNameWithNamespace(),
 		ValueName:     opt.localizedValueName(),
 		Optional:      opt.OptionalArgument,
 		Required:      opt.Required,
-		Description:   docDescriptionText(opt.localizedDescription(), trimDescriptions),
+		Description:   docDescriptionText(opt.localizedDescription(), programName, trimDescriptions),
 		TypeClass:     optionTypeClass(opt),
 		Choices:       opt.displayChoices(),
 		DefaultRaw:    opt.displayValues(opt.Default),
@@ -303,11 +305,11 @@ func buildDocOption(opt *Option, format optionRenderFormat, trimDescriptions boo
 	return doc
 }
 
-func buildDocArgs(cmd *Command, includeHidden bool, trimDescriptions bool) []docArg {
+func buildDocArgs(cmd *Command, programName string, includeHidden bool, trimDescriptions bool) []docArg {
 	args := cmd.Args()
 	ret := make([]docArg, 0, len(args))
 	for _, arg := range args {
-		argDescription := docDescriptionText(arg.localizedDescription(), trimDescriptions)
+		argDescription := docDescriptionText(arg.localizedDescription(), programName, trimDescriptions)
 		if !includeHidden && argDescription == "" {
 			continue
 		}
@@ -321,7 +323,8 @@ func buildDocArgs(cmd *Command, includeHidden bool, trimDescriptions bool) []doc
 	return ret
 }
 
-func docDescriptionText(text string, trim bool) string {
+func docDescriptionText(text, programName string, trim bool) string {
+	text = replaceDocProgramNamePlaceholder(text, programName)
 	if !trim {
 		return text
 	}
@@ -333,6 +336,10 @@ func docDescriptionText(text string, trim bool) string {
 		lines[idx] = strings.TrimSpace(lines[idx])
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
+}
+
+func replaceDocProgramNamePlaceholder(text, programName string) string {
+	return strings.ReplaceAll(text, DocProgramNamePlaceholder, programName)
 }
 
 func buildDocCommandGroups(commands []docCommand) []docCommandGroup {
