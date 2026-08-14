@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Project: https://github.com/woozymasta/flags
 
+// Package main demonstrates pausing a Windows console launched from Explorer.
 package main
 
 import (
