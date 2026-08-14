@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.13.0] - 2026-08-14
 
 ### Added
 
@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning][].
 * `DocProgramNamePlaceholder` (`{{.ProgramName}}`) substitutes
   the effective program name in help and generated documentation descriptions,
   for example `Examples:\n  - {{.ProgramName}} build`.
+
+[0.13.0]: https://github.com/WoozyMasta/flags/compare/v0.12.1...v0.13.0
 
 ## [0.12.1] - 2026-08-05
 
