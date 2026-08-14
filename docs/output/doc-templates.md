@@ -90,6 +90,18 @@ repository URLs, build IDs, generated-file notices, or site metadata.
 Use `WithIncludeHidden` and `WithMarkHidden` for internal documentation.
 Hidden entities are excluded unless `WithIncludeHidden(true)` is set.
 
+Use `DocProgramNamePlaceholder` in a description
+when it should follow the runtime binary name and a documentation-specific name.
+For example:
+
+```go
+parser.LongDescription = "Examples:\n  - {{.ProgramName}} build"
+```
+
+`WriteHelp` replaces it with `parser.Name`;
+`WithProgramName` replaces it with its override during `WriteDoc`.
+This is a literal replacement, not Go template evaluation.
+
 Use `WithBuiltinCommands` to control which built-in commands appear in
 the generated output.
 Pass `nil` to include all (the default when calling `WriteDoc` directly).

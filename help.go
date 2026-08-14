@@ -195,7 +195,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 		_, _ = fmt.Fprintln(wr)
 
-		longDescription := cmd.localizedLongDescription()
+		longDescription := p.helpDescriptionText(cmd.localizedLongDescription())
 		if len(longDescription) != 0 {
 			_, _ = fmt.Fprintln(wr)
 
@@ -253,7 +253,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 						_, _ = wr.WriteString(strings.Repeat(" ", optionAlignInfo.indent))
 					}
 
-					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(grp.localizedShortDescription(), p.helpColorScheme.GroupHeader))
+					_, _ = fmt.Fprintf(wr, "%s:\n", p.colorizeHelp(p.helpDescriptionText(grp.localizedShortDescription()), p.helpColorScheme.GroupHeader))
 					first = false
 				}
 
@@ -263,7 +263,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 		var args []*Arg
 		for _, arg := range c.args {
-			if arg.localizedDescription() != "" {
+			if p.helpDescriptionText(arg.localizedDescription()) != "" {
 				args = append(args, arg)
 			}
 		}
@@ -326,7 +326,7 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 			for _, c := range group.commands {
 				_, _ = fmt.Fprintf(wr, "%s%s", strings.Repeat(" ", commandIndent), p.colorizeHelp(c.Name, p.helpColorScheme.CommandName))
 
-				shortDescription := c.localizedShortDescription()
+				shortDescription := p.helpDescriptionText(c.localizedShortDescription())
 				if len(shortDescription) > 0 {
 					pad := strings.Repeat(" ", maxnamelen-textWidth(c.Name))
 					_, _ = fmt.Fprintf(wr, "%s  %s", pad, p.colorizeHelp(shortDescription, p.helpColorScheme.CommandDesc))
@@ -424,6 +424,10 @@ func (p *Parser) WriteHelpWithOptions(writer io.Writer, opts HelpRenderOptions) 
 	p.helpIncludeHidden = opts.IncludeHidden
 
 	p.WriteHelp(writer)
+}
+
+func (p *Parser) helpDescriptionText(text string) string {
+	return replaceDocProgramNamePlaceholder(text, p.Name)
 }
 
 // WriteBanner writes the configured banner text to writer as a raw block.
@@ -592,7 +596,7 @@ func (p *Parser) getAlignmentInfo() alignmentInfo {
 		if c != prevcmd {
 			for _, arg := range c.args {
 				argLeft := strings.Repeat(" ", paddingBeforeOption) + arg.localizedName()
-				if arg.localizedDescription() != "" {
+				if p.helpDescriptionText(arg.localizedDescription()) != "" {
 					argLeft += ":"
 				}
 				ret.updateLen(argLeft, 0)
@@ -1247,7 +1251,7 @@ func (p *Parser) buildHelpOptionDescription(
 	format optionRenderFormat,
 	descWidth int,
 ) ([]string, string, string, string, string) {
-	description := option.localizedDescription()
+	description := p.helpDescriptionText(option.localizedDescription())
 	if description == "" {
 		return nil, "", "", "", ""
 	}
@@ -1434,7 +1438,7 @@ func (p *Parser) writeHelpArgument(
 	argPrefix := strings.Repeat(" ", indent)
 	argPrefix += arg.localizedName()
 
-	argDescriptionText := arg.localizedDescription()
+	argDescriptionText := p.helpDescriptionText(arg.localizedDescription())
 	if len(argDescriptionText) > 0 {
 		argPrefix += ":"
 		_, _ = wr.WriteString(p.colorizeHelp(argPrefix, p.helpColorScheme.ArgumentName))

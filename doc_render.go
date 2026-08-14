@@ -16,6 +16,9 @@ import (
 type DocFormat string
 
 const (
+	// DocProgramNamePlaceholder is replaced with the effective program name
+	// in help output and generated documentation descriptions.
+	DocProgramNamePlaceholder = "{{.ProgramName}}"
 	// DocFormatMan renders classic man page output.
 	DocFormatMan DocFormat = "man"
 	// DocFormatMarkdown renders markdown documentation.
@@ -81,7 +84,8 @@ func WithTemplateData(data map[string]any) DocOption {
 }
 
 // WithProgramName overrides program/binary name in the generated doc model.
-// It affects all templates/formats through Doc.Name and usage lines.
+// It affects all templates/formats through Doc.Name, usage lines,
+// and DocProgramNamePlaceholder in descriptions.
 func WithProgramName(name string) DocOption {
 	return func(o *docRenderOptions) error {
 		o.programName = name

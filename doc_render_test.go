@@ -81,6 +81,77 @@ func TestWriteDocMarkdownBuiltin(t *testing.T) {
 	}
 }
 
+func TestDocProgramNamePlaceholder(t *testing.T) {
+	type options struct {
+		Args struct {
+			Input string `positional-arg-name:"input" description:"Read input with {{.ProgramName}}"`
+		} `positional-args:"yes"`
+		Token string `long:"token" description:"Authenticate {{.ProgramName}}"`
+		Build struct {
+			Target string `long:"target" description:"Build target for {{.ProgramName}}"`
+		} `command:"build" description:"Build with {{.ProgramName}}" long-description:"Examples:\n  - {{.ProgramName}} build"`
+	}
+
+	p := NewNamedParser("app.exe", None)
+	p.ShortDescription = "Run {{.ProgramName}}"
+	p.LongDescription = "Examples:\n  - {{.ProgramName}} build"
+	if _, err := p.AddGroup("Options for {{.ProgramName}}", "Use {{.ProgramName}} options", &options{}); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var help bytes.Buffer
+	p.WriteHelp(&help)
+	if got := help.String(); !strings.Contains(got, "app.exe build") ||
+		!strings.Contains(got, "Authenticate app.exe") {
+		t.Fatalf("expected runtime program name in help, got:\n%s", got)
+	}
+
+	for _, format := range []DocFormat{
+		DocFormatMarkdown,
+		DocFormatHTML,
+		DocFormatMan,
+		DocFormatJSON,
+	} {
+		t.Run(string(format), func(t *testing.T) {
+			var out bytes.Buffer
+			if err := p.WriteDoc(&out, format, WithProgramName("app")); err != nil {
+				t.Fatalf("unexpected write doc error: %v", err)
+			}
+
+			got := out.String()
+			for _, want := range []string{
+				"app build",
+				"Authenticate app",
+				"Examples:",
+				"Build with app",
+				"Build target for app",
+			} {
+				if !strings.Contains(got, want) {
+					t.Fatalf("expected %q in output:\n%s", want, got)
+				}
+			}
+			if strings.Contains(got, DocProgramNamePlaceholder) {
+				t.Fatalf("placeholder was not replaced:\n%s", got)
+			}
+		})
+	}
+
+	model := p.buildDocModel(docRenderOptions{programName: "app"})
+	if len(model.Args) != 1 || model.Args[0].Description != "Read input with app" {
+		t.Fatalf("expected placeholder replacement in argument description, got: %#v", model.Args)
+	}
+
+	if p.LongDescription != "Examples:\n  - {{.ProgramName}} build" {
+		t.Fatalf("parser description was mutated: %q", p.LongDescription)
+	}
+	if got := p.Command.Find("build").LongDescription; got != "Examples:\n  - {{.ProgramName}} build" {
+		t.Fatalf("command description was mutated: %q", got)
+	}
+	if got := p.Command.FindOptionByLongName("token").Description; got != "Authenticate {{.ProgramName}}" {
+		t.Fatalf("option description was mutated: %q", got)
+	}
+}
+
 func TestWriteDocBuiltinHelpGroupInSubcommands(t *testing.T) {
 	var opts struct {
 		Serve struct {
