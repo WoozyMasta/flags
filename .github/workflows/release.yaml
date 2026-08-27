@@ -33,6 +33,7 @@ jobs:
           bodyFile: release.md
 
       - name: Request pkg.go.dev reindex
+        continue-on-error: true
         env:
           MODULE: github.com/woozymasta/flags
           VERSION: ${{ github.ref_name }}
