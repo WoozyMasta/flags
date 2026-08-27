@@ -781,6 +781,27 @@ func (p *Parser) findCommandPath(commandPath string) *Command {
 	return command
 }
 
+// SetCommandExamples replaces structured examples for commands by path.
+// Command paths are space-separated command names.
+// An empty path targets the parser root command.
+// The operation is atomic when a path is unknown.
+func (p *Parser) SetCommandExamples(examples map[string][]*CommandExample) error {
+	commands := make(map[string]*Command, len(examples))
+	for commandPath := range examples {
+		command := p.findCommandPath(commandPath)
+		if command == nil {
+			return fmt.Errorf("command path %q is not registered", commandPath)
+		}
+		commands[commandPath] = command
+	}
+
+	for commandPath, command := range commands {
+		command.SetExamples(examples[commandPath]...)
+	}
+
+	return nil
+}
+
 // SetCommandShortDescriptions updates short descriptions for multiple commands.
 // Missing command names are ignored.
 func (p *Parser) SetCommandShortDescriptions(descriptions map[string]string) {
@@ -836,7 +857,7 @@ func (p *Parser) SetCommandLongDescriptionI18nKeys(keys map[string]string) {
 // for multiple commands. Missing command names are ignored.
 func (p *Parser) SetCommandDescriptionI18nKeys(keys map[string]CommandDescriptionI18nKeys) {
 	for commandName, key := range keys {
-		if cmd := p.Find(commandName); cmd != nil {
+		if cmd := p.findCommandPath(commandName); cmd != nil {
 			cmd.SetShortDescriptionI18nKey(key.Short)
 			cmd.SetLongDescriptionI18nKey(key.Long)
 		}
@@ -1452,6 +1473,21 @@ type commandSpec struct {
 // (as opposed to one added directly through AddCommand) does not survive a rebuild;
 // see TestSetTagListDelimiterDoesNotPreserveTagDeclaredCommandMetadata.
 func (p *Parser) rebuildTree() error {
+	type commandExamplesSpec struct {
+		data     any
+		examples []*CommandExample
+	}
+
+	commandExamples := make([]commandExamplesSpec, 0)
+	p.eachCommand(func(c *Command) {
+		if len(c.examples) != 0 {
+			commandExamples = append(commandExamples, commandExamplesSpec{
+				data:     c.data,
+				examples: cloneCommandExamples(c.examples),
+			})
+		}
+	})
+
 	groups := make([]groupSpec, 0, len(p.groups))
 	commands := make([]commandSpec, 0, len(p.commands))
 	rootOptions := append([]*Option(nil), p.options...)
@@ -1590,6 +1626,13 @@ func (p *Parser) rebuildTree() error {
 	}
 	for _, c := range p.commands {
 		c.parent = p.Command
+	}
+	for _, spec := range commandExamples {
+		scratch.eachCommand(func(c *Command) {
+			if sameCommandData(c.data, spec.data) {
+				c.examples = cloneCommandExamples(spec.examples)
+			}
+		})
 	}
 
 	p.invalidateLookupCache()

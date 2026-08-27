@@ -7,7 +7,7 @@ import (
 	"os/exec"
 )
 
-func Example() {
+func ExampleNewParser() {
 	var opts struct {
 		// Slice of bool will append 'true' each time the option
 		// is encountered (can be set multiple times, like -vvv)

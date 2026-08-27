@@ -55,6 +55,9 @@ type Command struct {
 	// Positive values are shown first, then zero, then negative.
 	Order int
 
+	// Structured command examples used by help and generated documentation.
+	examples []*CommandExample
+
 	lookupCacheGeneration uint64
 
 	// Whether subcommands are optional
@@ -191,6 +194,16 @@ func (c *Command) SetLongDescription(description string) {
 // SetLongDescriptionI18nKey sets i18n key for command long description.
 func (c *Command) SetLongDescriptionI18nKey(key string) {
 	c.Group.SetLongDescriptionI18nKey(key)
+}
+
+// SetExamples replaces structured command examples.
+func (c *Command) SetExamples(examples ...*CommandExample) {
+	c.examples = cloneCommandExamples(examples)
+}
+
+// Examples returns a copy of structured command examples.
+func (c *Command) Examples() []*CommandExample {
+	return cloneCommandExamples(c.examples)
 }
 
 // SetIniName updates stable INI section token used for this command block.
