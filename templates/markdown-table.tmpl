@@ -10,6 +10,17 @@
 
 {{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
 
+{{ if .Doc.Examples }}
+## Examples
+
+{{ range .Doc.Examples }}{{ if .Description }}{{ .Description }}
+
+{{ end }}{{ codeFenceOpen }}
+{{ .Command }}
+{{ codeFenceClose }}
+
+{{ end }}{{ end }}
+
 {{ if .ShowTOC }}
 ## {{ i18n "doc.tmpl.markdown.toc.title" }}
 
@@ -117,6 +128,16 @@
 **{{ i18n "doc.tmpl.markdown.label.usage" }}:** {{ code .UsageLine }}
 
 {{ end }}
+{{ if .Examples }}
+#### Examples
+
+{{ range .Examples }}{{ if .Description }}{{ .Description }}
+
+{{ end }}{{ codeFenceOpen }}
+{{ .Command }}
+{{ codeFenceClose }}
+
+{{ end }}{{ end }}
 {{ if .Aliases }}
 **{{ i18n "doc.tmpl.markdown.label.aliases" }}:** {{ join .Aliases ", " }}
 

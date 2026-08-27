@@ -15,6 +15,16 @@
     <pre>{{ quoteHTML .Doc.Name }} {{ quoteHTML .Doc.Usage }}</pre>
   </section>
 
+{{- if .Doc.Examples }}
+  <section id="examples">
+    <h2>Examples</h2>
+{{- range .Doc.Examples }}
+{{- if .Description }}    <p>{{ quoteHTML .Description }}</p>
+{{- end }}    <pre><code>{{ quoteHTML .Command }}</code></pre>
+{{- end }}
+  </section>
+{{- end }}
+
 {{- if .ShowTOC }}
   <section>
     <h2>{{ i18n "doc.tmpl.html.toc.title" }}</h2>
@@ -169,6 +179,13 @@
 {{- end }}
 {{- if .UsageLine }}
       <p><strong>{{ i18n "doc.tmpl.html.label.usage" }}:</strong> <code>{{ quoteHTML .UsageLine }}</code></p>
+{{- end }}
+{{- if .Examples }}
+      <h4>Examples</h4>
+{{- range .Examples }}
+{{- if .Description }}      <p>{{ quoteHTML .Description }}</p>
+{{- end }}      <pre><code>{{ quoteHTML .Command }}</code></pre>
+{{- end }}
 {{- end }}
 {{- if .Aliases }}
       <p><strong>{{ i18n "doc.tmpl.html.label.aliases" }}:</strong> {{ quoteHTML (join .Aliases ", ") }}</p>

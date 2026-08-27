@@ -136,6 +136,10 @@ type builtinDocRenderStyleOption struct {
 	Style string `long:"style" auto-env:"false" choices:"auto;posix;windows;shell" description:"Override flag and environment render style used in generated documentation"`
 }
 
+type builtinDocExampleShellOption struct {
+	Shell string `long:"shell" auto-env:"false" choices:"bash;pwsh" default:"bash" description:"Shell syntax used for rendered command examples"`
+}
+
 type builtinDocBuiltinCommandsOption struct {
 	Builtins []string `long:"builtins" auto-env:"false" choices:"help;version;completion;docs;config" description-i18n:"help.builtin.command.docs.builtins.desc" description:"Built-in commands to include in generated output"`
 }
@@ -153,6 +157,7 @@ type builtinDocManCommand struct {
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocExampleShellOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
 
@@ -165,6 +170,7 @@ func (c *builtinDocManCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithBuiltinTemplate(DocTemplateManDefault),
 		WithProgramName(c.ProgramName),
+		WithExampleShell(ExampleShell(c.Shell)),
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
@@ -187,6 +193,7 @@ type builtinDocHTMLCommand struct {
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocExampleShellOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
 
@@ -207,6 +214,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
+		WithExampleShell(ExampleShell(c.Shell)),
 		WithTOC(c.TOC),
 		WithNestedTOC(c.TOCNested),
 		WithTrimDescriptions(c.TrimDescriptions),
@@ -230,6 +238,7 @@ type builtinDocMarkdownCommand struct {
 	} `positional-args:"yes"`
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocExampleShellOption
 	builtinDocBuiltinCommandsOption
 	WrapWidth int `description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false" long:"wrap-width" default:"80" value-name:"COLUMNS"`
 
@@ -256,6 +265,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
+		WithExampleShell(ExampleShell(c.Shell)),
 		WithTOC(c.TOC),
 		WithNestedTOC(c.TOCNested),
 		WithMarkdownDashLists(c.DashLists),
@@ -281,6 +291,7 @@ type builtinDocJSONCommand struct {
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocExampleShellOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
 
@@ -292,6 +303,7 @@ type builtinDocJSONCommand struct {
 func (c *builtinDocJSONCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithProgramName(c.ProgramName),
+		WithExampleShell(ExampleShell(c.Shell)),
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithIncludeHidden(c.IncludeHidden),
 		withJSONCompact(c.Compact),
@@ -335,6 +347,7 @@ type builtinDocTemplateRenderCommand struct {
 
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
+	builtinDocExampleShellOption
 	builtinDocBuiltinCommandsOption
 
 	WrapWidth int `auto-env:"false" long:"wrap-width"        description:"Maximum width for wrapped Markdown text; zero disables wrapping" default:"80" value-name:"COLUMNS"`
@@ -375,6 +388,7 @@ func (c *builtinDocTemplateRenderCommand) Execute(_ []string) error {
 	opts := []DocOption{
 		WithTemplateBytes(tplBytes),
 		WithProgramName(c.ProgramName),
+		WithExampleShell(ExampleShell(c.Shell)),
 		WithTOC(c.TOC),
 		WithMarkdownDashLists(c.DashLists),
 		WithTrimDescriptions(c.TrimDescriptions),

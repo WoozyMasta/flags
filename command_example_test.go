@@ -233,3 +233,48 @@ func TestWriteHelpIncludesCommandExamples(t *testing.T) {
 		t.Fatalf("help does not contain command example:\n%s", got)
 	}
 }
+
+func TestMarkdownDocumentationIncludesCommandExamples(t *testing.T) {
+	var opts struct {
+		Namespace string `long:"namespace"`
+		Command   struct {
+			Value string `long:"value"`
+		} `command:"command"`
+	}
+	p := NewParser(&opts, None)
+	command := p.Command.Find("command")
+	if err := command.SetExamples(Example().Describe("Run command").Option(&opts.Namespace, "prod").Option(&opts.Command.Value, "value")); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
+
+	var out strings.Builder
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithProgramName("app")); err != nil {
+		t.Fatalf("unexpected documentation error: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "#### Examples") || !strings.Contains(got, "app command --namespace prod --value value") {
+		t.Fatalf("markdown documentation does not contain command example:\n%s", got)
+	}
+}
+
+func TestHTMLAndManDocumentationIncludeCommandExamples(t *testing.T) {
+	var opts struct {
+		Command struct{} `command:"command"`
+	}
+	p := NewParser(&opts, None)
+	command := p.Command.Find("command")
+	if err := command.SetExamples(Example().Describe("Run it").Arg("value")); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
+
+	for _, format := range []DocFormat{DocFormatHTML, DocFormatMan} {
+		var out strings.Builder
+		if err := p.WriteDoc(&out, format, WithProgramName("app")); err != nil {
+			t.Fatalf("unexpected %s documentation error: %v", format, err)
+		}
+		got := out.String()
+		if !strings.Contains(got, "Examples") || !strings.Contains(got, "app command value") {
+			t.Fatalf("%s documentation does not contain command example:\n%s", format, got)
+		}
+	}
+}

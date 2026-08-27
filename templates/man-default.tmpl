@@ -8,6 +8,17 @@
 {{- end }}
 .SH {{ quoteMan (i18n "doc.tmpl.man.section.synopsis") }}
 \fB{{ quoteMan .Doc.Name }}\fP {{ quoteMan .Doc.Usage }}
+{{- if .Doc.Examples }}
+.SH EXAMPLES
+{{- range .Doc.Examples }}
+{{- if .Description }}{{ manInline .Description }}
+.PP
+{{- end }}
+.nf
+{{ quoteMan .Command }}
+.fi
+{{- end }}
+{{- end }}
 {{- if .Doc.LongDescription }}
 .SH {{ quoteMan (i18n "doc.tmpl.man.section.description") }}
 {{ manInline .Doc.LongDescription }}
@@ -135,6 +146,19 @@
 {{- if .UsageLine }}
 .PP
 \fB{{ i18n "doc.tmpl.man.label.usage" }}\fP: {{ quoteMan .UsageLine }}
+{{- end }}
+{{- if .Examples }}
+.PP
+\fBExamples\fP
+{{- range .Examples }}
+{{- if .Description }}
+.PP
+{{ manInline .Description }}
+{{- end }}
+.nf
+{{ quoteMan .Command }}
+.fi
+{{- end }}
 {{- end }}
 {{- if .Aliases }}
 .PP
