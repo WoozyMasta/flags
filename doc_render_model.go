@@ -7,6 +7,7 @@ package flags
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -339,7 +340,12 @@ func docDescriptionText(text, programName string, trim bool) string {
 }
 
 func replaceDocProgramNamePlaceholder(text, programName string) string {
-	return strings.ReplaceAll(text, DocProgramNamePlaceholder, programName)
+	text = strings.ReplaceAll(text, DocProgramNamePlaceholder, programName)
+	if programName == "" {
+		return text
+	}
+
+	return strings.ReplaceAll(text, DocProgramBaseNamePlaceholder, filepath.Base(programName))
 }
 
 func buildDocCommandGroups(commands []docCommand) []docCommandGroup {

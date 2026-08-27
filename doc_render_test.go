@@ -3,6 +3,7 @@ package flags
 import (
 	"bytes"
 	"encoding/json"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -149,6 +150,44 @@ func TestDocProgramNamePlaceholder(t *testing.T) {
 	}
 	if got := p.Command.FindOptionByLongName("token").Description; got != "Authenticate {{.ProgramName}}" {
 		t.Fatalf("option description was mutated: %q", got)
+	}
+}
+
+func TestDocProgramBaseNamePlaceholder(t *testing.T) {
+	type options struct {
+		Token string `long:"token" description:"Use {{.ProgramName}} ({{.ProgramBaseName}})"`
+	}
+
+	programPath := filepath.Join("bin", "app.exe")
+	p := NewNamedParser(programPath, None)
+	p.LongDescription = "Run {{.ProgramBaseName}} from {{.ProgramName}}"
+	if _, err := p.AddGroup("Options", "For {{.ProgramBaseName}}", &options{}); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var help bytes.Buffer
+	p.WriteHelp(&help)
+	if got := help.String(); !strings.Contains(got, "Use "+programPath+" (app.exe)") {
+		t.Fatalf("expected base name replacement in help, got:\n%s", got)
+	}
+
+	var doc bytes.Buffer
+	docProgramPath := filepath.Join("docs", "tool")
+	if err := p.WriteDoc(&doc, DocFormatMarkdown, WithProgramName(docProgramPath)); err != nil {
+		t.Fatalf("unexpected write doc error: %v", err)
+	}
+	got := doc.String()
+	for _, want := range []string{
+		"Run tool from " + docProgramPath,
+		"For tool",
+		"Use " + docProgramPath + " (tool)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q in output:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, DocProgramBaseNamePlaceholder) {
+		t.Fatalf("placeholder was not replaced:\n%s", got)
 	}
 }
 

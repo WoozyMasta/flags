@@ -1177,7 +1177,7 @@ func dynamicOptionDefault(value reflect.Value) ([]string, bool, error) {
 	v := value
 
 	for v.IsValid() && v.CanInterface() {
-		if provider, ok := v.Interface().(DefaultProvider); ok {
+		if provider, ok := reflect.TypeAssert[DefaultProvider](v); ok {
 			def, err := provider.Default()
 			return def, true, err
 		}

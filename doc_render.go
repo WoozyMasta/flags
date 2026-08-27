@@ -19,6 +19,9 @@ const (
 	// DocProgramNamePlaceholder is replaced with the effective program name
 	// in help output and generated documentation descriptions.
 	DocProgramNamePlaceholder = "{{.ProgramName}}"
+	// DocProgramBaseNamePlaceholder is replaced with the base name of the effective program name
+	// in help output and generated documentation descriptions.
+	DocProgramBaseNamePlaceholder = "{{.ProgramBaseName}}"
 	// DocFormatMan renders classic man page output.
 	DocFormatMan DocFormat = "man"
 	// DocFormatMarkdown renders markdown documentation.

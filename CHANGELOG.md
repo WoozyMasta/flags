@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* `DocProgramBaseNamePlaceholder` (`{{.ProgramBaseName}}`)
+  for using the base name of the effective program in help and documentation.
+
 ## [0.13.0] - 2026-08-14
 
 ### Added

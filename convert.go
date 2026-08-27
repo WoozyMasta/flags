@@ -63,12 +63,12 @@ func getBase(options multiTag, base int) (int, error) {
 func convertMarshal(val reflect.Value) (bool, string, error) {
 	// Check first for the Marshaler interface
 	if val.IsValid() && val.Type().NumMethod() > 0 && val.CanInterface() {
-		if marshaler, ok := val.Interface().(Marshaler); ok {
+		if marshaler, ok := reflect.TypeAssert[Marshaler](val); ok {
 			ret, err := marshaler.MarshalFlag()
 			return true, ret, err
 		}
 
-		if marshaler, ok := val.Interface().(encoding.TextMarshaler); ok {
+		if marshaler, ok := reflect.TypeAssert[encoding.TextMarshaler](val); ok {
 			ret, err := marshaler.MarshalText()
 			return true, string(ret), err
 		}
@@ -188,7 +188,7 @@ func convertToString(val reflect.Value, options multiTag) (string, error) {
 
 func convertUnmarshal(val string, retval reflect.Value) (bool, error) {
 	if retval.Type().NumMethod() > 0 && retval.CanInterface() {
-		if unmarshaler, ok := retval.Interface().(Unmarshaler); ok {
+		if unmarshaler, ok := reflect.TypeAssert[Unmarshaler](retval); ok {
 			if retval.IsNil() {
 				retval.Set(reflect.New(retval.Type().Elem()))
 
@@ -199,7 +199,7 @@ func convertUnmarshal(val string, retval reflect.Value) (bool, error) {
 			return true, unmarshaler.UnmarshalFlag(val)
 		}
 
-		if unmarshaler, ok := retval.Interface().(encoding.TextUnmarshaler); ok {
+		if unmarshaler, ok := reflect.TypeAssert[encoding.TextUnmarshaler](retval); ok {
 			if retval.IsNil() {
 				retval.Set(reflect.New(retval.Type().Elem()))
 
