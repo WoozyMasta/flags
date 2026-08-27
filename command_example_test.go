@@ -310,3 +310,29 @@ func TestJSONAndCustomTemplateExposeCommandExamples(t *testing.T) {
 		t.Fatalf("unexpected custom template output: %q", got)
 	}
 }
+
+func TestCommandAliasKeepsExamplesAndNestedCompletion(t *testing.T) {
+	var opts struct {
+		List struct {
+			Item struct{} `command:"item"`
+		} `command:"list" alias:"ls"`
+	}
+	p := NewParser(&opts, None)
+	list := p.Find("list")
+	if err := list.SetExamples(Example().Arg("value")); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
+
+	completion := (&completion{parser: p}).complete([]string{"ls", ""})
+	if len(completion) != 1 || completion[0].Item != "item" {
+		t.Fatalf("unexpected completion through command alias: %#v", completion)
+	}
+
+	rendered, err := renderCommandExample(p.Find("ls"), "app", ExampleShellBash, list.Examples()[0])
+	if err != nil {
+		t.Fatalf("unexpected example render error: %v", err)
+	}
+	if rendered.Command != "app list value" {
+		t.Fatalf("unexpected aliased command example: %q", rendered.Command)
+	}
+}
