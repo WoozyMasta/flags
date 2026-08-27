@@ -4,6 +4,12 @@
 
 package flags
 
+import (
+	"errors"
+	"fmt"
+	"reflect"
+)
+
 type commandExamplePartKind uint8
 
 const (
@@ -108,4 +114,54 @@ func cloneCommandExamples(examples []*CommandExample) []*CommandExample {
 	}
 
 	return clones
+}
+
+func (c *Command) resolveExampleOption(target any) (*Option, error) {
+	if target == nil {
+		return nil, errors.New("example option target must not be nil")
+	}
+
+	targetValue := reflect.ValueOf(target)
+	if targetValue.Kind() != reflect.Pointer || targetValue.IsNil() {
+		return nil, errors.New("example option target must be a non-nil pointer")
+	}
+
+	var found *Option
+	for _, command := range c.optionScopeCommands() {
+		command.eachGroup(func(group *Group) {
+			for _, option := range group.options {
+				if found != nil || !option.value.CanAddr() {
+					continue
+				}
+				field := option.value.Addr()
+				if field.Type() == targetValue.Type() && field.Pointer() == targetValue.Pointer() {
+					found = option
+				}
+			}
+		})
+	}
+
+	if found == nil {
+		return nil, fmt.Errorf("example option target %T is not registered in command scope", target)
+	}
+
+	return found, nil
+}
+
+func (c *Command) validateCommandExample(example *CommandExample) error {
+	if example == nil {
+		return nil
+	}
+
+	for _, part := range example.parts {
+		if part.kind != commandExampleOption && part.kind != commandExampleShortOption {
+			continue
+		}
+
+		if _, err := c.resolveExampleOption(part.target); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

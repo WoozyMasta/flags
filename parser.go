@@ -796,7 +796,17 @@ func (p *Parser) SetCommandExamples(examples map[string][]*CommandExample) error
 	}
 
 	for commandPath, command := range commands {
-		command.SetExamples(examples[commandPath]...)
+		for _, example := range examples[commandPath] {
+			if err := command.validateCommandExample(example); err != nil {
+				return fmt.Errorf("command path %q: %w", commandPath, err)
+			}
+		}
+	}
+
+	for commandPath, command := range commands {
+		if err := command.SetExamples(examples[commandPath]...); err != nil {
+			return fmt.Errorf("command path %q: %w", commandPath, err)
+		}
 	}
 
 	return nil

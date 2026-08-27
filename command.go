@@ -197,8 +197,15 @@ func (c *Command) SetLongDescriptionI18nKey(key string) {
 }
 
 // SetExamples replaces structured command examples.
-func (c *Command) SetExamples(examples ...*CommandExample) {
+// It returns an error when an option target is outside the command scope.
+func (c *Command) SetExamples(examples ...*CommandExample) error {
+	for _, example := range examples {
+		if err := c.validateCommandExample(example); err != nil {
+			return err
+		}
+	}
 	c.examples = cloneCommandExamples(examples)
+	return nil
 }
 
 // Examples returns a copy of structured command examples.

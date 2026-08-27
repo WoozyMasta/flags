@@ -59,7 +59,9 @@ func TestCommandExamplesAreCopiedOnSetAndGet(t *testing.T) {
 	command := p.Command.Find("command")
 	example := Example().Describe("description").Arg("value")
 
-	command.SetExamples(example)
+	if err := command.SetExamples(example); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
 	example.parts[0].value = "changed"
 	stored := command.Examples()
 	stored[0].parts[0].value = "mutated"
@@ -69,7 +71,9 @@ func TestCommandExamplesAreCopiedOnSetAndGet(t *testing.T) {
 		t.Fatalf("stored example was mutated through caller data: %q", got[0].parts[0].value)
 	}
 
-	command.SetExamples()
+	if err := command.SetExamples(); err != nil {
+		t.Fatalf("unexpected clear examples error: %v", err)
+	}
 	if len(command.Examples()) != 0 {
 		t.Fatal("empty SetExamples did not clear examples")
 	}
@@ -81,7 +85,9 @@ func TestCommandExamplesSurviveParserRebuild(t *testing.T) {
 	}
 	p := NewParser(&opts, None)
 	command := p.Command.Find("command")
-	command.SetExamples(Example().Arg("value"))
+	if err := command.SetExamples(Example().Arg("value")); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
 
 	if err := p.SetTagListDelimiter(';'); err != nil {
 		t.Fatalf("unexpected rebuild error: %v", err)
@@ -127,5 +133,45 @@ func TestSetCommandExamplesSupportsNestedPathsAtomically(t *testing.T) {
 	}
 	if got := command.Examples()[0].parts[0].value; got != "profile.yaml" {
 		t.Fatalf("invalid registration partially changed examples: %q", got)
+	}
+}
+
+func TestCommandExampleOptionResolutionUsesCommandScope(t *testing.T) {
+	var opts struct {
+		Global  string `long:"global"`
+		Command struct {
+			Local string `long:"local" short:"l"`
+		} `command:"command"`
+		Sibling struct {
+			Other string `long:"other"`
+		} `command:"sibling"`
+	}
+	p := NewParser(&opts, None)
+	command := p.Command.Find("command")
+
+	global, err := command.resolveExampleOption(&opts.Global)
+	if err != nil || global.LongName != "global" {
+		t.Fatalf("global option resolution = %v, %v", global, err)
+	}
+	local, err := command.resolveExampleOption(&opts.Command.Local)
+	if err != nil || local.LongName != "local" {
+		t.Fatalf("local option resolution = %v, %v", local, err)
+	}
+	if _, err := command.resolveExampleOption(&opts.Sibling.Other); err == nil {
+		t.Fatal("sibling option was accepted")
+	}
+	if _, err := command.resolveExampleOption(nil); err == nil {
+		t.Fatal("nil option target was accepted")
+	}
+
+	if err := local.SetLongName("renamed"); err != nil {
+		t.Fatalf("unexpected long name update error: %v", err)
+	}
+	if err := local.SetShortName('r'); err != nil {
+		t.Fatalf("unexpected short name update error: %v", err)
+	}
+	resolved, err := command.resolveExampleOption(&opts.Command.Local)
+	if err != nil || resolved.LongName != "renamed" || resolved.ShortName != 'r' {
+		t.Fatalf("renamed option resolution = %v, %v", resolved, err)
 	}
 }
