@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
+	"unicode"
 )
 
 type commandExamplePartKind uint8
@@ -18,6 +20,8 @@ const (
 	commandExampleShortOption
 	commandExampleRaw
 )
+
+var _ = renderCommandExample
 
 type commandExamplePart struct {
 	kind   commandExamplePartKind
@@ -164,4 +168,96 @@ func (c *Command) validateCommandExample(example *CommandExample) error {
 	}
 
 	return nil
+}
+
+type exampleShell string
+
+const (
+	exampleShellBash exampleShell = "bash"
+	exampleShellPwsh exampleShell = "pwsh"
+)
+
+type renderedCommandExample struct {
+	Description string
+	Command     string
+}
+
+func renderCommandExample(command *Command, programName string, shell exampleShell, example *CommandExample) (renderedCommandExample, error) {
+	if command == nil || example == nil {
+		return renderedCommandExample{}, errors.New("command and example must not be nil")
+	}
+	if shell != exampleShellBash && shell != exampleShellPwsh {
+		return renderedCommandExample{}, fmt.Errorf("unsupported example shell %q", shell)
+	}
+
+	parts := []string{quoteExampleToken(programName, shell)}
+	for current := command; current != nil; {
+		parent, ok := current.parent.(*Command)
+		if !ok {
+			break
+		}
+		parts = append(parts, current.Name)
+		current = parent
+	}
+
+	// Command names were collected leaf-first.
+	for left, right := 1, len(parts)-1; left < right; left, right = left+1, right-1 {
+		parts[left], parts[right] = parts[right], parts[left]
+	}
+
+	for _, part := range example.parts {
+		switch part.kind {
+		case commandExampleArg:
+			parts = append(parts, quoteExampleToken(part.value, shell))
+
+		case commandExampleOption, commandExampleShortOption:
+			option, err := command.resolveExampleOption(part.target)
+			if err != nil {
+				return renderedCommandExample{}, err
+			}
+
+			name := ""
+			switch {
+			case part.kind == commandExampleOption && option.LongName != "":
+				name = "--" + option.LongNameWithNamespace()
+			case option.ShortName != 0:
+				name = "-" + string(option.ShortName)
+			default:
+				return renderedCommandExample{}, fmt.Errorf("option target %T has no usable name", part.target)
+			}
+
+			parts = append(parts, name)
+			if part.value != "" {
+				parts = append(parts, quoteExampleToken(part.value, shell))
+			}
+
+		case commandExampleRaw:
+			if part.value != "" {
+				parts = append(parts, part.value)
+			}
+		}
+	}
+
+	return renderedCommandExample{Description: example.description, Command: strings.Join(parts, " ")}, nil
+}
+
+func quoteExampleToken(value string, shell exampleShell) string {
+	if value != "" && isSafeExampleToken(value) {
+		return value
+	}
+	if shell == exampleShellPwsh {
+		return pwshSingleQuote(value)
+	}
+
+	return bashSingleQuote(value)
+}
+
+func isSafeExampleToken(value string) bool {
+	for _, r := range value {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || strings.ContainsRune("_./:-+=,@%", r) {
+			continue
+		}
+		return false
+	}
+	return true
 }

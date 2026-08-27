@@ -175,3 +175,36 @@ func TestCommandExampleOptionResolutionUsesCommandScope(t *testing.T) {
 		t.Fatalf("renamed option resolution = %v, %v", resolved, err)
 	}
 }
+
+func TestRenderCommandExample(t *testing.T) {
+	var opts struct {
+		Global  string `long:"global"`
+		Command struct {
+			Local string `long:"local-name" short:"l"`
+		} `command:"command"`
+	}
+	p := NewParser(&opts, None)
+	command := p.Command.Find("command")
+	example := Example().
+		Describe("Run command").
+		Arg("path with spaces").
+		Option(&opts.Global, "$value").
+		ShortOption(&opts.Command.Local, "local").
+		Raw("| jq '.')")
+
+	bash, err := renderCommandExample(command, "my-app", exampleShellBash, example)
+	if err != nil {
+		t.Fatalf("unexpected Bash render error: %v", err)
+	}
+	if bash.Command != "my-app command 'path with spaces' --global '$value' -l local | jq '.')" {
+		t.Fatalf("unexpected Bash example: %q", bash.Command)
+	}
+
+	pwsh, err := renderCommandExample(command, "my app", exampleShellPwsh, Example().Arg("it's `$value"))
+	if err != nil {
+		t.Fatalf("unexpected PowerShell render error: %v", err)
+	}
+	if pwsh.Command != "'my app' command 'it''s `$value'" {
+		t.Fatalf("unexpected PowerShell example: %q", pwsh.Command)
+	}
+}
