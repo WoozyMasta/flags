@@ -11,7 +11,7 @@
 {{ code (printf "%s %s" .Doc.Name .Doc.Usage) }}
 
 {{ if .Doc.Examples }}
-## Examples
+## {{ i18n "doc.tmpl.markdown.section.examples" }}
 
 {{ range .Doc.Examples }}{{ if .Description }}{{ .Description }}
 
@@ -145,7 +145,7 @@
 
 {{ end }}
 {{ if .Examples }}
-#### Examples
+#### {{ i18n "doc.tmpl.markdown.section.examples" }}
 
 {{ range .Examples }}{{ if .Description }}{{ .Description }}
 

@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## [0.14.1] - 2026-08-27
+
+### Fixed
+
+* Localize structured command example headings in generated documentation.
+
+[0.14.1]: https://github.com/WoozyMasta/flags/compare/v0.14.0...v0.14.1
+
 ## [0.14.0] - 2026-08-27
 
 ### Added

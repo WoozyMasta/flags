@@ -9,7 +9,7 @@
 .SH {{ quoteMan (i18n "doc.tmpl.man.section.synopsis") }}
 \fB{{ quoteMan .Doc.Name }}\fP {{ quoteMan .Doc.Usage }}
 {{- if .Doc.Examples }}
-.SH EXAMPLES
+.SH {{ quoteMan (i18n "doc.tmpl.man.section.examples") }}
 {{- range .Doc.Examples }}
 {{- if .Description }}{{ manInline .Description }}
 .PP
@@ -149,7 +149,7 @@
 {{- end }}
 {{- if .Examples }}
 .PP
-\fBExamples\fP
+\fB{{ i18n "doc.tmpl.man.section.examples_title" }}\fP
 {{- range .Examples }}
 {{- if .Description }}
 .PP
