@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.14.0] - 2026-08-27
 
 ### Added
 
@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning][].
   when `StrictPositionalArgs` is enabled.
 * Shell completion now suggests root
   and nested command names after the built-in `help` command.
+
+[0.14.0]: https://github.com/WoozyMasta/flags/compare/v0.13.0...v0.14.0
 
 ## [0.13.0] - 2026-08-14
 
