@@ -420,7 +420,7 @@ and this project adheres to [Semantic Versioning][].
 * Choice lists in built-in help no longer degrade into
   one-item-per-line wrapping in common wide-terminal scenarios.
 * Localized built-in help test coverage now relies on explicit
- `ShowChoiceListInHelp` for stable `valid values` label expectations.
+  `ShowChoiceListInHelp` for stable `valid values` label expectations.
 
 [0.3.1]: https://github.com/WoozyMasta/flags/compare/v0.3.0...v0.3.1
 
