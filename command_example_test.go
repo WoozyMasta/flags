@@ -1,6 +1,9 @@
 package flags
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestCommandExampleBuilderPreservesDeclarationOrder(t *testing.T) {
 	var opts struct {
@@ -206,5 +209,27 @@ func TestRenderCommandExample(t *testing.T) {
 	}
 	if pwsh.Command != "'my app' command 'it''s `$value'" {
 		t.Fatalf("unexpected PowerShell example: %q", pwsh.Command)
+	}
+}
+
+func TestWriteHelpIncludesCommandExamples(t *testing.T) {
+	var opts struct {
+		Command struct{} `command:"command"`
+	}
+	p := NewParser(&opts, None)
+	command := p.Command.Find("command")
+	if err := command.SetExamples(Example().Describe("Run it").Arg("value")); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
+	if _, err := p.ParseArgs([]string{"command"}); err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	var out strings.Builder
+	p.WriteHelp(&out)
+	got := out.String()
+	if !strings.Contains(got, "Examples:") || !strings.Contains(got, "Run it:") ||
+		!strings.Contains(got, "command value") {
+		t.Fatalf("help does not contain command example:\n%s", got)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
@@ -206,6 +207,8 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 
 			_, _ = fmt.Fprintln(wr, p.colorizeHelp(t, p.helpColorScheme.LongDescription))
 		}
+
+		p.writeHelpExamples(wr, cmd)
 	}
 
 	c := p.Command
@@ -375,6 +378,31 @@ func (p *Parser) WriteHelp(writer io.Writer) {
 	p.writeHelpRawBlock(wr, p.helpFooter, p.helpColorScheme.HelpFooter, aligninfo.terminalColumns)
 
 	_ = wr.Flush()
+}
+
+func (p *Parser) writeHelpExamples(wr *bufio.Writer, command *Command) {
+	if len(command.examples) == 0 {
+		return
+	}
+
+	shell := exampleShellBash
+	if runtime.GOOS == "windows" {
+		shell = exampleShellPwsh
+	}
+
+	_, _ = fmt.Fprintf(wr, "\n%s:\n", p.colorizeHelp(p.i18nText("help.examples", "Examples"), p.helpColorScheme.LongDescription))
+	for _, example := range command.examples {
+		rendered, err := renderCommandExample(command, p.Name, shell, example)
+		if err != nil {
+			continue
+		}
+		if rendered.Description != "" {
+			_, _ = fmt.Fprintf(wr, "  %s:\n", p.colorizeHelp(rendered.Description, p.helpColorScheme.LongDescription))
+			_, _ = fmt.Fprintf(wr, "    %s\n", p.colorizeHelp(rendered.Command, p.helpColorScheme.LongDescription))
+			continue
+		}
+		_, _ = fmt.Fprintf(wr, "  %s\n", p.colorizeHelp(rendered.Command, p.helpColorScheme.LongDescription))
+	}
 }
 
 // HelpRenderOptions configures a single WriteHelpWithOptions call without
