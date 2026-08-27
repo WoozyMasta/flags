@@ -385,9 +385,9 @@ func (p *Parser) writeHelpExamples(wr *bufio.Writer, command *Command) {
 		return
 	}
 
-	shell := exampleShellBash
+	shell := ExampleShellBash
 	if runtime.GOOS == "windows" {
-		shell = exampleShellPwsh
+		shell = ExampleShellPwsh
 	}
 
 	_, _ = fmt.Fprintf(wr, "\n%s:\n", p.colorizeHelp(p.i18nText("help.examples", "Examples"), p.helpColorScheme.LongDescription))

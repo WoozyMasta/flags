@@ -170,11 +170,14 @@ func (c *Command) validateCommandExample(example *CommandExample) error {
 	return nil
 }
 
-type exampleShell string
+// ExampleShell identifies the shell syntax used to render command examples.
+type ExampleShell string
 
 const (
-	exampleShellBash exampleShell = "bash"
-	exampleShellPwsh exampleShell = "pwsh"
+	// ExampleShellBash renders examples for Bash-compatible shells.
+	ExampleShellBash ExampleShell = "bash"
+	// ExampleShellPwsh renders examples for PowerShell.
+	ExampleShellPwsh ExampleShell = "pwsh"
 )
 
 type renderedCommandExample struct {
@@ -182,11 +185,11 @@ type renderedCommandExample struct {
 	Command     string
 }
 
-func renderCommandExample(command *Command, programName string, shell exampleShell, example *CommandExample) (renderedCommandExample, error) {
+func renderCommandExample(command *Command, programName string, shell ExampleShell, example *CommandExample) (renderedCommandExample, error) {
 	if command == nil || example == nil {
 		return renderedCommandExample{}, errors.New("command and example must not be nil")
 	}
-	if shell != exampleShellBash && shell != exampleShellPwsh {
+	if shell != ExampleShellBash && shell != ExampleShellPwsh {
 		return renderedCommandExample{}, fmt.Errorf("unsupported example shell %q", shell)
 	}
 
@@ -241,11 +244,11 @@ func renderCommandExample(command *Command, programName string, shell exampleShe
 	return renderedCommandExample{Description: example.description, Command: strings.Join(parts, " ")}, nil
 }
 
-func quoteExampleToken(value string, shell exampleShell) string {
+func quoteExampleToken(value string, shell ExampleShell) string {
 	if value != "" && isSafeExampleToken(value) {
 		return value
 	}
-	if shell == exampleShellPwsh {
+	if shell == ExampleShellPwsh {
 		return pwshSingleQuote(value)
 	}
 

@@ -39,6 +39,7 @@ type docRenderOptions struct {
 	programName                     string
 	includeBuiltinCommands          []string // nil = include all; non-nil = include only these names
 	wrapWidth                       int
+	exampleShell                    ExampleShell
 	renderStyle                     RenderStyle
 	toc                             bool
 	tocNested                       bool
@@ -49,7 +50,20 @@ type docRenderOptions struct {
 	jsonCompact                     bool
 	hasRenderStyle                  bool
 	hasWrapWidth                    bool
+	hasExampleShell                 bool
 	includeBuiltinHelpInSubcommands bool
+}
+
+// WithExampleShell configures the shell syntax used for rendered examples.
+func WithExampleShell(shell ExampleShell) DocOption {
+	return func(o *docRenderOptions) error {
+		if shell != ExampleShellBash && shell != ExampleShellPwsh {
+			return fmt.Errorf("unsupported example shell %q", shell)
+		}
+		o.exampleShell = shell
+		o.hasExampleShell = true
+		return nil
+	}
 }
 
 // DocOption configures WriteDoc behavior.

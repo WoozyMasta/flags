@@ -25,6 +25,7 @@ type docParser struct {
 	Args             []docArg          `json:"args,omitempty"`
 	Groups           []docGroup        `json:"groups,omitempty"`
 	Commands         []docCommand      `json:"commands,omitempty"`
+	Examples         []docExample      `json:"examples,omitempty"`
 	CommandGroups    []docCommandGroup `json:"-"`
 }
 
@@ -51,10 +52,16 @@ type docCommand struct {
 	Args                []docArg          `json:"args,omitempty"`
 	Groups              []docGroup        `json:"groups,omitempty"`
 	Commands            []docCommand      `json:"commands,omitempty"`
+	Examples            []docExample      `json:"examples,omitempty"`
 	CommandGroups       []docCommandGroup `json:"-"`
 	SubcommandsOptional bool              `json:"subcommands_optional,omitempty"`
 	PassAfterNonOption  bool              `json:"pass_after_non_option,omitempty"`
 	Hidden              bool              `json:"hidden,omitempty"`
+}
+
+type docExample struct {
+	Description string `json:"description,omitempty"`
+	Command     string `json:"command"`
 }
 
 type docArg struct {
@@ -133,6 +140,10 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		Groups:           buildDocGroups(p.Group, programName, true, cfg.includeHidden, format, cfg.trimDescriptions, false),
 		Meta:             p.buildDocMeta(),
 	}
+	if !cfg.hasExampleShell {
+		cfg.exampleShell = ExampleShellBash
+	}
+	model.Examples = buildDocExamples(p.Command, programName, cfg.exampleShell)
 
 	skipBuiltinHelpInSubs := !cfg.includeBuiltinHelpInSubcommands
 
@@ -151,7 +162,7 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		commands = filtered
 	}
 	for _, cmd := range commands {
-		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, programName, cmd, cfg.includeHidden, format, cfg.trimDescriptions, skipBuiltinHelpInSubs))
+		model.Commands = append(model.Commands, buildDocCommand("", programName+" "+usage, programName, cfg.exampleShell, cmd, cfg.includeHidden, format, cfg.trimDescriptions, skipBuiltinHelpInSubs))
 	}
 	model.CommandGroups = buildDocCommandGroups(model.Commands)
 
@@ -162,6 +173,7 @@ func buildDocCommand(
 	parentName string,
 	usagePrefix string,
 	programName string,
+	exampleShell ExampleShell,
 	cmd *Command,
 	includeHidden bool,
 	format optionRenderFormat,
@@ -200,14 +212,32 @@ func buildDocCommand(
 		Group:               cmd.localizedCommandGroup(),
 		Args:                buildDocArgs(cmd, programName, includeHidden, trimDescriptions),
 		Groups:              buildDocGroups(cmd.Group, programName, true, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup),
+		Examples:            buildDocExamples(cmd, programName, exampleShell),
 	}
 
 	for _, sub := range docCommands(cmd, includeHidden) {
-		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, programName, sub, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup))
+		doc.Commands = append(doc.Commands, buildDocCommand(fullName, nextPrefix, programName, exampleShell, sub, includeHidden, format, trimDescriptions, skipBuiltinHelpGroup))
 	}
 	doc.CommandGroups = buildDocCommandGroups(doc.Commands)
 
 	return doc
+}
+
+func buildDocExamples(command *Command, programName string, shell ExampleShell) []docExample {
+	if command == nil || len(command.examples) == 0 {
+		return nil
+	}
+
+	examples := make([]docExample, 0, len(command.examples))
+	for _, example := range command.examples {
+		rendered, err := renderCommandExample(command, programName, shell, example)
+		if err != nil {
+			continue
+		}
+		examples = append(examples, docExample(rendered))
+	}
+
+	return examples
 }
 
 func buildDocGroups(

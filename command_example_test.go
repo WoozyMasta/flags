@@ -195,7 +195,7 @@ func TestRenderCommandExample(t *testing.T) {
 		ShortOption(&opts.Command.Local, "local").
 		Raw("| jq '.')")
 
-	bash, err := renderCommandExample(command, "my-app", exampleShellBash, example)
+	bash, err := renderCommandExample(command, "my-app", ExampleShellBash, example)
 	if err != nil {
 		t.Fatalf("unexpected Bash render error: %v", err)
 	}
@@ -203,7 +203,7 @@ func TestRenderCommandExample(t *testing.T) {
 		t.Fatalf("unexpected Bash example: %q", bash.Command)
 	}
 
-	pwsh, err := renderCommandExample(command, "my app", exampleShellPwsh, Example().Arg("it's `$value"))
+	pwsh, err := renderCommandExample(command, "my app", ExampleShellPwsh, Example().Arg("it's `$value"))
 	if err != nil {
 		t.Fatalf("unexpected PowerShell render error: %v", err)
 	}
