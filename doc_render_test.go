@@ -392,6 +392,52 @@ func TestWriteDocMarkdownTOCLocalizedLabelsMatchHeadingAnchors(t *testing.T) {
 	}
 }
 
+func TestWriteDocNestedTOC(t *testing.T) {
+	var opts struct {
+		Capture struct {
+			Data struct {
+				Dir struct{} `command:"dir" description:"Capture to a directory"`
+			} `command:"data" description:"Capture data"`
+		} `command:"capture" description:"Capture resources"`
+	}
+
+	p := NewNamedParser("app", None)
+	if _, err := p.AddGroup("Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	var flat bytes.Buffer
+	if err := p.WriteDoc(&flat, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList), WithTOC(true)); err != nil {
+		t.Fatalf("unexpected flat write error: %v", err)
+	}
+	if !strings.Contains(flat.String(), "  * [capture data](#capture-data)") {
+		t.Fatalf("expected flat command entry, got:\n%s", flat.String())
+	}
+
+	var nested bytes.Buffer
+	if err := p.WriteDoc(&nested, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList), WithTOC(true), WithNestedTOC(true)); err != nil {
+		t.Fatalf("unexpected nested write error: %v", err)
+	}
+	got := nested.String()
+	for _, want := range []string{
+		"  * [capture](#capture)",
+		"    * [data](#capture-data)",
+		"      * [dir](#capture-data-dir)",
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected %q in output:\n%s", want, got)
+		}
+	}
+
+	var html bytes.Buffer
+	if err := p.WriteDoc(&html, DocFormatHTML, WithTOC(true), WithNestedTOC(true)); err != nil {
+		t.Fatalf("unexpected html write error: %v", err)
+	}
+	if !strings.Contains(html.String(), "<a href=\"#command-capture-data\">data</a>") {
+		t.Fatalf("expected nested html toc, got:\n%s", html.String())
+	}
+}
+
 func TestSlugifyTOCPreservesNonLatinScripts(t *testing.T) {
 	tests := []struct {
 		name string

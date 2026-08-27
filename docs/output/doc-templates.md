@@ -107,6 +107,11 @@ program name. This is literal replacement, not Go template evaluation.
 
 Use `WithBuiltinCommands` to control which built-in commands appear in
 the generated output.
+
+Use `WithNestedTOC(true)` or `--toc-nested` with Markdown/HTML output
+to nest command entries according to their command hierarchy.
+Labels use local command names while links keep the full command path.
+
 Pass `nil` to include all (the default when calling `WriteDoc` directly).
 Pass a non-nil slice to restrict to the named commands only:
 

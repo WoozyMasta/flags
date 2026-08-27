@@ -548,7 +548,7 @@ func TestBuiltinDocsCommandTOCMarkdown(t *testing.T) {
 	p := NewNamedParser("app.exe", HelpCommands)
 	out := filepath.Join(t.TempDir(), "docs.md")
 
-	if _, err := p.ParseArgs([]string{"docs", "md", "--toc", "--program-name", "app", out}); err != nil {
+	if _, err := p.ParseArgs([]string{"docs", "md", "--toc", "--toc-nested", "--program-name", "app", out}); err != nil {
 		t.Fatalf("unexpected parse error: %v", err)
 	}
 

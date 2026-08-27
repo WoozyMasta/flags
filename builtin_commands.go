@@ -121,10 +121,10 @@ func (c *builtinCompletionCommand) Execute(_ []string) error {
 }
 
 type builtinDocsCommand struct {
-	HTML     builtinDocHTMLCommand     `command:"html" ini-group:"docs.html" description:"Generate HTML documentation" description-i18n:"help.builtin.command.docs.html.desc"`
-	Man      builtinDocManCommand      `command:"man" ini-group:"docs.man" description:"Generate man page documentation" description-i18n:"help.builtin.command.docs.man.desc"`
-	JSON     builtinDocJSONCommand     `command:"json" ini-group:"docs.json" description:"Generate JSON documentation manifest" description-i18n:"help.builtin.command.docs.json.desc"`
-	MD       builtinDocMarkdownCommand `command:"md" ini-group:"docs.md" description:"Generate Markdown documentation" description-i18n:"help.builtin.command.docs.md.desc"`
+	HTML     builtinDocHTMLCommand     `command:"html"     ini-group:"docs.html"     description:"Generate HTML documentation"              description-i18n:"help.builtin.command.docs.html.desc"`
+	Man      builtinDocManCommand      `command:"man"      ini-group:"docs.man"      description:"Generate man page documentation"          description-i18n:"help.builtin.command.docs.man.desc"`
+	JSON     builtinDocJSONCommand     `command:"json"     ini-group:"docs.json"     description:"Generate JSON documentation manifest"     description-i18n:"help.builtin.command.docs.json.desc"`
+	MD       builtinDocMarkdownCommand `command:"md"       ini-group:"docs.md"       description:"Generate Markdown documentation"          description-i18n:"help.builtin.command.docs.md.desc"`
 	Template builtinDocTemplateCommand `command:"template" ini-group:"docs.template" description:"Export or render documentation templates" description-i18n:"help.builtin.command.docs.template.desc"`
 }
 
@@ -155,10 +155,10 @@ type builtinDocManCommand struct {
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
-	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
 
-	IncludeHidden bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	MarkHidden    bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
+	TrimDescriptions bool `auto-env:"false" long:"trim-descriptions" description:"Trim description whitespace in generated output"`
+	IncludeHidden    bool `auto-env:"false" long:"include-hidden"    description:"Include hidden options, groups and commands"     description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden       bool `auto-env:"false" long:"mark-hidden"       description:"Mark hidden entities in documentation output"    description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (c *builtinDocManCommand) Execute(_ []string) error {
@@ -184,15 +184,18 @@ type builtinDocHTMLCommand struct {
 	Output struct {
 		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
+
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
-	TOC              bool `description:"Include table of contents in output" auto-env:"false" long:"toc"`
-	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
 
-	IncludeHidden bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	MarkHidden    bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
+	TOC              bool `auto-env:"false" long:"toc"               description:"Include table of contents in output"`
+	TOCNested        bool `auto-env:"false" long:"toc-nested"        description:"Nest command entries in the table of contents"`
+	TrimDescriptions bool `auto-env:"false" long:"trim-descriptions" description:"Trim description whitespace in generated output"`
+
+	IncludeHidden bool `auto-env:"false" long:"include-hidden" description:"Include hidden options, groups and commands"  description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden    bool `auto-env:"false" long:"mark-hidden"    description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
 }
 
 func (c *builtinDocHTMLCommand) Execute(_ []string) error {
@@ -205,6 +208,7 @@ func (c *builtinDocHTMLCommand) Execute(_ []string) error {
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
 		WithTOC(c.TOC),
+		WithNestedTOC(c.TOCNested),
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithIncludeHidden(c.IncludeHidden),
 		WithMarkHidden(c.MarkHidden),
@@ -232,6 +236,7 @@ type builtinDocMarkdownCommand struct {
 	builtinDocHelpGroupOption
 
 	TOC              bool `description:"Include table of contents in output" auto-env:"false" long:"toc"`
+	TOCNested        bool `description:"Nest command entries in the table of contents" auto-env:"false" long:"toc-nested"`
 	DashLists        bool `description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false" long:"dash-lists"`
 	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
 
@@ -252,6 +257,7 @@ func (c *builtinDocMarkdownCommand) Execute(_ []string) error {
 		WithBuiltinTemplate(templateName),
 		WithProgramName(c.ProgramName),
 		WithTOC(c.TOC),
+		WithNestedTOC(c.TOCNested),
 		WithMarkdownDashLists(c.DashLists),
 		WithTrimDescriptions(c.TrimDescriptions),
 		WithDocWrapWidth(c.WrapWidth),
@@ -277,9 +283,10 @@ type builtinDocJSONCommand struct {
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
 	builtinDocHelpGroupOption
-	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
-	IncludeHidden    bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	Compact          bool `description:"Emit compact JSON without indentation" auto-env:"false" long:"compact"`
+
+	TrimDescriptions bool `auto-env:"false" long:"trim-descriptions" description:"Trim description whitespace in generated output"`
+	IncludeHidden    bool `auto-env:"false" long:"include-hidden"    description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	Compact          bool `auto-env:"false" long:"compact"           description:"Emit compact JSON without indentation"`
 }
 
 func (c *builtinDocJSONCommand) Execute(_ []string) error {
@@ -298,7 +305,7 @@ func (c *builtinDocJSONCommand) Execute(_ []string) error {
 }
 
 type builtinDocTemplateCommand struct {
-	Export builtinDocTemplateExportCommand `command:"export" ini-group:"docs.template.export" description:"Export a built-in documentation template" description-i18n:"help.builtin.command.docs.template.export.desc"`
+	Export builtinDocTemplateExportCommand `command:"export" ini-group:"docs.template.export" description:"Export a built-in documentation template"     description-i18n:"help.builtin.command.docs.template.export.desc"`
 	Render builtinDocTemplateRenderCommand `command:"render" ini-group:"docs.template.render" description:"Render documentation using a custom template" description-i18n:"help.builtin.command.docs.template.render.desc"`
 }
 
@@ -320,8 +327,8 @@ type builtinDocTemplateRenderCommand struct {
 	parser *Parser
 
 	Inputs struct {
-		Template string `description:"Template file path or - for stdin" positional-arg-name:"template" arg-name-i18n:"help.builtin.command.docs.template.input.name" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`
-		Output   string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
+		Template string `positional-arg-name:"template" description:"Template file path or - for stdin" arg-name-i18n:"help.builtin.command.docs.template.input.name" arg-description-i18n:"help.builtin.command.docs.template.input.desc"`
+		Output   string `positional-arg-name:"output"   description:"Output file path"                  arg-name-i18n:"help.builtin.command.output.name"              arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
 	Format string `description:"Output format for template rendering" auto-env:"false" long:"format" description-i18n:"help.builtin.command.docs.template.format.desc" default:"markdown" choices:"markdown;html;man;json"`
@@ -329,14 +336,15 @@ type builtinDocTemplateRenderCommand struct {
 	builtinDocProgramNameOption
 	builtinDocRenderStyleOption
 	builtinDocBuiltinCommandsOption
-	WrapWidth int `description:"Maximum width for wrapped Markdown text; zero disables wrapping" auto-env:"false" long:"wrap-width" default:"80" value-name:"COLUMNS"`
+
+	WrapWidth int `auto-env:"false" long:"wrap-width"        description:"Maximum width for wrapped Markdown text; zero disables wrapping" default:"80" value-name:"COLUMNS"`
 	builtinDocHelpGroupOption
-	TOC              bool `description:"Include table of contents in output" auto-env:"false" long:"toc"`
-	DashLists        bool `description:"Use '-' as Markdown list marker (default: '*')" auto-env:"false" long:"dash-lists"`
-	TrimDescriptions bool `description:"Trim description whitespace in generated output" auto-env:"false" long:"trim-descriptions"`
-	IncludeHidden    bool `description:"Include hidden options, groups and commands" auto-env:"false" long:"include-hidden" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
-	MarkHidden       bool `description:"Mark hidden entities in documentation output" auto-env:"false" long:"mark-hidden" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
-	Compact          bool `description:"Emit compact JSON without indentation" auto-env:"false" long:"compact"`
+	TOC              bool `auto-env:"false" long:"toc"               description:"Include table of contents in output"`
+	DashLists        bool `auto-env:"false" long:"dash-lists"        description:"Use '-' as Markdown list marker (default: '*')"`
+	TrimDescriptions bool `auto-env:"false" long:"trim-descriptions" description:"Trim description whitespace in generated output"`
+	IncludeHidden    bool `auto-env:"false" long:"include-hidden"    description:"Include hidden options, groups and commands" description-i18n:"help.builtin.command.docs.include_hidden.desc"`
+	MarkHidden       bool `auto-env:"false" long:"mark-hidden"       description:"Mark hidden entities in documentation output" description-i18n:"help.builtin.command.docs.mark_hidden.desc"`
+	Compact          bool `auto-env:"false" long:"compact"           description:"Emit compact JSON without indentation"`
 }
 
 func (c *builtinDocTemplateRenderCommand) Execute(_ []string) error {
@@ -492,8 +500,8 @@ type builtinConfigCommand struct {
 		Path string `description:"Output file path" positional-arg-name:"output" arg-name-i18n:"help.builtin.command.output.name" arg-description-i18n:"help.builtin.command.output.desc"`
 	} `positional-args:"yes"`
 
-	Format       string `long:"format"        description:"Output format"                       description-i18n:"help.builtin.command.config.format.desc"                    auto-env:"false"`
-	CommentWidth int    `long:"comment-width" description:"Maximum width for wrapped comments" description-i18n:"help.builtin.command.config.comment_width.desc" default:"80" value-name:"COLUMNS" value-name-i18n:"help.builtin.command.value.columns" auto-env:"false"`
+	Format       string `auto-env:"false" long:"format"        description:"Output format"                      description-i18n:"help.builtin.command.config.format.desc"`
+	CommentWidth int    `auto-env:"false" long:"comment-width" description:"Maximum width for wrapped comments" description-i18n:"help.builtin.command.config.comment_width.desc" default:"80" value-name:"COLUMNS" value-name-i18n:"help.builtin.command.value.columns"`
 	iniEnabled   bool
 	jsonEnabled  bool
 }

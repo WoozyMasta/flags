@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning][].
 
 * `DocProgramBaseNamePlaceholder` (`{{.ProgramBaseName}}`)
   for using the base name of the effective program in help and documentation.
+* `WithNestedTOC` and `--toc-nested` provide hierarchical command entries
+  in Markdown and HTML tables of contents.
 
 ## [0.13.0] - 2026-08-14
 

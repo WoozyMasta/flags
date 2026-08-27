@@ -217,9 +217,9 @@
         <li>
           <a href="#commands">{{ i18n "doc.tmpl.html.section.commands" }}</a>
           <ul>
-{{- range tocCommandEntries .Doc.Commands }}
+{{- if .NestedTOC }}{{ range tocCommandEntriesNested .Doc.Commands }}{{ template "tocHTMLCommand" . }}{{ end }}{{ else }}{{ range tocCommandEntries .Doc.Commands }}
             <li><a href="#{{ .Anchor }}">{{ quoteHTML .Name }}</a></li>
-{{- end }}
+{{- end }}{{ end }}
           </ul>
         </li>
 {{- end }}
@@ -433,6 +433,10 @@
 {{ template "command" . }}
 {{- end }}
 {{- end }}
+{{ end }}</body>
+</html>{{ define "tocHTMLCommand" }}
+            <li><a href="#{{ .Anchor }}">{{ quoteHTML .Name }}</a>{{ if .Children }}
+              <ul>{{ range .Children }}{{ template "tocHTMLCommand" . }}{{ end }}
+              </ul>{{ end }}
+            </li>
 {{ end }}
-</body>
-</html>

@@ -19,6 +19,7 @@ type docTemplateContext struct {
 	Doc        docParser
 	MarkHidden bool
 	ShowTOC    bool
+	NestedTOC  bool
 }
 
 const defaultDocMarkdownWrapWidth = 80
@@ -100,6 +101,7 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 		Data:       data,
 		MarkHidden: cfg.markHidden,
 		ShowTOC:    cfg.toc,
+		NestedTOC:  cfg.tocNested,
 	}
 
 	return tpl.Execute(w, ctx)
@@ -320,7 +322,12 @@ func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderF
 			return false
 		},
 
-		"tocCommandEntries": buildDocTOCCommandEntries,
+		"tocCommandEntries":           buildDocTOCCommandEntries,
+		"tocCommandEntriesNested":     buildDocTOCCommandTree,
+		"tocCommandEntriesNestedFlat": buildDocTOCCommandEntriesNestedFlat,
+		"tocIndent": func(depth int) string {
+			return strings.Repeat("  ", depth+1)
+		},
 
 		"tocCommandAnchor": func(name string) string {
 			return "command-" + slugifyTOC(name)
@@ -342,8 +349,10 @@ func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderF
 }
 
 type docTOCEntry struct {
-	Name   string
-	Anchor string
+	Name     string
+	Anchor   string
+	Children []docTOCEntry
+	Depth    int
 }
 
 func buildDocTOCCommandEntries(commands []docCommand) []docTOCEntry {
@@ -360,6 +369,53 @@ func buildDocTOCCommandEntries(commands []docCommand) []docTOCEntry {
 	}
 
 	walk(commands)
+	return ret
+}
+
+func buildDocTOCCommandTree(commands []docCommand) []docTOCEntry {
+	return buildDocTOCCommandTreeAtDepth(commands, 0)
+}
+
+func buildDocTOCCommandEntriesNestedFlat(commands []docCommand) []docTOCEntry {
+	ret := make([]docTOCEntry, 0)
+	var walk func([]docCommand, int)
+	walk = func(list []docCommand, depth int) {
+		for _, command := range list {
+			name := command.Name
+			if idx := strings.LastIndexByte(name, ' '); idx >= 0 {
+				name = name[idx+1:]
+			}
+
+			ret = append(ret, docTOCEntry{
+				Name:   name,
+				Anchor: slugifyTOC(command.Name),
+				Depth:  depth,
+			})
+
+			walk(command.Commands, depth+1)
+		}
+	}
+
+	walk(commands, 0)
+	return ret
+}
+
+func buildDocTOCCommandTreeAtDepth(commands []docCommand, depth int) []docTOCEntry {
+	ret := make([]docTOCEntry, 0, len(commands))
+	for _, command := range commands {
+		name := command.Name
+		if idx := strings.LastIndexByte(name, ' '); idx >= 0 {
+			name = name[idx+1:]
+		}
+
+		ret = append(ret, docTOCEntry{
+			Name:     name,
+			Anchor:   "command-" + slugifyTOC(command.Name),
+			Depth:    depth,
+			Children: buildDocTOCCommandTreeAtDepth(command.Commands, depth+1),
+		})
+	}
+
 	return ret
 }
 

@@ -16,8 +16,9 @@
 {{ if .Doc.LongDescription }}{{ $t := i18n "doc.tmpl.markdown.section.description" }}{{ mdList }} [{{ $t }}](#{{ tocHeadingAnchor $t }})
 {{ end }}{{ if .Doc.Groups }}{{ $t := i18n "doc.tmpl.markdown.section.options" }}{{ mdList }} [{{ $t }}](#{{ tocHeadingAnchor $t }})
 {{ end }}{{ if .Doc.Commands }}{{ $t := i18n "doc.tmpl.markdown.section.commands" }}{{ mdList }} [{{ $t }}](#{{ tocHeadingAnchor $t }})
-{{ range tocCommandEntries .Doc.Commands }}  {{ mdList }} [{{ .Name }}](#{{ tocHeadingAnchor .Name }})
-{{ end }}{{ end }}
+{{ if .NestedTOC }}{{ range tocCommandEntriesNestedFlat .Doc.Commands }}{{ tocIndent .Depth }}{{ mdList }} [{{ .Name }}](#{{ .Anchor }})
+{{ end }}{{ else }}{{ range tocCommandEntries .Doc.Commands }}  {{ mdList }} [{{ .Name }}](#{{ tocHeadingAnchor .Name }})
+{{ end }}{{ end }}{{ end }}
 {{ end }}
 
 {{ if .Doc.LongDescription }}

@@ -41,6 +41,7 @@ type docRenderOptions struct {
 	wrapWidth                       int
 	renderStyle                     RenderStyle
 	toc                             bool
+	tocNested                       bool
 	markdownDashLists               bool
 	trimDescriptions                bool
 	includeHidden                   bool
@@ -123,6 +124,15 @@ func WithDocWrapWidth(width int) DocOption {
 func WithTOC(enabled bool) DocOption {
 	return func(o *docRenderOptions) error {
 		o.toc = enabled
+		return nil
+	}
+}
+
+// WithNestedTOC enables hierarchical command entries in the table of
+// contents for templates supporting it.
+func WithNestedTOC(enabled bool) DocOption {
+	return func(o *docRenderOptions) error {
+		o.tocNested = enabled
 		return nil
 	}
 }
