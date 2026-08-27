@@ -5,10 +5,12 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
 	"reflect"
+	"strings"
 )
 
 // A Parser provides command line option parsing. It can contain several
@@ -733,11 +735,57 @@ func (p *Parser) SetCommandSort(mode CommandSortMode) {
 	p.commandSort = mode
 }
 
+// CommandFor returns the command bound to data.
+// For commands declared as struct fields, data must be a pointer to that field.
+// The lookup is based on the bound data identity,
+// so it remains valid when command metadata is rebuilt after a tag configuration change.
+func (p *Parser) CommandFor(data any) (*Command, error) {
+	if p == nil {
+		return nil, errors.New("cannot find command on a nil parser")
+	}
+	if data == nil {
+		return nil, errors.New("command data must not be nil")
+	}
+
+	value := reflect.ValueOf(data)
+	if value.Kind() != reflect.Pointer || value.IsNil() {
+		return nil, errors.New("command data must be a non-nil pointer")
+	}
+
+	var found *Command
+	p.eachCommand(func(command *Command) {
+		if found == nil && sameCommandData(command.data, data) {
+			found = command
+		}
+	})
+	if found == nil {
+		return nil, fmt.Errorf("command data %T is not registered with parser", data)
+	}
+
+	return found, nil
+}
+
+func (p *Parser) findCommandPath(commandPath string) *Command {
+	if p == nil || p.Command == nil {
+		return nil
+	}
+
+	command := p.Command
+	for name := range strings.FieldsSeq(commandPath) {
+		command = command.Find(name)
+		if command == nil {
+			return nil
+		}
+	}
+
+	return command
+}
+
 // SetCommandShortDescriptions updates short descriptions for multiple commands.
 // Missing command names are ignored.
 func (p *Parser) SetCommandShortDescriptions(descriptions map[string]string) {
 	for commandName, description := range descriptions {
-		if cmd := p.Find(commandName); cmd != nil {
+		if cmd := p.findCommandPath(commandName); cmd != nil {
 			cmd.SetShortDescription(description)
 		}
 	}
@@ -747,7 +795,7 @@ func (p *Parser) SetCommandShortDescriptions(descriptions map[string]string) {
 // Missing command names are ignored.
 func (p *Parser) SetCommandLongDescriptions(descriptions map[string]string) {
 	for commandName, description := range descriptions {
-		if cmd := p.Find(commandName); cmd != nil {
+		if cmd := p.findCommandPath(commandName); cmd != nil {
 			cmd.SetLongDescription(description)
 		}
 	}
@@ -757,7 +805,7 @@ func (p *Parser) SetCommandLongDescriptions(descriptions map[string]string) {
 // Missing command names are ignored.
 func (p *Parser) SetCommandDescriptions(descriptions map[string]CommandDescriptions) {
 	for commandName, description := range descriptions {
-		if cmd := p.Find(commandName); cmd != nil {
+		if cmd := p.findCommandPath(commandName); cmd != nil {
 			cmd.SetShortDescription(description.Short)
 			cmd.SetLongDescription(description.Long)
 		}
@@ -768,7 +816,7 @@ func (p *Parser) SetCommandDescriptions(descriptions map[string]CommandDescripti
 // for multiple commands. Missing command names are ignored.
 func (p *Parser) SetCommandShortDescriptionI18nKeys(keys map[string]string) {
 	for commandName, key := range keys {
-		if cmd := p.Find(commandName); cmd != nil {
+		if cmd := p.findCommandPath(commandName); cmd != nil {
 			cmd.SetShortDescriptionI18nKey(key)
 		}
 	}
@@ -778,7 +826,7 @@ func (p *Parser) SetCommandShortDescriptionI18nKeys(keys map[string]string) {
 // for multiple commands. Missing command names are ignored.
 func (p *Parser) SetCommandLongDescriptionI18nKeys(keys map[string]string) {
 	for commandName, key := range keys {
-		if cmd := p.Find(commandName); cmd != nil {
+		if cmd := p.findCommandPath(commandName); cmd != nil {
 			cmd.SetLongDescriptionI18nKey(key)
 		}
 	}

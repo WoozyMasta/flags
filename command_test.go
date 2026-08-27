@@ -7,6 +7,39 @@ import (
 	"testing"
 )
 
+func TestCommandForAndNestedCommandDescriptionPath(t *testing.T) {
+	type options struct {
+		Profile struct {
+			Export struct{} `command:"export"`
+		} `command:"profile"`
+	}
+
+	var opts options
+	p := NewParser(&opts, None)
+
+	command, err := p.CommandFor(&opts.Profile.Export)
+	if err != nil {
+		t.Fatalf("unexpected command lookup error: %v", err)
+	}
+	if command != p.findCommandPath("profile export") {
+		t.Fatalf("expected CommandFor and path lookup to resolve the same command")
+	}
+
+	p.SetCommandDescriptions(map[string]CommandDescriptions{
+		"profile export": {Short: "Export profile", Long: "Write profile YAML"},
+	})
+	if command.ShortDescription != "Export profile" || command.LongDescription != "Write profile YAML" {
+		t.Fatalf("nested command description was not updated: %#v", command)
+	}
+
+	if p.findCommandPath("profile missing") != nil {
+		t.Fatal("expected unknown nested command path")
+	}
+	if _, err := p.CommandFor(&struct{ Value string }{}); err == nil {
+		t.Fatal("expected unregistered command data error")
+	}
+}
+
 func TestCommandInline(t *testing.T) {
 	var opts = struct {
 		Value bool `short:"v"`
