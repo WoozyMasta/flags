@@ -114,6 +114,44 @@ or custom templates when a site or release process needs a specific shape.
 `WriteHelp` should stay optimized for runtime terminal output.
 `WriteDoc` is the richer documentation path.
 
+## Structured Command Examples
+
+Define examples from the same struct fields that declare commands and options:
+
+```go
+var opts struct {
+    Namespace string `long:"namespace"`
+    Export    struct {
+        Output string `long:"output"`
+    } `command:"export"`
+}
+
+parser := flags.NewParser(&opts, flags.Default)
+cmd, err := parser.CommandFor(&opts.Export)
+if err != nil {
+    return err
+}
+if err := cmd.SetExamples(
+    flags.Example().
+        Describe("Export a namespace").
+        Option(&opts.Namespace, "production").
+        Option(&opts.Export.Output, "backup.yaml"),
+); err != nil {
+    return err
+}
+```
+
+`CommandFor` and option references avoid duplicating command paths
+and option names in documentation metadata.
+Renaming a command or changing a flag tag is reflected in help
+and generated documentation automatically.
+
+Use `Arg` for positional values, `ShortOption` for an intentional short form,
+and `Raw` for shell syntax such as pipes and redirects.
+`WriteHelp` uses the native runtime shell;
+generated docs use Bash by default and accept
+`WithExampleShell(flags.ExampleShellPwsh)` for PowerShell.
+
 ## Presentation Settings
 
 Help, completion descriptions, and docs share presentation metadata:

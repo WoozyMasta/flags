@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning][].
   for using the base name of the effective program in help and documentation.
 * `WithNestedTOC` and `--toc-nested` provide hierarchical command entries
   in Markdown and HTML tables of contents.
+* Structured command examples via `Example`, `Command.SetExamples`,
+  and `Parser.CommandFor` are rendered in help,
+  Markdown, HTML, man, JSON, and custom documentation templates.
 
 ## [0.13.0] - 2026-08-14
 

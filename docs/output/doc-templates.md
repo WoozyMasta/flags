@@ -212,8 +212,12 @@ The root object has:
 `.Doc` contains parser metadata, generated time, usage, positional arguments,
 option groups, command groups, commands, subcommands, defaults, env metadata,
 INI metadata, visibility, choices, aliases, raw tag metadata, and render forms.
+Each parser and command also exposes
+rendered `Examples` with `Description` and `Command` fields.
+They are ready for custom templates and already include selected program name,
+command path, current option names, and shell quoting.
 
-Prefer reading the model through exported rendered examples and tests before
+Prefer reading the model through rendered examples and tests before
 writing complex custom templates.
 The model is meant for documentation output, not for application logic.
 

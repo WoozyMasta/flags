@@ -174,5 +174,10 @@ Document one primary style for users.
 Supporting both POSIX and Windows parsing is useful,
 but mixed examples can confuse readers.
 
+Structured command examples use Bash quoting by default in generated docs.
+Select PowerShell explicitly with `WithExampleShell(flags.ExampleShellPwsh)`
+when the output is intended for Windows users.
+`Raw` fragments are emitted unchanged and are not translated between shells.
+
 For cross-platform tools, prefer long options
 and avoid relying on shell-specific quoting in examples.
