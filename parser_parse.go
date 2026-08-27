@@ -1301,6 +1301,12 @@ func (p *Parser) parseNonOption(s *parseState) error {
 	isStrictCmds := (p.Options&StrictCommands) != 0 || s.command.StrictSubcommands
 	isStrictPos := (p.Options&StrictPositionalArgs) != 0 || s.command.StrictArgs
 
+	// The builtin help command uses all remaining positional arguments as a command path,
+	// so the global positional-argument limit must not reject nested paths such as `help capture data`.
+	if _, ok := s.command.data.(*builtinHelpCommand); ok {
+		isStrictPos = false
+	}
+
 	if len(s.command.commands) > 0 && len(s.retargs) == 0 {
 		if cmd := s.lookup.commands[s.arg]; cmd != nil {
 			if len(s.positional) > 0 {

@@ -405,6 +405,31 @@ func TestBuiltinHelpCommandShowsCommandHelpForTarget(t *testing.T) {
 	}
 }
 
+func TestBuiltinHelpCommandAllowsNestedPathWithStrictPositionalArgs(t *testing.T) {
+	var opts struct {
+		Capture struct {
+			Data struct {
+				Dir struct{}
+			} `command:"data"`
+		} `command:"capture"`
+	}
+
+	p := NewNamedParser("builtin-help-strict-positional", HelpCommand|StrictPositionalArgs)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+
+	stdout, stderr := captureStdIO(t, func() {
+		_, _ = p.ParseArgs([]string{"help", "capture", "data"})
+	})
+	if stderr != "" {
+		t.Fatalf("expected empty stderr, got %q", stderr)
+	}
+	if !strings.Contains(stdout, "capture data") {
+		t.Fatalf("expected nested command help, got:\n%s", stdout)
+	}
+}
+
 func TestBuiltinHelpCommandTakesPrecedenceOverRootPositionalArgs(t *testing.T) {
 	var opts struct {
 		Positional struct {

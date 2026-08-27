@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning][].
   and `Parser.CommandFor` are rendered in help,
   Markdown, HTML, man, JSON, and custom documentation templates.
 
+### Fixed
+
+* Built-in `help` now accepts nested command paths
+  when `StrictPositionalArgs` is enabled.
+
 ## [0.13.0] - 2026-08-14
 
 ### Added
