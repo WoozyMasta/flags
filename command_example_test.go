@@ -278,3 +278,35 @@ func TestHTMLAndManDocumentationIncludeCommandExamples(t *testing.T) {
 		}
 	}
 }
+
+func TestJSONAndCustomTemplateExposeCommandExamples(t *testing.T) {
+	var opts struct {
+		Command struct{} `command:"command"`
+	}
+	p := NewParser(&opts, None)
+	if err := p.Command.Find("command").SetExamples(Example().Describe("Run it").Arg("value")); err != nil {
+		t.Fatalf("unexpected SetExamples error: %v", err)
+	}
+
+	var jsonOutput strings.Builder
+	if err := p.WriteDoc(&jsonOutput, DocFormatJSON, WithProgramName("app")); err != nil {
+		t.Fatalf("unexpected JSON documentation error: %v", err)
+	}
+	if !strings.Contains(jsonOutput.String(), `"examples":`) ||
+		!strings.Contains(jsonOutput.String(), `"command": "app command value"`) {
+		t.Fatalf("JSON documentation does not expose examples: %s", jsonOutput.String())
+	}
+
+	var templateOutput strings.Builder
+	if err := p.WriteDoc(
+		&templateOutput,
+		DocFormatMarkdown,
+		WithProgramName("app"),
+		WithTemplateString("{{ (index .Doc.Commands 0).Examples | len }}|{{ (index (index .Doc.Commands 0).Examples 0).Command }}"),
+	); err != nil {
+		t.Fatalf("unexpected custom template error: %v", err)
+	}
+	if got := templateOutput.String(); got != "1|app command value\n" {
+		t.Fatalf("unexpected custom template output: %q", got)
+	}
+}
