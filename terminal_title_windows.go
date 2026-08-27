@@ -23,7 +23,7 @@ func setTerminalTitle(title string) error {
 
 	ret, _, callErr := proc.Call(uintptr(unsafe.Pointer(ptr)))
 	if ret == 0 {
-		if callErr != nil && callErr != windows.ERROR_SUCCESS {
+		if callErr != windows.ERROR_SUCCESS {
 			return callErr
 		}
 		return ErrSetConsoleTitleFailed
