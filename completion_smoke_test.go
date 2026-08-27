@@ -228,3 +228,19 @@ func TestCompletionSmokeCandidatesPartialCommand(t *testing.T) {
 		"status",
 	)
 }
+
+func TestCompletionCandidatesForBuiltinHelpCommand(t *testing.T) {
+	var opts struct {
+		Capture struct {
+			Data struct {
+				Dir struct{}
+			} `command:"data"`
+		} `command:"capture"`
+		Status struct{} `command:"status"`
+	}
+
+	p := NewParser(&opts, HelpCommand)
+	assertCompletionCandidates(t, p, []string{"help", ""}, "capture", "status")
+	assertCompletionCandidates(t, p, []string{"help", "capture", ""}, "data")
+	assertCompletionCandidates(t, p, []string{"help", "capture", "d"}, "data")
+}

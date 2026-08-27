@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning][].
 
 * Built-in `help` now accepts nested command paths
   when `StrictPositionalArgs` is enabled.
+* Shell completion now suggests root
+  and nested command names after the built-in `help` command.
 
 ## [0.13.0] - 2026-08-14
 

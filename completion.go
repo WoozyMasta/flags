@@ -343,7 +343,11 @@ func (c *completion) collectOptionsForCompletion(s *parseState) []*Option {
 }
 
 func (c *completion) completeCommands(s *parseState, match string) []Completion {
-	n := make([]Completion, 0, len(s.command.commands))
+	return c.completeCommandsForCommand(s.command, match)
+}
+
+func (c *completion) completeCommandsForCommand(command *Command, match string) []Completion {
+	n := make([]Completion, 0, len(command.commands))
 	seen := make(map[string]bool)
 
 	add := func(item string, description string) {
@@ -358,7 +362,7 @@ func (c *completion) completeCommands(s *parseState, match string) []Completion 
 		})
 	}
 
-	for _, cmd := range s.command.commands {
+	for _, cmd := range command.commands {
 		if cmd.data == c || cmd.Hidden {
 			continue
 		}
@@ -375,6 +379,14 @@ func (c *completion) completeCommands(s *parseState, match string) []Completion 
 	}
 
 	return n
+}
+
+func isBuiltinHelpCommand(command *Command) bool {
+	if command == nil {
+		return false
+	}
+	_, ok := command.data.(*builtinHelpCommand)
+	return ok
 }
 
 func completeChoices(choices []string, prefix string, match string) []Completion {
@@ -543,6 +555,10 @@ func (c *completion) complete(args []string) []Completion {
 				}
 			} else if cmd, ok := s.lookup.commands[arg]; ok {
 				cmd.fillParseState(s)
+			} else if isBuiltinHelpCommand(s.command) {
+				if cmd := c.parser.Find(arg); cmd != nil {
+					cmd.fillParseState(s)
+				}
 			}
 
 			opt = nil
@@ -593,6 +609,8 @@ func (c *completion) complete(args []string) []Completion {
 	case len(s.positional) > 0:
 		// Complete for positional argument
 		ret = c.completeValue(nil, s.positional[0], s.positional[0].value, "", lastarg)
+	case isBuiltinHelpCommand(s.command):
+		ret = c.completeCommandsForCommand(c.parser.Command, lastarg)
 	case len(s.command.commands) > 0:
 		// Complete for command
 		ret = c.completeCommands(s, lastarg)
