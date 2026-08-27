@@ -69,7 +69,7 @@ type AdvancedOptions struct {
 	HelpColor        string                 `description:"Color scheme for built-in help output" long:"help-color" default:"none" json:"helpColor" choices:"none;default;contrast;gray;light"` //nolint:tagliatelle
 	Token            DynamicToken           `description:"Dynamic default token" long:"token"`
 	Demo             AdvancedDemoOptions    `group:"Demo Options" immediate:"true"`
-	Deploy           AdvancedDeployCommand  `description:"Deploy selected targets" command:"deploy" long-description:"Run deployment workflow with validation checks.\n\nExamples:\n  advanced-cli deploy --force target artifact\n  advanced-cli deploy --plan target artifact"`
+	Deploy           AdvancedDeployCommand  `description:"Deploy selected targets" command:"deploy" long-description:"Run deployment workflow with validation checks."`
 	Verbose          []bool                 `description:"Increase verbosity level" long:"verbose" order:"100" short:"V"`
 	Labels           []ServiceLabel         `description:"Service labels" long:"label"`
 	Exec             []string               `description:"Collect args until ';' terminator" long:"exec" order:"-30" terminator:";"`
@@ -101,7 +101,7 @@ type AdvancedDemoOptions struct {
 type AdvancedDeployCommand struct {
 	ReleaseID  string                       `long:"release-id" description:"Release identifier for audit trail" required:"yes" value-name:"RELEASE_IDENTIFIER"`
 	Positional AdvancedDeployPositionalArgs `required:"yes" positional-args:"yes"`
-	Force      bool                         `long:"force"      description:"Force deployment"`
+	Force      bool                         `long:"force" short:"f" description:"Force deployment"`
 	Plan       bool                         `long:"plan"       description:"Show execution plan only"`
 }
 
@@ -182,8 +182,44 @@ func newParser(opts *AdvancedOptions) *flags.Parser {
 	if err != nil {
 		panic(err)
 	}
+	if err := configureAdvancedExamples(p, opts); err != nil {
+		panic(err)
+	}
 
 	return p
+}
+
+func configureAdvancedExamples(p *flags.Parser, opts *AdvancedOptions) error {
+	deploy, err := p.CommandFor(&opts.Deploy)
+	if err != nil {
+		return err
+	}
+	if err := deploy.SetExamples(
+		flags.Example().
+			Describe("Deploy an artifact").
+			Arg("api").
+			Arg("artifact.tar").
+			Option(&opts.Deploy.ReleaseID, "release-123").
+			ShortOption(&opts.Deploy.Force),
+		flags.Example().
+			Describe("Preview the deployment plan").
+			Arg("api").
+			Arg("artifact.tar").
+			Option(&opts.Deploy.ReleaseID, "release-123").
+			Option(&opts.Deploy.Plan),
+	); err != nil {
+		return err
+	}
+
+	publish, err := p.CommandFor(&opts.Publish)
+	if err != nil {
+		return err
+	}
+	return publish.SetExamples(flags.Example().
+		Describe("Publish an artifact").
+		Option(&opts.Publish.Registry, "registry.example.com").
+		Option(&opts.Publish.Tag, "v1.2.3").
+		Arg("artifact.tar"))
 }
 
 func applySortMode(p *flags.Parser, mode string) error {
