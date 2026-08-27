@@ -24,9 +24,9 @@ const (
 var _ = renderCommandExample
 
 type commandExamplePart struct {
-	kind   commandExamplePartKind
-	value  string
 	target any
+	value  string
+	kind   commandExamplePartKind
 }
 
 // CommandExample describes one command invocation for help and generated documentation.

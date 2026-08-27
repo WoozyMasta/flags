@@ -51,12 +51,12 @@ type Command struct {
 	// Positional arguments declared for this command.
 	args []*Arg
 
+	// Structured command examples used by help and generated documentation.
+	examples []*CommandExample
+
 	// Display sort index used in help/docs command ordering.
 	// Positive values are shown first, then zero, then negative.
 	Order int
-
-	// Structured command examples used by help and generated documentation.
-	examples []*CommandExample
 
 	lookupCacheGeneration uint64
 

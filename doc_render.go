@@ -37,9 +37,9 @@ type docRenderOptions struct {
 	builtinTemplate                 string
 	templateText                    string
 	programName                     string
+	exampleShell                    ExampleShell
 	includeBuiltinCommands          []string // nil = include all; non-nil = include only these names
 	wrapWidth                       int
-	exampleShell                    ExampleShell
 	renderStyle                     RenderStyle
 	toc                             bool
 	tocNested                       bool
