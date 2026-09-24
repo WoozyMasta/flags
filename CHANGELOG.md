@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning][].
 
 ### Fixed
 
-* On Unix, shell autodetection now prefers `$SHELL` over inherited PowerShell
-  markers such as `PSModulePath`.
+* On Unix, shell autodetection now prefers `$SHELL`
+  over inherited PowerShell markers such as `PSModulePath`.
 * Markdown command examples now use shell-aware fenced code blocks.
 
 [0.14.2]: https://github.com/WoozyMasta/flags/compare/v0.14.1...v0.14.2
