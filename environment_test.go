@@ -24,6 +24,24 @@ func TestEnvironmentAPIDetectShellFromOverride(t *testing.T) {
 	}
 }
 
+func TestEnvironmentAPIDetectShellPrefersPOSIXShellOverPowerShellMarkers(t *testing.T) {
+	if isWindowsRuntime() {
+		t.Skip("Unix-only shell precedence")
+	}
+
+	t.Setenv("GO_FLAGS_SHELL", "")
+	t.Setenv("SHELL", "/bin/bash")
+	t.Setenv("POWERSHELL_DISTRIBUTION_CHANNEL", "GitHub-Actions")
+	t.Setenv("PSModulePath", "/some/powershell/path")
+
+	if got := DetectShell(); got != "bash" {
+		t.Fatalf("expected bash shell, got %q", got)
+	}
+	if got := DetectShellStyle(); got != RenderStylePOSIX {
+		t.Fatalf("expected POSIX shell style, got %v", got)
+	}
+}
+
 func TestEnvironmentAPIDetectEnvironmentSnapshot(t *testing.T) {
 	t.Setenv("GO_FLAGS_SHELL", "pwsh")
 

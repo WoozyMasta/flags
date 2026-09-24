@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Fixed
+
+* On Unix, shell autodetection now prefers `$SHELL` over inherited PowerShell
+  markers such as `PSModulePath`.
+
 ## [0.14.1] - 2026-08-27
 
 ### Fixed

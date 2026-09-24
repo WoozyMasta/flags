@@ -128,13 +128,26 @@ func RuntimeOS() string {
 func candidateShellNames() []string {
 	candidates := make([]string, 0, 4)
 
-	// pwsh on Unix can expose these even when SHELL is inherited from POSIX.
+	appendPOSIXShell := func() {
+		if v := strings.TrimSpace(os.Getenv("SHELL")); v != "" {
+			candidates = append(candidates, v)
+		}
+	}
+
+	// On Unix, PSModulePath can be inherited while the process runs under a POSIX shell.
+	// Prefer the current shell and use PowerShell markers only as a fallback.
+	// Windows keeps the existing marker-first behavior
+	// because SHELL may be set by a POSIX compatibility layer there.
+	if !isWindowsRuntime() {
+		appendPOSIXShell()
+	}
+
 	if os.Getenv("POWERSHELL_DISTRIBUTION_CHANNEL") != "" || os.Getenv("PSModulePath") != "" {
 		candidates = append(candidates, "pwsh")
 	}
 
-	if v := strings.TrimSpace(os.Getenv("SHELL")); v != "" {
-		candidates = append(candidates, v)
+	if isWindowsRuntime() {
+		appendPOSIXShell()
 	}
 
 	if v := strings.TrimSpace(os.Getenv("ComSpec")); v != "" {
