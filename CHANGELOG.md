@@ -14,13 +14,15 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.14.2] - 2026-09-24
 
 ### Fixed
 
 * On Unix, shell autodetection now prefers `$SHELL` over inherited PowerShell
   markers such as `PSModulePath`.
 * Markdown command examples now use shell-aware fenced code blocks.
+
+[0.14.2]: https://github.com/WoozyMasta/flags/compare/v0.14.1...v0.14.2
 
 ## [0.14.1] - 2026-08-27
 
