@@ -15,7 +15,7 @@
 
 {{ range .Doc.Examples }}{{ if .Description }}{{ .Description }}
 
-{{ end }}{{ codeFenceOpen }}
+{{ end }}{{ shellFenceOpen }}
 {{ .Command }}
 {{ codeFenceClose }}
 
@@ -149,7 +149,7 @@
 
 {{ range .Examples }}{{ if .Description }}{{ .Description }}
 
-{{ end }}{{ codeFenceOpen }}
+{{ end }}{{ shellFenceOpen }}
 {{ .Command }}
 {{ codeFenceClose }}
 

@@ -135,6 +135,10 @@ func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderF
 		}
 		return maxWidth
 	}
+	shellFenceOpen := "```shell"
+	if cfg.exampleShell == ExampleShellPwsh {
+		shellFenceOpen = "```powershell"
+	}
 
 	return template.FuncMap{
 		"i18n": func(key string, fallback ...string) string {
@@ -263,6 +267,10 @@ func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderF
 
 		"codeFenceOpen": func() string {
 			return "```text"
+		},
+
+		"shellFenceOpen": func() string {
+			return shellFenceOpen
 		},
 
 		"codeFenceClose": func() string {

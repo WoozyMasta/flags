@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning][].
 
 * On Unix, shell autodetection now prefers `$SHELL` over inherited PowerShell
   markers such as `PSModulePath`.
+* Markdown command examples now use shell-aware fenced code blocks.
 
 ## [0.14.1] - 2026-08-27
 

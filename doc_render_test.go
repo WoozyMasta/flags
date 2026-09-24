@@ -745,6 +745,54 @@ func TestWriteDocMarkdownBuiltinCode(t *testing.T) {
 	}
 }
 
+func TestWriteDocMarkdownExamplesUseShellFence(t *testing.T) {
+	var opts struct {
+		Run struct{} `command:"run"`
+	}
+
+	p := NewNamedParser("doc-app", None)
+	if _, err := p.AddGroup("Application Options", "", &opts); err != nil {
+		t.Fatalf("unexpected add group error: %v", err)
+	}
+	if err := p.Find("run").SetExamples(Example().Arg("value")); err != nil {
+		t.Fatalf("unexpected set examples error: %v", err)
+	}
+
+	for _, templateName := range []string{
+		DocTemplateMarkdownList,
+		DocTemplateMarkdownTable,
+		DocTemplateMarkdownCode,
+	} {
+		t.Run(string(templateName), func(t *testing.T) {
+			var out bytes.Buffer
+			if err := p.WriteDoc(
+				&out,
+				DocFormatMarkdown,
+				WithBuiltinTemplate(templateName),
+			); err != nil {
+				t.Fatalf("unexpected write doc error: %v", err)
+			}
+
+			if want := "```shell\ndoc-app run value\n```"; !strings.Contains(out.String(), want) {
+				t.Fatalf("expected shell fence %q in output:\n%s", want, out.String())
+			}
+		})
+	}
+
+	var pwshOut bytes.Buffer
+	if err := p.WriteDoc(
+		&pwshOut,
+		DocFormatMarkdown,
+		WithExampleShell(ExampleShellPwsh),
+	); err != nil {
+		t.Fatalf("unexpected write PowerShell doc error: %v", err)
+	}
+
+	if want := "```powershell\ndoc-app run value\n```"; !strings.Contains(pwshOut.String(), want) {
+		t.Fatalf("expected PowerShell fence %q in output:\n%s", want, pwshOut.String())
+	}
+}
+
 func TestWriteDocCustomTemplate(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"Value"`

@@ -228,7 +228,7 @@ Built-in helpers cover common rendering needs:
 * `i18n` resolves an i18n key with an optional fallback.
 * `hiddenMark` reports whether a hidden marker should be rendered.
 * `optionForms` renders short and long option forms for one option.
-* `codeJoin`, `code`, `codeFenceOpen`, and `codeFenceClose`
+* `codeJoin`, `code`, `codeFenceOpen`, `shellFenceOpen`, and `codeFenceClose`
   render markdown-friendly code fragments.
 * `join`, `wrap`, `markdownWrap`, `markdownWrapIndent`, and `indent`
   format text blocks.
