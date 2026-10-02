@@ -16,6 +16,9 @@ import (
 
 type docTemplateContext struct {
 	Data       map[string]any
+	Header     string
+	Banner     string
+	Footer     string
 	Doc        docParser
 	MarkHidden bool
 	ShowTOC    bool
@@ -96,15 +99,26 @@ func (p *Parser) executeDocTemplate(w io.Writer, templateText string, data map[s
 		return err
 	}
 
+	blocks := p.docTemplateContent[cfg.format]
 	ctx := docTemplateContext{
 		Doc:        p.buildDocModel(cfg),
 		Data:       data,
+		Header:     docTemplateContent(blocks.header, p.helpHeader),
+		Banner:     docTemplateContent(blocks.banner, p.banner),
+		Footer:     docTemplateContent(blocks.footer, p.helpFooter),
 		MarkHidden: cfg.markHidden,
 		ShowTOC:    cfg.toc,
 		NestedTOC:  cfg.tocNested,
 	}
 
 	return tpl.Execute(w, ctx)
+}
+
+func docTemplateContent(formatContent *string, helpContent string) string {
+	if formatContent != nil {
+		return *formatContent
+	}
+	return helpContent
 }
 
 func docTemplateFuncs(parser *Parser, cfg docRenderOptions, format optionRenderFormat) template.FuncMap {

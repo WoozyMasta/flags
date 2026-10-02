@@ -472,6 +472,49 @@ func TestBuiltinDocsCommandWritesFile(t *testing.T) {
 	}
 }
 
+func TestBuiltinDocsCommandUsesPersistentFormatContent(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		format DocFormat
+		cmd    string
+		ext    string
+	}{
+		{name: "markdown", format: DocFormatMarkdown, cmd: "md", ext: ".md"},
+		{name: "html", format: DocFormatHTML, cmd: "html", ext: ".html"},
+		{name: "man", format: DocFormatMan, cmd: "man", ext: ".1"},
+		{name: "json", format: DocFormatJSON, cmd: "json", ext: ".json"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NewNamedParser("builtin-docs-content", DocsCommand)
+			helpFooter := tc.name + "-help footer"
+			p.SetHelpFooter(helpFooter)
+			footer := tc.name + "-specific documentation footer"
+			expectedFooter := footer
+			if tc.format == DocFormatJSON {
+				expectedFooter = helpFooter
+			} else if err := p.SetDocFooter(tc.format, footer); err != nil {
+				t.Fatalf("unexpected SetDocFooter error: %v", err)
+			}
+
+			out := filepath.Join(t.TempDir(), "docs"+tc.ext)
+			if _, err := p.ParseArgs([]string{"docs", tc.cmd, out}); err != nil {
+				t.Fatalf("unexpected parse error: %v", err)
+			}
+
+			got, err := os.ReadFile(out)
+			if err != nil {
+				t.Fatalf("unexpected read error: %v", err)
+			}
+			if !strings.Contains(string(got), expectedFooter) {
+				t.Fatalf("expected parser-configured documentation footer, got:\n%s", string(got))
+			}
+			if expectedFooter != helpFooter && strings.Contains(string(got), helpFooter) {
+				t.Fatalf("format-specific footer should override the help footer, got:\n%s", string(got))
+			}
+		})
+	}
+}
+
 func TestBuiltinDocsCommandMarkdownWrapWidth(t *testing.T) {
 	var opts struct {
 		Value string `long:"value" description:"alpha beta gamma delta epsilon zeta eta theta"`

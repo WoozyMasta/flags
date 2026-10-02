@@ -34,6 +34,7 @@ const (
 
 type docRenderOptions struct {
 	templateData                    map[string]any
+	format                          DocFormat
 	builtinTemplate                 string
 	templateText                    string
 	programName                     string
@@ -98,6 +99,61 @@ func WithTemplateData(data map[string]any) DocOption {
 	return func(o *docRenderOptions) error {
 		o.templateData = data
 		return nil
+	}
+}
+
+type docTemplateBlocks struct {
+	header *string
+	banner *string
+	footer *string
+}
+
+// SetDocHeader sets header content for one documentation format.
+// An empty string disables the help header fallback for that format.
+func (p *Parser) SetDocHeader(format DocFormat, text string) error {
+	return p.setDocTemplateBlock(format, func(blocks *docTemplateBlocks) {
+		blocks.header = &text
+	})
+}
+
+// SetDocBanner sets banner content for one documentation format.
+// An empty string disables the help banner fallback for that format.
+func (p *Parser) SetDocBanner(format DocFormat, text string) error {
+	return p.setDocTemplateBlock(format, func(blocks *docTemplateBlocks) {
+		blocks.banner = &text
+	})
+}
+
+// SetDocFooter sets footer content for one documentation format.
+// An empty string disables the help footer fallback for that format.
+func (p *Parser) SetDocFooter(format DocFormat, text string) error {
+	return p.setDocTemplateBlock(format, func(blocks *docTemplateBlocks) {
+		blocks.footer = &text
+	})
+}
+
+func (p *Parser) setDocTemplateBlock(format DocFormat, set func(*docTemplateBlocks)) error {
+	if err := validateDocTemplateFormat(format); err != nil {
+		return err
+	}
+
+	if p.docTemplateContent == nil {
+		p.docTemplateContent = make(map[DocFormat]docTemplateBlocks)
+	}
+	blocks := p.docTemplateContent[format]
+	set(&blocks)
+	p.docTemplateContent[format] = blocks
+
+	return nil
+}
+
+func validateDocTemplateFormat(format DocFormat) error {
+	switch format {
+	case DocFormatMarkdown, DocFormatHTML, DocFormatMan, DocFormatJSON:
+		return nil
+
+	default:
+		return fmt.Errorf("unsupported documentation template format %q", format)
 	}
 }
 
@@ -238,6 +294,7 @@ func (p *Parser) WriteDoc(w io.Writer, format DocFormat, opts ...DocOption) erro
 	}
 
 	cfg := docRenderOptions{}
+	cfg.format = format
 	for _, opt := range opts {
 		if err := opt(&cfg); err != nil {
 			return err

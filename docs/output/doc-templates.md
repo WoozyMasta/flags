@@ -142,6 +142,42 @@ err := parser.WriteDoc(
 )
 ```
 
+## Header, Banner, and Footer
+
+Documentation templates receive
+`.Header`, `.Banner`, and `.Footer` placeholders.
+By default, documentation uses the text configured with
+`SetHelpHeader`, `SetBanner`, and `SetHelpFooter`.
+Built-in templates place the document title first,
+then the header before the table of contents and the banner after it.
+Man output has no table of contents,
+so both blocks appear before the `NAME` section.
+The footer follows the main options, arguments,
+and commands, before metadata sections.
+
+Configure format-specific values on the parser
+with `SetDocHeader`, `SetDocBanner`, and `SetDocFooter`.
+The built-in `docs` command and direct `WriteDoc` calls use the same settings:
+
+```go
+if err := parser.SetDocFooter(
+  flags.DocFormatMarkdown,
+  "Markdown-specific usage notes",
+); err != nil {
+  return err
+}
+```
+
+Format-specific values override the corresponding help text
+and are used by both the built-in `docs` command and direct `WriteDoc` calls.
+Set a block to an empty string to disable its text fallback for that format.
+
+Provide format-appropriate content.
+Markdown and man template content is inserted as-is;
+HTML template content is inserted as HTML.
+JSON output is a serialized doc model, so the values appear as optional
+top-level string fields named `header`, `banner`, and `footer`.
+
 ## Custom Template Text
 
 Use a template string:
@@ -315,6 +351,8 @@ env keys, INI keys, choices, defaults, aliases, deprecation markers,
 and visibility flags.
 Secret option values and choices are masked
 the same way as in all other formats.
+Configured help blocks are included as optional top-level string fields:
+`header`, `banner`, and `footer`.
 
 `DocFormatJSON` accepts the same `DocOption` values as other formats:
 

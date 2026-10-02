@@ -201,7 +201,8 @@
       <p class="muted">{{ quoteHTML .Doc.ShortDescription }}</p>
       {{- end }}
       <pre>{{ quoteHTML .Doc.Name }} {{ quoteHTML .Doc.Usage }}</pre>
-    </header>
+    </header>{{ if .Header }}
+    <section class="doc-header">{{ .Header }}</section>{{ end }}
 
 {{- if .Doc.Examples }}
     <section id="examples">
@@ -236,6 +237,10 @@
       </ul>
     </section>
 {{- end }}
+
+{{ if .Banner }}
+    <section class="doc-banner">{{ .Banner }}</section>
+{{ end }}
 
 {{- if .Doc.LongDescription }}
     <section>
@@ -318,6 +323,10 @@
 {{- end }}
     </section>
 {{- end }}
+{{ if .Footer }}
+    <footer class="doc-footer">{{ .Footer }}</footer>
+{{ end }}
+
 {{- if .Doc.Meta }}
 {{- if .Doc.Meta.Author }}
     <section id="section-author">

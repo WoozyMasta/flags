@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
+## Unreleased
+
+### Added
+
+* Documentation output inherits help headers, banners, and footers by default,
+  with per-format overrides for templates and JSON fields.
+
 ## [0.14.2] - 2026-09-24
 
 ### Fixed

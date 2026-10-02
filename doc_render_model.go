@@ -18,6 +18,9 @@ import (
 type docParser struct {
 	GeneratedAt      time.Time         `json:"-"`
 	Meta             *docParserMeta    `json:"meta,omitempty"`
+	Header           string            `json:"header,omitempty"`
+	Banner           string            `json:"banner,omitempty"`
+	Footer           string            `json:"footer,omitempty"`
 	Name             string            `json:"name"`
 	ShortDescription string            `json:"short_description,omitempty"`
 	LongDescription  string            `json:"long_description,omitempty"`
@@ -139,6 +142,12 @@ func (p *Parser) buildDocModel(cfg docRenderOptions) docParser {
 		Args:             buildDocArgs(p.Command, programName, cfg.includeHidden, cfg.trimDescriptions),
 		Groups:           buildDocGroups(p.Group, programName, true, cfg.includeHidden, format, cfg.trimDescriptions, false),
 		Meta:             p.buildDocMeta(),
+	}
+	if cfg.format == DocFormatJSON {
+		blocks := p.docTemplateContent[cfg.format]
+		model.Header = docTemplateContent(blocks.header, p.helpHeader)
+		model.Banner = docTemplateContent(blocks.banner, p.banner)
+		model.Footer = docTemplateContent(blocks.footer, p.helpFooter)
 	}
 	if !cfg.hasExampleShell {
 		cfg.exampleShell = ExampleShellBash

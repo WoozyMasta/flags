@@ -93,6 +93,10 @@ type Parser struct {
 	banner     string
 	helpFooter string
 
+	// Documentation blocks configured per output format;
+	// absent blocks inherit the corresponding help text.
+	docTemplateContent map[DocFormat]docTemplateBlocks
+
 	// .env file path used when DotEnv/DotEnvOverride/DotEnvFlags is set.
 	dotEnvFile string
 

@@ -1537,6 +1537,319 @@ func TestWriteDocJSONSecretMasked(t *testing.T) {
 	}
 }
 
+func TestWriteDocTemplatesInheritHelpBlocks(t *testing.T) {
+	p := NewNamedParser("doc-blocks", None)
+	p.SetHelpHeader("inherited-header")
+	p.SetBanner("inherited-banner")
+	p.SetHelpFooter("inherited-footer")
+
+	templates := []struct {
+		name   string
+		format DocFormat
+		tmpl   string
+	}{
+		{name: "markdown-list", format: DocFormatMarkdown, tmpl: DocTemplateMarkdownList},
+		{name: "markdown-table", format: DocFormatMarkdown, tmpl: DocTemplateMarkdownTable},
+		{name: "markdown-code", format: DocFormatMarkdown, tmpl: DocTemplateMarkdownCode},
+		{name: "html-default", format: DocFormatHTML, tmpl: DocTemplateHTMLDefault},
+		{name: "html-styled", format: DocFormatHTML, tmpl: DocTemplateHTMLStyled},
+		{name: "man-default", format: DocFormatMan, tmpl: DocTemplateManDefault},
+	}
+
+	for _, tc := range templates {
+		t.Run(tc.name, func(t *testing.T) {
+			var out bytes.Buffer
+			opts := []DocOption{WithBuiltinTemplate(tc.tmpl)}
+			if tc.format == DocFormatMarkdown || tc.format == DocFormatHTML {
+				opts = append(opts, WithTOC(true))
+			}
+			if err := p.WriteDoc(&out, tc.format, opts...); err != nil {
+				t.Fatalf("WriteDoc: %v", err)
+			}
+
+			text := out.String()
+			for _, marker := range []string{"inherited-header", "inherited-banner", "inherited-footer"} {
+				if !strings.Contains(text, marker) {
+					t.Errorf("CLI help block %q should be included in documentation by default:\n%s", marker, text)
+				}
+			}
+			if tc.format == DocFormatMarkdown {
+				if !(strings.Index(text, "# doc-blocks") < strings.Index(text, "inherited-header") &&
+					strings.Index(text, "inherited-header") < strings.Index(text, "## Table of Contents") &&
+					strings.Index(text, "## Table of Contents") < strings.Index(text, "inherited-banner")) {
+					t.Fatalf("Markdown help blocks must bracket the TOC after the title:\n%s", text)
+				}
+			}
+			if tc.format == DocFormatHTML {
+				if !(strings.Index(text, "<h1>doc-blocks</h1>") < strings.Index(text, "inherited-header") &&
+					strings.Index(text, "inherited-header") < strings.Index(text, "Table of Contents") &&
+					strings.Index(text, "Table of Contents") < strings.Index(text, "inherited-banner")) {
+					t.Fatalf("HTML help blocks must bracket the TOC after the title:\n%s", text)
+				}
+			}
+		})
+	}
+}
+
+func TestWriteDocTemplateHelpBlockOverridesAndDisables(t *testing.T) {
+	p := NewNamedParser("doc-blocks", None)
+	p.SetHelpHeader("inherited-header")
+	p.SetBanner("inherited-banner")
+	p.SetHelpFooter("inherited-footer")
+	if err := p.SetDocHeader(DocFormatMarkdown, "configured-header"); err != nil {
+		t.Fatalf("SetDocHeader: %v", err)
+	}
+	if err := p.SetDocBanner(DocFormatMarkdown, "configured-banner"); err != nil {
+		t.Fatalf("SetDocBanner: %v", err)
+	}
+	if err := p.SetDocFooter(DocFormatMarkdown, "configured-footer"); err != nil {
+		t.Fatalf("SetDocFooter: %v", err)
+	}
+
+	var out bytes.Buffer
+	if err := p.SetDocHeader(DocFormatMarkdown, "markdown-header"); err != nil {
+		t.Fatalf("SetDocHeader override: %v", err)
+	}
+	if err := p.SetDocBanner(DocFormatMarkdown, ""); err != nil {
+		t.Fatalf("SetDocBanner disable: %v", err)
+	}
+	if err := p.SetDocFooter(DocFormatMarkdown, "markdown-footer"); err != nil {
+		t.Fatalf("SetDocFooter override: %v", err)
+	}
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("WriteDoc with format content: %v", err)
+	}
+
+	text := out.String()
+	if !strings.Contains(text, "markdown-header") || !strings.Contains(text, "markdown-footer") {
+		t.Fatalf("expected explicit documentation content, got:\n%s", text)
+	}
+	for _, marker := range []string{
+		"inherited-header", "inherited-banner", "inherited-footer",
+		"configured-header", "configured-banner", "configured-footer",
+	} {
+		if strings.Contains(text, marker) {
+			t.Fatalf("explicit overrides did not replace configured block %q:\n%s", marker, text)
+		}
+	}
+
+	out.Reset()
+	if err := p.SetDocHeader(DocFormatMarkdown, ""); err != nil {
+		t.Fatalf("disable format header: %v", err)
+	}
+	if err := p.SetDocBanner(DocFormatMarkdown, ""); err != nil {
+		t.Fatalf("disable format banner: %v", err)
+	}
+	if err := p.SetDocFooter(DocFormatMarkdown, ""); err != nil {
+		t.Fatalf("disable format footer: %v", err)
+	}
+	if err := p.WriteDoc(&out, DocFormatMarkdown, WithBuiltinTemplate(DocTemplateMarkdownList)); err != nil {
+		t.Fatalf("WriteDoc with disabled blocks: %v", err)
+	}
+
+	text = out.String()
+	for _, marker := range []string{
+		"explicit-header",
+		"inherited-header",
+		"inherited-banner",
+		"inherited-footer",
+		"configured-header",
+		"configured-banner",
+		"configured-footer",
+	} {
+		if strings.Contains(text, marker) {
+			t.Errorf("disabled help block %q appeared in output:\n%s", marker, text)
+		}
+	}
+}
+
+func TestWriteDocUsesPersistentFormatContent(t *testing.T) {
+	p := NewNamedParser("doc-format-content", None)
+	p.SetHelpHeader("shared-header")
+	p.SetBanner("shared-banner")
+	p.SetHelpFooter("shared-footer")
+	p.SetVersionAuthor("Test Author")
+	var options struct {
+		Value string `long:"doc-option" description:"option marker"`
+	}
+	if _, err := p.AddGroup("Options", "", &options); err != nil {
+		t.Fatalf("AddGroup: %v", err)
+	}
+
+	for _, tc := range []struct {
+		format DocFormat
+		header string
+		banner string
+		footer string
+		tmpl   string
+	}{
+		{
+			format: DocFormatMarkdown, header: "markdown-header", banner: "markdown-banner",
+			footer: "markdown-footer", tmpl: DocTemplateMarkdownList,
+		},
+		{
+			format: DocFormatHTML, header: "html-header", banner: "html-banner",
+			footer: "html-footer", tmpl: DocTemplateHTMLDefault,
+		},
+		{
+			format: DocFormatMan, header: "man-header", banner: "man-banner",
+			footer: "man-footer", tmpl: DocTemplateManDefault,
+		},
+	} {
+		t.Run(string(tc.format), func(t *testing.T) {
+			if err := p.SetDocHeader(tc.format, tc.header); err != nil {
+				t.Fatalf("SetDocHeader: %v", err)
+			}
+			if err := p.SetDocBanner(tc.format, tc.banner); err != nil {
+				t.Fatalf("SetDocBanner: %v", err)
+			}
+			if err := p.SetDocFooter(tc.format, tc.footer); err != nil {
+				t.Fatalf("SetDocFooter: %v", err)
+			}
+
+			var out bytes.Buffer
+			opts := []DocOption{WithBuiltinTemplate(tc.tmpl)}
+			if tc.format == DocFormatMarkdown || tc.format == DocFormatHTML {
+				opts = append(opts, WithTOC(true))
+			}
+			if err := p.WriteDoc(&out, tc.format, opts...); err != nil {
+				t.Fatalf("WriteDoc: %v", err)
+			}
+
+			text := out.String()
+			headerIndex := strings.Index(text, tc.header)
+			bannerIndex := strings.Index(text, tc.banner)
+			footerIndex := strings.Index(text, tc.footer)
+			for _, marker := range []string{tc.header, tc.banner, tc.footer} {
+				if !strings.Contains(text, marker) {
+					t.Errorf("expected format-specific block %q, got:\n%s", marker, text)
+				}
+			}
+
+			if !(headerIndex < bannerIndex && bannerIndex < footerIndex) {
+				t.Fatalf(
+					"format-specific blocks are out of order: header=%d banner=%d footer=%d",
+					headerIndex,
+					bannerIndex,
+					footerIndex,
+				)
+			}
+
+			if !(strings.Index(text, "option marker") < footerIndex &&
+				footerIndex < strings.Index(text, "Test Author")) {
+				t.Fatalf("footer must follow options and precede metadata:\n%s", text)
+			}
+
+			switch tc.format {
+			case DocFormatMarkdown:
+				titleIndex := strings.Index(text, "# doc-format-content")
+				tocIndex := strings.Index(text, "## Table of Contents")
+				if !(titleIndex < headerIndex && headerIndex < strings.Index(text, "## NAME") &&
+					strings.Index(text, "## NAME") < tocIndex && tocIndex < bannerIndex && bannerIndex < footerIndex) {
+					t.Fatalf("Markdown content blocks are not separated from document sections:\n%s", text)
+				}
+
+			case DocFormatHTML:
+				for _, markup := range []string{
+					`<header class="doc-header">html-header</header>`,
+					`<div class="doc-banner">html-banner</div>`,
+					`<footer class="doc-footer">html-footer</footer>`,
+				} {
+					if !strings.Contains(text, markup) {
+						t.Errorf("expected HTML block %q, got:\n%s", markup, text)
+					}
+				}
+				if strings.Index(text, "</body>") < footerIndex {
+					t.Fatalf("HTML footer appeared after the body close:\n%s", text)
+				}
+				tocIndex := strings.Index(text, "Table of Contents")
+				if !(strings.Index(text, "<h1>doc-format-content</h1>") < headerIndex &&
+					headerIndex < tocIndex && tocIndex < bannerIndex && bannerIndex < footerIndex) {
+					t.Fatalf("HTML content blocks are not placed around the TOC:\n%s", text)
+				}
+
+			case DocFormatMan:
+				if !strings.Contains(text, ".PP\nman-header\n.PP\nman-banner\n.SH ") ||
+					!strings.Contains(text, ".PP\nman-footer\n.SH ") {
+					t.Fatalf("man content blocks are not valid separate paragraphs:\n%s", text)
+				}
+			}
+
+			for _, marker := range []string{"shared-header", "shared-banner", "shared-footer"} {
+				if strings.Contains(text, marker) {
+					t.Errorf("shared help block %q should be overridden, got:\n%s", marker, text)
+				}
+			}
+		})
+	}
+
+	if err := p.SetDocFooter(DocFormatMarkdown, ""); err != nil {
+		t.Fatalf("SetDocFooter empty: %v", err)
+	}
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatMarkdown); err != nil {
+		t.Fatalf("WriteDoc with empty format footer: %v", err)
+	}
+
+	for _, marker := range []string{"markdown-footer", "shared-footer"} {
+		if strings.Contains(out.String(), marker) {
+			t.Fatalf("empty format-specific footer should leave %q empty", marker)
+		}
+	}
+
+	if err := p.SetDocFooter(DocFormatJSON, "json-footer"); err != nil {
+		t.Fatalf("SetDocFooter for JSON: %v", err)
+	}
+}
+
+func TestWriteDocJSONIncludesHelpBlocks(t *testing.T) {
+	p := NewNamedParser("json-doc-blocks", None)
+	p.SetHelpHeader("help-header")
+	p.SetBanner("help-banner")
+	p.SetHelpFooter("help-footer")
+	if err := p.SetDocBanner(DocFormatJSON, "json-banner"); err != nil {
+		t.Fatalf("SetDocBanner: %v", err)
+	}
+
+	type blocks struct {
+		Header string `json:"header"`
+		Banner string `json:"banner"`
+		Footer string `json:"footer"`
+	}
+	decode := func(t *testing.T, output string) blocks {
+		t.Helper()
+		var got blocks
+		if err := json.Unmarshal([]byte(output), &got); err != nil {
+			t.Fatalf("unmarshal JSON doc: %v\n%s", err, output)
+		}
+		return got
+	}
+
+	var out bytes.Buffer
+	if err := p.WriteDoc(&out, DocFormatJSON); err != nil {
+		t.Fatalf("WriteDoc: %v", err)
+	}
+	got := decode(t, out.String())
+	if got != (blocks{Header: "help-header", Banner: "json-banner", Footer: "help-footer"}) {
+		t.Fatalf("unexpected JSON content blocks: %+v", got)
+	}
+
+	if err := p.SetDocHeader(DocFormatJSON, "json-header"); err != nil {
+		t.Fatalf("SetDocHeader: %v", err)
+	}
+	if err := p.SetDocFooter(DocFormatJSON, ""); err != nil {
+		t.Fatalf("SetDocFooter disable: %v", err)
+	}
+	out.Reset()
+	if err := p.WriteDoc(&out, DocFormatJSON); err != nil {
+		t.Fatalf("WriteDoc with format content: %v", err)
+	}
+	got = decode(t, out.String())
+	if got != (blocks{Header: "json-header", Banner: "json-banner"}) {
+		t.Fatalf("unexpected JSON content blocks with options: %+v", got)
+	}
+}
+
 func TestWriteDocJSONDocOptions(t *testing.T) {
 	var opts struct {
 		Name   string `long:"name" description:"Name"`

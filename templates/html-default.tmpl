@@ -8,7 +8,8 @@
   <title>{{ quoteHTML .Doc.Name }} {{ i18n "doc.tmpl.html.title.suffix" }}</title>
 </head>
 <body>
-  <h1>{{ quoteHTML .Doc.Name }}</h1>
+  <h1>{{ quoteHTML .Doc.Name }}</h1>{{ if .Header }}
+  <header class="doc-header">{{ .Header }}</header>{{ end }}
 
   <section>
     <h2>{{ i18n "doc.tmpl.html.section.synopsis" }}</h2>
@@ -48,6 +49,10 @@
     </ul>
   </section>
 {{- end }}
+
+{{ if .Banner }}
+  <div class="doc-banner">{{ .Banner }}</div>
+{{ end }}
 
 {{- if .Doc.LongDescription }}
   <section>
@@ -132,6 +137,10 @@
 {{- end }}
   </section>
 {{- end }}
+
+{{ if .Footer }}
+  <footer class="doc-footer">{{ .Footer }}</footer>
+{{ end }}
 
 {{- if .Doc.Meta }}
 {{- if .Doc.Meta.Author }}
@@ -266,8 +275,7 @@
 {{ template "command" . }}
 {{- end }}
 {{- end }}
-{{ end }}
-</body>
+{{ end }}</body>
 </html>{{ define "tocHTMLCommand" }}
           <li><a href="#{{ .Anchor }}">{{ quoteHTML .Name }}</a>{{ if .Children }}
             <ul>{{ range .Children }}{{ template "tocHTMLCommand" . }}{{ end }}
