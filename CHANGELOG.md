@@ -14,12 +14,14 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## Unreleased
+## [0.15.0] - 2026-09-24
 
 ### Added
 
 * Documentation output inherits help headers, banners, and footers by default,
   with per-format overrides for templates and JSON fields.
+
+[0.15.0]: https://github.com/WoozyMasta/flags/compare/v0.14.0...v0.15.0
 
 ## [0.14.2] - 2026-09-24
 
