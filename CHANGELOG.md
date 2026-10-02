@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning][].
 ### Removed
 -->
 
-## [0.15.0] - 2026-09-24
+## [0.15.0] - 2026-10-02
 
 ### Added
 
